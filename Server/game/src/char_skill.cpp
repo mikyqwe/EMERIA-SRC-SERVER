@@ -403,8 +403,8 @@ bool CHARACTER::LearnGrandMasterSkill(DWORD dwSkillVnum)
 		return false;
 	}
 
-	ChatPacket(CHAT_TYPE_TALKING, LC_TEXT("E' come se qualcosa mi stesse uscendo dal corpo!"));
-	ChatPacket(CHAT_TYPE_TALKING, LC_TEXT("Mi sento potentissimo!"));
+	ChatPacket(CHAT_TYPE_TALKING, LC_TEXT("Parca iese ceva din corpul meu!"));
+	ChatPacket(CHAT_TYPE_TALKING, LC_TEXT("Ma simt foarte puternic!"));
 	ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"Hai completato con successo l'apprendimento."));
 	LogManager::instance().CharLog(this, dwSkillVnum, "GM_READ_SUCCESS", "");
 	return true;

@@ -1647,7 +1647,7 @@ int CInputMain::OfflineShop(LPCHARACTER ch, const char * data, size_t uiBytes)
 
 		if (ch->IsOpenSafebox() || ch->IsCubeOpen() || ch->IsDead() || ch->GetExchange())
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Make sure you don't have any open windows!"));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Fii sigur ca nu ai alte ferestre deschise!"));
 			return 0;
 		}
 
@@ -1879,7 +1879,7 @@ void CInputMain::Exchange(LPCHARACTER ch, const char * data)
 
 				if (CHEQUE_MAX <= nTotalCheque)
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("The other player has cheque over the limite."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Celalalt jucator are Won peste limita."));
 
 					sys_err("[OVERFLOW_CHEQUE] CHEQUE_ADD (%u) id %u name %s ",
 						ch->GetExchange()->GetCompany()->GetOwner()->GetCheque(),

@@ -77,7 +77,7 @@ void CGuild::GuildWarPacket(DWORD dwOppGID, BYTE bWarType, BYTE bWarState
 #endif
 
 		if (bWarState == GUILD_WAR_ON_WAR)
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Gilda> Non si ottengono punti esperienza durante la guerra di gilda."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Breasla> Nu primesti puncte de experienta in timpul razboiului dintre bresle."));
 
 		LPDESC d = ch->GetDesc();
 
@@ -997,7 +997,7 @@ void CGuild::SetLadderPoint(int point)
 	if (m_data.ladder_point != point)
 	{
 		char buf[256];
-		snprintf(buf, sizeof(buf), LC_TEXT("Leaderboard updated to score: %d - keep climbing to the top!"), point);
+		snprintf(buf, sizeof(buf), LC_TEXT("Leaderboard actualizat: %d - succes in continuare!"), point);
 		for (itertype(m_memberOnline) it = m_memberOnline.begin(); it!=m_memberOnline.end();++it)
 		{
 			LPCHARACTER ch = (*it);

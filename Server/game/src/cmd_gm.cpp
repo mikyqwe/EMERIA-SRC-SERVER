@@ -5469,7 +5469,7 @@ ACMD(do_maintenance)
 {
 	if (ch && ch->GetGMLevel() < GM_IMPLEMENTOR)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You have to be a administrator."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Trebuie sa fii administrator."));
 		return;
 	}
 

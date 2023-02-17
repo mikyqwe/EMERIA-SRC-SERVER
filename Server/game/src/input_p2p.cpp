@@ -655,7 +655,7 @@ void CInputP2P::SendOfflineShopMessage(LPDESC d, const char * c_pData)
 		if (pkVictimDesc)
 		{
 			char msg[CHAT_MAX_LEN + 1];
-			snprintf(msg, sizeof(msg), LC_TEXT("Your item %s sold, buyer is: %s."), p->szItemName, p->szName);
+			snprintf(msg, sizeof(msg), LC_TEXT("Itemul tau %s a fost batut, cumparatorul este: %s."), p->szItemName, p->szName);
 
 			TPacketGCWhisper pack;
 

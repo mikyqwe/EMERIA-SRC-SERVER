@@ -5667,7 +5667,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 									
 									if (item2->GetVnum() == 79501)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Non puoi aggiungere bonus alla faretra."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu mai puteti adauga bonusuri."));
 										return false;
 									}
 
@@ -6486,7 +6486,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 						if (item2->GetVnum() == 55701 || item2->GetVnum() == 55702 || item2->GetVnum() == 55703 || item2->GetVnum() == 55704 || item2->GetVnum() == 55705 || item2->GetVnum() == 55706 || item2->GetVnum() == 55716)
 						{
 							if(GetNewPetSystem()->IsActivePet()){
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You need to unsummon the pet first."));
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Trebuie intai sa alungati petul."));
 								return false;
 							}
 							else{
@@ -6531,8 +6531,8 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 								else if (skill_slots == 3){
 									DBManager::instance().DirectQuery("UPDATE new_petsystem SET skill0=%d, skill0lv= %d, skill1=%d, skill1lv= %d, skill2=%d, skill2lv= %d WHERE id = %lu ", enabled_skill, default_skilllv, enabled_skill, default_skilllv, enabled_skill, default_skilllv, item2->GetID());
 								}
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You changed the bonus."));
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Slot Unlocked : %d."), skill_slots);
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ai schimbat bonusul."));
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Slot deblocat : %d."), skill_slots);
 								item->SetCount(item->GetCount() - 1);
 								break;
 							}
@@ -6794,7 +6794,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 										else{
 
 											item2->ChangeAttribute();
-											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai cambiato i bonus con successo."));
+											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ai schimbat cu succes bonusurile."));
 											{
 												char buf[21];
 												snprintf(buf, sizeof(buf), "%u", item2->GetID());
@@ -6808,7 +6808,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 										}
 									#else
 
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai cambiato i bonus con successo."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ai schimbat cu succes bonusurile."));
 										{
 											char buf[21];
 											snprintf(buf, sizeof(buf), "%u", item2->GetID());
@@ -6831,7 +6831,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 									
 									if (item2->GetVnum() == 79501)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Non puoi aggiungere bonus alla faretra."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu mai puteti adauga bonusuri."));
 										return false;
 									}
 
@@ -6925,7 +6925,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 									
 									if (item2->GetVnum() == 79501)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Non puoi aggiungere bonus alla faretra."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu mai puteti adauga bonusuri."));
 										return false;
 									}
 
@@ -7440,7 +7440,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 		int iEmptyCell = GetEmptyInventory(item->GetSize());
 		if (iEmptyCell == -1)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Cannot remove item from fast equip. Inventory is full."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti retrage itemele din FastEquip. Inventarul este full."));
 			return false;
 		}
 
@@ -8954,10 +8954,10 @@ bool CHARACTER::PickupItem(DWORD dwVID)
 				{
 					BYTE bCount = item->GetCount();
 
-					const char * GetStorageName[4] = {	LC_TEXT("Skill Book - Inventory"),
-														LC_TEXT("UppItem - Inventory"),
-														LC_TEXT("GhostStone - Inventory"),
-														LC_TEXT("General - Inventory")
+					const char * GetStorageName[4] = {	LC_TEXT("Carti - Inventar"),
+														LC_TEXT("Upgrade - Inventar"),
+														LC_TEXT("Pietre - Inventar"),
+														LC_TEXT("General - Inventar")
 					};
 
 					int GetSpecialWindowType = item->GetSpecialWindowType() - 6;
@@ -8990,7 +8990,7 @@ bool CHARACTER::PickupItem(DWORD dwVID)
 
 								char szTemp[256];
 								snprintf(szTemp, sizeof(szTemp), LC_TEXT(" x%d "), item->GetCount());
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai ricevuto: %s"), item2->GetName());	
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ai primit: %s"), item2->GetName());	
 								M2_DESTROY_ITEM(item);
 
 								return true;
@@ -9062,10 +9062,10 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai ricevuto: %s"), item->GetName());
 #ifdef __SPECIAL_STORAGE_SYSTEM__
 				else if (item->IsSpecialStorageItem())
 				{
-					const char* GetStorageName[4] = {	LC_TEXT("Skill Book - Inventory"),
-														LC_TEXT("UppItem - Inventory"),
-														LC_TEXT("GhostStone - Inventory"),
-														LC_TEXT("General - Inventory")
+					const char* GetStorageName[4] = {	LC_TEXT("Carti - Inventar"),
+														LC_TEXT("Upgrade - Inventar"),
+														LC_TEXT("Pietre - Inventar"),
+														LC_TEXT("General - Inventar")
 					};
 
 					int GetSpecialWindowType = item->GetSpecialWindowType() - 6;
@@ -9139,7 +9139,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai ricevuto: %s"), item->GetName());
 				char szHint[32+1];
 				snprintf(szHint, sizeof(szHint), "%s %u %u", item->GetName(GetLanguage()), item->GetCount(), item->GetOriginalVnum());
 				LogManager::instance().ItemLog(this, item, "GET", szHint);
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai ricevuto: %s"), item->GetName());	
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ai primit: %s"), item->GetName());	
 				if (item->GetType() == ITEM_QUEST)
 					quest::CQuestManager::instance().PickupItem (GetPlayerID(), item);
 			}
@@ -9326,7 +9326,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai ricevuto: %s"), item->GetName());
 			LogManager::instance().ItemLog(owner, item, "GET", szHint);
 
 			if (owner == this)
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai ricevuto: %s"), item->GetName());	
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ai primit: %s"), item->GetName());	
 			else
 			{
 				owner->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"Hai ricevuto: %s , %s"), GetName(), item->GetName(GetLanguage()));
@@ -10313,7 +10313,7 @@ LPITEM CHARACTER::AutoGiveItem(DWORD dwItemVnum, BYTE bCount, int iRarePct, bool
 				if (bCount == 0)
 				{
 					if (bMsg)
-						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ricevuto: %s"), item->GetName());	
+						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Primit: %s"), item->GetName());	
 					return item;
 				}
 			}
@@ -10342,7 +10342,7 @@ LPITEM CHARACTER::AutoGiveItem(DWORD dwItemVnum, BYTE bCount, int iRarePct, bool
 				if (bCount == 0)
 				{
 					if (bMsg)
-						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ricevuto: %s"), item->GetName());	
+						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Primit: %s"), item->GetName());	
 					return item;
 				}
 			}
@@ -10442,7 +10442,7 @@ LPITEM CHARACTER::AutoGiveItem(DWORD dwItemVnum, BYTE bCount, int iRarePct, bool
 	if (iEmptyCell != -1)
 	{
 		if (bMsg)
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai ricevuto: %s"), item->GetName());	
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ai primit: %s"), item->GetName());	
 		if (item->IsDragonSoul())
 			item->AddToCharacter(this, TItemPos(DRAGON_SOUL_INVENTORY, iEmptyCell));
 #ifdef __SPECIAL_STORAGE_SYSTEM__
@@ -11545,13 +11545,13 @@ void CHARACTER::ShopSearchInfo(bool bNameOnly, BYTE bItemType, BYTE bItemSubType
 
 	if (IsOpenSafebox() || GetShop() || IsCubeOpen() || IsDead() || GetExchange() || GetOfflineShop() || GetMyShop())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("make sure you don't have any open windows!"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Sa fii sigur ca nu ai ferestre deschise!"));
 		return;
 	}
 
 	if (quest::CQuestManager::instance().GetEventFlag("disable_shop_search"))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Item arama penceresi suanda devre disi."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Temporar dezactivat searchshopul."));
 		return;
 	}
 	/*
@@ -11606,7 +11606,7 @@ void CHARACTER::ShopSearchInfo(bool bNameOnly, BYTE bItemType, BYTE bItemSubType
 
 	if (dwLastShopSearchAttrSec + dwShopSearchSecCycle > dwNowSec)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You're to fast! Please wait %d s."), (dwShopSearchSecCycle, dwShopSearchSecCycle - (dwNowSec - dwLastShopSearchAttrSec)));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Esti prea rapid! Te rog asteapta %d s."), (dwShopSearchSecCycle, dwShopSearchSecCycle - (dwNowSec - dwLastShopSearchAttrSec)));
 		return;
 	}
 
@@ -11828,13 +11828,13 @@ void CHARACTER::ShopSearchBuyItem(DWORD dwShopVID, BYTE bItemPos)
 
 	if (quest::CQuestManager::instance().GetEventFlag("disable_shop_search"))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Item arama penceresi suanda devre disi."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Fereastra de cautare a articolelor este in prezent dezactivata."));
 		return;
 	}
 
 	if (IsOpenSafebox() || GetShop() || IsCubeOpen() || IsDead() || GetExchange() || GetOfflineShop() || GetMyShop())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("make sure you don't have any open windows!"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Fii sigur ca nu ai ferestre deschise!"));
 		return;
 	}
 	/*
@@ -11856,7 +11856,7 @@ void CHARACTER::ShopSearchBuyItem(DWORD dwShopVID, BYTE bItemPos)
 
 	if (GetMapIndex() != pkChrShop->GetMapIndex())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Pazar ile ayni haritada degilsin alisveris basarisiz."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu esti pe aceeasi harta cu piata. Cumparaturile au esuat."));
 		return;
 	}
 

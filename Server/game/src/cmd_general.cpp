@@ -1128,7 +1128,7 @@ ACMD(do_trash_bin)
 	
 	if(ch->GetExchange() || ch->GetMyShop() || ch->GetShopOwner() || ch->IsOpenSafebox() || ch->IsCubeOpen())
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO,LC_TEXT("<System> Cannot execute operation at this time."));
+		ch->ChatPacket(CHAT_TYPE_INFO,LC_TEXT("<System> Nu se poate efectua actiunea."));
 		return;
 	}
 		
@@ -1812,7 +1812,7 @@ ACMD(do_war)
 	
 	if (g->UnderAnyWar())
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("La tua Gilda sta partecipando ad un altra guerra."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Breasla ta participa la un alt razboi."));
 		return;
 	}
 
@@ -1877,7 +1877,7 @@ ACMD(do_war)
 
 	if (!opp_g)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Questa Gilda non esiste."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Aceasta breasla nu exista."));
 		return;
 	}
 
@@ -1920,7 +1920,7 @@ ACMD(do_war)
 			{
 				if (opp_g->UnderAnyWar())
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Gilde> Questa gilda e' gia' in guerra."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Breasla> Aceasta breasla este deja in razboi."));
 					g->RequestRefuseWar(opp_g->GetID()
 #ifdef __IMPROVED_GUILD_WAR__			
 						, 0, 0, 0, 0
@@ -1943,7 +1943,7 @@ ACMD(do_war)
 			return;
 
 		default:
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Gilde> Questa gilda sta gia' partecipando ad una guerra."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Breasla> Aceasta breasla este deja in razboi."));
 			g->RequestRefuseWar(opp_g->GetID()
 #ifdef __IMPROVED_GUILD_WAR__			
 				, 0, 0, 0, 0
@@ -1964,7 +1964,7 @@ ACMD(do_war)
 #endif
 		if (g->GetMemberCount() < GUILD_WAR_MIN_MEMBER_COUNT)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("La Gilda deve avere almeno 3 membri per partecipare a una guerra."), GUILD_WAR_MIN_MEMBER_COUNT);
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Breasla trebuie sa aiba cel putin 3 membri pentru a participa la un razboi."), GUILD_WAR_MIN_MEMBER_COUNT);
 			sys_log(0, "GuildWar.StartError.NEED_MINIMUM_MEMBER[%d]", GUILD_WAR_MIN_MEMBER_COUNT);
 		}
 		else
@@ -1980,7 +1980,7 @@ ACMD(do_war)
 		//if (opp_g->GetLadderPoint() == 0)
 		//	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<길드> 상대방 길드의 레더 점수가 모자라서 길드전을 할 수 없습니다."));
 		if (opp_g->GetMemberCount() < GUILD_WAR_MIN_MEMBER_COUNT)
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("La Gilda non ha abbastanza membri per partecipare alla guerra tra Gilde."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Breasla nu are suficienti membri pentru a participa la Razboiul Breaslei."));
 		return;
 	}
 
@@ -2005,7 +2005,7 @@ ACMD(do_war)
 		}
 #endif
 
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Il capo della gilda avversaria e' offline."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Liderul advers este offline."));
 		g->RequestRefuseWar(opp_g->GetID()
 #ifdef __IMPROVED_GUILD_WAR__			
 			, 0, 0, 0, 0
@@ -2038,7 +2038,7 @@ ACMD(do_war)
 		}
 #endif
 
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Il capo della gilda avversaria e' offline."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Liderul advers este offline."));
 		g->RequestRefuseWar(opp_g->GetID()
 #ifdef __IMPROVED_GUILD_WAR__			
 			, 0, 0, 0, 0
@@ -2114,7 +2114,7 @@ ACMD(do_nowar)
 
 	if (!opp_g)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Questa Gilda non esiste."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Aceasta breasla nu exista."));
 		return;
 	}
 
@@ -2198,7 +2198,7 @@ ACMD(do_messenger_auth)
 			{
 				LPDESC pkDesc = pkCCI->pkDesc;
 				pkDesc->SetRelay(arg2);
-				pkDesc->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%s declined the friend request."), ch->GetName());
+				pkDesc->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%s a refuzat cererea de prietenie."), ch->GetName());
 				pkDesc->SetRelay("");
 			}
 		}
@@ -3610,19 +3610,19 @@ ACMD(do_open_offline_shop)
 {
 	if (ch->IsOpenSafebox() || ch->GetShop() || ch->IsCubeOpen() || ch->IsDead() || ch->GetExchange() || ch->GetOfflineShop() || ch->GetMyShop())
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Assicurati di non avere nessuna finestra aperta."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Asigurati-va ca nu aveti alte ferestre deschise."));
 		return;
 	}
 
 	if (!COfflineShopManager::instance().MapCheck(ch->GetMapIndex(), ch->GetEmpire()))
 	{
-	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> Non puoi farlo in questa mappa."));
+	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu puteti face acest lucru, pe aceasta harta."));
 	return;
 	}
 
 	if (!COfflineShopManager::instance().ChannelCheck(g_bChannel))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> Non puoi farlo in questo channel."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu poti face asta pe acest canal."));
 		return;
 	}
 
@@ -3635,25 +3635,25 @@ ACMD(do_withdraw_offline_shop_money)
 {
 	if (ch->IsDead() || ch->GetExchange() || ch->GetMyShop() || ch->GetOfflineShop() || ch->IsCubeOpen() || ch->IsOpenSafebox() || ch->GetShop())
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Assicurati di non avere nessuna finestra aperta."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Asigurati-va ca nu aveti alte ferestre deschise."));
 		return;
 	}
 
 	if (thecore_pulse() - ch->GetMyOfflineShopTime() < PASSES_PER_SEC(1))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Attendi un attimo."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Asteapta un moment."));
 		return;
 	}
 
 	if (!COfflineShopManager::instance().MapCheck(ch->GetMapIndex(), ch->GetEmpire()))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> Non puoi farlo in questa mappa."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu poti face asta pe aceasta harta."));
 		return;
 	}
 
 	if (!COfflineShopManager::instance().ChannelCheck(g_bChannel))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> Non puoi farlo in questo channel."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu poti face asta pe acest canal."));
 		return;
 	}
 
@@ -3666,25 +3666,25 @@ ACMD(do_withdraw_offline_shop_cheque)
 {
 	if (ch->IsDead() || ch->GetExchange() || ch->GetMyShop() || ch->GetOfflineShop() || ch->IsCubeOpen() || ch->IsOpenSafebox() || ch->GetShop())
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Assicurati di non avere nessuna finestra aperta."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Asigurati-va ca nu aveti ferestre deschise."));
 		return;
 	}
 
 	if (thecore_pulse() - ch->GetMyOfflineShopTime() < PASSES_PER_SEC(1))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Attendi un attimo."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Asteapta un moment."));
 		return;
 	}
 
 	if (!COfflineShopManager::instance().MapCheck(ch->GetMapIndex(), ch->GetEmpire()))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> Non puoi farlo in questa mappa."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu poti face asta pe aceasta harta."));
 		return;
 	}
 
 	if (!COfflineShopManager::instance().ChannelCheck(g_bChannel))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> Non puoi farlo in questo channel."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu poti face asta pe acest canal."));
 		return;
 	}
 
@@ -3697,31 +3697,31 @@ ACMD(do_retrieve_offline_shop_item)
 {
 	if (ch->IsDead() || ch->GetExchange() || ch->GetMyShop() || ch->GetOfflineShop() || ch->IsCubeOpen() || ch->IsOpenSafebox() || ch->GetShop())
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Assicurati di non avere nessuna finestra aperta."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Asigurati-va ca nu aveti ferestre deschise."));
 		return;
 	}
 
 	if (thecore_pulse() - ch->GetMyOfflineShopTime() < PASSES_PER_SEC(1))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Attendi un attimo."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Asteapta un moment."));
 		return;
 	}
 
 	if (!COfflineShopManager::instance().MapCheck(ch->GetMapIndex(), ch->GetEmpire()))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> Non puoi farlo in questa mappa."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu poti face asta pe aceasta harta."));
 		return;
 	}
 
 	if (!COfflineShopManager::instance().ChannelCheck(g_bChannel))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> Non puoi farlo in questo channel."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu poti face asta pe acest canal."));
 		return;
 	}
 
 	if (ch->IsAffectFlag(AFF_SHOPOWNER))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Devi prima chiudere il tuo negozio prima di fare questo."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Trebuie sa deschideti magazinul inainte sa faceti acest lucru."));
 		return;
 	}
 
@@ -3862,7 +3862,7 @@ ACMD(do_ride)
 		}
 	}
 
-	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Devi prima evocare una cavalcatura."));
+	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Intai trebuie sa chemi calul."));
 }
 #else
 ACMD(do_ride)
@@ -4930,7 +4930,7 @@ ACMD(do_stat_val)
 
 	if (ch->IsPolymorphed())
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You cannot change your state as long as you are transformed."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu iti poti schimba starea atata timp cat esti transformat."));
 		return;
 	}
 
@@ -5458,7 +5458,7 @@ ACMD(do_daily_reward_get_reward){
 		DBManager::Instance().DirectQuery("UPDATE daily_reward_status SET reward = CASE WHEN reward = 0 THEN '1' WHEN reward = 1 THEN '2' WHEN reward = 2 THEN '3' WHEN reward = 3 THEN '4' WHEN reward = 4 THEN '5' WHEN reward = 5 THEN '6' WHEN reward = 6 THEN '0' END, total_rewards = total_rewards +1, time = (NOW() + interval 1 day) WHERE pid = %u", ch->GetPlayerID());
 	}
 	else{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Dopo la scadenza delle 24 ore, puoi ritirare un altro premio."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Abia dupa expirarea celor 24 de ore, puteti colecta un alt premiu."));
 	}
 }	
 

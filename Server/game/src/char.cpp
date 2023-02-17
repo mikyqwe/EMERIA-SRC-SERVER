@@ -1140,7 +1140,7 @@ void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, BYTE
 	if (CHEQUE_MAX <= nTotalCheque)
 	{
 		sys_err("[OVERFLOW_CHEQUE] Overflow (CHEQUE_MAX) id %u name %s", GetPlayerID(), GetName());
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You can't open a Warehouse because you carry more than 999 Cheque."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti deschide depozitul pentru ca aveti 999 Won."));
 		return;
 	}
 #endif
@@ -5533,14 +5533,14 @@ void CHARACTER::OpenMyOfflineShop(const char * c_pszSign, TShopItemTable * pTabl
 {
 	if (thecore_pulse() - GetMyOfflineShopTime() < PASSES_PER_SEC(1))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You're too fast! Slow down!"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Esti prea rapid! Mai incet!"));
 		return;
 	}
 
 #ifdef WJ_SECURITY_SYSTEM
 	if (IsActivateSecurity() == true)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Cannot open offlineshop with security key activate"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti deschide un offline shop cu cheia de securitate activa"));
 		return;
 	}
 #endif
@@ -5553,13 +5553,13 @@ void CHARACTER::OpenMyOfflineShop(const char * c_pszSign, TShopItemTable * pTabl
 
 	if (IsOpenSafebox() || GetShop() || IsCubeOpen() || IsDead() || GetExchange() || GetOfflineShop() || GetMyShop() || GetMailBox() || bItemCount <= 0 || bItemCount > OFFLINE_SHOP_HOST_ITEM_MAX_NUM)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Assicurati di non avere altre finestre aperte."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Asigurati-va ca nu aveti alte ferestre deschise."));
 		return;
 	}
 #ifdef SASH_ITEM_COPY_FIX
 	if (IsSashCombinationOpen() || IsSashAbsorptionOpen())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("ZayosSecurityFix"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("EmeriaSecurityFix"));
 		return;
 	}
 #endif
@@ -5569,25 +5569,25 @@ void CHARACTER::OpenMyOfflineShop(const char * c_pszSign, TShopItemTable * pTabl
 
 	if (!COfflineShopManager::instance().MapCheck(GetMapIndex(), GetEmpire()))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> You can't do this in that map!"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu puteti face asta in aceasta harta!"));
 		return;
 	}
 
 	if (!COfflineShopManager::instance().ChannelCheck(g_bChannel))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> You can't do this in that channel!"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu puteti face asta pe acest canal!"));
 		return;
 	}
 
 	if (COfflineShopManager::instance().HaveOfflineShopOnAccount(GetDesc()->GetAccountTable().id))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Non puoi aprire negozi multipli dallo stesso account."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti deschide mai multe magazine de pe acelasi cont."));
 		return;
 	}
 
 	if (IsAffectFlag(AFF_SHOPOWNER))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai gia' un negozio aperto."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ai deja un magazin deschis."));
 		return;
 	}
 
@@ -5640,13 +5640,13 @@ void CHARACTER::OpenMyOfflineShop(const char * c_pszSign, TShopItemTable * pTabl
 
 	if (g_bOfflineShopNeedMoney && (GetGold() < g_iOfflineShopMoney))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Non hai abbastanza Yang per aprire un negozio. (%d)"), g_iOfflineShopMoney);
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu ai suficient yang pentru a deschide magazinul. (%d)"), g_iOfflineShopMoney);
 		return;
 	}
 
 	if (g_bOfflineShopNeedLevel && (GetLevel() < g_iOfflineShopLevel))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Devi essere almeno livello: (%d)."), g_iOfflineShopLevel);
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Trebuie sa fii cel putin nivelul: (%d)."), g_iOfflineShopLevel);
 		return;
 	}
 
@@ -5696,7 +5696,7 @@ void CHARACTER::OpenMyOfflineShop(const char * c_pszSign, TShopItemTable * pTabl
 
 	if (pMsg->Get()->uiNumRows > 0)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Devi prima ritirare gli item che hai nel negozio offline!"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Mai intai trebuie sa colectati itemele pe care le aveti in magazinul offline!"));
 		return;
 	}
 	// END_OF_BUG_FIX
@@ -5773,7 +5773,7 @@ void CHARACTER::OpenMyOfflineShop(const char * c_pszSign, TShopItemTable * pTabl
 	db_clientdesc->DBPacket(HEADER_GD_OFFLINESHOP_CREATE, 0, &pStartShop, sizeof(pStartShop));
 	// Create Shop Offlne
 
-	ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Offline Shop> Il tuo negozio si chiudera' dopo %d ore."), bTime);
+	ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Magazinul tau se va inchide dupa %d ore."), bTime);
 
 	// BEGIN_COUNTER_UPDATE
 	TPacketUpdateOfflineShopsCount pCount;
@@ -8754,7 +8754,7 @@ bool CHARACTER::IsHack(bool bSendMsg, bool bCheckShopOwner, int limittime)
 	if (iPulse - GetMyOfflineShopTime() < PASSES_PER_SEC(limittime))
 	{
 		if (bSendMsg)
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Devi aspettare %d s per farlo."), limittime);
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Trebuie sa asteptati %d pentru a face asta."), limittime);
 		return true;
 	}
 #endif
@@ -10451,14 +10451,14 @@ void CHARACTER::ChangeLookWindow(bool bOpen, bool bRequest)
 {
 	if ((bOpen) && (isChangeLookOpened()))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] La finestra e' gia' aperta."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Fereastra este deja deschisa."));
 		return;
 	}
 
 	if ((!bOpen) && (!isChangeLookOpened()))
 	{
 		if (!bRequest)
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] La finestra non e' aperta."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Fereastra nu este deschisa."));
 
 		return;
 	}
@@ -10528,48 +10528,48 @@ void CHARACTER::AddClMaterial(TItemPos tPos, BYTE bPos)
 		return;
 	if (pkItem->IsEquipped())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] Non puoi proiettare un item in uso."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Nu poti face asta cu un obiect echipat."));
 		return;
 	}
 	if ((bPos == 2 && pkItem->GetVnum() != CL_SCROLL_VNUM) || (bPos != 2 && pkItem->GetVnum() == CL_SCROLL_VNUM))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] Questo oggetto non puo' essere proiettato."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
 		return;
 	}
 	if (pkItem->GetVnum() != CL_SCROLL_VNUM)
 	{
 		if ((pkItem->GetType() != ITEM_WEAPON) && (pkItem->GetType() != ITEM_ARMOR) && (pkItem->GetType() != ITEM_COSTUME))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] Questo oggetto non puo' essere proiettato."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
 			return;
 		}
 		else if ((pkItem->GetType() == ITEM_WEAPON) && ((pkItem->GetSubType() == WEAPON_ARROW) || (pkItem->GetSubType() == WEAPON_MOUNT_SPEAR)))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] Questo oggetto non puo' essere proiettato."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
 			return;
 		}
 		else if ((pkItem->GetType() == ITEM_ARMOR) && (pkItem->GetSubType() != ARMOR_BODY))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] Questo oggetto non puo' essere proiettato."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
 			return;
 		}
 
 		else if ((pkItem->GetType() == ITEM_COSTUME) && (pkItem->GetSubType() != COSTUME_BODY) && (pkItem->GetSubType() != COSTUME_HAIR) && (pkItem->GetSubType() != COSTUME_WEAPON))
 
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] Questo oggetto non puo' essere proiettato."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
 			return;
 		}
 
 
 		else if (pkItem->isLocked())
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] You can't add locked items."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Nu puteti adauga elemente blocate."));
 			return;
 		}
 		else if (pkItem->GetTransmutation() != 0)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] Non puoi usare item gia' proiettati."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Nu puteti utiliza elemente care au fost deja proiectate."));
 			return;
 		}
 	}
@@ -10645,7 +10645,7 @@ void CHARACTER::AddClMaterial(TItemPos tPos, BYTE bPos)
 
 		if (bStop)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transmutation] You cannot submit this item."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transmutare] Nu poti face asta cu acest item."));
 			return;
 		}
 	}
@@ -10702,7 +10702,7 @@ void CHARACTER::RefineClMaterials()
 		return;
 	else if (!pkItemMaterial[1])
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] Per favore inserisci l'item da proiettare."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Va rugam sa introduceti elementul de proiectat."));
 		return;
 	}
 
@@ -10714,7 +10714,7 @@ void CHARACTER::RefineClMaterials()
 	{
 		if (GetGold() < dwPrice)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Proiezione] Non hai abbastanza Yang."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Nu ai suficient Yang."));
 			return;
 		}
 	}
@@ -10756,7 +10756,7 @@ bool CHARACTER::CleanTransmutation(LPITEM pkItem, LPITEM pkTarget)
 
 	else if (pkTarget->isLocked())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You can't remove the transmute because item is locked."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu poti sterge transmutarea deoarece este blocata."));
 		return false;
 	}
 
@@ -10775,8 +10775,8 @@ void CHARACTER::WonExchange(BYTE bOption, WORD wValue)
 {
 	if (!CanWarp())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You cannot execute the exchange process during you are doing something else."));
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Close every window and/or wait, then try it again."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti schmba Won in timp ce faceti altceva."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Inchideti fiecare fereastra, asteptati, iar mai apoi incercati iarasi."));
 		return;
 	}
 
@@ -10786,16 +10786,16 @@ void CHARACTER::WonExchange(BYTE bOption, WORD wValue)
 	{
 		if (GetCheque() < wVal)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You don't have enough Won to proceed the exchange."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu ai suficient Won pentru a continua schimbul."));
 			return;
 		}
 		if (GetGold() + static_cast<long long>(wVal) * static_cast<long long>(CHEQUE_NAME_VALUE * fMul) > GOLD_MAX)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You cannot proceed the exchange because your Yang would step over the limit."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu poti continua schimbul, deoarece yang-ul tau ar depasi limita."));
 			return;
 		}
 		
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("The exchange was succesfull."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Schimbul a avut succes."));
 		PointChange(POINT_GOLD, static_cast<long long>(wVal) * static_cast<long long>(CHEQUE_NAME_VALUE * fMul), true);
 		PointChange(POINT_CHEQUE, -wVal, true);
 	}
@@ -10803,22 +10803,22 @@ void CHARACTER::WonExchange(BYTE bOption, WORD wValue)
 	{
 		if (GetGold() < static_cast<long long>(wVal) * static_cast<long long>(CHEQUE_NAME_VALUE * fMul))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You don't have enough Yang to proceed the exchange."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu aveti suficient yang pentru a continua schimbul."));
 			return;
 		}
 		if (GetCheque() + wVal > CHEQUE_MAX)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You cannot proceed the exchange because your Won would step over the limit."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti continua schimbul deoarece Won-ul tau ar depasi limita castigul."));
 			return;
 		}
 
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("The exchange was succesfull."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Schimbul a fost facut cu succes."));
 		PointChange(POINT_GOLD, -(static_cast<long long>(wVal) * static_cast<long long>(CHEQUE_NAME_VALUE * fMul)), true);
 		PointChange(POINT_CHEQUE, wVal, true);
 	}
 	else
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Oups. Something went wrong. Unknown exchange operation."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ops. Ceva n-a mers bine, operatiune de schimb necunoscuta."));
 	}
 }
 #endif

@@ -590,7 +590,7 @@ void CGuildManager::DeclareWar(DWORD guild_id1, DWORD guild_id2, BYTE bType
 		// @warme005
 		{
 			char buf[256];
-			snprintf(buf, sizeof(buf), LC_TEXT("%s declared war on %s!"), TouchGuild(guild_id1)->GetName(), TouchGuild(guild_id2)->GetName());
+			snprintf(buf, sizeof(buf), LC_TEXT("%s a declarat razboi contra %s!"), TouchGuild(guild_id1)->GetName(), TouchGuild(guild_id2)->GetName());
 			SendNotice(buf);
 		}
 	}
@@ -611,7 +611,7 @@ void CGuildManager::RefuseWar(DWORD guild_id1, DWORD guild_id2
 			g2->GetMasterCharacter()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<길드> %s 길드가 길드전을 거부하였습니다."), g1->GetName());
 
 		char buf[256];
-		snprintf(buf, sizeof(buf), LC_TEXT("The guild %s refused to fight against %s."), g1->GetName(), g2->GetName());
+		snprintf(buf, sizeof(buf), LC_TEXT("Breasla %s a refuzat sa se lupte impotriva %s."), g1->GetName(), g2->GetName());
 		SendNotice(buf);
 
 	}
@@ -669,7 +669,7 @@ void CGuildManager::WaitStartWar(DWORD guild_id1, DWORD guild_id2
 #endif
 	{
 		char buf[256];
-		snprintf(buf, sizeof(buf), LC_TEXT("The war between %s and %s will start soon!"), g1->GetName(), g2->GetName());
+		snprintf(buf, sizeof(buf), LC_TEXT("Razboiul dintre %s si %s va incepe curand!"), g1->GetName(), g2->GetName());
 		SendNotice(buf);
 	}
 }
@@ -725,7 +725,7 @@ void CGuildManager::StartWar(DWORD guild_id1, DWORD guild_id2
 #endif
 
 	char buf[256];
-	snprintf(buf, sizeof(buf), LC_TEXT("%s and guild %s are still fighting!"), g1->GetName(), g2->GetName());
+	snprintf(buf, sizeof(buf), LC_TEXT("%s si breasla %s inca se lupta!"), g1->GetName(), g2->GetName());
 	SendNotice(buf);
 
 	if (guild_id1 > guild_id2)
@@ -743,17 +743,17 @@ void SendGuildWarOverNotice(CGuild* g1, CGuild* g2, bool bDraw)
 
 		if (bDraw)
 		{
-			snprintf(buf, sizeof(buf), LC_TEXT("The war between %s and %s ended in a draw."), g1->GetName(), g2->GetName());
+			snprintf(buf, sizeof(buf), LC_TEXT("Razboiul dintre %s si %s s-a terminat egalitate."), g1->GetName(), g2->GetName());
 		}
 		else
 		{
 			if ( g1->GetWarScoreAgainstTo( g2->GetID() ) > g2->GetWarScoreAgainstTo( g1->GetID() ) )
 			{
-				snprintf(buf, sizeof(buf), LC_TEXT("The guild %s won the war against %s"), g1->GetName(), g2->GetName());
+				snprintf(buf, sizeof(buf), LC_TEXT("Breasla %s a castigat razboiul contra %s"), g1->GetName(), g2->GetName());
 			}
 			else
 			{
-				snprintf(buf, sizeof(buf), LC_TEXT("The guild %s won the war against %s"), g2->GetName(), g1->GetName());
+				snprintf(buf, sizeof(buf), LC_TEXT("Breasla %s a castigat razboiul contra %s"), g2->GetName(), g1->GetName());
 			}
 		}
 

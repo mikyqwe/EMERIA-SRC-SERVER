@@ -243,7 +243,7 @@ bool CHARACTER::Attack(LPCHARACTER pkVictim, BYTE bType)
 	if (pkVictim && pkVictim->IsPC() && pkVictim->IsAway())
 	{
 		if(IsPC())
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("This player is AFK."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest jucator este AFK."));
 		return false;
 	}
 #endif
