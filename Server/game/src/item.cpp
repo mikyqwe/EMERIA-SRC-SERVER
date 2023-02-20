@@ -2747,7 +2747,7 @@ bool CItem::IsSkillBookItem()
 		// Inserisci qui i value:
 		case 50124: case 50125: case 50127: case 50128: case 50301: case 50302: case 50303:
 		case 50304: case 50305: case 50306: case 55015: case 55016: case 55017: case 55018:
-		case 55019: case 55020: case 55021: case 55022: case 55023: case 55024: case 55025: case 55026: case 55027:
+		case 55019: case 55020: case 55021: case 55022: case 55023: case 55024: case 55025: case 55026: case 55027: case 71094: case 72310: case 31098:
 		case 55010: case 55011: case 55012: case 55013:
 			return true;
 	}
@@ -2795,10 +2795,12 @@ bool CItem::IsUpgradeItem()
 		case 30252: case 30137: case 70031: case 30167: case 30182:
 		case 30183: case 30188: case 72322: case 31036: case 39063: case 70102:
 		case 39064: case 39065: case 39066: case 39067: case 39068: case 39069:
-		case 70022: case 50121: case 39070: case 39071: case 39072: case 39073:
+		case 70022: case 30171: case 39070: case 39071: case 39072: case 39073:
 		case 39074: case 39075: case 39076: case 39077: case 39078: case 39079: case 39080:
 		case 72064: case 72065: case 72066: case 72067: case 55001: case 50513: case 100300:
-		case 100400: case 100500: case 28527: case 31009: case 31002: case 50054:
+		case 100400: case 100500: case 28527: case 31009: case 31002: case 50054: case 30265:
+		case 55003: case 30318: case 50730: case 53235: case 30316: case 31043:
+		case 30176: case 31018: case 55004: case 30322: case 31025: case 55005:
 			return true;
 	}
 
