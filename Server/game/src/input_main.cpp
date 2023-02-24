@@ -1161,6 +1161,22 @@ void CInputMain::ItemDrop2(LPCHARACTER ch, const char * data)
 		ch->DropItem(pinfo->Cell, pinfo->count);
 }
 
+#ifdef ENABLE_SELL_ITEM
+void CInputMain::ItemSell(LPCHARACTER ch, const char * data)
+{
+	TPacketCGItemSell * pinfo = (TPacketCGItemSell *) data;
+	
+	if (!ch)
+		return;
+
+	if (pinfo->gold > 0)
+		ch->DropGold(pinfo->gold);
+	else
+		ch->SellItem(pinfo->Cell);
+}
+#endif
+
+
 void CInputMain::ItemMove(LPCHARACTER ch, const char * data)
 {
 	if (!ch)
@@ -4691,7 +4707,14 @@ int CInputMain::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 			if (!ch->IsObserverMode())
 				ItemMove(ch, c_pData);
 			break;
-			
+
+#ifdef ENABLE_SELL_ITEM
+		case HEADER_CG_ITEM_SELL:
+			if (!ch->IsObserverMode())
+				ItemSell(ch, c_pData);
+			break;
+#endif
+
 #if defined(__DUNGEON_INFO_SYSTEM__)
 		case DungeonInfo::Packet::HEADER_CG_DUNGEON_INFO:
 			DungeonInfo(ch, c_pData);
@@ -4995,11 +5018,6 @@ int CInputMain::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 			{
 				TPacketXTrapCSVerify* p = reinterpret_cast<TPacketXTrapCSVerify*>((void*)c_pData);
 				CXTrapManager::instance().Verify_CSStep3(d->GetCharacter(), p->bPacketData);
-			}
-			break;
-		case HEADER_CG_SOULSTONE_USE:
-			{
-			SoulStoneUse(ch, c_pData);
 			}
 			break;
 #ifdef TARGET_INFORMATION_SYSTEM

@@ -200,6 +200,9 @@ class CInputMain : public CInputProcessor
 		void 		CubeRenewalSend(LPCHARACTER ch, const char* data);
 #endif
 		void		Refine(LPCHARACTER ch, const char* c_pData);
+#ifdef ENABLE_SELL_ITEM
+		void		ItemSell(LPCHARACTER ch, const char * data);
+#endif
 #ifdef ENABLE_CSHIELD
 		void		CShieldReceive(LPCHARACTER ch, const char* c_pData);
 #endif

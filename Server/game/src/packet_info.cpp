@@ -323,6 +323,9 @@ CPacketInfoCG::CPacketInfoCG()
 #ifdef ENABLE_NEW_FISHING_SYSTEM
 	Set(HEADER_CG_FISHING_NEW, sizeof(TPacketFishingNew), "PacketFishingNew");
 #endif
+#ifdef ENABLE_SELL_ITEM
+	Set(HEADER_CG_ITEM_SELL,	sizeof(TPacketCGItemSell),	"ItemSell");
+#endif
 }
 
 CPacketInfoCG::~CPacketInfoCG()

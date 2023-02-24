@@ -3698,7 +3698,7 @@ teleport_area:
 	}
 #endif
 
-	int pc_get_skill_list(lua_State* L)
+/* 	int pc_get_skill_list(lua_State* L)
 	{
 		lua_newtable(L);
 
@@ -3721,7 +3721,7 @@ teleport_area:
 		}
 
 		return 1;
-	}
+	} */
 
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	ALUA(pc_open_acce)
@@ -4153,7 +4153,7 @@ teleport_area:
 			{ "decored",					pc_decored},
 			{ "is_decored",					pc_is_decored},
 #endif
-			{ "get_skill_list",		pc_get_skill_list		},
+			//{ "get_skill_list",		pc_get_skill_list		},
 #if defined(__DUNGEON_INFO_SYSTEM__)
 			{ "update_dungeon_rank", pc_update_dungeon_rank },
 #endif

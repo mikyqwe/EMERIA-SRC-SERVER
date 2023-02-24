@@ -172,7 +172,7 @@ CPPFILE = BattleArena.cpp FSM.cpp MarkConvert.cpp MarkImage.cpp MarkManager.cpp 
 		  auction_manager.cpp FileMonitor_FreeBSD.cpp ClientPackageCryptInfo.cpp cipher.cpp\
 		  buff_on_attributes.cpp dragon_soul_table.cpp DragonSoul.cpp SoulRoulette.cpp ShipDefense.cpp questlua_shipdefense_mgr.cpp\
 		  group_text_parse_tree.cpp char_dragonsoul.cpp questlua_dragonsoul.cpp worldboss.cpp\
-		  shop_manager.cpp shopEx.cpp 67bonusnew.cpp questlua_67bonus.cpp questlua_petnew.cpp char_hunting.cpp\
+		  shop_manager.cpp shopEx.cpp questlua_petnew.cpp char_hunting.cpp\
 		  item_manager_read_tables.cpp shutdown_manager.cpp MailBox.cpp CsvReader.cpp vid.cpp EventFunctionHandler.cpp
 
 ifeq ($(ENABLE_NEWSTUFF_EX), 1)

@@ -1466,6 +1466,9 @@ public:
 
 		bool			RefineItem(LPITEM pkItem, LPITEM pkTarget);
 		bool			DropItem(TItemPos Cell,  BYTE bCount=0);
+#ifdef ENABLE_SELL_ITEM
+		bool			SellItem(TItemPos Cell);
+#endif
 #ifdef NEW_ADD_INVENTORY
 		bool            Envanter_update();
 #endif
