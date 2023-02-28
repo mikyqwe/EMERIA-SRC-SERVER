@@ -27,7 +27,7 @@
 
 #define IS_NO_SAVE_AFFECT(type) ((type) == AFFECT_WAR_FLAG || (type) == AFFECT_REVIVE_INVISIBLE || ((type) >= AFFECT_PREMIUM_START && (type) <= AFFECT_PREMIUM_END))
 #ifdef OFFLINE_SHOP
-#define IS_NO_CLEAR_ON_DEATH_AFFECT(type) ((type) == AFFECT_BLOCK_CHAT || (type) == AFFECT_SHOPOWNER || ((type) >= 500 && (type) < 600) || type == 620)
+#define IS_NO_CLEAR_ON_DEATH_AFFECT(type) ((type) == AFFECT_BLOCK_CHAT || (type) == AFFECT_SHOPOWNER || ((type) >= 500 && (type) < 615) || type == 620 || type == 200 || type == 201)
 #else
 #define IS_NO_CLEAR_ON_DEATH_AFFECT(type) ((type) == AFFECT_BLOCK_CHAT || ((type) >= 500 && (type) < 662))
 #endif

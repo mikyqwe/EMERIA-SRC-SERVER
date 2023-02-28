@@ -5607,6 +5607,215 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 								break;
 #endif
 
+#ifdef BYKATIL199_ITEM_SLOT_EFFECT
+							case NEW_MOVE_SPEED_POTION:
+							case NEW_ATTACK_SPEED_POTION:
+								{
+									EAffectTypes type = AFFECT_NONE;
+
+									if (item->GetVnum() == NEW_MOVE_SPEED_POTION)
+										type = AFFECT_MOV_SPEED;
+
+									if (item->GetVnum() == NEW_ATTACK_SPEED_POTION)
+										type = AFFECT_ATT_SPEED;
+
+									if (AFFECT_NONE == type)
+										break;
+
+									CAffect * pAffect = FindAffect(type);
+
+									if (NULL == pAffect)
+									{
+										EPointTypes bonus = POINT_NONE;
+										EAffectBits flag = AFF_NONE;
+
+										if (item->GetVnum() == NEW_MOVE_SPEED_POTION)
+										{
+											bonus = POINT_MOV_SPEED;
+											flag = AFF_MOV_SPEED_POTION;
+										}
+
+										if (item->GetVnum() == NEW_ATTACK_SPEED_POTION)
+										{
+											bonus = POINT_ATT_SPEED;
+											flag = AFF_ATT_SPEED_POTION;
+										}
+
+										AddAffect(type, bonus, item->GetValue(2), flag, INFINITE_AFFECT_DURATION, 0, true);
+
+										item->Lock(true);
+										item->SetSocket(0, true);
+									}
+									else
+									{
+										RemoveAffect(pAffect);
+										item->Lock(false);
+										item->SetSocket(0, false);
+									}
+								}
+								break;
+							case NEW_KRITIK_POTION:
+							case NEW_DELICI_POTION:
+							case NEW_DRAGON_1_POTION:
+							case NEW_DRAGON_2_POTION:
+							case NEW_DRAGON_3_POTION:
+							case NEW_DRAGON_4_POTION:
+								{
+									EAffectTypes type = AFFECT_NONE;
+
+									if (item->GetVnum() == NEW_KRITIK_POTION)
+										type = AFFECT_NEW_AFFECT_POTION_1;
+
+									if (item->GetVnum() == NEW_DELICI_POTION)
+										type = AFFECT_NEW_AFFECT_POTION_2;
+
+									if (item->GetVnum() == NEW_DRAGON_1_POTION)
+										type = AFFECT_NEW_AFFECT_POTION_3;
+
+									if (item->GetVnum() == NEW_DRAGON_2_POTION)
+										type = AFFECT_NEW_AFFECT_POTION_4;
+
+									if (item->GetVnum() == NEW_DRAGON_3_POTION)
+										type = AFFECT_NEW_AFFECT_POTION_5;
+
+									if (item->GetVnum() == NEW_DRAGON_4_POTION)
+										type = AFFECT_NEW_AFFECT_POTION_6;
+
+									if (AFFECT_NONE == type)
+										break;
+
+									CAffect * pAffect = FindAffect(type);
+
+									if (NULL == pAffect)
+									{
+										EPointTypes bonus = POINT_NONE;
+										EAffectBits flag = AFF_NONE;
+
+										if (item->GetVnum() == NEW_KRITIK_POTION)
+										{
+											bonus = POINT_CRITICAL_PCT;
+										}
+
+										if (item->GetVnum() == NEW_DELICI_POTION)
+										{
+											bonus = POINT_PENETRATE_PCT;
+										}
+
+										if (item->GetVnum() == NEW_DRAGON_1_POTION)
+										{
+											bonus = POINT_STEAL_HP;
+										}
+
+										if (item->GetVnum() == NEW_DRAGON_2_POTION)
+										{
+											bonus = POINT_ATT_BONUS;
+										}
+
+										if (item->GetVnum() == NEW_DRAGON_3_POTION)
+										{
+											bonus = POINT_STEAL_SP;
+										}
+
+										if (item->GetVnum() == NEW_DRAGON_4_POTION)
+										{
+											bonus = POINT_DEF_BONUS;
+										}
+
+										AddAffect(type, bonus, item->GetValue(2), flag, INFINITE_AFFECT_DURATION, 0, true);
+
+										item->Lock(true);
+										item->SetSocket(0, true);
+									}
+									else
+									{
+										RemoveAffect(pAffect);
+										item->Lock(false);
+										item->SetSocket(0, false);
+									}
+								}
+								break;
+							case NEW_SEBNEM_PEMBE:
+							case NEW_SEBNEM_KIRMIZI:
+							case NEW_SEBNEM_MAVI:
+							case NEW_SEBNEM_BEYAZ:
+							case NEW_SEBNEM_YESIL:
+							case NEW_SEBNEM_SARI:
+								{
+									EAffectTypes type = AFFECT_NONE;
+
+									if (item->GetVnum() == NEW_SEBNEM_PEMBE)
+										type = AFFECT_NEW_SEBNEM_POTION_1;
+
+									if (item->GetVnum() == NEW_SEBNEM_KIRMIZI)
+										type = AFFECT_NEW_SEBNEM_POTION_2;
+
+									if (item->GetVnum() == NEW_SEBNEM_MAVI)
+										type = AFFECT_NEW_SEBNEM_POTION_3;
+
+									if (item->GetVnum() == NEW_SEBNEM_BEYAZ)
+										type = AFFECT_NEW_SEBNEM_POTION_4;
+
+									if (item->GetVnum() == NEW_SEBNEM_YESIL)
+										type = AFFECT_NEW_SEBNEM_POTION_5;
+
+									if (item->GetVnum() == NEW_SEBNEM_SARI)
+										type = AFFECT_NEW_SEBNEM_POTION_6;
+
+									if (AFFECT_NONE == type)
+										break;
+
+									CAffect * pAffect = FindAffect(type);
+
+									if (NULL == pAffect)
+									{
+										EPointTypes bonus = POINT_NONE;
+										EAffectBits flag = AFF_NONE;
+
+										if (item->GetVnum() == NEW_SEBNEM_PEMBE)
+										{
+											bonus = POINT_PENETRATE_PCT;
+										}
+
+										if (item->GetVnum() == NEW_SEBNEM_KIRMIZI)
+										{
+											bonus = POINT_CRITICAL_PCT;
+										}
+
+										if (item->GetVnum() == NEW_SEBNEM_MAVI)
+										{
+											bonus = POINT_ATT_GRADE_BONUS;
+										}
+
+										if (item->GetVnum() == NEW_SEBNEM_BEYAZ)
+										{
+											bonus = POINT_DEF_GRADE_BONUS;
+										}
+
+										if (item->GetVnum() == NEW_SEBNEM_YESIL)
+										{
+											bonus = POINT_RESIST_MAGIC;
+										}
+
+										if (item->GetVnum() == NEW_SEBNEM_SARI)
+										{
+											bonus = POINT_ATT_SPEED;
+										}
+
+										AddAffect(type, bonus, item->GetValue(2), flag, INFINITE_AFFECT_DURATION, 0, true);
+
+										item->Lock(true);
+										item->SetSocket(0, true);
+									}
+									else
+									{
+										RemoveAffect(pAffect);
+										item->Lock(false);
+										item->SetSocket(0, false);
+									}
+								}
+								break;
+#endif
+
 								//군주의 증표
 							case 70021:
 								{
