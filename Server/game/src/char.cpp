@@ -2388,10 +2388,10 @@ void CHARACTER::SetRace(BYTE race)
 	m_points.job = race;
 }
 
-/* void CHARACTER::RestoreTalismanBonus()
+void CHARACTER::RestoreTalismanBonus()
 {
 	BYTE equipped = 0;
-	int slot_table_num[] = { 9650, 9880, 10110, 10340, 10570, 10800 };
+	int slot_table_num[] = { 9620, 9850, 10080, 10310, 10540, 10770 };
 	for (int i = WEAR_TALISMAN; i <= WEAR_TALISMAN_6; i++) {
 		LPITEM item = GetWear(i);
 		if (item) {
@@ -2401,10 +2401,10 @@ void CHARACTER::SetRace(BYTE race)
 		}
 	}
 
-	ApplyPoint(APPLY_MAX_HP, equipped == 6 ? 10000 : 0); //Bonus 1
+	ApplyPoint(APPLY_ATTBONUS_MONSTER, equipped == 6 ? 10 : 0); //Bonus 1
 	// ApplyPoint(APPLY_MAX_HP, equipped == 6 ? 10000 : 0); //Bonus 2
 	// ApplyPoint(APPLY_MAX_HP, equipped == 6 ? 10000 : 0); //Bonus 3
-} */
+}
 
 BYTE CHARACTER::GetJob() const
 {
@@ -3499,7 +3499,7 @@ void CHARACTER::ComputePoints()
 
 	ComputeSkillPoints();
 
-	//RestoreTalismanBonus();
+	RestoreTalismanBonus();
 
 	RefreshAffect();
 	// @fixme118 part2 (before petsystem stuff)
@@ -8171,13 +8171,13 @@ void CHARACTER::SetQuestFlag(const std::string & flag, int value)
 
 void CHARACTER::DetermineDropMetinStone()
 {
-#ifdef ENABLE_NEWSTUFF
-	if (g_NoDropMetinStone)
-	{
-		m_dwDropMetinStone = 0;
-		return;
-	}
-#endif
+// #ifdef ENABLE_NEWSTUFF
+	// if (g_NoDropMetinStone)
+	// {
+		// m_dwDropMetinStone = 0;
+		// return;
+	// }
+// #endif
 
 	static const DWORD c_adwMetin[] =
 	{

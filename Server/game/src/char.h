@@ -880,7 +880,7 @@ public:
 		BYTE			GetJob() const;
 		BYTE			GetCharType() const;
 
-		//void RestoreTalismanBonus();
+		void RestoreTalismanBonus();
 
 		bool			IsPC() const		{ return GetDesc() ? true : false; }
 		bool			IsNPC()	const		{ return m_bCharType != CHAR_TYPE_PC; }

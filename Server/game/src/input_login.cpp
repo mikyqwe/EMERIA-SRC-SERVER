@@ -1086,7 +1086,7 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 #ifdef ENABLE_HUNTING_SYSTEM
 	ch->CheckHunting();
 #endif
-	//ch->RestoreTalismanBonus();
+	ch->RestoreTalismanBonus();
 #ifdef ENABLE_ENTITY_PRELOADING
 	SECTREE_MANAGER::Instance().SendPreloadEntitiesPacket(ch);
 #endif	

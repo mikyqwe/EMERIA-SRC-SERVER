@@ -5713,7 +5713,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 
 										if (item->GetVnum() == NEW_DRAGON_3_POTION)
 										{
-											bonus = POINT_STEAL_SP;
+											bonus = POINT_ATTBONUS_MONSTER;
 										}
 
 										if (item->GetVnum() == NEW_DRAGON_4_POTION)
