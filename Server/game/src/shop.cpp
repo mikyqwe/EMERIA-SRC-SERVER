@@ -70,7 +70,7 @@ bool CShop::Create(DWORD dwVnum, DWORD dwNPCVnum, TShopItemTable * pTable)
 	m_dwVnum = dwVnum;
 	m_dwNPCVnum = dwNPCVnum;
 
-	BYTE bItemCount;
+	short bItemCount;
 
 	for (bItemCount = 0; bItemCount < SHOP_HOST_ITEM_MAX_NUM; ++bItemCount)
 		if (0 == (pTable + bItemCount)->vnum)
@@ -80,7 +80,7 @@ bool CShop::Create(DWORD dwVnum, DWORD dwNPCVnum, TShopItemTable * pTable)
 	return true;
 }
 
-void CShop::SetShopItems(TShopItemTable * pTable, BYTE bItemCount)
+void CShop::SetShopItems(TShopItemTable * pTable, short bItemCount)
 {
 	if (bItemCount > SHOP_HOST_ITEM_MAX_NUM)
 		return;

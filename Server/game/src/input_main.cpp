@@ -1598,7 +1598,7 @@ int CInputMain::Shop(LPCHARACTER ch, const char * data, size_t uiBytes)
 					return -1;
 
 				const BYTE wPos = *reinterpret_cast<const BYTE*>(c_pData);
-				const BYTE bCount = *(c_pData + sizeof(BYTE));
+				const short bCount = *(c_pData + sizeof(BYTE));
 				const BYTE bType = *(c_pData + sizeof(BYTE) + sizeof(BYTE));
 
 				sys_log(0, "INPUT: %s SHOP: SELL2", ch->GetName());

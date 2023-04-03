@@ -16,7 +16,7 @@ class CSafebox
 		LPITEM		Remove(DWORD dwPos);
 		void		ChangeSize(int iSize);
 
-		bool		MoveItem(BYTE bCell, BYTE bDestCell, BYTE count);
+		bool		MoveItem(BYTE bCell, BYTE bDestCell, short count);
 		LPITEM		GetItem(BYTE bCell);
 
 		void		Save();

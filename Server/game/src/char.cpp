@@ -751,7 +751,46 @@ void CHARACTER::Initialize()
 #ifdef ENABLE_DECORUM
 	m_pDecorumArena = NULL;
 #endif
+
+#ifdef ENABLE_DUNGEON_FUNC
+	m_iMonsterHpBlock = 0;
+#endif
 }
+
+#ifdef ENABLE_DUNGEON_FUNC
+void CHARACTER::BlockMonsterHP(BYTE hpPercentage)
+{
+	int monsterMaxHP = GetMaxHP();
+	int monsterCurentHP = GetHP();
+
+	int monsterHpByPercent = (monsterMaxHP) / 100 * hpPercentage;
+	if (monsterHpByPercent > monsterCurentHP)
+	{
+		sys_err("BlockMonsterHP: cannot set higher block monster hp then monster's hp");
+		return;
+	}
+
+	m_iMonsterHpBlock = monsterHpByPercent;
+}
+
+int CHARACTER::CanDamageMonster(int damage)
+{
+	int monsterCurentHP = GetHP();
+	
+	if (monsterCurentHP <= m_iMonsterHpBlock)
+		return 0;
+
+	int possibleMaxDmg = monsterCurentHP - m_iMonsterHpBlock;
+	if (possibleMaxDmg < 1)
+		return 0;
+	
+	if ((monsterCurentHP - possibleMaxDmg) < m_iMonsterHpBlock)
+		return 0;
+	
+	damage = MIN(damage, possibleMaxDmg);
+	return damage;
+}
+#endif
 
 void CHARACTER::Create(const char * c_pszName, DWORD vid, bool isPC)
 {
@@ -1082,7 +1121,7 @@ const char * CHARACTER::GetName() const
 }
 #endif
 
-void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, BYTE bItemCount)
+void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, short bItemCount)
 {
 	if (!CanHandleItem()) // @fixme149
 	{
@@ -1168,7 +1207,7 @@ void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, BYTE
 	// END_OF_MYSHOP_PRICE_LIST
 
 	std::set<TItemPos> cont;
-	for (BYTE i = 0; i < bItemCount; ++i)
+	for (short i = 0; i < bItemCount; ++i)
 	{
 		if (cont.find((pTable + i)->pos) != cont.end())
 		{
@@ -3547,6 +3586,13 @@ EVENTFUNC(recovery_event)
 
 	if (!ch->IsPC())
 	{
+#ifdef ENABLE_DUNGEON_FUNC
+		if (ch->IsMonsterBlocked())
+		{
+			ch->m_pkRecoveryEvent = NULL;
+			return 0;
+		}
+#endif
 		//
 		// 몬스터 회복
 		//

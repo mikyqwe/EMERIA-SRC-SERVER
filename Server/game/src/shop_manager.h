@@ -27,12 +27,12 @@ public:
 
 	void	Buy(LPCHARACTER ch, BYTE pos);
 #ifdef __SPECIAL_STORAGE_SYSTEM__
-	void	Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount = 0, BYTE bType = 0);
+	void	Sell(LPCHARACTER ch, BYTE bCell, short bCount = 0, BYTE bType = 0);
 #else
 	void	Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount = 0);
 #endif
 
-	LPSHOP	CreatePCShop(LPCHARACTER ch, TShopItemTable * pTable, BYTE bItemCount);
+	LPSHOP	CreatePCShop(LPCHARACTER ch, TShopItemTable * pTable, short bItemCount);
 	LPSHOP	FindPCShop(DWORD dwVID);
 	void	DestroyPCShop(LPCHARACTER ch);
 private:

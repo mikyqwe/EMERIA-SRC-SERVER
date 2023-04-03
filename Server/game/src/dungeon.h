@@ -83,8 +83,16 @@ class CDungeon
 	void	PurgeUnique(const std::string& key);
 	bool	IsUniqueDead(const std::string& key);
 	float	GetUniqueHpPerc(const std::string& key);
+#ifdef ENABLE_DUNGEON_FUNC
+	int		GetUniqueHp(const std::string& key);
+#endif
 	DWORD	GetUniqueVid(const std::string& key);
-
+	
+#ifdef ENABLE_DUNGEON_FUNC
+	void	BlockUniqueHP(const std::string& key, BYTE uniqTargetHP);
+	void	UnblockUniqueHP(const std::string& key);
+#endif
+	
 	void	DeadCharacter(LPCHARACTER ch);
 
 	void	UniqueSetMaxHP(const std::string& key, int iMaxHP);

@@ -1929,7 +1929,25 @@ bool CHARACTER::Damage(LPCHARACTER pAttacker, int dam, EDamageType type) // retu
 		}
 	}
 #endif
+	
+#ifdef ENABLE_DUNGEON_FUNC
+	if (pAttacker && pAttacker->IsPC())
+	{
+		if (this->IsMonsterBlocked())
+		{
+			int damageToMonster = this->CanDamageMonster(dam);
+			dam = damageToMonster;
+			
+			if (dam < 1)
+			{
+				SendDamagePacket(pAttacker, 0, DAMAGE_BLOCK);
+				return false;
+			}
+		}
+	}
+#endif
 
+	
 	if (DAMAGE_TYPE_MAGIC == type)
 	{
 		dam = (int)((float)dam * (100 + (pAttacker->GetPoint(POINT_MAGIC_ATT_BONUS_PER) + pAttacker->GetPoint(POINT_MELEE_MAGIC_ATT_BONUS_PER))) / 100.f + 0.5f);
@@ -2593,6 +2611,13 @@ bool CHARACTER::Damage(LPCHARACTER pAttacker, int dam, EDamageType type) // retu
 		if (GetHPPct() < GetMobTable().bStoneSkinPoint)
 			dam /= 2;
 	}
+	
+#ifdef ENABLE_DUNGEON_FUNC
+	if ((type == DAMAGE_TYPE_POISON || type == DAMAGE_TYPE_FIRE) && GetHP() <= GetMonsterHPBlock())
+	{
+		return true;
+	}
+#endif
 
 #if defined(__SHIP_DEFENSE__)
 	CShipDefenseManager& rkShipDefenseMgr = CShipDefenseManager::Instance();

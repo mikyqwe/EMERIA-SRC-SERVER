@@ -172,7 +172,7 @@ LPITEM CSafebox::GetItem(BYTE bCell)
 	return m_pkItems[bCell];
 }
 
-bool CSafebox::MoveItem(BYTE bCell, BYTE bDestCell, BYTE count)
+bool CSafebox::MoveItem(BYTE bCell, BYTE bDestCell, short count)
 {
 	LPITEM item;
 
@@ -204,7 +204,7 @@ bool CSafebox::MoveItem(BYTE bCell, BYTE bDestCell, BYTE count)
 			if (count == 0)
 				count = item->GetCount();
 
-			count = MIN(g_bItemCountLimit - item2->GetCount(), count);
+			count = MIN(ITEM_MAX_COUNT - item2->GetCount(), count);
 
 			if (item->GetCount() >= count)
 				Remove(bCell);

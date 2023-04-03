@@ -1465,7 +1465,7 @@ public:
 		// END_OF_ADD_REFINE_BUILDING
 
 		bool			RefineItem(LPITEM pkItem, LPITEM pkTarget);
-		bool			DropItem(TItemPos Cell,  BYTE bCount=0);
+		bool			DropItem(TItemPos Cell,  short bCount=0);
 #ifdef ENABLE_SELL_ITEM
 		bool			SellItem(TItemPos Cell);
 #endif
@@ -1495,7 +1495,7 @@ public:
 		bool			GiveItemFromSpecialItemGroup(DWORD dwGroupNum, std::vector <DWORD> &dwItemVnums,
 							std::vector <DWORD> &dwItemCounts, std::vector <LPITEM> &item_gets, int &count);
 
-		bool			MoveItem(TItemPos pos, TItemPos change_pos, BYTE num);
+		bool			MoveItem(TItemPos pos, TItemPos change_pos, short num);
 		bool			PickupItem(DWORD vid);
 		bool			EquipItem(LPITEM item, int iCandidateCell = -1);
 		bool			UnequipItem(LPITEM item);
@@ -1507,7 +1507,7 @@ public:
 		bool			CanUnequipNow(const LPITEM item, const TItemPos& srcCell = NPOS, const TItemPos& destCell = NPOS);
 
 		bool			SwapItem(BYTE bCell, BYTE bDestCell);
-		LPITEM			AutoGiveItem(DWORD dwItemVnum, BYTE bCount=1, int iRarePct = -1, bool bMsg = true);
+		LPITEM			AutoGiveItem(DWORD dwItemVnum, short bCount=1, int iRarePct = -1, bool bMsg = true);
 		void			AutoGiveItem(LPITEM item, bool longOwnerShip = false);
 
 		int				GetEmptyInventory(BYTE size) const;
@@ -1583,7 +1583,7 @@ public:
 
 		void			SetShopOwner(LPCHARACTER ch) { m_pkChrShopOwner = ch; }
 		LPCHARACTER		GetShopOwner() const { return m_pkChrShopOwner;}
-		void			OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, BYTE bItemCount);
+		void			OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, short bItemCount);
 		
 		LPSHOP			GetMyShop() const { return m_pkMyShop; }
 		void			CloseMyShop();
@@ -2982,6 +2982,17 @@ public:
 	private:
 		int 	time_change_equip;
 
+#endif
+
+#ifdef ENABLE_DUNGEON_FUNC
+	protected:
+		int	m_iMonsterHpBlock;
+	public:
+		void	BlockMonsterHP(BYTE hpPercentage);
+		void	UnblockMonsterHP() { m_iMonsterHpBlock = 0; }
+		bool	IsMonsterBlocked() { return m_iMonsterHpBlock > 0 ? true : false; }
+		int		GetMonsterHPBlock() const { return m_iMonsterHpBlock; }
+		int		CanDamageMonster(int damage);
 #endif
 
 };

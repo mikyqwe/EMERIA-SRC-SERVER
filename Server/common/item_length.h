@@ -19,7 +19,7 @@ enum EItemMisc
 #else
 	ITEM_SOCKET_MAX_NUM			= 3,
 #endif
-	ITEM_MAX_COUNT				= 200,
+	ITEM_MAX_COUNT				= 2000,
 
 	ITEM_ATTRIBUTE_NORM_NUM		= 5,
 	ITEM_ATTRIBUTE_RARE_NUM		= 2,

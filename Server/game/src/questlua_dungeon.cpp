@@ -602,6 +602,29 @@ namespace quest
 		lua_pushnumber(L,0);
 		return 1;
 	}
+	
+#ifdef ENABLE_DUNGEON_FUNC
+	ALUA(dungeon_unique_get_hp)
+	{
+		if (!lua_isstring(L,1))
+		{
+			lua_pushnumber(L,0);
+			return 1;
+		}
+
+		CQuestManager& q = CQuestManager::instance();
+		LPDUNGEON pDungeon = q.GetCurrentDungeon();
+
+		if (pDungeon)
+		{
+			lua_pushnumber(L, pDungeon->GetUniqueHp(lua_tostring(L,1)));
+			return 1;
+		}
+
+		lua_pushnumber(L,0);
+		return 1;
+	}
+#endif
 
 	ALUA(dungeon_is_unique_dead)
 	{
@@ -1941,6 +1964,50 @@ namespace quest
 	}
 #endif
 
+#ifdef ENABLE_DUNGEON_FUNC
+	ALUA(dungeon_block_unique_hp)
+	{
+		if (!lua_isstring(L, 1) || !lua_isnumber(L, 2))
+		{
+			lua_pushnumber(L, 0);
+			return 1;
+		}
+
+		CQuestManager& q = CQuestManager::instance();
+		LPDUNGEON pDungeon = q.GetCurrentDungeon();
+
+		if (pDungeon)
+		{
+			pDungeon->BlockUniqueHP(lua_tostring(L, 1), lua_tonumber(L, 2));
+			return 1;
+		}
+
+		lua_pushnumber(L, 0);
+		return 1;
+	}
+
+	ALUA(dungeon_unblock_unique_hp)
+	{
+		if (!lua_isstring(L, 1))
+		{
+			lua_pushnumber(L, 0);
+			return 1;
+		}
+
+		CQuestManager& q = CQuestManager::instance();
+		LPDUNGEON pDungeon = q.GetCurrentDungeon();
+
+		if (pDungeon)
+		{
+			pDungeon->UnblockUniqueHP(lua_tostring(L, 1));
+			return 1;
+		}
+
+		lua_pushnumber(L, 0);
+		return 1;
+	}
+#endif
+
 	void RegisterDungeonFunctionTable()
 	{
 		luaL_reg dungeon_functions[] =
@@ -1971,6 +2038,9 @@ namespace quest
 			{ "kill_unique",		dungeon_kill_unique	},
 			{ "is_unique_dead",		dungeon_is_unique_dead	},
 			{ "unique_get_hp_perc",		dungeon_unique_get_hp_perc},
+#ifdef ENABLE_DUNGEON_FUNC
+			{ "unique_get_hp",		dungeon_unique_get_hp},
+#endif
 			{ "unique_set_def_grade",	dungeon_unique_set_def_grade},
 			{ "unique_set_hp",		dungeon_unique_set_hp	},
 			{ "unique_set_maxhp",		dungeon_unique_set_maxhp},
@@ -2027,13 +2097,18 @@ namespace quest
 #if defined(__DUNGEON_INFO_SYSTEM__)
 			{ "update_ranking", dungeon_update_ranking },
 #endif
-		//{ "new_kill_all",		dungeon_new_kill_all	},
-		{ "command", dungeon_command},
-		{ "global_warp_all_to_base", dungeon_global_warp_all_to_base},
-		{ "dungeon_remove_all",			special_dungeon_remove_all	},
-		{ "mission_notice", dungeon_mission_notice},
+			//{ "new_kill_all",		dungeon_new_kill_all	},
+			{ "command", dungeon_command},
+			{ "global_warp_all_to_base", dungeon_global_warp_all_to_base},
+			{ "dungeon_remove_all",			special_dungeon_remove_all	},
+			{ "mission_notice", dungeon_mission_notice},
 #ifdef ENABLE_DEFENSAWE_SHIP
 			{ "spawn_mob_new",		dungeon_spawn_mob_new	},
+#endif
+
+#ifdef ENABLE_DUNGEON_FUNC
+			{ "block_unique_hp",			dungeon_block_unique_hp		},
+			{ "unblock_unique_hp",			dungeon_unblock_unique_hp		},
 #endif
 			{ NULL,				NULL			}
 		};

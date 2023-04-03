@@ -420,7 +420,7 @@ typedef struct SSpecialAffects
 typedef struct SShopItemTable
 {
 	DWORD		vnum;
-	BYTE		count;
+	short		count;
 #ifdef ENABLE_MULTISHOP
 	DWORD		wPriceVnum;
 	DWORD		wPrice;
@@ -809,7 +809,7 @@ typedef struct SShopTable
 	DWORD		dwVnum;
 	DWORD		dwNPCVnum;
 
-	BYTE		byItemCount;
+	short		byItemCount;
 	TShopItemTable	items[SHOP_HOST_ITEM_MAX_NUM];
 } TShopTable;
 
@@ -1282,7 +1282,7 @@ typedef struct SRefineTable
 	//DWORD src_vnum;
 	//DWORD result_vnum;
 	DWORD id;
-	BYTE material_count;
+	short material_count;
 	int cost; // �ҿ� ���
 	int prob; // Ȯ��
 	TRefineMaterial materials[REFINE_MATERIAL_MAX_NUM];

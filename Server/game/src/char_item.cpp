@@ -46,6 +46,7 @@
 #include "pvp.h"
 #endif
 #include "../../common/VnumHelper.h"
+#include "../../common/item_length.h"
 #include "DragonSoul.h"
 #include "buff_on_attributes.h"
 #include "belt_inventory_helper.h"
@@ -8201,7 +8202,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 		return UseItemEx(item, DestCell);
 }
 
-bool CHARACTER::DropItem(TItemPos Cell, BYTE bCount)
+bool CHARACTER::DropItem(TItemPos Cell, short bCount)
 {
 	LPITEM item = NULL;
 
@@ -8611,7 +8612,7 @@ bool CHARACTER::IsValidItemChangeEquip(int cell, LPITEM item)
 
 #endif
 
-bool CHARACTER::MoveItem(TItemPos Cell, TItemPos DestCell, BYTE count)
+bool CHARACTER::MoveItem(TItemPos Cell, TItemPos DestCell, short count)
 {
 #ifdef __SPECIAL_STORAGE_SYSTEM__
 	if (DestCell.window_type == INVENTORY && (Cell.window_type >= SKILLBOOK_INVENTORY && Cell.window_type <= GENERAL_INVENTORY))
@@ -8846,7 +8847,7 @@ bool CHARACTER::MoveItem(TItemPos Cell, TItemPos DestCell, BYTE count)
 			sys_log(0, "%s: ITEM_STACK %s (window: %d, cell : %d) -> (window:%d, cell %d) count %d", GetName(), item->GetName(GetLanguage()), Cell.window_type, Cell.cell,
 				DestCell.window_type, DestCell.cell, count);
 
-			count = MIN(g_bItemCountLimit - item2->GetCount(), count);
+			count = MIN(ITEM_MAX_COUNT - item2->GetCount(), count);
 
 			item->SetCount(item->GetCount() - count);
 			item2->SetCount(item2->GetCount() + count);
@@ -9228,7 +9229,7 @@ bool CHARACTER::PickupItem(DWORD dwVID)
 #ifdef __SPECIAL_STORAGE_SYSTEM__
 				if (item->IsSpecialStorageItem() && item->IsStackable() && !IS_SET(item->GetAntiFlag(), ITEM_ANTIFLAG_STACK))
 				{
-					BYTE bCount = item->GetCount();
+					short bCount = item->GetCount();
 
 					const char * GetStorageName[4] = {	LC_TEXT("Carti - Inventar"),
 														LC_TEXT("Upgrade - Inventar"),
@@ -9281,7 +9282,7 @@ bool CHARACTER::PickupItem(DWORD dwVID)
 				if (item->IsStackable() && !IS_SET(item->GetAntiFlag(), ITEM_ANTIFLAG_STACK))
 #endif
 				{
-					BYTE bCount = item->GetCount();
+					short bCount = item->GetCount();
 
 					for (int i = 0; i < INVENTORY_MAX_NUM; ++i)
 					{
@@ -9440,7 +9441,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai ricevuto: %s"), item->GetName());
 #ifdef __SPECIAL_STORAGE_SYSTEM__
 			if (item->IsSpecialStorageItem() && owner && item->IsStackable() && !IS_SET(item->GetAntiFlag(), ITEM_ANTIFLAG_STACK))
 			{
-				BYTE bCount = item->GetCount();
+				short bCount = item->GetCount();
 
 				for (int i = 0; i < INVENTORY_MAX_NUM; ++i)
 				{
@@ -9492,7 +9493,7 @@ ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Hai ricevuto: %s"), item->GetName());
 			if (owner && item->IsStackable() && !IS_SET(item->GetAntiFlag(), ITEM_ANTIFLAG_STACK))
 #endif
 			{
-				BYTE bCount = item->GetCount();
+				short bCount = item->GetCount();
 
 				for (int i = 0; i < INVENTORY_MAX_NUM; ++i)
 				{
@@ -10530,7 +10531,7 @@ void CHARACTER::AutoGiveItem(LPITEM item, bool longOwnerShip)
 	}
 }
 
-LPITEM CHARACTER::AutoGiveItem(DWORD dwItemVnum, BYTE bCount, int iRarePct, bool bMsg)
+LPITEM CHARACTER::AutoGiveItem(DWORD dwItemVnum, short bCount, int iRarePct, bool bMsg)
 {
 	TItemTable * p = ITEM_MANAGER::instance().GetTable(dwItemVnum);
 

@@ -2834,7 +2834,17 @@ struct FuncWeaken
 			return;
 
 		if (pkChr->IsNPC())
-			pkChr->PointChange(POINT_HP, (10 - pkChr->GetHP()));
+		{
+			int weakenDamage = pkChr->GetHP() - 10;
+
+#ifdef ENABLE_DUNGEON_FUNC
+			if (pkChr->IsMonsterBlocked())
+			{
+				weakenDamage = pkChr->CanDamageMonster(weakenDamage);
+			}
+#endif
+			pkChr->PointChange(POINT_HP, -weakenDamage);
+		}
 	}
 };
 

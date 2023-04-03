@@ -281,7 +281,7 @@ DWORD CItem::GetCount()
 	if (GetType() == ITEM_ELK) return MIN(m_dwCount, INT_MAX);
 	else
 	{
-		return MIN(m_dwCount, g_bItemCountLimit);
+		return MIN(m_dwCount, ITEM_MAX_COUNT);
 	}
 }
 

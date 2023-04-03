@@ -25,7 +25,7 @@ class CShop
 #ifdef ENABLE_CHEQUE_SYSTEM
 			int	cheque_price;
 #endif			
-			BYTE	count;		// 아이템 개수
+			short	count;		// 아이템 개수
 
 			LPITEM	pkItem;
 			int		itemid;		// 아이템 고유아이디
@@ -51,7 +51,7 @@ class CShop
 		virtual ~CShop(); // @fixme139 (+virtual)
 
 		bool	Create(DWORD dwVnum, DWORD dwNPCVnum, TShopItemTable * pItemTable);
-		void	SetShopItems(TShopItemTable * pItemTable, BYTE bItemCount);
+		void	SetShopItems(TShopItemTable * pItemTable, short bItemCount);
 
 		virtual void	SetPCShop(LPCHARACTER ch);
 		virtual bool	IsPCShop()	{ return m_pkPC ? true : false; }

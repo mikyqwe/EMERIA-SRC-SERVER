@@ -162,7 +162,7 @@ LPSHOP CShopManager::FindPCShop(DWORD dwVID)
 	return it->second;
 }
 
-LPSHOP CShopManager::CreatePCShop(LPCHARACTER ch, TShopItemTable * pTable, BYTE bItemCount)
+LPSHOP CShopManager::CreatePCShop(LPCHARACTER ch, TShopItemTable * pTable, short bItemCount)
 {
 	if (FindPCShop(ch->GetVID()))
 		return NULL;
@@ -276,7 +276,7 @@ void CShopManager::Buy(LPCHARACTER ch, BYTE pos)
 }
 
 #ifdef __SPECIAL_STORAGE_SYSTEM__
-void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount, BYTE bType)
+void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, short bCount, BYTE bType)
 #else
 void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount)
 #endif

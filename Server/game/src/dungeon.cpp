@@ -672,6 +672,33 @@ void CDungeon::KillUnique(const std::string& key)
 	ch->Dead();
 }
 
+
+#ifdef ENABLE_DUNGEON_FUNC
+void CDungeon::BlockUniqueHP(const std::string& key, BYTE uniqTargetHP)
+{
+	TUniqueMobMap::iterator it = m_map_UniqueMob.find(key);
+	if (it == m_map_UniqueMob.end())
+	{
+		sys_err("Unknown Key : %s", key.c_str());
+		return;
+	}
+
+	it->second->BlockMonsterHP(uniqTargetHP);
+}
+
+void CDungeon::UnblockUniqueHP(const std::string& key)
+{
+	TUniqueMobMap::iterator it = m_map_UniqueMob.find(key);
+	if (it == m_map_UniqueMob.end())
+	{
+		sys_err("Unknown Key : %s", key.c_str());
+		return;
+	}
+
+	it->second->UnblockMonsterHP();
+}
+#endif
+
 DWORD CDungeon::GetUniqueVid(const std::string& key)
 {
 	TUniqueMobMap::iterator it = m_map_UniqueMob.find(key);
@@ -694,6 +721,19 @@ float CDungeon::GetUniqueHpPerc(const std::string& key)
 	}
 	return (100.f*it->second->GetHP())/it->second->GetMaxHP();
 }
+
+#ifdef ENABLE_DUNGEON_FUNC
+int CDungeon::GetUniqueHp(const std::string& key)
+{
+	TUniqueMobMap::iterator it = m_map_UniqueMob.find(key);
+	if (it == m_map_UniqueMob.end())
+	{
+		sys_err("Unknown Key : %s", key.c_str());
+		return false;
+	}
+	return it->second->GetHP();
+}
+#endif
 
 void CDungeon::DeadCharacter(LPCHARACTER ch)
 {

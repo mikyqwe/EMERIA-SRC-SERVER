@@ -1072,7 +1072,7 @@ typedef struct command_item_drop2
 	BYTE 	header;
 	TItemPos 	Cell;
 	DWORD	gold;
-	BYTE	count;
+	short	count;
 } TPacketCGItemDrop2;
 
 typedef struct command_item_move
@@ -1080,7 +1080,7 @@ typedef struct command_item_move
 	BYTE 	header;
 	TItemPos	Cell;
 	TItemPos	CellTo;
-	BYTE	count;
+	short	count;
 } TPacketCGItemMove;
 
 #ifdef ENABLE_SELL_ITEM
@@ -1180,7 +1180,7 @@ typedef struct command_shop_sell
 typedef struct command_shop
 {
 	BYTE	header;
-	BYTE	subheader;
+	short	subheader;
 } TPacketCGShop;
 
 typedef struct command_on_click
@@ -1704,7 +1704,7 @@ struct TPacketGCItemDelDeprecated
 	BYTE	header;
 	TItemPos Cell;
 	DWORD	vnum;
-	BYTE	count;
+	short	count;
 #ifdef CHANGELOOK_SYSTEM
 	DWORD	transmutation;
 #endif
@@ -1717,7 +1717,7 @@ typedef struct packet_item_set
 	BYTE	header;
 	TItemPos Cell;
 	DWORD	vnum;
-	BYTE	count;
+	short	count;
 #ifdef CHANGELOOK_SYSTEM
 	DWORD	transmutation;
 #endif
@@ -1754,7 +1754,7 @@ typedef struct packet_item_update
 {
 	BYTE	header;
 	TItemPos Cell;
-	BYTE	count;
+	short	count;
 #ifdef CHANGELOOK_SYSTEM
 	DWORD	transmutation;
 #endif
@@ -1852,7 +1852,7 @@ struct packet_shop_item
 #else
 	DWORD		price;
 #endif
-    BYTE        count;
+    short        count;
 #ifdef ENABLE_MULTISHOP
 	DWORD		wPriceVnum;
 	DWORD		wPrice;
@@ -2761,7 +2761,7 @@ typedef struct command_give_item
 	BYTE byHeader;
 	DWORD dwTargetVID;
 	TItemPos ItemPos;
-	BYTE byItemCount;
+	short byItemCount;
 } TPacketCGGiveItem;
 
 typedef struct SPacketCGHack
@@ -2801,7 +2801,7 @@ typedef struct SPacketCGMyShop
 {
 	BYTE	bHeader;
 	char	szSign[SHOP_SIGN_MAX_LEN + 1];
-	BYTE	bCount;
+	short	bCount;
 } TPacketCGMyShop;
 
 #ifdef OFFLINE_SHOP
@@ -2871,7 +2871,7 @@ typedef struct SPacketGCRefineInformaion
 	BYTE	pos;
 	DWORD	src_vnum;
 	DWORD	result_vnum;
-	BYTE	material_count;
+	short	material_count;
 	int		cost; // �ҿ� ���?
 	int		prob; // Ȯ��
 	TRefineMaterial materials[REFINE_MATERIAL_MAX_NUM];
@@ -2960,6 +2960,7 @@ typedef struct pakcet_view_equip
 {
 	BYTE  header;
 	DWORD vid;
+	short count;
 	TEquipmentItemSet equips[WEAR_MAX_NUM];
 } TPacketViewEquip;
 
