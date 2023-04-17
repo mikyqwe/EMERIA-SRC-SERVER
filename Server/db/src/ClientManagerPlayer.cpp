@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include "ClientManager.h"
@@ -8,8 +7,7 @@
 #include "ItemAwardManager.h"
 #include "HB.h"
 #include "Cache.h"
-#include "../../common/CommonDefines.h"
-#include "../../common/tables.h"
+
 extern bool g_bHotBackup;
 
 extern std::string g_stLocale;
@@ -33,7 +31,7 @@ bool CreateItemTableFromRes(MYSQL_RES * res, std::vector<TPlayerItem> * pVec, DW
 
 	int rows;
 
-	if ((rows = mysql_num_rows(res)) <= 0)	// 데이터 없음
+	if ((rows = mysql_num_rows(res)) <= 0)
 	{
 		pVec->clear();
 		return true;
@@ -56,15 +54,10 @@ bool CreateItemTableFromRes(MYSQL_RES * res, std::vector<TPlayerItem> * pVec, DW
 		str_to_number(item.pos, row[cur++]);
 		str_to_number(item.count, row[cur++]);
 		str_to_number(item.vnum, row[cur++]);
-#ifdef CHANGELOOK_SYSTEM
-		str_to_number(item.transmutation, row[cur++]);
-#endif
 		str_to_number(item.alSockets[0], row[cur++]);
 		str_to_number(item.alSockets[1], row[cur++]);
 		str_to_number(item.alSockets[2], row[cur++]);
-#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-		str_to_number(item.alSockets[3], row[cur++]);
-#endif
+
 		for (int j = 0; j < ITEM_ATTRIBUTE_MAX_NUM; j++)
 		{
 #ifndef __FROZENBONUS_SYSTEM__
@@ -82,7 +75,6 @@ bool CreateItemTableFromRes(MYSQL_RES * res, std::vector<TPlayerItem> * pVec, DW
 
 	return true;
 }
-
 
 size_t CreatePlayerSaveQuery(char * pszQuery, size_t querySize, TPlayerTable * pkTab)
 {
@@ -112,9 +104,10 @@ size_t CreatePlayerSaveQuery(char * pszQuery, size_t querySize, TPlayerTable * p
 			"ht = %d, "
 			"dx = %d, "
 			"iq = %d, "
+#ifdef ENABLE_LONG_LONG
+			"gold = %lld, "
+#else
 			"gold = %d, "
-#ifdef ENABLE_CHEQUE_SYSTEM
-			"cheque = %d, "
 #endif
 			"exp = %u, "
 			"stat_point = %d, "
@@ -124,12 +117,9 @@ size_t CreatePlayerSaveQuery(char * pszQuery, size_t querySize, TPlayerTable * p
 			"ip = '%s', "
 			"part_main = %d, "
 			"part_hair = %d, "
-#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+			#ifdef ENABLE_ACCE_COSTUME_SYSTEM
 			"part_acce = %d, "
-#endif
-#ifdef ENABLE_AURA_SYSTEM
-			"part_aura = %d, "
-#endif
+			#endif
 			"last_play = NOW(), "
 			"skill_group = %d, "
 			"alignment = %ld, "
@@ -139,7 +129,8 @@ size_t CreatePlayerSaveQuery(char * pszQuery, size_t querySize, TPlayerTable * p
 			"horse_hp_droptime = %u, "
 			"horse_stamina = %d, "
 			"horse_skill_point = %d, "
-		, GetTablePostfix(),
+			,
+		GetTablePostfix(),
 		pkTab->job,
 		pkTab->voice,
 		pkTab->dir,
@@ -163,9 +154,6 @@ size_t CreatePlayerSaveQuery(char * pszQuery, size_t querySize, TPlayerTable * p
 		pkTab->dx,
 		pkTab->iq,
 		pkTab->gold,
-#ifdef ENABLE_CHEQUE_SYSTEM
-		pkTab->cheque,
-#endif
 		pkTab->exp,
 		pkTab->stat_point,
 		pkTab->skill_point,
@@ -177,9 +165,6 @@ size_t CreatePlayerSaveQuery(char * pszQuery, size_t querySize, TPlayerTable * p
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 		pkTab->parts[PART_ACCE],
 #endif
-#ifdef ENABLE_AURA_SYSTEM
-		pkTab->parts[PART_AURA],
-#endif
 		pkTab->skill_group,
 		pkTab->lAlignment,
 		pkTab->horse.bLevel,
@@ -187,9 +172,9 @@ size_t CreatePlayerSaveQuery(char * pszQuery, size_t querySize, TPlayerTable * p
 		pkTab->horse.sHealth,
 		pkTab->horse.dwHorseHealthDropTime,
 		pkTab->horse.sStamina,
-		pkTab->horse_skill_point
-	);
-	// Binary 로 바꾸기 위한 임시 공간
+		pkTab->horse_skill_point);
+
+
 	static char text[8192 + 1];
 
 	CDBManager::instance().EscapeString(text, pkTab->skills, sizeof(pkTab->skills));
@@ -219,77 +204,6 @@ CPlayerTableCache * CClientManager::GetPlayerCache(DWORD id)
 	return it->second;
 }
 
-
-#ifdef ENABLE_SPECIAL_AFFECT
-void CClientManager::SendSpecialAffects(DWORD* adwPids, DWORD* adwGids)
-{
-	TSpecialAffects p;
-	memset(&p, 0, sizeof(p));
-	
-	if (adwPids)
-	{
-		p.aPids[0] = adwPids[0];
-		p.aPids[1] = adwPids[1];
-		p.aPids[2] = adwPids[2];
-	}
-	
-	if (adwGids)
-	{
-		p.aGids[0] = adwGids[0];
-		p.aGids[1] = adwGids[1];
-		p.aGids[2] = adwGids[2];
-	}
-	
-	CClientManager::instance().ForwardPacket(HEADER_DG_SPECIAL_AFFECTS, &p, sizeof(p));
-}
-
-void CClientManager::ComputeSpecialAffects()
-{
-	char szQuery[1024];
-	DWORD adwPids[3], adwGids[3];
-	
-	memset(adwGids, 0, sizeof(adwGids));
-	memset(adwPids, 0, sizeof(adwPids));
-	
-	snprintf(szQuery, 1024, "SELECT pid, IF (deaths=0, kills, AVG(kills/deaths)) AS ratio FROM guild_member%s GROUP BY pid ORDER BY ratio DESC LIMIT 3;", GetTablePostfix());
-
-	std::auto_ptr<SQLMsg> pMsg(CDBManager::instance().DirectQuery(szQuery));
-	SQLResult* pRes = pMsg->Get();
-	
-	if (pRes && pRes->uiNumRows > 0)
-	{
-		MYSQL_ROW row = mysql_fetch_row(pRes->pSQLResult);
-		DWORD dwCount = 0;
-		while (row && dwCount < 3)
-		{
-			str_to_number(adwPids[dwCount], row[0]);
-			dwCount++;
-			row = mysql_fetch_row(pRes->pSQLResult);
-		}
-	}
-	
-	snprintf(szQuery, 1024, "SELECT trophies FROM guild_ranking%s ORDER BY (trophies) DESC LIMIT 3;", GetTablePostfix());
-	
-	std::auto_ptr<SQLMsg> pMsg2(CDBManager::instance().DirectQuery(szQuery));
-	
-	pRes = pMsg2->Get();
-	
-	if (pRes && pRes->uiNumRows > 0)
-	{
-		MYSQL_ROW row = mysql_fetch_row(pRes->pSQLResult);
-		DWORD dwCount = 0;
-		while (row && dwCount < 3)
-		{
-			str_to_number(adwGids[dwCount], row[0]);
-			dwCount++;
-			row = mysql_fetch_row(pRes->pSQLResult);
-		}
-	}
-	
-	SendSpecialAffects(adwPids, adwGids);
-}
-#endif
-
 void CClientManager::PutPlayerCache(TPlayerTable * pNew)
 {
 	CPlayerTableCache * c;
@@ -317,7 +231,7 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 	TPlayerTable * pTab;
 
 	//
-	// 한 계정에 속한 모든 캐릭터들 캐쉬처리
+
 	//
 	CLoginData * pLoginData = GetLoginDataByAID(packet->account_id);
 
@@ -329,12 +243,12 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 	}
 
 	//----------------------------------------------------------------
-	// 1. 유저정보가 DBCache 에 존재 : DBCache에서
-	// 2. 유저정보가 DBCache 에 없음 : DB에서
+
+
 	// ---------------------------------------------------------------
 
 	//----------------------------------
-	// 1. 유저정보가 DBCache 에 존재 : DBCache에서
+
 	//----------------------------------
 	if ((c = GetPlayerCache(packet->player_id)))
 	{
@@ -371,20 +285,20 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 
 		TItemCacheSet * pSet = GetItemCacheSet(pTab->id);
 
-#ifdef ENABLE_CHEQUE_SYSTEM
-		sys_log(0, "[PLAYER_LOAD] ID %s pid %d gold %d cheque %d ", pTab->name, pTab->id, pTab->gold, pTab->cheque);
+#ifdef ENABLE_LONG_LONG
+		sys_log(0, "[PLAYER_LOAD] ID %s pid %d gold %lld ", pTab->name, pTab->id, pTab->gold);
 #else
 		sys_log(0, "[PLAYER_LOAD] ID %s pid %d gold %d ", pTab->name, pTab->id, pTab->gold);
 #endif
 
 		//--------------------------------------------
-		// 아이템 & AFFECT & QUEST 로딩 :
+
 		//--------------------------------------------
-		// 1) 아이템이 DBCache 에 존재 : DBCache 에서 가져옴
-		// 2) 아이템이 DBCache 에 없음 : DB 에서 가져옴
+
+
 
 		/////////////////////////////////////////////
-		// 1) 아이템이 DBCache 에 존재 : DBCache 에서 가져옴
+
 		/////////////////////////////////////////////
 		if (pSet)
 		{
@@ -399,7 +313,7 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 				CItemCache * c = *it++;
 				TPlayerItem * p = c->Get();
 
-				if (p->vnum) // vnum이 없으면 삭제된 아이템이다.
+				if (p->vnum)
 					thecore_memcpy(&s_items[dwCount++], p, sizeof(TPlayerItem));
 			}
 
@@ -425,103 +339,16 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 					GetTablePostfix(), pTab->id);
 			// @fixme402 ClientHandleInfo+pTab->id
 			CDBManager::instance().ReturnQuery(szQuery, QID_AFFECT, peer->GetHandle(), new ClientHandleInfo(dwHandle, pTab->id));
-
-#ifdef ENABLE_DECORUM
-			// Decorum
-			snprintf(szQuery, sizeof(szQuery),
-					"SELECT pid, decorum, prmotions, demotions, block, last_kills, last_arena, "
-					"kills, death, ffa_done, ffa_won, arena_1_done, arena_1_won, arena_2_done, arena_2_won, arena_3_done, arena_3_won, duel_done, duel_won, "
-					"elo_rating "
-					"FROM decorum%s WHERE pid=%d", GetTablePostfix(), pTab->id);
-			CDBManager::instance().ReturnQuery(szQuery, QID_DECORUM, peer->GetHandle(), new ClientHandleInfo(dwHandle));
-#endif
-
-			// Marriage pid
-			snprintf(szQuery, sizeof(szQuery),
-					"SELECT is_married, pid1, pid2 FROM marriage%s WHERE pid1=%d OR pid2=%d",
-					GetTablePostfix(), pTab->id, pTab->id);
-			CDBManager::instance().ReturnQuery(szQuery, QID_MARRIAGE, peer->GetHandle(), new ClientHandleInfo(dwHandle, pTab->id));
-		
-	
-#ifdef __SPECIALSTAT_SYSTEM__
-			//sys_log(0, "ClientManagerPlayer Special Stats Cache Set ");
-			snprintf(szQuery, sizeof(szQuery),
-				"SELECT pid, frt, agl, crm, tnc, avd, tlt, next_book_readtime, skip_time_book FROM player_specialstats WHERE pid=%d",
-				packet->player_id);
-			CDBManager::instance().ReturnQuery(szQuery, QID_SPECIALSTAT_LOAD, peer->GetHandle(), new ClientHandleInfo(dwHandle, pTab->id));
-
-#endif // __SPECIALSTAT_SYSTEM__
 		}
 		/////////////////////////////////////////////
-		// 2) 아이템이 DBCache 에 없음 : DB 에서 가져옴
+
 		/////////////////////////////////////////////
 		else
 		{
-
-
-#ifndef __FROZENBONUS_SYSTEM__
 			snprintf(szQuery, sizeof(szQuery),
-					"SELECT id,window+0,pos,count,vnum,socket0,socket1,socket2,"
-#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-					" socket3 ,"
-#endif
-					"attrtype0,attrvalue0,attrtype1,attrvalue1,attrtype2,attrvalue2,attrtype3,attrvalue3,attrtype4,attrvalue4,attrtype5,attrvalue5,attrtype6,attrvalue6 "
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-#ifdef ENABLE_SWITCHBOT
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67', 'CHANGE_EQUIP'))",
-#else
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#else
-#ifdef ENABLE_SWITCHBOT
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67'))",
-#else
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#endif
+					"SELECT id,`window`+0,pos,count,vnum,socket0,socket1,socket2,attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
+					"FROM item%s WHERE owner_id=%d AND (`window` in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY','SWITCHBOT','CHANGE_EQUIP','GROUND'))",
 					GetTablePostfix(), pTab->id);
-
-#else
-#ifdef RARITY_SYSTEM
-				snprintf(szQuery, sizeof(szQuery),
-					"SELECT id,window+0,pos,count,vnum,socket0,socket1,socket2,socket3,attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-#ifdef ENABLE_SWITCHBOT
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT, 'BONUS_NEW_67', 'CHANGE_EQUIP''))",
-#else
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#else
-#ifdef ENABLE_SWITCHBOT
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT, 'BONUS_NEW_67''))",
-#else
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#endif
-					GetTablePostfix(), pTab->id);
-	#else
-				snprintf(szQuery, sizeof(szQuery),
-					"SELECT id,window+0,pos,count,vnum,transmutation,socket0,socket1,socket2,"
-	#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-					" socket3 ,"
-#endif
-					"attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-#ifdef ENABLE_SWITCHBOT
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT'))",
-#else
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#else
-#ifdef ENABLE_SWITCHBOT
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67'))",
-#else
-					"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#endif
-					GetTablePostfix(), pTab->id);
-	#endif
-#endif // !__FROZENBONUS_SYSTEM__
 
 			CDBManager::instance().ReturnQuery(szQuery,
 					QID_ITEM,
@@ -543,46 +370,12 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 					QID_AFFECT,
 					peer->GetHandle(),
 					new ClientHandleInfo(dwHandle, pTab->id));
-
-					
-					
-			// Marriage pid
-			
-			snprintf(szQuery, sizeof(szQuery),
-					"SELECT is_married, pid1,pid2 FROM marriage%s WHERE pid1=%d OR pid2=%d",
-					GetTablePostfix(), pTab->id, pTab->id);
-
-			CDBManager::instance().ReturnQuery(szQuery,
-					QID_MARRIAGE,
-					peer->GetHandle(),
-					new ClientHandleInfo(dwHandle, pTab->id));
-
-#ifdef ENABLE_DECORUM
-			// DECORUM
-			snprintf(szQuery, sizeof(szQuery),
-					"SELECT pid, decorum, prmotions, demotions, block, last_kills, last_arena, "
-					"kills, death, ffa_done, ffa_won, arena_1_done, arena_1_won, arena_2_done, arena_2_won, arena_3_done, arena_3_won, duel_done, duel_won, "
-					"elo_rating "
-					"FROM decorum%s WHERE pid=%d", GetTablePostfix(), pTab->id);
-			CDBManager::instance().ReturnQuery(szQuery, QID_DECORUM, peer->GetHandle(), new ClientHandleInfo(dwHandle, pTab->id));
-#endif
-
-#ifdef __SPECIALSTAT_SYSTEM__
-
-			//sys_log(0, "ClientManagerPlayer Special Stats Cache No Set ");
-			snprintf(szQuery, sizeof(szQuery),
-				"SELECT pid, frt, agl, crm, tnc, avd, tlt, next_book_readtime, skip_time_book FROM player_specialstats WHERE pid=%d",
-				packet->player_id);
-			CDBManager::instance().ReturnQuery(szQuery, QID_SPECIALSTAT_LOAD, peer->GetHandle(), new ClientHandleInfo(dwHandle, pTab->id));
-
-#endif // __SPECIALSTAT_SYSTEM__
-
 		}
 		//ljw
 		//return;
 	}
 	//----------------------------------
-	// 2. 유저정보가 DBCache 에 없음 : DB에서
+
 	//----------------------------------
 	else
 	{
@@ -591,20 +384,18 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 		char queryStr[QUERY_MAX_LEN];
 
 		//--------------------------------------------------------------
-		// 캐릭터 정보 얻어오기 : 무조건 DB에서
+
 		//--------------------------------------------------------------
 		snprintf(queryStr, sizeof(queryStr),
 				"SELECT "
-				"player.id,name,job,voice,dir,x,y,z,map_index,exit_x,exit_y,exit_map_index,hp,mp,stamina,random_hp,random_sp,playtime,"
-				"gold,cheque,level,level_step,st,ht,dx,iq,exp,"
-				"stat_point,skill_point,sub_skill_point,stat_reset_count,part_base,part_hair, part_acce, part_aura,"
-				"skill_level,quickslot,skill_group,alignment,"
-				"mobile,horse_level,horse_riding,horse_hp,horse_hp_droptime,horse_stamina,"
-				"UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(player.last_play),horse_skill_point "
-#ifdef ENABLE_NEW_DETAILS_GUI
-				",kill_log "
-#endif
-				"FROM player%s WHERE player.id=%d",
+				"id,name,job,voice,dir,x,y,z,map_index,exit_x,exit_y,exit_map_index,hp,mp,stamina,random_hp,random_sp,playtime,"
+				"gold,level,level_step,st,ht,dx,iq,exp,"
+				"stat_point,skill_point,sub_skill_point,stat_reset_count,part_base,part_hair,"
+				#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+				"part_acce, "
+				#endif
+				"skill_level,quickslot,skill_group,alignment,mobile,horse_level,horse_riding,horse_hp,horse_hp_droptime,horse_stamina,"
+				"UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(last_play),horse_skill_point,kill_log FROM player%s WHERE id=%d",
 				GetTablePostfix(), packet->player_id);
 
 		ClientHandleInfo * pkInfo = new ClientHandleInfo(dwHandle, packet->player_id);
@@ -612,120 +403,34 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 		CDBManager::instance().ReturnQuery(queryStr, QID_PLAYER, peer->GetHandle(), pkInfo);
 
 		//--------------------------------------------------------------
-		// 아이템 가져오기
+
 		//--------------------------------------------------------------
-
-#ifndef __FROZENBONUS_SYSTEM__
 		snprintf(queryStr, sizeof(queryStr),
-				"SELECT id,window+0,pos,count,vnum,socket0,socket1,socket2,"
-	#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-				" socket3 ,"
-#endif
-				"attrtype0,attrvalue0,attrtype1,attrvalue1,attrtype2,attrvalue2,attrtype3,attrvalue3,attrtype4,attrvalue4,attrtype5,attrvalue5,attrtype6,attrvalue6 "
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-#ifdef ENABLE_SWITCHBOT
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67', 'CHANGE_EQUIP'))",
-#else
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#else
-#ifdef ENABLE_SWITCHBOT
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67'))",
-#else
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#endif
+				"SELECT id,`window`+0,pos,count,vnum,socket0,socket1,socket2,attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
+				"FROM item%s WHERE owner_id=%d AND (`window` in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY','SWITCHBOT','CHANGE_EQUIP','GROUND'))",
 				GetTablePostfix(), packet->player_id);
-#else
-	#ifdef RARITY_SYSTEM
-			snprintf(queryStr, sizeof(queryStr),
-				"SELECT id,window+0,pos,count,vnum,socket0,socket1,socket2,socket3,attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-#ifdef ENABLE_SWITCHBOT
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67', 'CHANGE_EQUIP'))",
-#else
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#else
-#ifdef ENABLE_SWITCHBOT
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67'))",
-#else
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#endif
-				GetTablePostfix(), packet->player_id);
-#else
-			snprintf(queryStr, sizeof(queryStr),
-				"SELECT id,window+0,pos,count,vnum,transmutation,socket0,socket1,socket2,"
-#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-				" socket3 ,"
-#endif
-				"attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-#ifdef ENABLE_SWITCHBOT
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67', 'CHANGE_EQUIP'))",
-#else
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#else
-#ifdef ENABLE_SWITCHBOT
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67'))",
-#else
-				"FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY'))",
-#endif
-#endif
-				GetTablePostfix(), packet->player_id);
-	#endif
-#endif // !__FROZENBONUS_SYSTEM__
-
 		CDBManager::instance().ReturnQuery(queryStr, QID_ITEM, peer->GetHandle(), new ClientHandleInfo(dwHandle, packet->player_id));
 
 		//--------------------------------------------------------------
-		// QUEST 가져오기
+
 		//--------------------------------------------------------------
 		snprintf(queryStr, sizeof(queryStr),
 				"SELECT dwPID,szName,szState,lValue FROM quest%s WHERE dwPID=%d",
 				GetTablePostfix(), packet->player_id);
 		CDBManager::instance().ReturnQuery(queryStr, QID_QUEST, peer->GetHandle(), new ClientHandleInfo(dwHandle, packet->player_id,packet->account_id));
-		//독일 선물 기능에서 item_award테이블에서 login 정보를 얻기위해 account id도 넘겨준다
+
 		//--------------------------------------------------------------
-		// AFFECT 가져오기
+
 		//--------------------------------------------------------------
 		snprintf(queryStr, sizeof(queryStr),
 				"SELECT dwPID,bType,bApplyOn,lApplyValue,dwFlag,lDuration,lSPCost FROM affect%s WHERE dwPID=%d",
 				GetTablePostfix(), packet->player_id);
 		CDBManager::instance().ReturnQuery(queryStr, QID_AFFECT, peer->GetHandle(), new ClientHandleInfo(dwHandle, packet->player_id));
+	}
 	
-	
-		//--------------------------------------------------------------
-		// MARRIAGE PID
-		//--------------------------------------------------------------
-		snprintf(queryStr, sizeof(queryStr),
-				"SELECT is_married,pid1,pid2 FROM marriage%s WHERE pid1=%d OR pid2=%d",
-				GetTablePostfix(), packet->player_id, packet->player_id);
-		CDBManager::instance().ReturnQuery(queryStr, QID_MARRIAGE, peer->GetHandle(), new ClientHandleInfo(dwHandle, packet->player_id));
-	
-#ifdef __SPECIALSTAT_SYSTEM__
-		sys_log(0, "ClientManagerPlayer Special Stats No Cache");
-		snprintf(queryStr, sizeof(queryStr),
-			"SELECT pid, frt, agl, crm, tnc, avd, tlt, next_book_readtime, skip_time_book FROM player_specialstats WHERE pid=%d",
-			packet->player_id);
-		CDBManager::instance().ReturnQuery(queryStr, QID_SPECIALSTAT_LOAD, peer->GetHandle(), new ClientHandleInfo(dwHandle, packet->player_id));
-
-#endif // __SPECIALSTAT_SYSTEM__
-#ifdef ENABLE_DECORUM
-		//--------------------------------------------------------------
-		// DECORUM
-		//--------------------------------------------------------------
-		snprintf(queryStr, sizeof(queryStr),
-				"SELECT pid, decorum, prmotions, demotions, block, last_kills, last_arena, "
-				"kills, death, ffa_done, ffa_won, arena_1_done, arena_1_won, arena_2_done, arena_2_won, arena_3_done, arena_3_won, duel_done, duel_won, "
-				"elo_rating "
-				"FROM decorum%s WHERE pid=%d", GetTablePostfix(), packet->player_id);
-		CDBManager::instance().ReturnQuery(queryStr, QID_DECORUM, peer->GetHandle(), new ClientHandleInfo(dwHandle, packet->player_id));
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	OfflineshopLoadShopSafebox(peer, packet->player_id);
 #endif
-
-}
 
 
 }
@@ -736,22 +441,22 @@ void CClientManager::ItemAward(CPeer * peer,char* login)
 	std::set<TItemAward *> * pSet = ItemAwardManager::instance().GetByLogin(login_t);
 	if(pSet == NULL)
 		return;
-	typeof(pSet->begin()) it = pSet->begin();	//taken_time이 NULL인것들 읽어옴
+	typeof(pSet->begin()) it = pSet->begin();
 	while(it != pSet->end() )
 	{
 		TItemAward * pItemAward = *(it++);
-		char* whyStr = pItemAward->szWhy;	//why 콜룸 읽기
-		char cmdStr[100] = "";	//why콜룸에서 읽은 값을 임시 문자열에 복사해둠
-		strcpy(cmdStr,whyStr);	//명령어 얻는 과정에서 토큰쓰면 원본도 토큰화 되기 때문
+		char* whyStr = pItemAward->szWhy;
+		char cmdStr[100] = "";
+		strcpy(cmdStr,whyStr);
 		char command[20] = "";
 		// @fixme203 directly GetCommand instead of strcpy
-		GetCommand(cmdStr, command);			// command 얻기
-		if( !(strcmp(command,"GIFT") ))	// command 가 GIFT이면
+		GetCommand(cmdStr, command);
+		if( !(strcmp(command,"GIFT") ))
 		{
 			TPacketItemAwardInfromer giftData;
-			strcpy(giftData.login, pItemAward->szLogin);	//로그인 아이디 복사
-			strcpy(giftData.command, command);					//명령어 복사
-			giftData.vnum = pItemAward->dwVnum;				//아이템 vnum도 복사
+			strcpy(giftData.login, pItemAward->szLogin);
+			strcpy(giftData.command, command);
+			giftData.vnum = pItemAward->dwVnum;
 			ForwardPacket(HEADER_DG_ITEMAWARD_INFORMER,&giftData,sizeof(TPacketItemAwardInfromer));
 		}
 	}
@@ -771,7 +476,7 @@ char* CClientManager::GetCommand(char* str, char* command) // @fixme203
 
 bool CreatePlayerTableFromRes(MYSQL_RES * res, TPlayerTable * pkTab)
 {
-	if (mysql_num_rows(res) == 0)	// 데이터 없음
+	if (mysql_num_rows(res) == 0)
 		return false;
 
 	memset(pkTab, 0, sizeof(TPlayerTable));
@@ -803,9 +508,6 @@ bool CreatePlayerTableFromRes(MYSQL_RES * res, TPlayerTable * pkTab)
 	str_to_number(pkTab->sRandomSP, row[col++]);
 	str_to_number(pkTab->playtime, row[col++]);
 	str_to_number(pkTab->gold, row[col++]);
-#ifdef ENABLE_CHEQUE_SYSTEM
-	str_to_number(pkTab->cheque, row[col++]);
-#endif
 	str_to_number(pkTab->level, row[col++]);
 	str_to_number(pkTab->level_step, row[col++]);
 	str_to_number(pkTab->st, row[col++]);
@@ -822,9 +524,7 @@ bool CreatePlayerTableFromRes(MYSQL_RES * res, TPlayerTable * pkTab)
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	str_to_number(pkTab->parts[PART_ACCE], row[col++]);
 #endif
-#ifdef ENABLE_AURA_SYSTEM
-	str_to_number(pkTab->parts[PART_AURA], row[col++]);
-#endif
+
 	if (row[col])
 		thecore_memcpy(pkTab->skills, row[col], sizeof(pkTab->skills));
 	else
@@ -841,6 +541,7 @@ bool CreatePlayerTableFromRes(MYSQL_RES * res, TPlayerTable * pkTab)
 
 	str_to_number(pkTab->skill_group, row[col++]);
 	str_to_number(pkTab->lAlignment, row[col++]);
+
 	if (row[col])
 	{
 		strlcpy(pkTab->szMobile, row[col], sizeof(pkTab->szMobile));
@@ -855,6 +556,16 @@ bool CreatePlayerTableFromRes(MYSQL_RES * res, TPlayerTable * pkTab)
 	str_to_number(pkTab->horse.sStamina, row[col++]);
 	str_to_number(pkTab->logoff_interval, row[col++]);
 	str_to_number(pkTab->horse_skill_point, row[col++]);
+
+#ifdef ENABLE_NEW_DETAILS_GUI
+	if (row[col])
+		thecore_memcpy(pkTab->kill_log, row[col], sizeof(pkTab->kill_log));
+	else
+		memset(pkTab->kill_log, 0, sizeof(pkTab->kill_log));
+	col++;
+#endif
+
+
 	// reset sub_skill_point
 	{
 		pkTab->skills[123].bLevel = 0; // SKILL_CREATE
@@ -864,11 +575,11 @@ bool CreatePlayerTableFromRes(MYSQL_RES * res, TPlayerTable * pkTab)
 			int max_point = pkTab->level - 9;
 
 			int skill_point =
-				MIN(20, pkTab->skills[121].bLevel) +	// SKILL_LEADERSHIP			통솔력
-				MIN(20, pkTab->skills[124].bLevel) +	// SKILL_MINING				채광
-				MIN(10, pkTab->skills[131].bLevel) +	// SKILL_HORSE_SUMMON		말소환
-				MIN(20, pkTab->skills[141].bLevel) +	// SKILL_ADD_HP				HP보강
-				MIN(20, pkTab->skills[142].bLevel);		// SKILL_RESIST_PENETRATE	관통저항
+				MIN(20, pkTab->skills[121].bLevel) +
+				MIN(20, pkTab->skills[124].bLevel) +
+				MIN(10, pkTab->skills[131].bLevel) +
+				MIN(20, pkTab->skills[141].bLevel) +
+				MIN(20, pkTab->skills[142].bLevel);
 
 			pkTab->sub_skill_point = max_point - skill_point;
 		}
@@ -908,13 +619,13 @@ void CClientManager::RESULT_COMPOSITE_PLAYER(CPeer * peer, SQLMsg * pMsg, DWORD 
 			{
 				sys_log(0, "QID_QUEST %u", info->dwHandle);
 				RESULT_QUEST_LOAD(peer, pSQLResult, info->dwHandle, info->player_id);
-				//aid얻기
+
 				ClientHandleInfo*  temp1 = info.get();
 				if (temp1 == NULL)
 					break;
 
 				CLoginData* pLoginData1 = GetLoginDataByAID(temp1->account_id);	//
-				//독일 선물 기능
+
 				if( pLoginData1->GetAccountRef().login == NULL)
 					break;
 				if( pLoginData1 == NULL )
@@ -929,11 +640,6 @@ void CClientManager::RESULT_COMPOSITE_PLAYER(CPeer * peer, SQLMsg * pMsg, DWORD 
 			// @fixme402 RESULT_AFFECT_LOAD+info->player_id
 			RESULT_AFFECT_LOAD(peer, pSQLResult, info->dwHandle, info->player_id);
 			break;
-		
-		case QID_MARRIAGE:
-			RESULT_MARRIAGE_LOAD(peer, pSQLResult, info->dwHandle, info->player_id);
-			break;
-			
 			/*
 			   case QID_PLAYER_ITEM_QUEST_AFFECT:
 			   sys_log(0, "QID_PLAYER_ITEM_QUEST_AFFECT %u", info->dwHandle);
@@ -966,19 +672,6 @@ void CClientManager::RESULT_COMPOSITE_PLAYER(CPeer * peer, SQLMsg * pMsg, DWORD 
 
 			   break;
 			   */
-
-#ifdef __SPECIALSTAT_SYSTEM__
-		case QID_SPECIALSTAT_LOAD:
-			sys_log(0, "QID_SPECIALSTAT %u", info->dwHandle);
-			RESULT_SPECIALSTATS_LOAD(peer, pSQLResult, info->dwHandle);
-			break;
-#endif
-#ifdef ENABLE_DECORUM
-		case QID_DECORUM:
-			sys_log(0, "QID_DECORUM %u", info->dwHandle);
-			RESULT_DECORUM_LOAD(peer, pSQLResult, info->dwHandle);
-			break;
-#endif
 	}
 
 }
@@ -1024,14 +717,14 @@ void CClientManager::RESULT_PLAYER_LOAD(CPeer * peer, MYSQL_RES * pRes, ClientHa
 void CClientManager::RESULT_ITEM_LOAD(CPeer * peer, MYSQL_RES * pRes, DWORD dwHandle, DWORD dwPID)
 {
 	static std::vector<TPlayerItem> s_items;
-	//DB에서 아이템 정보를 읽어온다.
+
 	CreateItemTableFromRes(pRes, &s_items, dwPID);
 	DWORD dwCount = s_items.size();
 
 	peer->EncodeHeader(HEADER_DG_ITEM_LOAD, dwHandle, sizeof(DWORD) + sizeof(TPlayerItem) * dwCount);
 	peer->EncodeDWORD(dwCount);
 
-	//CacheSet을 만든다
+
 	CreateItemCacheSet(dwPID);
 
 	// ITEM_LOAD_LOG_ATTACH_PID
@@ -1043,44 +736,16 @@ void CClientManager::RESULT_ITEM_LOAD(CPeer * peer, MYSQL_RES * pRes, DWORD dwHa
 		peer->Encode(&s_items[0], sizeof(TPlayerItem) * dwCount);
 
 		for (DWORD i = 0; i < dwCount; ++i)
-			PutItemCache(&s_items[i], true); // 로드한 것은 따로 저장할 필요 없으므로, 인자 bSkipQuery에 true를 넣는다.
+			PutItemCache(&s_items[i], true);
 	}
 }
-
-#ifdef __SPECIALSTAT_SYSTEM__
-void CClientManager::RESULT_SPECIALSTATS_LOAD(CPeer * peer, MYSQL_RES * pRes, DWORD dwHandle)
-{
-	TSpecialStats tab;
-
-	if (mysql_num_rows(pRes) == 0) // 데이터 없음
-		return;
-	MYSQL_ROW row = mysql_fetch_row(pRes);
-	int dwPID;
-	str_to_number(dwPID, row[0]);
-
-	for (int i = 0; i < SPECIALSTATS_MAX; i++){
-
-		str_to_number(tab.s_stats[i], row[i + 1]);
-		//sys_log(0, "SPECIAL_STAT LOAD: [%d] --> %d", i, atoi(row[i + 1]));
-	}
-
-	str_to_number(tab.next_book_time, row[SPECIALSTATS_MAX]);
-	str_to_number(tab.skip_time_book, row[SPECIALSTATS_MAX + 1]);
-
-	peer->EncodeHeader(HEADER_DG_SPECIALSTAT_LOAD_SUCCESS, dwHandle, sizeof(TSpecialStats));
-	peer->Encode(&tab, sizeof(TSpecialStats));
-
-	sys_log(0, "SPECIAL_STAT LOAD: PID %d", dwPID);
-
-}
-#endif
 
 // @fixme402 (RESULT_AFFECT_LOAD +dwRealPID)
 void CClientManager::RESULT_AFFECT_LOAD(CPeer * peer, MYSQL_RES * pRes, DWORD dwHandle, DWORD dwRealPID)
 {
 	int iNumRows;
 
-	if ((iNumRows = mysql_num_rows(pRes)) == 0) // 데이터 없음
+	if ((iNumRows = mysql_num_rows(pRes)) == 0)
 	{
 		// @fixme402 begin
 		static DWORD dwPID;
@@ -1131,46 +796,6 @@ void CClientManager::RESULT_AFFECT_LOAD(CPeer * peer, MYSQL_RES * pRes, DWORD dw
 	peer->Encode(&s_elements[0], sizeof(TPacketAffectElement) * dwCount);
 }
 
-// MARRIAGE LOAD
-void CClientManager::RESULT_MARRIAGE_LOAD(CPeer * peer, MYSQL_RES * pRes, DWORD dwHandle, DWORD dwRealPID)
-{
-	int iNumRows;
-
-	if ((iNumRows = mysql_num_rows(pRes)) == 0)
-		return;
-
-	static std::vector<TPacketMarriageElement> s_elements;
-	s_elements.resize(iNumRows);
-
-	DWORD dwPID = dwRealPID;
-	DWORD dwPid1, dwPid2 = 0;
-
-	MYSQL_ROW row;
-	for (int i = 0; i < iNumRows; ++i)
-	{
-		TPacketMarriageElement & r = s_elements[i];
-		row = mysql_fetch_row(pRes);
-
-		str_to_number(r.bIsMarriage, row[0]);
-		str_to_number(dwPid1, row[1]);
-		str_to_number(dwPid2, row[2]);
-	
-		// marriage send partner pid
-		
-		if (dwPid1 == dwPID) // check if first pid info is YOU.
-			r.dwPidMarriage = dwPid2;
-		else
-			r.dwPidMarriage = dwPid1;
-	}
-
-	DWORD dwCount = s_elements.size();
-
-	peer->EncodeHeader(HEADER_DG_MARRIAGE_LOAD, dwHandle, sizeof(DWORD) + sizeof(DWORD) + sizeof(TPacketMarriageElement) * dwCount);
-	peer->Encode(&dwPID, sizeof(DWORD));
-	peer->Encode(&dwCount, sizeof(DWORD));
-	peer->Encode(&s_elements[0], sizeof(TPacketMarriageElement) * dwCount);
-}
-
 void CClientManager::RESULT_QUEST_LOAD(CPeer * peer, MYSQL_RES * pRes, DWORD dwHandle, DWORD pid)
 {
 	int iNumRows;
@@ -1209,63 +834,6 @@ void CClientManager::RESULT_QUEST_LOAD(CPeer * peer, MYSQL_RES * pRes, DWORD dwH
 	peer->Encode(&s_table[0], sizeof(TQuestTable) * dwCount);
 }
 
-
-#ifdef ENABLE_DECORUM
-/*
- * DECORUM
- */
-void CClientManager::RESULT_DECORUM_LOAD(CPeer * peer, MYSQL_RES * pRes, DWORD dwHandle)
-{
-	int iNumRows;
-	if ((iNumRows = mysql_num_rows(pRes)) == 0)
-	{
-		/*TDecorumTable s_table;
-		memset(&s_table, 0, sizeof(TDecorumTable));
-		peer->EncodeHeader(HEADER_DG_DECORUM_LOAD, dwHandle, sizeof(TDecorumTable));
-		peer->Encode(&s_table, sizeof(TDecorumTable));*/
-		return;
-	}
-
-	TDecorumTable s_table;
-	int i = 0;
-
-	MYSQL_ROW row = mysql_fetch_row(pRes);
-
-	str_to_number(s_table.dwPID, row[i++]);
-	str_to_number(s_table.dwDecorum, row[i++]);
-	str_to_number(s_table.dwPromotion, row[i++]);
-	str_to_number(s_table.dwDemotion, row[i++]);
-	str_to_number(s_table.dwBlock, row[i++]);
-	
-	if (row[i])
-		thecore_memcpy(&s_table.adwLastKills, row[i], sizeof(s_table.adwLastKills));
-	else
-		memset(&s_table.adwLastKills, 0, sizeof(s_table.adwLastKills));
-	i++;
-	
-	str_to_number(s_table.dwLastArena, row[i++]);
-	
-	str_to_number(s_table.dwKill, row[i++]);
-	str_to_number(s_table.dwDeath, row[i++]);
-	str_to_number(s_table.adwFFA[0], row[i++]);
-	str_to_number(s_table.adwFFA[1], row[i++]);
-	str_to_number(s_table.adwDecorumArena[0][0], row[i++]);
-	str_to_number(s_table.adwDecorumArena[0][1], row[i++]);
-	str_to_number(s_table.adwDecorumArena[1][0], row[i++]);
-	str_to_number(s_table.adwDecorumArena[1][1], row[i++]);
-	str_to_number(s_table.adwDecorumArena[2][0], row[i++]);
-	str_to_number(s_table.adwDecorumArena[2][1], row[i++]);
-	str_to_number(s_table.adwDuel[0], row[i++]);
-	str_to_number(s_table.adwDuel[1], row[i++]);
-	str_to_number(s_table.dwELORating, row[i++]);
-
-	sys_log(0, "DECORUM_LOAD: PID %u", s_table.dwPID);
-
-	peer->EncodeHeader(HEADER_DG_DECORUM_LOAD, dwHandle, sizeof(TDecorumTable));
-	peer->Encode(&s_table, sizeof(TDecorumTable));
-}
-#endif
-
 /*
  * PLAYER SAVE
  */
@@ -1289,7 +857,7 @@ void CClientManager::__QUERY_PLAYER_CREATE(CPeer *peer, DWORD dwHandle, TPlayerC
 	int		queryLen;
 	int		player_id;
 
-	// 한 계정에 X초 내로 캐릭터 생성을 할 수 없다.
+
 	time_by_id_map_t::iterator it = s_createTimeByAccountID.find(packet->account_id);
 
 	if (it != s_createTimeByAccountID.end())
@@ -1306,8 +874,7 @@ void CClientManager::__QUERY_PLAYER_CREATE(CPeer *peer, DWORD dwHandle, TPlayerC
 	queryLen = snprintf(queryStr, sizeof(queryStr),
 			"SELECT pid%u FROM player_index%s WHERE id=%d", packet->account_index + 1, GetTablePostfix(), packet->account_id);
 
-	std::auto_ptr<SQLMsg> pMsg0(CDBManager::instance().DirectQuery(queryStr));
-
+	auto pMsg0(CDBManager::instance().DirectQuery(queryStr));
 	if (pMsg0->Get()->uiNumRows != 0)
 	{
 		if (!pMsg0->Get()->pSQLResult)
@@ -1340,8 +907,7 @@ void CClientManager::__QUERY_PLAYER_CREATE(CPeer *peer, DWORD dwHandle, TPlayerC
 	snprintf(queryStr, sizeof(queryStr),
 			"SELECT COUNT(*) as count FROM player%s WHERE name='%s'", GetTablePostfix(), packet->player_table.name);
 
-	std::auto_ptr<SQLMsg> pMsg1(CDBManager::instance().DirectQuery(queryStr));
-
+	auto pMsg1(CDBManager::instance().DirectQuery(queryStr));
 	if (pMsg1->Get()->uiNumRows)
 	{
 		if (!pMsg1->Get()->pSQLResult)
@@ -1369,31 +935,26 @@ void CClientManager::__QUERY_PLAYER_CREATE(CPeer *peer, DWORD dwHandle, TPlayerC
 			"INSERT INTO player%s "
 			"(id, account_id, name, level, st, ht, dx, iq, "
 			"job, voice, dir, x, y, z, "
-			"hp, mp, random_hp, random_sp, stat_point, stamina, part_base, part_main, part_hair, part_acce, part_aura, gold, cheque, "
-#ifdef NEW_ADD_INVENTORY
-			"envanter, "
-#endif
-			"playtime, "
+			"hp, mp, random_hp, random_sp, stat_point, stamina, part_base, part_main, part_hair,"
+			#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+			"part_acce, "
+			#endif
+			"gold, playtime, "
 			"skill_level, quickslot) "
 			"VALUES(0, %u, '%s', %d, %d, %d, %d, %d, "
-			"%d, %d, %d, %d, %d, %d, "
-			"%d, %d, %d, %d, %d, %d, %d, %d, 0, 0, 0, %d, %d, "
-#ifdef NEW_ADD_INVENTORY
-			"%d, "
-#endif
-			"0, ",
+			"%d, %d, %d, %d, %d, %d, %d, "
+			"%d, %d, %d, %d, %d, %d, %d, 0, "
+			#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+			"0, "
+			#endif
+			"%lld, 0, ",
 			GetTablePostfix(),
 			packet->account_id, packet->player_table.name, packet->player_table.level, packet->player_table.st, packet->player_table.ht, packet->player_table.dx, packet->player_table.iq,
 			packet->player_table.job, packet->player_table.voice, packet->player_table.dir, packet->player_table.x, packet->player_table.y, packet->player_table.z,
-			packet->player_table.hp, packet->player_table.sp, packet->player_table.sRandomHP, packet->player_table.sRandomSP, packet->player_table.stat_point, packet->player_table.stamina, packet->player_table.part_base, packet->player_table.part_base, packet->player_table.part_base, packet->player_table.gold, packet->player_table.cheque
-#ifdef NEW_ADD_INVENTORY
-			,packet->player_table.envanter
-#endif
-		);
+			packet->player_table.hp, packet->player_table.sp, packet->player_table.sRandomHP, packet->player_table.sRandomSP, packet->player_table.stat_point, packet->player_table.stamina, packet->player_table.part_base, packet->player_table.part_base, packet->player_table.gold);
 
-
-#ifdef ENABLE_CHEQUE_SYSTEM
-	sys_log(0, "PlayerCreate accountid %d name %s level %d gold %d cheque %d, st %d ht %d job %d",
+#ifdef ENABLE_LONG_LONG
+	sys_log(0, "PlayerCreate accountid %d name %s level %d gold %lld, st %d ht %d job %d",
 #else
 	sys_log(0, "PlayerCreate accountid %d name %s level %d gold %d, st %d ht %d job %d",
 #endif
@@ -1401,9 +962,6 @@ void CClientManager::__QUERY_PLAYER_CREATE(CPeer *peer, DWORD dwHandle, TPlayerC
 			packet->player_table.name,
 			packet->player_table.level,
 			packet->player_table.gold,
-#ifdef ENABLE_CHEQUE_SYSTEM
-			packet->player_table.cheque,
-#endif
 			packet->player_table.st,
 			packet->player_table.ht,
 			packet->player_table.job);
@@ -1418,7 +976,7 @@ void CClientManager::__QUERY_PLAYER_CREATE(CPeer *peer, DWORD dwHandle, TPlayerC
 	CDBManager::instance().EscapeString(text, packet->player_table.quickslot, sizeof(packet->player_table.quickslot));
 	queryLen += snprintf(queryStr + queryLen, sizeof(queryStr) - queryLen, "'%s')", text);
 
-	std::auto_ptr<SQLMsg> pMsg2(CDBManager::instance().DirectQuery(queryStr));
+	auto pMsg2(CDBManager::instance().DirectQuery(queryStr));
 	if (g_test_server)
 		sys_log(0, "Create_Player queryLen[%d] TEXT[%s]", queryLen, text);
 
@@ -1433,8 +991,8 @@ void CClientManager::__QUERY_PLAYER_CREATE(CPeer *peer, DWORD dwHandle, TPlayerC
 
 	snprintf(queryStr, sizeof(queryStr), "UPDATE player_index%s SET pid%d=%d WHERE id=%d",
 			GetTablePostfix(), packet->account_index + 1, player_id, packet->account_id);
-	std::auto_ptr<SQLMsg> pMsg3(CDBManager::instance().DirectQuery(queryStr));
 
+	auto pMsg3(CDBManager::instance().DirectQuery(queryStr));
 	if (pMsg3->Get()->uiAffectedRows <= 0)
 	{
 		sys_err("QUERY_ERROR: %s", queryStr);
@@ -1470,14 +1028,6 @@ void CClientManager::__QUERY_PLAYER_CREATE(CPeer *peer, DWORD dwHandle, TPlayerC
 	sys_log(0, "7 name %s job %d", pack.player.szName, pack.player.byJob);
 
 	s_createTimeByAccountID[packet->account_id] = time(0);
-
-#ifdef __SPECIALSTAT_SYSTEM__
-	//Creo il record delle stats per il nuovo player
-
-	char specialstats[512];
-	snprintf(specialstats, sizeof(specialstats), "INSERT INTO player.player_specialstats (pid, frt, agl, crm, tnc, avd, tlt, next_book_readtime, skip_time_book) VALUES('%d', '0', '0', '0', '0', '0', '0', '0', '0')", player_id);
-	std::auto_ptr<SQLMsg> pMsg5(CDBManager::instance().DirectQuery(specialstats));
-#endif
 }
 
 /*
@@ -1535,6 +1085,15 @@ void CClientManager::__QUERY_PLAYER_DELETE(CPeer* peer, DWORD dwHandle, TPlayerD
 			}
 		}
 	}
+	
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	if (IsUsingOfflineshopSystem(packet->player_id)) {
+		sys_log(0, "PLAYER_DELETE FAILED %u IS USING OFFLINESHOP SYSTEM", packet->player_id);
+		peer->EncodeHeader(HEADER_DG_PLAYER_DELETE_FAILED, dwHandle, 1);
+		peer->EncodeBYTE(packet->account_index);
+		return;
+	}
+#endif	
 
 	char szQuery[128];
 	snprintf(szQuery, sizeof(szQuery), "SELECT p.id, p.level, p.name FROM player_index%s AS i, player%s AS p WHERE pid%u=%u AND pid%u=p.id",
@@ -1548,7 +1107,7 @@ void CClientManager::__QUERY_PLAYER_DELETE(CPeer* peer, DWORD dwHandle, TPlayerD
 }
 
 //
-// @version	05/06/10 Bang2ni - 플레이어 삭제시 가격정보 리스트 삭제 추가.
+
 //
 void CClientManager::__RESULT_PLAYER_DELETE(CPeer *peer, SQLMsg* msg)
 {
@@ -1588,7 +1147,7 @@ void CClientManager::__RESULT_PLAYER_DELETE(CPeer *peer, SQLMsg* msg)
 
 		snprintf(queryStr, sizeof(queryStr), "INSERT INTO player%s_deleted SELECT * FROM player%s WHERE id=%d",
 				GetTablePostfix(), GetTablePostfix(), pi->player_id);
-		std::auto_ptr<SQLMsg> pIns(CDBManager::instance().DirectQuery(queryStr));
+		auto pIns(CDBManager::instance().DirectQuery(queryStr));
 
 		if (pIns->Get()->uiAffectedRows == 0 || pIns->Get()->uiAffectedRows == (uint32_t)-1)
 		{
@@ -1599,14 +1158,14 @@ void CClientManager::__RESULT_PLAYER_DELETE(CPeer *peer, SQLMsg* msg)
 			return;
 		}
 
-		// 삭제 성공
+
 		sys_log(0, "PLAYER_DELETE SUCCESS %u", dwPID);
 
 		char account_index_string[16];
 
 		snprintf(account_index_string, sizeof(account_index_string), "player_id%d", m_iPlayerIDStart + pi->account_index);
 
-		// 플레이어 테이블을 캐쉬에서 삭제한다.
+
 		CPlayerTableCache * pkPlayerCache = GetPlayerCache(pi->player_id);
 
 		if (pkPlayerCache)
@@ -1615,7 +1174,7 @@ void CClientManager::__RESULT_PLAYER_DELETE(CPeer *peer, SQLMsg* msg)
 			delete pkPlayerCache;
 		}
 
-		// 아이템들을 캐쉬에서 삭제한다.
+
 		TItemCacheSet * pSet = GetItemCacheSet(pi->player_id);
 
 		if (pSet)
@@ -1640,8 +1199,7 @@ void CClientManager::__RESULT_PLAYER_DELETE(CPeer *peer, SQLMsg* msg)
 				pi->account_index + 1,
 				pi->player_id);
 
-		std::auto_ptr<SQLMsg> pMsg(CDBManager::instance().DirectQuery(queryStr));
-
+		auto pMsg(CDBManager::instance().DirectQuery(queryStr));
 		if (pMsg->Get()->uiAffectedRows == 0 || pMsg->Get()->uiAffectedRows == (uint32_t)-1)
 		{
 			sys_log(0, "PLAYER_DELETE FAIL WHEN UPDATE account table");
@@ -1651,22 +1209,10 @@ void CClientManager::__RESULT_PLAYER_DELETE(CPeer *peer, SQLMsg* msg)
 		}
 
 		snprintf(queryStr, sizeof(queryStr), "DELETE FROM player%s WHERE id=%d", GetTablePostfix(), pi->player_id);
-		delete CDBManager::instance().DirectQuery(queryStr);
+		CDBManager::instance().DirectQuery(queryStr);
 
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-#ifdef ENABLE_SWITCHBOT
-		snprintf(queryStr, sizeof(queryStr), "DELETE FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67', 'CHANGE_EQUIP'))", GetTablePostfix(), pi->player_id);
-#else
-		snprintf(queryStr, sizeof(queryStr), "DELETE FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY'))", GetTablePostfix(), pi->player_id);
-#endif
-#else
-#ifdef ENABLE_SWITCHBOT
-		snprintf(queryStr, sizeof(queryStr), "DELETE FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY', 'SWITCHBOT', 'BONUS_NEW_67', 'CHANGE_EQUIP'))", GetTablePostfix(), pi->player_id);
-#else
-		snprintf(queryStr, sizeof(queryStr), "DELETE FROM item%s WHERE owner_id=%d AND (window in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','BELT_INVENTORY'))", GetTablePostfix(), pi->player_id);
-#endif	
-#endif
-		delete CDBManager::instance().DirectQuery(queryStr);
+		snprintf(queryStr, sizeof(queryStr), "DELETE FROM item%s WHERE owner_id=%d AND (`window` in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY','SWITCHBOT','CHANGE_EQUIP','GROUND'))", GetTablePostfix(), pi->player_id);
+		CDBManager::instance().DirectQuery(queryStr);
 
 		snprintf(queryStr, sizeof(queryStr), "DELETE FROM quest%s WHERE dwPID=%d", GetTablePostfix(), pi->player_id);
 		CDBManager::instance().AsyncQuery(queryStr);
@@ -1685,29 +1231,12 @@ void CClientManager::__RESULT_PLAYER_DELETE(CPeer *peer, SQLMsg* msg)
 		snprintf(queryStr, sizeof(queryStr), "DELETE FROM messenger_list%s WHERE account='%s' OR companion='%s'", GetTablePostfix(), szName, szName);
 		CDBManager::instance().AsyncQuery(queryStr);
 
-#ifdef GUILD_WAR_COUNTER
-		snprintf(queryStr, sizeof(queryStr), "DELETE FROM guild_counter_ranking%s WHERE pid=%d", GetTablePostfix(), pi->player_id);
-		CDBManager::instance().AsyncQuery(queryStr);
-		snprintf(queryStr, sizeof(queryStr), "DELETE FROM guild_counter_ranking_deleted%s WHERE pid=%d",GetTablePostfix(), pi->player_id);
-		CDBManager::instance().AsyncQuery(queryStr);
-#endif
-#ifdef ENABLE_GUILD_REQUEST
-		snprintf(queryStr, sizeof(queryStr), "DELETE FROM player.request_list WHERE pid = %d", pi->player_id);
-		CDBManager::instance().AsyncQuery(queryStr);
-#endif
-
-#ifdef __SPECIALSTAT_SYSTEM__
-		//Cancello il record delle stats per il player
-		snprintf(queryStr, sizeof(queryStr), "DELETE FROM player_specialstats WHERE pid=%d", pi->player_id);
-		std::auto_ptr<SQLMsg> pMsg5(CDBManager::instance().DirectQuery(queryStr));
-#endif
-
 		peer->EncodeHeader(HEADER_DG_PLAYER_DELETE_SUCCESS, pi->dwHandle, 1);
 		peer->EncodeBYTE(pi->account_index);
 	}
 	else
 	{
-		// 삭제 실패
+
 		sys_log(0, "PLAYER_DELETE FAIL NO ROW");
 		peer->EncodeHeader(HEADER_DG_PLAYER_DELETE_FAILED, pi->dwHandle, 1);
 		peer->EncodeBYTE(pi->account_index);
@@ -1792,7 +1321,7 @@ void CClientManager::RESULT_HIGHSCORE_REGISTER(CPeer * pkPeer, SQLMsg * msg)
 
 	if (res->uiNumRows == 0)
 	{
-		// 새로운 하이스코어를 삽입
+
 		char buf[256];
 		snprintf(buf, sizeof(buf), "INSERT INTO highscore%s VALUES('%s', %u, %d)", GetTablePostfix(), szBoard, pi->player_id, value);
 		CDBManager::instance().AsyncQuery(buf);
@@ -1827,7 +1356,7 @@ void CClientManager::RESULT_HIGHSCORE_REGISTER(CPeer * pkPeer, SQLMsg * msg)
 			CDBManager::instance().AsyncQuery(buf);
 		}
 	}
-	// TODO: 이곳에서 하이스코어가 업데이트 되었는지 체크하여 공지를 뿌려야한다.
+
 	delete pi;
 }
 
@@ -1835,10 +1364,10 @@ void CClientManager::InsertLogoutPlayer(DWORD pid)
 {
 	TLogoutPlayerMap::iterator it = m_map_logout.find(pid);
 
-	// 존재하지 않을경우 추가
+
 	if (it != m_map_logout.end())
 	{
-		// 존재할경우 시간만 갱신
+
 		if (g_log)
 			sys_log(0, "LOGOUT: Update player time pid(%d)", pid);
 
@@ -1904,4 +1433,4 @@ void CClientManager::FlushPlayerCacheSet(DWORD pid)
 		delete c;
 	}
 }
-
+//martysama0134's 2022

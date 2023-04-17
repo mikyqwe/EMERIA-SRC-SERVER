@@ -1,4 +1,3 @@
-
 const static int nBATTLE_ARENA_MAP[] = { 0, 190, 191, 192 };
 const static std::string strRegen[] =
 {
@@ -39,4 +38,4 @@ class CBattleArena : public singleton<CBattleArena>
 		void SpawnLastBoss();
 		void SpawnRandomStone();
 };
-
+//martysama0134's 2022

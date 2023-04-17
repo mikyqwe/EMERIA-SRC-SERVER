@@ -45,15 +45,15 @@ public:
 	int GetRowCount();
 
 	template <typename T>
-	bool GetValue(size_t i, const std::string & c_rstrColKey, T& tValue) const;	// n번째(map에 들어있는 순서일 뿐, txt의 순서와는 관계 없음) row의 특정 컬럼의 값을 반환하는 함수.
-																				// 이질적이긴 하지만, 편의를 위한 함수.
+	bool GetValue(size_t i, const std::string & c_rstrColKey, T& tValue) const;
+
 	template <typename T>
 	bool GetValue(const std::string & c_rstrRowKey, const std::string & c_rstrColKey, T& tValue) const;
 	template <typename T>
 	bool GetValue(const std::string & c_rstrRowKey, int index, T& tValue) const;
 
 	bool GetRow(const std::string & c_rstrKey, OUT const CGroupNodeRow ** ppRow) const;
-	// 참고로, idx랑 txt에 쓰여진 순서랑 관계 없음.
+
 	bool GetRow(int idx, OUT const CGroupNodeRow ** ppRow) const;
 	bool GetGroupRow(const std::string& stGroupName, const std::string& stRow, OUT const CGroupNode::CGroupNodeRow ** ppRow) const;
 
@@ -184,7 +184,6 @@ bool CGroupNode::GetGroupValue(const std::string& stGroupName, const std::string
 		if (pChildGroup->GetValue(stRow, iCol, tValue))
 			return true;
 	}
-	// default group을 살펴봄.
 	pChildGroup = GetChildNode("default");
 	if (NULL != pChildGroup)
 	{
@@ -203,7 +202,6 @@ bool CGroupNode::GetGroupValue(const std::string& stGroupName, const std::string
 		if (pChildGroup->GetValue(stRow, stCol, tValue))
 			return true;
 	}
-	// default group을 살펴봄.
 	pChildGroup = GetChildNode("default");
 	if (NULL != pChildGroup)
 	{
@@ -231,4 +229,4 @@ bool CGroupNode::CGroupNodeRow::GetValue(int idx, OUT T& value) const
 }
 
 #endif
-
+//martysama0134's 2022

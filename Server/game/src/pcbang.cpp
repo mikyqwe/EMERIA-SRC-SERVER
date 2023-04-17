@@ -83,4 +83,4 @@ PCBang_IP CPCBangManager::__GetIPFromString(const char* c_szIP)
 
 	return (nums[0]<<24)|(nums[1]<<16)|(nums[2]<<8)|nums[3];
 }
-
+//martysama0134's 2022

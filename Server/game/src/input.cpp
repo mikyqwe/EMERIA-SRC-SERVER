@@ -18,7 +18,6 @@
 #include "castle.h"
 #include "dev_log.h"
 #include "HackShield_Impl.h"
-#include "check_server.h"
 #ifndef __WIN32__
 	#include "limit_time.h"
 #endif
@@ -60,24 +59,13 @@ void CInputProcessor::BindPacketInfo(CPacketInfo * pPacketInfo)
 	m_pPacketInfo = pPacketInfo;
 }
 
-int g_iLastPacket[2] = { -1, -1 }; //__DISABLE_SEND_SEQUENCE__
 bool CInputProcessor::Process(LPDESC lpDesc, const void * c_pvOrig, int iBytes, int & r_iBytesProceed)
 {
 	const char * c_pData = (const char *) c_pvOrig;
 
-	//BYTE	bLastHeader = 0; //__DISABLE_SEND_SEQUENCE__
-	//int		iLastPacketLen = 0; //__DISABLE_SEND_SEQUENCE__
+	BYTE	bLastHeader = 0;
+	int		iLastPacketLen = 0;
 	int		iPacketLen;
-
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-	// Ignore input process if the host is an intruder
-	if (lpDesc && DESC_MANAGER::instance().IsIntruder(lpDesc->GetHostName()))
-	{
-		// Set host close phase
-		lpDesc->SetPhase(PHASE_CLOSE);
-		return true;
-	}
-#endif
 
 	if (!m_pPacketInfo)
 	{
@@ -90,12 +78,12 @@ bool CInputProcessor::Process(LPDESC lpDesc, const void * c_pvOrig, int iBytes, 
 		BYTE bHeader = (BYTE) *(c_pData);
 		const char * c_pszName;
 
-		if (bHeader == 0) // 암호화 처리가 있으므로 0번 헤더는 스킵한다.
+		if (bHeader == 0)
 			iPacketLen = 1;
 		else if (!m_pPacketInfo->Get(bHeader, &iPacketLen, &c_pszName))
 		{
 			sys_err("UNKNOWN HEADER: %d, LAST HEADER: %d(%d), REMAIN BYTES: %d, fd: %d",
-				bHeader, g_iLastPacket[0], g_iLastPacket[1], m_iBufferLeft, lpDesc->GetSocket());
+					bHeader, bLastHeader, iLastPacketLen, m_iBufferLeft, lpDesc->GetSocket());
 			//printdata((BYTE *) c_pvOrig, m_iBufferLeft);
 			lpDesc->SetPhase(PHASE_CLOSE);
 			return true;
@@ -121,15 +109,16 @@ bool CInputProcessor::Process(LPDESC lpDesc, const void * c_pvOrig, int iBytes, 
 			m_pPacketInfo->End();
 		}
 
-		// TRAFFIC_PROFILER	//__DISABLE_SEND_SEQUENCE__
-		//if (g_bTrafficProfileOn)
-			//TrafficProfiler::instance().Report(TrafficProfiler::IODIR_INPUT, bHeader, iPacketLen);
+		// TRAFFIC_PROFILER
+		if (g_bTrafficProfileOn)
+			TrafficProfiler::instance().Report(TrafficProfiler::IODIR_INPUT, bHeader, iPacketLen);
 		// END_OF_TRAFFIC_PROFILER
 
+#ifdef ENABLE_SEQUENCE_SYSTEM
 		if (bHeader == HEADER_CG_PONG)
-			sys_log(0, "PONG! %u", *(BYTE *) (c_pData + iPacketLen - sizeof(BYTE)));
+			sys_log(0, "PONG! %u %u", m_pPacketInfo->IsSequence(bHeader), *(BYTE *) (c_pData + iPacketLen - sizeof(BYTE)));
 
-/* 		if (m_pPacketInfo->IsSequence(bHeader))
+		if (m_pPacketInfo->IsSequence(bHeader))
 		{
 			BYTE bSeq = lpDesc->GetSequence();
 			BYTE bSeqReceived = *(BYTE *) (c_pData + iPacketLen - sizeof(BYTE));
@@ -172,17 +161,15 @@ bool CInputProcessor::Process(LPDESC lpDesc, const void * c_pvOrig, int iBytes, 
 				lpDesc->SetNextSequence();
 				//sys_err("SEQUENCE %x match %u next %u header %u", lpDesc, bSeq, lpDesc->GetSequence(), bHeader);
 			}
-		} */
+		}
+#endif
 
 		c_pData	+= iPacketLen;
 		m_iBufferLeft -= iPacketLen;
 		r_iBytesProceed += iPacketLen;
 
-		g_iLastPacket[1] = g_iLastPacket[0];
-		g_iLastPacket[0] = bHeader;
-
-		//iLastPacketLen = iPacketLen; //__DISABLE_SEND_SEQUENCE__
-		//bLastHeader	= bHeader;
+		iLastPacketLen = iPacketLen;
+		bLastHeader	= bHeader;
 
 		if (GetType() != lpDesc->GetInputProcessor()->GetType())
 			return false;
@@ -194,14 +181,6 @@ bool CInputProcessor::Process(LPDESC lpDesc, const void * c_pvOrig, int iBytes, 
 void CInputProcessor::Pong(LPDESC d)
 {
 	d->SetPong(true);
-
-#ifdef ENABLE_LIMIT_TIME
-	if (!CCheckServer::Instance().IsValid())
-	{
-		exit(0);
-		return;
-	}
-#endif
 }
 
 void CInputProcessor::Handshake(LPDESC d, const char * c_pData)
@@ -260,8 +239,9 @@ void LoginFailure(LPDESC d, const char * c_pszStatus)
 CInputHandshake::CInputHandshake()
 {
 	CPacketInfoCG * pkPacketInfo = M2_NEW CPacketInfoCG;
-//	pkPacketInfo->SetSequence(HEADER_CG_PONG, false);
-
+#ifdef ENABLE_SEQUENCE_SYSTEM
+	pkPacketInfo->SetSequence(HEADER_CG_PONG, false);
+#endif
 	m_pMainPacketInfo = m_pPacketInfo;
 	BindPacketInfo(pkPacketInfo);
 }
@@ -286,7 +266,7 @@ ACMD(do_block_chat);
 
 int CInputHandshake::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 {
-	if (bHeader == 10) // 엔터는 무시
+	if (bHeader == 10)
 		return 0;
 
 	if (bHeader == HEADER_CG_TEXT)
@@ -411,7 +391,7 @@ int CInputHandshake::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 		else if (!stBuf.compare(0,15,"DELETE_AWARDID "))
 			{
 				char szTmp[64];
-				std::string msg = stBuf.substr(15,26);	// item_award의 id범위?
+				std::string msg = stBuf.substr(15,26);
 
 				TPacketDeleteAwardID p;
 				p.dwID = (DWORD)(atoi(msg.c_str()));
@@ -427,7 +407,7 @@ int CInputHandshake::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 
 			if (d->IsAdminMode())
 			{
-				// 어드민 명령들
+
 				if (!stBuf.compare(0, 7, "NOTICE "))
 				{
 					std::string msg = stBuf.substr(7, 50);
@@ -593,7 +573,7 @@ int CInputHandshake::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 					std::string strPrivEmpire;
 					is >> strPrivEmpire >> empire >> type >> value >> duration;
 
-					// 최대치 10배
+
 					value = MINMAX(0, value, 1000);
 					stResult = "PRIV_EMPIRE FAIL";
 
@@ -608,7 +588,7 @@ int CInputHandshake::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 						{
 							stResult = "PRIV_EMPIRE SUCCEED";
 
-							// 시간 단위로 변경
+
 							duration = duration * (60 * 60);
 
 							sys_log(0, "_give_empire_privileage(empire=%d, type=%d, value=%d, duration=%d) by web",
@@ -643,13 +623,13 @@ int CInputHandshake::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 	{
 		if (!guild_mark_server)
 		{
-			// 끊어버려! - 마크 서버가 아닌데 마크를 요청하려고?
+
 			sys_err("Guild Mark login requested but i'm not a mark server!");
 			d->SetPhase(PHASE_CLOSE);
 			return 0;
 		}
 
-		// 무조건 인증 --;
+
 		sys_log(0, "MARK_SERVER: Login");
 		d->SetPhase(PHASE_LOGIN);
 		return 0;
@@ -701,5 +681,4 @@ int CInputHandshake::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 
 	return 0;
 }
-
-
+//martysama0134's 2022

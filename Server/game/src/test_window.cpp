@@ -120,7 +120,7 @@ int main(int argc, char ** argv)
 	SECTREE_MANAGER	sectree_manager;
 	DESC_MANAGER desc_manager;
 	CHARACTER_MANAGER char_manager;
-	quest::CQuestManager quest_manager; // CHARACTER::Intiailize에서 필요함
+	quest::CQuestManager quest_manager;
 	CArenaManager arena_manager;
 	CPVPManager pvp_manager;
 	LZOManager lzo;
@@ -186,7 +186,7 @@ int main(int argc, char ** argv)
 					// Buffer overflow test (must use with valgrind or gdb at least)
                     LPCHARACTER ch = CHARACTER_MANAGER::instance().CreateCharacter("test");
 
-					// 스택에 할당하면 valgrind가 제대로 오류를 잡지 못함
+
 					size_t bufsize = 512 + 1;
 					size_t linesize = 1024 + 1;
 
@@ -289,11 +289,11 @@ bool ReadMapAttribute(DWORD dwAreaX, DWORD dwAreaY, const char * c_pszFileName)
 	fclose(fp);	// close file
 
 	//
-	// 하나의 SECTREE는 6400 PIXEL을 차지 100픽셀이 1미터 이므로
+
 	// 1 SECTREE = 64m = 6400px
 	//
-	// 클라이언트의 하나의 Area는 256m를 차지하므로 SECTREE 네개를 처리해야
-	// 한다.
+
+
 	//
 	DWORD dwStartX, dwStartY, dwEndX, dwEndY;
 
@@ -325,9 +325,8 @@ bool ReadMapAttribute(DWORD dwAreaX, DWORD dwAreaY, const char * c_pszFileName)
 			{
 				for (int ax = region[x - dwStartX][0], px = 0; ax < region[x - dwStartX][1]; ++ax, px += 2)
 				{
-					// AREA의 경우 속성 해상도가 1m 이므로
-					// CELL 1개가 50x50cm인 SECTREE에서는
-					// AREA의 속성 한개가 2x2개를 차지 한다.
+
+
 					BYTE bAttr = pbAttr[ay * wHeight + ax];
 
 					if (bAttr & ATTR_OBJECT)
@@ -367,7 +366,7 @@ void GetFindFileList(LPCTSTR pszDirectory, LPCTSTR pszFilter, std::vector <std::
 	for(;hHandle!=INVALID_HANDLE_VALUE;)
 	{
 		if( ( FindFileData.cFileName[0]!=_T('.') || lstrlen(FindFileData.cFileName)>2) &&
-			( 0 != _stricmp( FindFileData.cFileName, "Replay"))) //  Replay 폴더는 지우지 않는다
+			( 0 != _stricmp( FindFileData.cFileName, "Replay")))
 		{
 			lstrcpy(buf,pszDirectory);
 			lstrcat(buf,_T("\\"));
@@ -541,7 +540,6 @@ void ProcessLine(int sx, int sy, int ex, int ey, _f f)
 	else
 		h = ey - sy;
 
-	// distance = (w * w) + (h * h); // 거리
 	if (w > h)
 	{
 		d = (h << 1) - w;
@@ -570,7 +568,7 @@ void ProcessLine(int sx, int sy, int ex, int ey, _f f)
 				default: return;
 			}
 
-			if (!f(px, py))	// false 가 리턴 되면 중단 한다.
+			if (!f(px, py))
 			{
 				printf("putting error %d %d", px, py);
 				return;
@@ -604,7 +602,7 @@ void ProcessLine(int sx, int sy, int ex, int ey, _f f)
 				default: return;
 			}
 
-			if (!f(px, py))	// false 가 리턴 되면 중단 한다.
+			if (!f(px, py))
 			{
 				printf("putting error %d %d", px, py);
 				return;
@@ -756,10 +754,10 @@ void ReadCollisionData(const char * c_pszFileName, int iBaseX, int iBaseY)
 
 								}
 							}
-							// 사각형 채우기도 합시다
-							// 0 1 2 3 순서대로
+
+
 							// -- +- -+ ++
-							// 근데 y 는 마이너스 취하는거 확인하시길
+
 							// TODO
 						}
 						break;
@@ -831,7 +829,7 @@ void ConvertAttribute(const char * c_pszCollisionDataFileName, const char * c_ps
 	printf("bx by %d %d\n", bx, by);
 	int x, y;
 
-	// 일단 속성 초기화
+
 	for (y = 0; y < iMapHeight * (25600 / SECTREE_SIZE); ++y)
 	{
 		for (x = 0; x < iMapWidth * (25600 / SECTREE_SIZE); ++x)
@@ -979,4 +977,4 @@ void ConvertAttribute2(const char * filename)
 	fclose(fp);
 	fclose(wfp);
 }
-
+//martysama0134's 2022

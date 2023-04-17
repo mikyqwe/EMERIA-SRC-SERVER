@@ -63,5 +63,4 @@ inline void_binder<F> void_bind(const F& f, const Arg& arg)
 // This software is provided "as is" without express or implied warranty.
 
 #endif
-
-
+//martysama0134's 2022

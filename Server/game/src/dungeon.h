@@ -28,9 +28,6 @@ class CDungeon
 
 	void	JoinParty(LPPARTY pParty);
 	void	QuitParty(LPPARTY pParty);
-	//void	NewKillAll(DWORD dwMapIndex);
-	void	MissionNotice(DWORD dwMapIndex, const char* msg, BYTE value = 0);
-	void	DungeonCommand(DWORD dwMapIndex, const char* msg);
 
 	void	Join(LPCHARACTER ch);
 
@@ -44,8 +41,8 @@ class CDungeon
 
 	void	IncMonster() { m_iMonsterCount++; sys_log(0, "MonsterCount %d", m_iMonsterCount); }
 	void	DecMonster() { m_iMonsterCount--; CheckEliminated(); }
-	int	CountMonster() { return m_iMonsterCount; }	// 데이터로 리젠한 몬스터의 수
-	int	CountRealMonster();				// 실제로 맵상에 있는 몬스터
+	int	CountMonster() { return m_iMonsterCount; }
+	int	CountRealMonster();
 
 	void	IncPartyMember(LPPARTY pParty, LPCHARACTER ch);
 	void	DecPartyMember(LPPARTY pParty, LPCHARACTER ch);
@@ -83,16 +80,8 @@ class CDungeon
 	void	PurgeUnique(const std::string& key);
 	bool	IsUniqueDead(const std::string& key);
 	float	GetUniqueHpPerc(const std::string& key);
-#ifdef ENABLE_DUNGEON_FUNC
-	int		GetUniqueHp(const std::string& key);
-#endif
 	DWORD	GetUniqueVid(const std::string& key);
-	
-#ifdef ENABLE_DUNGEON_FUNC
-	void	BlockUniqueHP(const std::string& key, BYTE uniqTargetHP);
-	void	UnblockUniqueHP(const std::string& key);
-#endif
-	
+
 	void	DeadCharacter(LPCHARACTER ch);
 
 	void	UniqueSetMaxHP(const std::string& key, int iMaxHP);
@@ -120,7 +109,6 @@ class CDungeon
 	void	SetFlag(std::string name, int value);
 	void	SetWarpLocation (long map_index, int x, int y);
 
-	// item group은 item_vnum과 item_count로 구성.
 	typedef std::vector <std::pair <DWORD, int> > ItemGroup;
 	void	CreateItemGroup (std::string& group_name, ItemGroup& item_group);
 	const ItemGroup* GetItemGroup (std::string& group_name);
@@ -159,7 +147,7 @@ class CDungeon
 	bool		m_bExitAllAtEliminate;
 	bool		m_bWarpAtEliminate;
 
-	// 적 전멸시 워프하는 위치
+
 	int		m_iWarpDelay;
 	long		m_lWarpMapIndex;
 	long		m_lWarpX;
@@ -180,9 +168,9 @@ class CDungeon
 	friend EVENTFUNC(dungeon_exit_all_event);
 	friend EVENTFUNC(dungeon_jump_to_event);
 
-	// 파티 단위 던전 입장을 위한 임시 변수.
-	// m_map_pkParty는 관리가 부실하여 사용할 수 없다고 판단하여,
-	// 임시로 한 파티에 대한 관리를 하는 변수 생성.
+
+
+
 
 	LPPARTY m_pParty;
 #ifdef ENABLE_D_NJGUILD
@@ -215,3 +203,4 @@ class CDungeonManager : public singleton<CDungeonManager>
 };
 
 #endif
+//martysama0134's 2022

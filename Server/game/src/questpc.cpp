@@ -243,66 +243,68 @@ namespace quest
 		qi.c_index = CQuestManager::instance().GetQuestCategoryByQuestIndex(qi.index);
 #endif
 
-		if (m_iSendToClient & QUEST_SEND_TITLE)
-		{
-			m_RunningQuestState->_title.reserve(30+1);
-			strlcpy(qi.szTitle, m_RunningQuestState->_title.c_str(), sizeof(qi.szTitle));
-			qi.szTitle[30] = '\0';
-		}
-		else
-			qi.szTitle[30 + 1] = '\0';
+		TEMP_BUFFER buf;
+		buf.write(&qi, sizeof(qi));
 
 		if (m_iSendToClient & QUEST_SEND_ISBEGIN)
 		{
-			qi.isBegin = m_RunningQuestState->bStart?1:0;
-		}
-		else
-			qi.isBegin = 0;
+			BYTE temp = m_RunningQuestState->bStart?1:0;
+			buf.write(&temp,1);
+			qi.size+=1;
 
+			sys_log(1, "QUEST BeginFlag %d", (int)temp);
+		}
+		if (m_iSendToClient & QUEST_SEND_TITLE)
+		{
+			m_RunningQuestState->_title.reserve(30+1);
+			buf.write(m_RunningQuestState->_title.c_str(), 30+1);
+			qi.size+=30+1;
+
+			sys_log(1, "QUEST Title %s", m_RunningQuestState->_title.c_str());
+		}
 		if (m_iSendToClient & QUEST_SEND_CLOCK_NAME)
 		{
 			m_RunningQuestState->_clock_name.reserve(16+1);
-			strlcpy(qi.szClockName, m_RunningQuestState->_clock_name.c_str(), sizeof(qi.szClockName));
-			qi.szClockName[16] = '\0';
-		}
-		else
-			qi.szClockName[16] = '\0';
+			buf.write(m_RunningQuestState->_clock_name.c_str(), 16+1);
+			qi.size+=16+1;
 
+			sys_log(1, "QUEST Clock Name %s", m_RunningQuestState->_clock_name.c_str());
+		}
 		if (m_iSendToClient & QUEST_SEND_CLOCK_VALUE)
 		{
-			qi.iClockValue = m_RunningQuestState->_clock_value;
-		}
-		else
-			qi.iClockValue = 0;
+			buf.write(&m_RunningQuestState->_clock_value, sizeof(int));
+			qi.size+=4;
 
+			sys_log(1, "QUEST Clock Value %d", m_RunningQuestState->_clock_value);
+		}
 		if (m_iSendToClient & QUEST_SEND_COUNTER_NAME)
 		{
 			m_RunningQuestState->_counter_name.reserve(16+1);
-			strlcpy(qi.szCounterName, m_RunningQuestState->_counter_name.c_str(), sizeof(qi.szCounterName));
-			qi.szCounterName[16] = '\0';
-		}
-		else
-			qi.szCounterName[16] = '\0';
+			buf.write(m_RunningQuestState->_counter_name.c_str(), 16+1);
+			qi.size+=16+1;
 
+			sys_log(1, "QUEST Counter Name %s", m_RunningQuestState->_counter_name.c_str());
+		}
 		if (m_iSendToClient & QUEST_SEND_COUNTER_VALUE)
 		{
-			qi.iCounterValue = m_RunningQuestState->_counter_value;
-		}
-		else
-			qi.iCounterValue = 0;
+			buf.write(&m_RunningQuestState->_counter_value, sizeof(int));
+			qi.size+=4;
 
+			sys_log(1, "QUEST Counter Value %d", m_RunningQuestState->_counter_value);
+		}
 		if (m_iSendToClient & QUEST_SEND_ICON_FILE)
 		{
 			m_RunningQuestState->_icon_file.reserve(24+1);
-			strlcpy(qi.szIconFileName, m_RunningQuestState->_icon_file.c_str(), sizeof(qi.szIconFileName));
-			qi.szIconFileName[24] = '\0';
-		}
-		else
-			qi.szIconFileName[24] = '\0';
+			buf.write(m_RunningQuestState->_icon_file.c_str(), 24+1);
+			qi.size+=24+1;
 
-		CQuestManager::instance().GetCurrentCharacterPtr()->GetDesc()->Packet(&qi, sizeof(qi));
+			sys_log(1, "QUEST Icon File %s", m_RunningQuestState->_icon_file.c_str());
+		}
+
+		CQuestManager::instance().GetCurrentCharacterPtr()->GetDesc()->Packet(buf.read_peek(),buf.size());
 
 		m_iSendToClient = 0;
+
 	}
 
 	void PC::EndRunning()
@@ -311,10 +313,10 @@ namespace quest
 		{
 			LPCHARACTER npc = CQuestManager::instance().GetCurrentNPCCharacterPtr();
 			LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-			// npc 있었던 경우
+
 			if (npc && !npc->IsPC())
 			{
-				// 그 엔피씨가 나에게 락인 경우
+
 				if (ch->GetPlayerID() == npc->GetQuestNPCID())
 				{
 					npc->SetQuestNPCID(0);
@@ -627,7 +629,7 @@ namespace quest
 	{
 		if (m_bIsGivenReward)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"<퀘스트> 이전에 같은 보상을 받은 적이 있어 다시 받지 않습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<퀘스트> 이전에 같은 보상을 받은 적이 있어 다시 받지 않습니다."));
 			m_bIsGivenReward = false;
 		}
 
@@ -723,4 +725,4 @@ namespace quest
 		}
 	}
 }
-
+//martysama0134's 2022

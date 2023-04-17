@@ -85,4 +85,4 @@ class CStateTemplate : public CState
 };
 
 #endif
-
+//martysama0134's 2022

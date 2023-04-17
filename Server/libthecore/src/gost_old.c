@@ -54,7 +54,7 @@ typedef unsigned long word32;
  * The standard also does not specify a standard bit-string representation
  * for the contents of these blocks.
  */
-static unsigned char const k8[16] = { 14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7 }; 
+static unsigned char const k8[16] = { 14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7 };
 static unsigned char const k7[16] = { 15,  1,  8, 14,  6, 11,  3,  4,  9,  7,  2, 13, 12,  0,  5, 10 };
 static unsigned char const k6[16] = { 10,  0,  9, 14,  6,  3, 15,  5,  1, 13, 12,  7, 11,  4,  2,  8 };
 static unsigned char const k5[16] = { 7, 13, 14,  3,  0,  6,  9, 10,  1,  2,  8,  5, 11, 12,  4, 15 };
@@ -79,7 +79,7 @@ void kboxinit(void)
 {
     int i;
 
-    for (i = 0; i < 256; i++) 
+    for (i = 0; i < 256; i++)
     {
 	k87[i] = k8[i >> 4] << 4 | k7[i & 15];
 	k65[i] = k6[i >> 4] << 4 | k5[i & 15];
@@ -303,7 +303,7 @@ void gostcfbencrypt(word32 const *in, word32 *out, int len, word32 iv[2], word32
 void gostcfbdecrypt(word32 const *in, word32 *out, int len, word32 iv[2], word32 const key[8])
 {
     word32 t;
-   
+
     while (len--)
     {
 	gostcrypt(iv, iv, key);
@@ -409,3 +409,4 @@ int main(void)
 }
 
 #endif /* TEST */
+//martysama0134's 2022

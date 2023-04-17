@@ -30,18 +30,15 @@ void CClientManager::GuildAddMember(CPeer* peer, TPacketGDGuildAddMember * p)
 	char szQuery[512];
 
 	snprintf(szQuery, sizeof(szQuery),
-
 			"INSERT INTO guild_member%s VALUES(%u, %u, %d, 0, 0)",
-
 			GetTablePostfix(), p->dwPID, p->dwGuild, p->bGrade);
 
-	std::auto_ptr<SQLMsg> pmsg_insert(CDBManager::instance().DirectQuery(szQuery));
+	auto pmsg_insert(CDBManager::instance().DirectQuery(szQuery));
+
 	snprintf(szQuery, sizeof(szQuery),
 			"SELECT pid, grade, is_general, offer, level, job, name FROM guild_member%s, player%s WHERE guild_id = %u and pid = id and pid = %u", GetTablePostfix(), GetTablePostfix(), p->dwGuild, p->dwPID);
 
-
-	std::auto_ptr<SQLMsg> pmsg(CDBManager::instance().DirectQuery(szQuery));
-
+	auto pmsg(CDBManager::instance().DirectQuery(szQuery));
 	if (pmsg->Get()->uiNumRows == 0)
 	{
 		sys_err("Query failed when getting guild member data %s", pmsg->stQuery.c_str());
@@ -121,20 +118,6 @@ void CClientManager::GuildDisband(CPeer* peer, TPacketGuild* p)
 
 	snprintf(szQuery, sizeof(szQuery), "DELETE FROM guild_comment%s WHERE guild_id=%u", GetTablePostfix(), p->dwGuild);
 	CDBManager::instance().AsyncQuery(szQuery);
-#ifdef GUILD_WAR_COUNTER
-	snprintf(szQuery, sizeof(szQuery), "DELETE FROM guild_war_reservation%s WHERE guild1=%u or guild2=%u",GetTablePostfix(), p->dwGuild);
-	CDBManager::instance().AsyncQuery(szQuery);
-	snprintf(szQuery, sizeof(szQuery), "DELETE FROM guild_war_reservation_deleted%s WHERE guild1=%u or guild2=%u", GetTablePostfix(),p->dwGuild);
-	CDBManager::instance().AsyncQuery(szQuery);
-	snprintf(szQuery, sizeof(szQuery), "DELETE FROM guild_counter_ranking%s WHERE guild_id=%u",GetTablePostfix(), p->dwGuild);
-	CDBManager::instance().AsyncQuery(szQuery);
-	snprintf(szQuery, sizeof(szQuery), "DELETE FROM guild_counter_ranking_deleted%s WHERE guild_id=%u",GetTablePostfix(), p->dwGuild);
-	CDBManager::instance().AsyncQuery(szQuery);
-#endif
-#ifdef ENABLE_GUILD_REQUEST
-	snprintf(szQuery, sizeof(szQuery), "DELETE FROM player.request_list WHERE guild_id=%u", p->dwGuild);
-	CDBManager::instance().AsyncQuery(szQuery);
-#endif	
 
 	ForwardPacket(HEADER_DG_GUILD_DISBAND, p, sizeof(TPacketGuild));
 }
@@ -159,23 +142,13 @@ void CClientManager::GuildWar(CPeer* peer, TPacketGuildWar* p)
 	switch (p->bWar)
 	{
 		case GUILD_WAR_SEND_DECLARE:
-#ifdef __IMPROVED_GUILD_WAR__
-			sys_log(0, "GuildWar: GUILD_WAR_SEND_DECLARE type(%s) guild(%d - %d) limits(%d - %d) info(%ld - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-			CGuildManager::instance().AddDeclare(p->bType, p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-#else
 			sys_log(0, "GuildWar: GUILD_WAR_SEND_DECLARE type(%s) guild(%d - %d)",  __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo);
 			CGuildManager::instance().AddDeclare(p->bType, p->dwGuildFrom, p->dwGuildTo);
-#endif
 			break;
 
 		case GUILD_WAR_REFUSE:
-#ifdef __IMPROVED_GUILD_WAR__
-			sys_log(0, "GuildWar: GUILD_WAR_REFUSE type(%s) guild(%d - %d) limits(%d - %d) info(%ld - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-			CGuildManager::instance().RemoveDeclare(p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-#else
 			sys_log(0, "GuildWar: GUILD_WAR_REFUSE type(%s) guild(%d - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo);
 			CGuildManager::instance().RemoveDeclare(p->dwGuildFrom, p->dwGuildTo);
-#endif
 			break;
 			/*
 			   case GUILD_WAR_WAIT_START:
@@ -189,15 +162,10 @@ void CClientManager::GuildWar(CPeer* peer, TPacketGuildWar* p)
 
 		case GUILD_WAR_WAIT_START:
 			sys_log(0, "GuildWar: GUILD_WAR_WAIT_START type(%s) guild(%d - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo);
-		case GUILD_WAR_RESERVE:	// ±æµåÀü ¿¹¾à
+		case GUILD_WAR_RESERVE:
 			if (p->bWar != GUILD_WAR_WAIT_START)
 				sys_log(0, "GuildWar: GUILD_WAR_RESERVE type(%s) guild(%d - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo);
-
-#ifdef __IMPROVED_GUILD_WAR__
-			CGuildManager::instance().RemoveDeclare(p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-#else
 			CGuildManager::instance().RemoveDeclare(p->dwGuildFrom, p->dwGuildTo);
-#endif
 
 			if (!CGuildManager::instance().ReserveWar(p))
 				p->bWar = GUILD_WAR_CANCEL;
@@ -206,46 +174,25 @@ void CClientManager::GuildWar(CPeer* peer, TPacketGuildWar* p)
 
 			break;
 
-		case GUILD_WAR_ON_WAR:		
-#ifdef __IMPROVED_GUILD_WAR__
-			sys_log(0, "GuildWar: GUILD_WAR_ON_WAR type(%s) guild(%d - %d) limits(%d - %d) info(%ld - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-			CGuildManager::instance().RemoveDeclare(p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-			CGuildManager::instance().StartWar(p->bType, p->dwGuildFrom, p->dwGuildTo, NULL, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-#else
+		case GUILD_WAR_ON_WAR:
 			sys_log(0, "GuildWar: GUILD_WAR_ON_WAR type(%s) guild(%d - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo);
 			CGuildManager::instance().RemoveDeclare(p->dwGuildFrom, p->dwGuildTo);
 			CGuildManager::instance().StartWar(p->bType, p->dwGuildFrom, p->dwGuildTo);
-#endif
 			break;
 
-		case GUILD_WAR_OVER:		
-#ifdef __IMPROVED_GUILD_WAR__
-			sys_log(0, "GuildWar: GUILD_WAR_OVER type(%s) guild(%d - %d) limits(%d - %d) info(%ld - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-			CGuildManager::instance().RecvWarOver(p->dwGuildFrom, p->dwGuildTo, p->bType, p->lWarPrice, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-#else
+		case GUILD_WAR_OVER:
 			sys_log(0, "GuildWar: GUILD_WAR_OVER type(%s) guild(%d - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo);
 			CGuildManager::instance().RecvWarOver(p->dwGuildFrom, p->dwGuildTo, p->bType, p->lWarPrice);
-#endif
 			break;
 
-		case GUILD_WAR_END:		
-#ifdef __IMPROVED_GUILD_WAR__
-			sys_log(0, "GuildWar: GUILD_WAR_END type(%s) guild(%d - %d) limits(%d - %d) info(%ld - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-			CGuildManager::instance().RecvWarEnd(p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-#else
+		case GUILD_WAR_END:
 			sys_log(0, "GuildWar: GUILD_WAR_END type(%s) guild(%d - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo);
 			CGuildManager::instance().RecvWarEnd(p->dwGuildFrom, p->dwGuildTo);
-#endif
-			return; 
+			return;
 
 		case GUILD_WAR_CANCEL :
-#ifdef __IMPROVED_GUILD_WAR__
-			sys_log(0, "GuildWar: GUILD_WAR_CANCEL type(%s) guild(%d - %d) limits(%d - %d) info(%ld - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-			CGuildManager::instance().CancelWar(p->dwGuildFrom, p->dwGuildTo, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index);
-#else
 			sys_log(0, "GuildWar: GUILD_WAR_CANCEL type(%s) guild(%d - %d)", __GetWarType(p->bType), p->dwGuildFrom, p->dwGuildTo);
 			CGuildManager::instance().CancelWar(p->dwGuildFrom, p->dwGuildTo);
-#endif
 			break;
 	}
 
@@ -295,3 +242,4 @@ void CClientManager::GuildChangeMaster(TPacketChangeGuildMaster* p)
 		ForwardPacket(HEADER_DG_ACK_CHANGE_GUILD_MASTER, &packet, sizeof(packet));
 	}
 }
+//martysama0134's 2022

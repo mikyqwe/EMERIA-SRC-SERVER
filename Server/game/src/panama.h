@@ -5,3 +5,4 @@ extern size_t PanamaLoad();
 extern void SendPanamaList(LPDESC d);
 
 #endif
+//martysama0134's 2022

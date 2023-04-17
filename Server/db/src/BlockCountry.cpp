@@ -1,11 +1,3 @@
-// vim:ts=4 sw=4
-/*********************************************************************
- * date        : 2007.05.31
- * file        : BlockCountry.cpp
- * author      : mhh
- * description :
- */
-
 #include "stdafx.h"
 
 #include "BlockCountry.h"
@@ -20,9 +12,6 @@
 
 CBlockCountry::CBlockCountry()
 {
-
-
-
 }
 
 CBlockCountry::~CBlockCountry()
@@ -46,12 +35,10 @@ bool CBlockCountry::Load()
 	{
 		char szQuery[256];
 		snprintf(szQuery, sizeof(szQuery), "SELECT IP_FROM, IP_TO, COUNTRY_NAME FROM iptocountry");
-		SQLMsg * pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_ACCOUNT);
-
+		auto pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_ACCOUNT);
 		if (pMsg->Get()->uiNumRows == 0)
 		{
 			sys_err(" DirectQuery failed(%s)", szQuery);
-			delete pMsg;
 			return false;
 		}
 
@@ -67,7 +54,6 @@ bool CBlockCountry::Load()
 			sys_log(0, "BLOCKED_IP : %u - %u", block_ip->ip_from, block_ip->ip_to);
 
 		}
-		delete pMsg;
 	}
 
 
@@ -75,12 +61,11 @@ bool CBlockCountry::Load()
 	{
 		char szQuery[256];
 		snprintf(szQuery, sizeof(szQuery), "SELECT login FROM block_exception");
-		SQLMsg * pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_ACCOUNT);
 
+		auto pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_ACCOUNT);
 		if (pMsg->Get()->uiNumRows == 0)
 		{
 			sys_err(" DirectQuery failed(%s)", szQuery);
-			delete pMsg;
 			return true;
 		}
 
@@ -94,7 +79,6 @@ bool CBlockCountry::Load()
 			sys_log(0, "BLOCK_EXCEPTION = %s", login);
 
 		}
-		delete pMsg;
 	}
 
     return true;
@@ -114,7 +98,7 @@ bool CBlockCountry::IsBlockedCountryIp(const char *user_ip)
 	st_addr.s_addr = in_address;
 	if (INADDR_NONE == in_address)
 #endif
-		return true;  // 아이피가 괴상하니 일단 블럭처리
+		return true;
 
 	DO_ALL_BLOCK_IP(iter)
 	{
@@ -211,4 +195,4 @@ void CBlockCountry::DelBlockException(const char *login)
 	}
 	return;
 }
-
+//martysama0134's 2022

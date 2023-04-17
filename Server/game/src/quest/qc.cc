@@ -4,12 +4,12 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-#include <cstring>
 
-#if LUA_V == 523
-	#include "../../../liblua/.lua52/src/lzio.h"
-	#include "../../../liblua/.lua52/src/llex.h"
-	#include "../../../liblua/.lua52/src/lstring.h"
+#include <lzio.h>
+#include <llex.h>
+#include <lstring.h>
+
+#if LUA_VERSION_NUM >= 502
 	#define luaL_reg		luaL_Reg
 
 	#define lua_dobuffer	luaL_loadbuffer
@@ -26,10 +26,7 @@ extern "C" {
 	#define lua_ref(L,lock)	((lock) ? luaL_ref(L, LUA_REGISTRYINDEX) : \
 	  (lua_pushstring(L, "unlocked references are obsolete"), lua_error(L), 0))
 	#define lua_unref(L,ref)	luaL_unref(L, LUA_REGISTRYINDEX, (ref))
-#elif LUA_V == 503
-	#include "../../../liblua/.lua50/src/lzio.h"
-	#include "../../../liblua/.lua50/src/llex.h"
-	#include "../../../liblua/.lua50/src/lstring.h"
+#elif LUA_VERSION_NUM == 500
 #else
 	#error "lua version not found"
 #endif
@@ -39,6 +36,7 @@ extern "C" {
 }
 #endif
 
+#include <cstring>
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -548,7 +546,6 @@ void parse(char * filename)
 
 					if (lexstate.lookahead.token == TK_OR)
 					{
-						// 다중 when name
 						// push to somewhere -.-
 						ps = ST_WHEN_NAME;
 						when_name_arg_vector.push_back(make_pair(current_when_name, current_when_argument));
@@ -568,7 +565,6 @@ void parse(char * filename)
 					current_when_condition = "";
 					if (t.token == TK_WITH)
 					{
-						// here comes 조건식
 						next(&lexstate);
 						ostringstream os;
 						os << (lexstate.t);
@@ -877,7 +873,6 @@ void parse(char * filename)
 			}
 		}
 
-		// quest function들을 기록
 		ouf << all_functions;
 
 		ouf << "}";
@@ -1020,4 +1015,4 @@ int main(int argc, char* argv[])
 	lua_close(L);
 	return 0;
 }
-
+//martysama0134's 2022

@@ -1,11 +1,8 @@
-
 #ifndef __INC_METIN_II_UTILS_H__
 #define __INC_METIN_II_UTILS_H__
 
 #include <math.h>
-#ifdef ENABLE_BIOLOG_SYSTEM
-	#include "../../common/service.h"
-#endif
+
 #define IS_SET(flag, bit)		((flag) & (bit))
 #define SET_BIT(var, bit)		((var) |= (bit))
 #define REMOVE_BIT(var, bit)	((var) &= ~(bit))
@@ -14,6 +11,7 @@
 #ifdef ENABLE_UNLIMITED_ARGUMENT
 extern void split_argument(const char *argument, std::vector<std::string> & vecArgs);
 #endif
+
 inline float DISTANCE_SQRT(long dx, long dy)
 {
     return ::sqrt((float)dx * dx + (float)dy * dy);
@@ -53,9 +51,6 @@ inline WORD MAKEWORD(BYTE a, BYTE b)
 #endif
 
 extern void set_global_time(time_t t);
-#ifdef ENABLE_BIOLOG_SYSTEM
-extern time_t init_biologTime();
-#endif
 extern time_t get_global_time();
 
 #include <string>
@@ -80,7 +75,5 @@ extern int parse_time_str(const char* str);
 
 extern bool WildCaseCmp(const char *w, const char *s);
 
-extern int is_leap(int year);
-extern int days_in_month(int year, int month);
 #endif /* __INC_METIN_II_UTILS_H__ */
-
+//martysama0134's 2022

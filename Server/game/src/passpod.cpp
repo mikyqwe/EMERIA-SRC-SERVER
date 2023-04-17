@@ -45,7 +45,7 @@ int CPasspod::ConfirmPasspod( const char * account, const char * passpod )
 	char szResult[1024];
 	char szTmp[128];
 
-	int ret_code = 1; // 0 이 성공
+	int ret_code = 1;
 
 	snprintf( szRequest, sizeof(szRequest), "username=%s&systemname=%s&passpod=%s&algname=%s", account, servername, passpod, algname );
 	snprintf( szResult, sizeof(szResult), "POST %s%s HTTP/1.0\r\n", posspod_server, auth );
@@ -104,14 +104,13 @@ int CPasspod::ConfirmPasspod( const char * account, const char * passpod )
 	{
 		int n = 0;
 
-		//라인넘기기
+
 		for (; pos[n]!='\n'; ++n  ) {}
 
-		//\n에서 멈추기 하나더 남겨주자
+
 		pos = pos+n+1;
 
 
-		//Return Value 를 비교
 		if ( 0 == strncmp( pos, "AUTH_SUCCESS", strlen(ERR_STRINGS[0]) ) )
 		{
 			ret_code = E_PASSPOD_SUCCESS;
@@ -193,3 +192,4 @@ bool CPasspod::IConv( const char * src, char * desc )
 {
 	return true;
 }
+//martysama0134's 2022

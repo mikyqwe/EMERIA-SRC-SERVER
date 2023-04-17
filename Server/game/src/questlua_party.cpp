@@ -378,8 +378,8 @@ namespace quest
 		}
 	};
 
-	// 파티 단위로 버프 주는 함수.
-	// 같은 맵에 있는 파티원만 영향을 받는다.
+
+
 	ALUA(party_give_buff)
 	{
 		CQuestManager & q = CQuestManager::instance();
@@ -433,7 +433,7 @@ namespace quest
 		FPartyPIDCollector f;
 		pParty->ForEachOnMapMember(f, ch->GetMapIndex());
 
-		for (std::vector <DWORD>::iterator it = f.vecPIDs.begin(); it != f.vecPIDs.end(); ++it)	//@fixme541
+		for (std::vector <DWORD>::iterator it = f.vecPIDs.begin(); it != f.vecPIDs.end(); it++)
 		{
 			lua_pushnumber(L, *it);
 		}
@@ -465,14 +465,11 @@ namespace quest
 			{ "is_in_dungeon",	party_is_in_dungeon	},
 			{ "give_buff",		party_give_buff		},
 			{ "is_map_member_flag_lt",	party_is_map_member_flag_lt	},
-			{ "get_member_pids",		party_get_member_pids	}, // 파티원들의 pid를 return
+			{ "get_member_pids",		party_get_member_pids	},
 			{ NULL,				NULL				}
 		};
 
 		CQuestManager::instance().AddLuaFunctionTable("party", party_functions);
 	}
 }
-
-
-
-
+//martysama0134's 2022

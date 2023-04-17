@@ -50,4 +50,4 @@ bool CTargaImage::Save(const char * filename)
     fclose(fp);
     return true;
 }
-
+//martysama0134's 2022

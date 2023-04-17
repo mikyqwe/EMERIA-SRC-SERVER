@@ -34,22 +34,14 @@ void CPartyManager::DeleteAllParty()
 	}
 }
 
-bool CPartyManager::SetParty(LPCHARACTER ch)	// PC만 사용해야 한다!!
+bool CPartyManager::SetParty(LPCHARACTER ch)
 {
 	TPartyMap::iterator it = m_map_pkParty.find(ch->GetPlayerID());
 
 	if (it == m_map_pkParty.end())
 		return false;
+
 	LPPARTY pParty = it->second;
-
-#ifdef __REMOVE_PARTY_IN_SPECIFIC_MAP
-	if(!ch->CanEnterParty())
-	{
-		pParty->Quit(ch->GetPlayerID());
-		return false;
-	}
-#endif
-
 	pParty->Link(ch);
 	return true;
 }
@@ -138,9 +130,6 @@ void CPartyManager::P2PDeleteParty(DWORD pid)
 
 LPPARTY CPartyManager::CreateParty(LPCHARACTER pLeader)
 {
-	if (!pLeader) // Possible crash fix
-		return false;
-	
 	if (pLeader->GetParty())
 		return pLeader->GetParty();
 
@@ -229,30 +218,6 @@ EVENTINFO(party_update_event_info)
 // CParty begin!
 //
 /////////////////////////////////////////////////////////////////////////////
-#if defined(__BL_PARTY_POSITION__)
-EVENTINFO(party_position_event_info)
-{
-	LPPARTY pParty;
-	party_position_event_info(LPPARTY mParty) 
-		: pParty(mParty)
-	{}
-};
-
-EVENTFUNC(party_position_event)
-{
-	const party_position_event_info* info = dynamic_cast<party_position_event_info*>(event->info);
-
-	if (info == NULL || info->pParty == NULL)
-	{
-		sys_err("party_position_event> <Factor> Null pointer");
-		return 0;
-	}
-
-	info->pParty->SendPositionInfo();
-	return PASSES_PER_SEC(3);
-}
-#endif
-
 EVENTFUNC(party_update_event)
 {
 	party_update_event_info* info = dynamic_cast<party_update_event_info*>( event->info );
@@ -297,9 +262,7 @@ void CParty::Initialize()
 	m_dwLeaderPID = 0;
 
 	m_eventUpdate = NULL;
-#if defined(__BL_PARTY_POSITION__)
-	m_PositionInfoEvent = NULL;
-#endif
+
 	memset(&m_anRoleCount, 0, sizeof(m_anRoleCount));
 	memset(&m_anMaxRole, 0, sizeof(m_anMaxRole));
 	m_anMaxRole[PARTY_ROLE_LEADER] = 1;
@@ -332,7 +295,7 @@ void CParty::Destroy()
 {
 	sys_log(2, "Party::Destroy");
 
-	// PC가 만든 파티면 파티매니저에 맵에서 PID를 삭제해야 한다.
+
 	if (m_bPCParty)
 	{
 		for (TMemberMap::iterator it = m_memberMap.begin(); it != m_memberMap.end(); ++it)
@@ -340,9 +303,7 @@ void CParty::Destroy()
 	}
 
 	event_cancel(&m_eventUpdate);
-#if defined(__BL_PARTY_POSITION__)
-	event_cancel(&m_PositionInfoEvent);
-#endif
+
 	RemoveBonus();
 
 	TMemberMap::iterator it = m_memberMap.begin();
@@ -362,11 +323,11 @@ void CParty::Destroy()
 				p.header = HEADER_GC_PARTY_REMOVE;
 				p.pid = rMember.pCharacter->GetPlayerID();
 				rMember.pCharacter->GetDesc()->Packet(&p, sizeof(p));
-				rMember.pCharacter->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(rMember.pCharacter->GetLanguage(),"<파티> 파티가 해산 되었습니다."));
+				rMember.pCharacter->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티가 해산 되었습니다."));
 			}
 			else
 			{
-				// NPC일 경우 일정 시간 후 전투 중이 아닐 때 사라지게 하는 이벤트를 시작시킨다.
+
 				rMember.pCharacter->SetLastAttacked(dwTime);
 				rMember.pCharacter->StartDestroyWhenIdleEvent();
 			}
@@ -497,7 +458,7 @@ void CParty::Join(DWORD dwPID)
 		TPacketPartyAdd p;
 		p.dwLeaderPID = GetLeaderPID();
 		p.dwPID = dwPID;
-		p.bState = PARTY_ROLE_NORMAL; // #0000790: [M2EU] CZ 크래쉬 증가: 초기화 중요!
+		p.bState = PARTY_ROLE_NORMAL;
 		db_clientdesc->DBPacket(HEADER_GD_PARTY_ADD, 0, &p, sizeof(p));
 	}
 }
@@ -543,28 +504,31 @@ void CParty::P2PQuit(DWORD dwPID)
 	if (m_bPCParty)
 		CPartyManager::instance().SetPartyMember(dwPID, NULL);
 
-	// 리더가 나가면 파티는 해산되어야 한다.
+
 	if (bRole == PARTY_ROLE_LEADER)
 		CPartyManager::instance().DeleteParty(this);
 
-	// 이 아래는 코드를 추가하지 말 것!!! 위 DeleteParty 하면 this는 없다.
+
 }
 
 void CParty::Quit(DWORD dwPID)
 {
-    // Always PC
-    P2PQuit(dwPID);
+	// Always PC
+	P2PQuit(dwPID);
 
-    if(m_bPCParty && dwPID != GetLeaderPID())
-    {
-        if(g_bChannel != GUILD_WARP_WAR_CHANNEL && g_bChannel != CHANNEL_SINGLE_MAPS)
-        {
-            TPacketPartyRemove p;
-            p.dwPID = dwPID;
-            p.dwLeaderPID = GetLeaderPID();
-            db_clientdesc->DBPacket(HEADER_GD_PARTY_REMOVE, 0, &p, sizeof(p));
-        }
-    }
+	if (m_bPCParty && dwPID != GetLeaderPID())
+	{
+		//TPacketGGParty p;
+		//p.header = HEADER_GG_PARTY;
+		//p.subheader = PARTY_SUBHEADER_GG_QUIT;
+		//p.pid = dwPID;
+		//p.leaderpid = GetLeaderPID();
+		//P2P_MANAGER::instance().Send(&p, sizeof(p));
+		TPacketPartyRemove p;
+		p.dwPID = dwPID;
+		p.dwLeaderPID = GetLeaderPID();
+		db_clientdesc->DBPacket(HEADER_GD_PARTY_REMOVE, 0, &p, sizeof(p));
+	}
 }
 
 void CParty::Link(LPCHARACTER pkChr)
@@ -582,7 +546,7 @@ void CParty::Link(LPCHARACTER pkChr)
 		return;
 	}
 
-	// 플레이어 파티일 경우 업데이트 이벤트 생성
+
 	if (m_bPCParty && !m_eventUpdate)
 	{
 		party_update_event_info* info = AllocEventInfo<party_update_event_info>();
@@ -597,10 +561,7 @@ void CParty::Link(LPCHARACTER pkChr)
 
 	it->second.pCharacter = pkChr;
 	pkChr->SetParty(this);
-#if defined(__BL_PARTY_POSITION__)
-	if (m_bPCParty && m_PositionInfoEvent == NULL)
-		m_PositionInfoEvent = event_create(party_position_event, new party_position_event_info(this), PASSES_PER_SEC(1));
-#endif
+
 	if (pkChr->IsPC())
 	{
 		if (it->second.strName.empty())
@@ -683,7 +644,7 @@ void CParty::Unlink(LPCHARACTER pkChr)
 	if (pkChr->IsPC())
 	{
 		SendPartyUnlinkOneToAll(pkChr);
-		//SendPartyUnlinkAllToOne(pkChr); // 끊기는 것이므로 구지 Unlink 패킷을 보낼 필요 없다.
+
 
 		if (it->second.bRole == PARTY_ROLE_LEADER)
 		{
@@ -691,7 +652,7 @@ void CParty::Unlink(LPCHARACTER pkChr)
 
 			if (it->second.pCharacter->GetDungeon())
 			{
-				// TODO: 던젼에 있으면 나머지도 나간다
+
 				FExitDungeon f;
 				ForEachNearMember(f);
 			}
@@ -837,7 +798,6 @@ void CParty::SendPartyInfoOneToAll(DWORD pid)
 	p.header = HEADER_GC_PARTY_UPDATE;
 	p.pid = pid;
 	p.percent_hp = 255;
-	p.percent_sp = 255;
 	p.role = it->second.bRole;
 
 	for (it = m_memberMap.begin();it!= m_memberMap.end(); ++it)
@@ -873,9 +833,6 @@ void CParty::SendPartyInfoOneToAll(LPCHARACTER ch)
 
 void CParty::SendPartyInfoAllToOne(LPCHARACTER ch)
 {
-	if (!ch || !ch->GetDesc()) // Possible crash fix
-		return;
-	
 	TMemberMap::iterator it;
 
 	TPacketGCPartyUpdate p;
@@ -889,7 +846,6 @@ void CParty::SendPartyInfoAllToOne(LPCHARACTER ch)
 			p.header = HEADER_GC_PARTY_UPDATE;
 			p.pid = pid;
 			p.percent_hp = 255;
-			p.percent_sp = 255;
 			p.role = it->second.bRole;
 			ch->GetDesc()->Packet(&p, sizeof(p));
 			continue;
@@ -944,9 +900,9 @@ void CParty::SendMessage(LPCHARACTER ch, BYTE bMsg, DWORD dwArg1, DWORD dwArg2)
 			}
 			break;
 
-		case PM_ATTACKED_BY:	// 공격 받았음, 리더에게 도움을 요청
+		case PM_ATTACKED_BY:
 			{
-				// 리더가 없을 때
+
 				LPCHARACTER pkChrVictim = ch->GetVictim();
 
 				if (!pkChrVictim)
@@ -1113,7 +1069,7 @@ void CParty::RemoveBonusForOne(DWORD pid)
 
 void CParty::HealParty()
 {
-	// XXX DELETEME 클라이언트 완료될때까지
+
 	{
 		return;
 	}
@@ -1167,7 +1123,7 @@ void CParty::SummonToLeader(DWORD pid)
 
 	if (m_memberMap.find(pid) == m_memberMap.end())
 	{
-		l->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(l->GetLanguage(),"<파티> 소환하려는 대상을 찾을 수 없습니다."));
+		l->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 소환하려는 대상을 찾을 수 없습니다."));
 		return;
 	}
 
@@ -1175,13 +1131,13 @@ void CParty::SummonToLeader(DWORD pid)
 
 	if (!ch)
 	{
-		l->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(l->GetLanguage(),"<파티> 소환하려는 대상을 찾을 수 없습니다."));
+		l->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 소환하려는 대상을 찾을 수 없습니다."));
 		return;
 	}
 
 	if (!ch->CanSummon(m_iLeadership))
 	{
-		l->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(l->GetLanguage(),"<파티> 대상을 소환할 수 없습니다."));
+		l->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 대상을 소환할 수 없습니다."));
 		return;
 	}
 
@@ -1198,7 +1154,7 @@ void CParty::SummonToLeader(DWORD pid)
 	}
 
 	if (n == 0)
-		l->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(l->GetLanguage(),"<파티> 파티원을 현재 위치로 소환할 수 없습니다."));
+		l->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티원을 현재 위치로 소환할 수 없습니다."));
 	else
 	{
 		int i = number(0, n - 1);
@@ -1219,7 +1175,7 @@ void CParty::IncreaseOwnership()
 		m_itNextOwner = m_memberMap.begin();
 	else
 	{
-		++m_itNextOwner;	//@fixme541
+		m_itNextOwner++;
 
 		if (m_itNextOwner == m_memberMap.end())
 			m_itNextOwner = m_memberMap.begin();
@@ -1240,7 +1196,6 @@ LPCHARACTER CParty::GetNextOwnership(LPCHARACTER ch, long x, long y)
 		if (pkMember && DISTANCE_APPROX(pkMember->GetX() - x, pkMember->GetY() - y) < 3000)
 		{
 			IncreaseOwnership();
-
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 			if (pkMember->IsPC() && !pkMember->HasBlockedDrops())
 				return pkMember;
@@ -1410,7 +1365,7 @@ void CParty::Update()
 
 	bool bLongTimeExpBonusChanged = false;
 
-	// 파티 결성 후 충분한 시간이 지나면 경험치 보너스를 받는다.
+
 	if (!m_iLongTimeExpBonus && (get_dword_time() - m_dwPartyStartTime > PARTY_ENOUGH_MINUTE_FOR_EXP_BONUS * 60 * 1000 / 1))
 	{
 		bLongTimeExpBonusChanged = true;
@@ -1426,7 +1381,7 @@ void CParty::Update()
 			continue;
 
 		if (bLongTimeExpBonusChanged && ch->GetDesc())
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"파티의 협동력이 높아져 지금부터 추가 경험치 보너스를 받습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("파티의 협동력이 높아져 지금부터 추가 경험치 보너스를 받습니다."));
 
 		bool bNear = it->second.bNear;
 
@@ -1455,9 +1410,9 @@ void CParty::Update()
 		if (!m_bCanUsePartyHeal && m_iLeadership >= 18)
 			m_dwPartyHealTime = get_dword_time();
 
-		m_bCanUsePartyHeal = m_iLeadership >= 18; // 통솔력 18 이상은 힐을 사용할 수 있음.
+		m_bCanUsePartyHeal = m_iLeadership >= 18;
 
-		// 통솔력 40이상은 파티 힐 쿨타임이 적다.
+
 		DWORD PartyHealCoolTime = (m_iLeadership >= 40) ? PARTY_HEAL_COOLTIME_SHORT * 60 * 1000 : PARTY_HEAL_COOLTIME_LONG * 60 * 1000;
 
 		if (m_bCanUsePartyHeal)
@@ -1467,7 +1422,7 @@ void CParty::Update()
 				m_bPartyHealReady = true;
 
 				// send heal ready
-				if (0) // XXX  DELETEME 클라이언트 완료될때까지
+				if (0)
 					if (GetLeaderCharacter())
 						GetLeaderCharacter()->ChatPacket(CHAT_TYPE_COMMAND, "PartyHealReady");
 			}
@@ -1739,7 +1694,7 @@ int CParty::ComputePartyBonusExpPercent()
 	if (leader && (leader->IsEquipUniqueItem(UNIQUE_ITEM_PARTY_BONUS_EXP) || leader->IsEquipUniqueItem(UNIQUE_ITEM_PARTY_BONUS_EXP_MALL)
 		|| leader->IsEquipUniqueItem(UNIQUE_ITEM_PARTY_BONUS_EXP_GIFT) || leader->IsEquipUniqueGroup(10010)))
 	{
-		// 중국측 육도 적용을 확인해야한다.
+
 		iBonusPartyExpFromItem = 30;
 	}
 
@@ -1749,7 +1704,7 @@ int CParty::ComputePartyBonusExpPercent()
 
 bool CParty::IsPartyInDungeon(int mapIndex)
 {
-	// 파티원이 mapIndex인 던젼안에 있는지 순서대로 검사
+
 	for(TMemberMap::iterator it = m_memberMap.begin(); it != m_memberMap.end(); ++it)
 	{
 		LPCHARACTER ch = it->second.pCharacter;
@@ -1775,43 +1730,4 @@ bool CParty::IsPartyInDungeon(int mapIndex)
 	}
 	return false;
 }
-
-#if defined(__BL_PARTY_POSITION__)
-#include "buffer_manager.h"
-void CParty::SendPositionInfo() const
-{
-	for (TMemberMap::const_iterator it = m_memberMap.begin(); it != m_memberMap.end(); ++it) {
-		const LPCHARACTER ch = it->second.pCharacter;
-		if (ch == NULL || ch->GetDesc() == NULL)
-			continue;
-
-		TEMP_BUFFER buf;
-		for (TMemberMap::const_iterator it2 = m_memberMap.begin(); it2 != m_memberMap.end(); ++it2) {
-			if (it == it2)
-				continue;
-
-			const LPCHARACTER ch2 = it2->second.pCharacter;
-			if (ch2 == NULL || ch2->GetDesc() == NULL)
-				continue;
-
-			if (ch->GetMapIndex() != ch2->GetMapIndex())
-				continue;
-
-			TPartyPosition T;
-			T.dwPID = ch2->GetPlayerID();
-			T.lX = ch2->GetX();
-			T.lY = ch2->GetY();
-			T.fRot = ch2->GetRotation();
-			buf.write(&T, sizeof(T));
-		}
-
-		if (buf.size()) {
-			TPacketGCPartyPosition packet;
-			packet.bHeader = HEADER_GC_PARTY_POSITION_INFO;
-			packet.wSize = sizeof(packet) + buf.size();
-			ch->GetDesc()->BufferedPacket(&packet, sizeof(packet));
-			ch->GetDesc()->Packet(buf.read_peek(), buf.size());
-		}
-	}
-}
-#endif
+//martysama0134's 2022

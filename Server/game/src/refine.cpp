@@ -36,3 +36,4 @@ const TRefineTable* CRefineManager::GetRefineRecipe(DWORD vnum)
 
 	return &it->second;
 }
+//martysama0134's 2022

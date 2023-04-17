@@ -9,6 +9,7 @@
 #include "buffer_manager.h"
 #include "guild_manager.h"
 #include "db.h"
+
 #include "party.h"
 #include "../../common/CommonDefines.h"
 
@@ -84,7 +85,7 @@ bool CLIENT_DESC::Connect(int iPhaseWhenSucceed)
 	if (iPhaseWhenSucceed != 0)
 		m_iPhaseWhenSucceed = iPhaseWhenSucceed;
 
-	if (get_global_time() - m_LastTryToConnectTime < 3)	// 3초
+	if (get_global_time() - m_LastTryToConnectTime < 3)
 		return false;
 
 	m_LastTryToConnectTime = get_global_time();
@@ -207,7 +208,7 @@ void CLIENT_DESC::SetPhase(int iPhase)
 
 					sys_log(0, "DB_SETUP current user %d size %d", p.dwLoginCount, buf.size());
 
-					// 파티를 처리할 수 있게 됨.
+
 					CPartyManager::instance().EnablePCParty();
 					//CPartyManager::instance().SendPartyToDB();
 				}
@@ -294,7 +295,7 @@ void CLIENT_DESC::Update(DWORD t)
 void CLIENT_DESC::UpdateChannelStatus(DWORD t, bool fForce)
 {
 	enum {
-		CHANNELSTATUS_UPDATE_PERIOD = 5*60*1000,	// 5분마다
+		CHANNELSTATUS_UPDATE_PERIOD = 5*60*1000,
 	};
 	DWORD tLCSUP = m_tLastChannelStatusUpdateTime+CHANNELSTATUS_UPDATE_PERIOD;
 	if (fForce || tLCSUP < t) {
@@ -338,3 +339,4 @@ void CLIENT_DESC::InitializeBuffers()
 	m_lpInputBuffer = buffer_new(1024 * 1024);
 	m_iMinInputBufferLen = 1024 * 1024;
 }
+//martysama0134's 2022

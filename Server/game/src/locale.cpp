@@ -1,11 +1,7 @@
 #include "stdafx.h"
-#include "locale.hpp"
 #include "locale_service.h"
-#include "CsvReader.h"
 
-#include "../../common/CommonDefines.h"
-
-#define M2_SAFE_DELETE_ARRAY(p) if(p) delete[] (p);  (p) = NULL
+typedef std::map< std::string, std::string > LocaleStringMapType;
 
 #ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
 #include "char.h"
@@ -13,27 +9,9 @@ typedef std::map< std::string, std::string > LocaleStringMapTypeNew;
 LocaleStringMapTypeNew localeStringNew[LANGUAGE_MAX_NUM];
 #endif
 
-typedef std::map< std::string, std::string > LocaleStringMapType;
-
 LocaleStringMapType localeString;
 
-typedef std::map< std::string, std::string > LocaleStringMapType;
-typedef std::map< std::string, LocaleStringMapType> LocaleMapType;
-
-LocaleMapType localeMap;
-
 int g_iUseLocale = 0;
-
-void global_locale_add(std::string lang, LocaleStringMapType map)
-{
-	const LocaleMapType::const_iterator iter = localeMap.find(lang);
-
-	if (iter == localeMap.end())
-	{
-		localeMap.insert(std::make_pair(lang, map));
-	}
-
-}
 
 void locale_add(const char **strings)
 {
@@ -69,18 +47,18 @@ const char * locale_find(const char *string)
 const char *quote_find_end(const char *string)
 {
 	const char  *tmp = string;
-	int32_t         quote = 0;
+	int         quote = 0;
 
 	while (*tmp)
 	{
 		if (quote && *tmp == '\\' && *(tmp + 1))
 		{
-			// \ 다음 문자가 " 면 스킵한다.
+
 			switch (*(tmp + 1))
 			{
-			case '"':
-				tmp += 2;
-				continue;
+				case '"':
+					tmp += 2;
+					continue;
 			}
 		}
 		else if (*tmp == '"')
@@ -96,12 +74,12 @@ const char *quote_find_end(const char *string)
 	return (NULL);
 }
 
-char *locale_convert(const char *src, int32_t len)
+char *locale_convert(const char *src, int len)
 {
 	const char	*tmp;
-	int32_t		i, j;
+	int		i, j;
 	char	*buf, *dest;
-	int32_t		start = 0;
+	int		start = 0;
 	char	last_char = 0;
 
 	if (!len)
@@ -127,7 +105,7 @@ char *locale_convert(const char *src, int32_t len)
 		}
 		else if (start)
 		{
-		ENCODE:
+ENCODE:
 			if (*tmp == '\\' && *(tmp + 1) == 'n')
 			{
 				*(dest++) = '\n';
@@ -146,7 +124,7 @@ char *locale_convert(const char *src, int32_t len)
 
 	if (!j)
 	{
-		M2_SAFE_DELETE_ARRAY(buf);
+		M2_DELETE_ARRAY(buf);
 		return NULL;
 	}
 
@@ -359,4 +337,4 @@ void locale_init_new(BYTE language, const char *filename)
 	M2_DELETE_ARRAY(buf);
 }
 #endif
-
+//martysama0134's 2022

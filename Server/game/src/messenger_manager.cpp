@@ -47,7 +47,7 @@ void MessengerManager::Login(MessengerManager::keyA account)
 {
 	if (m_set_loginAccount.find(account) != m_set_loginAccount.end())
 		return;
-	
+
 	// @fixme142 BEGIN
 	DBManager::instance().EscapeString(__account, sizeof(__account), account.c_str(), account.size());
 	if (account.compare(__account))
@@ -55,151 +55,10 @@ void MessengerManager::Login(MessengerManager::keyA account)
 	// @fixme142 END
 
 	DBManager::instance().FuncQuery(std::bind1st(std::mem_fun(&MessengerManager::LoadList), this),
-			"SELECT account, companion FROM messenger_list%s WHERE account='%s'", get_table_postfix(), account.c_str());
-#ifdef ENABLE_MESSENGER_BLOCK
-	DBManager::instance().FuncQuery(std::bind1st(std::mem_fun(&MessengerManager::LoadBlockList), this),
-			"SELECT account, companion FROM messenger_block_list%s WHERE account='%s'", get_table_postfix(), account.c_str());
-#endif
-#ifdef ENABLE_MESSENGER_TEAM
-	DBManager::instance().FuncQuery(std::bind1st(std::mem_fun(&MessengerManager::LoadTeamList), this),
-			"SELECT '%s',mName FROM common.gmlist WHERE mName!='%s'", account.c_str(), account.c_str());
-#endif
+			"SELECT account, companion FROM messenger_list%s WHERE account='%s'", get_table_postfix(), __account);
+
 	m_set_loginAccount.insert(account);
 }
-
-#ifdef ENABLE_MESSENGER_TEAM
-void MessengerManager::LoadTeamList(SQLMsg * msg)
-{
-	if (NULL == msg or NULL == msg->Get() or msg->Get()->uiNumRows == 0)
-		return;
-	
-	std::string account;
-
-	for (uint i = 0; i < msg->Get()->uiNumRows; ++i)
-	{
-		MYSQL_ROW row = mysql_fetch_row(msg->Get()->pSQLResult);
-
-		if (row[0] && row[1])
-		{
-			if (account.length() == 0)
-				account = row[0];
-
-			m_TeamRelation[row[0]].insert(row[1]);
-			m_InverseTeamRelation[row[1]].insert(row[0]);
-		}
-	}
-
-	SendTeamList(account);
-
-	std::set<MessengerManager::keyT>::iterator it;
-
-	for (it = m_InverseTeamRelation[account].begin(); it != m_InverseTeamRelation[account].end(); ++it)
-		SendTeamLogin(*it, account);
-}
-
-void MessengerManager::SendTeamList(MessengerManager::keyA account)
-{
-	LPCHARACTER ch = CHARACTER_MANAGER::instance().FindPC(account.c_str());
-
-	if (!ch)
-		return;
-
-	LPDESC d = ch->GetDesc();
-
-	if (!d)
-		return;
-
-	TPacketGCMessenger pack;
-
-	pack.header		= HEADER_GC_MESSENGER;
-	pack.subheader	= MESSENGER_SUBHEADER_GC_TEAM_LIST;
-	pack.size		= sizeof(TPacketGCMessenger);
-
-	TPacketGCMessengerTeamListOffline pack_offline;
-	TPacketGCMessengerTeamListOnline pack_online;
-
-	TEMP_BUFFER buf(128 * 1024);
-
-	itertype(m_TeamRelation[account]) it = m_TeamRelation[account].begin(), eit = m_TeamRelation[account].end();
-
-	while (it != eit)
-	{
-		if (m_set_loginAccount.find(*it) != m_set_loginAccount.end())
-		{
-			pack_online.connected = 1;
-
-			pack_online.length = it->size();
-
-			buf.write(&pack_online, sizeof(TPacketGCMessengerTeamListOnline));
-			buf.write(it->c_str(), it->size());
-		}
-		else
-		{
-			pack_offline.connected = 0;
-
-			pack_offline.length = it->size();
-
-			buf.write(&pack_offline, sizeof(TPacketGCMessengerTeamListOffline));
-			buf.write(it->c_str(), it->size());
-		}
-
-		++it;
-	}
-
-	pack.size += buf.size();
-
-	d->BufferedPacket(&pack, sizeof(TPacketGCMessenger));
-	d->Packet(buf.read_peek(), buf.size());
-}
-
-void MessengerManager::SendTeamLogin(MessengerManager::keyA account, MessengerManager::keyA companion)
-{
-	LPCHARACTER ch = CHARACTER_MANAGER::instance().FindPC(account.c_str());
-	LPDESC d = ch ? ch->GetDesc() : NULL;
-
-	if (!d)
-		return;
-
-	if (!d->GetCharacter())
-		return;
-
-	BYTE bLen = companion.size();
-
-	TPacketGCMessenger pack;
-
-	pack.header			= HEADER_GC_MESSENGER;
-	pack.subheader		= MESSENGER_SUBHEADER_GC_TEAM_LOGIN;
-	pack.size			= sizeof(TPacketGCMessenger) + sizeof(BYTE) + bLen;
-
-	d->BufferedPacket(&pack, sizeof(TPacketGCMessenger));
-	d->BufferedPacket(&bLen, sizeof(BYTE));
-	d->Packet(companion.c_str(), companion.size());
-}
-
-void MessengerManager::SendTeamLogout(MessengerManager::keyA account, MessengerManager::keyA companion)
-{
-	if (!companion.size())
-		return;
-
-	LPCHARACTER ch = CHARACTER_MANAGER::instance().FindPC(account.c_str());
-	LPDESC d = ch ? ch->GetDesc() : NULL;
-
-	if (!d)
-		return;
-
-	BYTE bLen = companion.size();
-
-	TPacketGCMessenger pack;
-
-	pack.header		= HEADER_GC_MESSENGER;
-	pack.subheader	= MESSENGER_SUBHEADER_GC_TEAM_LOGOUT;
-	pack.size		= sizeof(TPacketGCMessenger) + sizeof(BYTE) + bLen;
-
-	d->BufferedPacket(&pack, sizeof(TPacketGCMessenger));
-	d->BufferedPacket(&bLen, sizeof(BYTE));
-	d->Packet(companion.c_str(), companion.size());
-}
-#endif
 
 void MessengerManager::LoadList(SQLMsg * msg)
 {
@@ -238,248 +97,6 @@ void MessengerManager::LoadList(SQLMsg * msg)
 		SendLogin(*it, account);
 }
 
-#ifdef ENABLE_MESSENGER_BLOCK
-bool MessengerManager::CheckMessengerList(std::string ch, std::string tch, BYTE type)
-{
-	const char* check = type == SYST_BLOCK ? "messenger_block_list" : "messenger_list";
-	// std::unique_ptr<SQLMsg> msg(DBManager::Instance().DirectQuery("SELECT * FROM player.%s", check));
-	std::auto_ptr<SQLMsg> msg(DBManager::Instance().DirectQuery("SELECT * FROM player.%s", check));
-	if (!msg->Get()->uiNumRows)
-		return false;
-	
-	for (int i = 0; i < (int)msg->Get()->uiNumRows; ++i) {
-		MYSQL_ROW row = mysql_fetch_row(msg->Get()->pSQLResult);
-		if ((row[0] == ch and row[1] == tch) or (row[1] == ch and row[0] == tch))
-			return true;
-	}
-	return false;
-}
-void MessengerManager::LoadBlockList(SQLMsg * msg)
-{
-	if (NULL == msg or NULL == msg->Get() or msg->Get()->uiNumRows == 0)
-		return;
-	
-	std::string account;
-
-	for (uint i = 0; i < msg->Get()->uiNumRows; ++i)
-	{
-		MYSQL_ROW row = mysql_fetch_row(msg->Get()->pSQLResult);
-
-		if (row[0] && row[1])
-		{
-			if (account.length() == 0)
-				account = row[0];
-
-			m_BlockRelation[row[0]].insert(row[1]);
-			m_InverseBlockRelation[row[1]].insert(row[0]);
-		}
-	}
-
-	SendBlockList(account);
-
-	std::set<MessengerManager::keyBL>::iterator it;
-
-	for (it = m_InverseBlockRelation[account].begin(); it != m_InverseBlockRelation[account].end(); ++it)
-		SendBlockLogin(*it, account);
-}
-void MessengerManager::SendBlockList(MessengerManager::keyA account)
-{
-	LPCHARACTER ch = CHARACTER_MANAGER::instance().FindPC(account.c_str());
-
-	if (!ch)
-		return;
-
-	LPDESC d = ch->GetDesc();
-
-	// if (!d or m_BlockRelation.find(account) == m_BlockRelation.end() or m_BlockRelation[account].empty())
-	if (!d)
-		return;
-
-	TPacketGCMessenger pack;
-
-	pack.header		= HEADER_GC_MESSENGER;
-	pack.subheader	= MESSENGER_SUBHEADER_GC_BLOCK_LIST;
-	pack.size		= sizeof(TPacketGCMessenger);
-
-	TPacketGCMessengerBlockListOffline pack_offline;
-	TPacketGCMessengerBlockListOnline pack_online;
-
-	TEMP_BUFFER buf(128 * 1024); // 128k
-
-	itertype(m_BlockRelation[account]) it = m_BlockRelation[account].begin(), eit = m_BlockRelation[account].end();
-
-	while (it != eit)
-	{
-		if (m_set_loginAccount.find(*it) != m_set_loginAccount.end())
-		{
-			pack_online.connected = 1;
-
-			// Online
-			pack_online.length = it->size();
-
-			buf.write(&pack_online, sizeof(TPacketGCMessengerBlockListOnline));
-			buf.write(it->c_str(), it->size());
-		}
-		else
-		{
-			pack_offline.connected = 0;
-
-			// Offline
-			pack_offline.length = it->size();
-
-			buf.write(&pack_offline, sizeof(TPacketGCMessengerBlockListOffline));
-			buf.write(it->c_str(), it->size());
-		}
-
-		++it;
-	}
-
-	pack.size += buf.size();
-
-	d->BufferedPacket(&pack, sizeof(TPacketGCMessenger));
-	d->Packet(buf.read_peek(), buf.size());
-}
-void MessengerManager::SendBlockLogin(MessengerManager::keyA account, MessengerManager::keyA companion)
-{
-	LPCHARACTER ch = CHARACTER_MANAGER::instance().FindPC(account.c_str());
-	LPDESC d = ch ? ch->GetDesc() : NULL;
-
-	if (!d)
-		return;
-
-	if (!d->GetCharacter())
-		return;
-
-	BYTE bLen = companion.size();
-
-	TPacketGCMessenger pack;
-
-	pack.header			= HEADER_GC_MESSENGER;
-	pack.subheader		= MESSENGER_SUBHEADER_GC_BLOCK_LOGIN;
-	pack.size			= sizeof(TPacketGCMessenger) + sizeof(BYTE) + bLen;
-
-	d->BufferedPacket(&pack, sizeof(TPacketGCMessenger));
-	d->BufferedPacket(&bLen, sizeof(BYTE));
-	d->Packet(companion.c_str(), companion.size());
-}
-
-void MessengerManager::SendBlockLogout(MessengerManager::keyA account, MessengerManager::keyA companion)
-{
-	if (!companion.size())
-		return;
-
-	LPCHARACTER ch = CHARACTER_MANAGER::instance().FindPC(account.c_str());
-	LPDESC d = ch ? ch->GetDesc() : NULL;
-
-	if (!d)
-		return;
-
-	BYTE bLen = companion.size();
-
-	TPacketGCMessenger pack;
-
-	pack.header		= HEADER_GC_MESSENGER;
-	pack.subheader	= MESSENGER_SUBHEADER_GC_BLOCK_LOGOUT;
-	pack.size		= sizeof(TPacketGCMessenger) + sizeof(BYTE) + bLen;
-
-	d->BufferedPacket(&pack, sizeof(TPacketGCMessenger));
-	d->BufferedPacket(&bLen, sizeof(BYTE));
-	d->Packet(companion.c_str(), companion.size());
-}
-///not compleated
-
-void MessengerManager::AddToBlockList(MessengerManager::keyA account, MessengerManager::keyA companion)
-{
-	if (companion.size() == 0)
-		return;
-
-	if (m_BlockRelation[account].find(companion) != m_BlockRelation[account].end())
-		return;
-
-	// sys_log(0, "Messenger Add %s %s", account.c_str(), companion.c_str());
-	DBManager::instance().Query("INSERT INTO messenger_block_list%s VALUES ('%s', '%s', NOW())", 
-			get_table_postfix(), account.c_str(), companion.c_str());
-
-	__AddToBlockList(account, companion);
-
-	TPacketGGMessenger p2ppck;
-
-	p2ppck.bHeader = HEADER_GG_MESSENGER_BLOCK_ADD;
-	strlcpy(p2ppck.szAccount, account.c_str(), sizeof(p2ppck.szAccount));
-	strlcpy(p2ppck.szCompanion, companion.c_str(), sizeof(p2ppck.szCompanion));
-	P2P_MANAGER::instance().Send(&p2ppck, sizeof(TPacketGGMessenger));
-}
-void MessengerManager::__AddToBlockList(MessengerManager::keyA account, MessengerManager::keyA companion)
-{
-	//yeni eklerken
-	m_BlockRelation[account].insert(companion);
-	m_InverseBlockRelation[companion].insert(account);
-
-	LPCHARACTER ch = CHARACTER_MANAGER::instance().FindPC(account.c_str());
-	LPDESC d = ch ? ch->GetDesc() : NULL;
-
-	if (d)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"%s bloklandi"), companion.c_str());
-	}
-
-	LPCHARACTER tch = CHARACTER_MANAGER::instance().FindPC(companion.c_str());
-
-	if (tch)
-		SendBlockLogin(account, companion);
-	else
-		SendBlockLogout(account, companion);
-}
-void MessengerManager::RemoveFromBlockList(MessengerManager::keyA account, MessengerManager::keyA companion)
-{
-	if (companion.size() == 0)
-		return;
-
-	// sys_log(1, "Messenger Remove %s %s", account.c_str(), companion.c_str());
-	DBManager::instance().Query("DELETE FROM messenger_block_list%s WHERE account='%s' AND companion = '%s'",
-	get_table_postfix(), account.c_str(), companion.c_str());
-			
-	__RemoveFromBlockList(account, companion);
-
-	TPacketGGMessenger p2ppck;
-
-	p2ppck.bHeader = HEADER_GG_MESSENGER_BLOCK_REMOVE;
-	strlcpy(p2ppck.szAccount, account.c_str(), sizeof(p2ppck.szAccount));
-	strlcpy(p2ppck.szCompanion, companion.c_str(), sizeof(p2ppck.szCompanion));
-	P2P_MANAGER::instance().Send(&p2ppck, sizeof(TPacketGGMessenger));
-}
-void MessengerManager::__RemoveFromBlockList(MessengerManager::keyA account, MessengerManager::keyA companion)
-{
-	m_BlockRelation[account].erase(companion);
-	m_InverseBlockRelation[companion].erase(account);
-
-	LPCHARACTER ch = CHARACTER_MANAGER::instance().FindPC(account.c_str());
-	LPDESC d = ch ? ch->GetDesc() : NULL;
-
-	if (d)
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"<메신져> %s 님을 메신저에서 삭제하였습니다."), companion.c_str());
-}
-void MessengerManager::RemoveAllBlockList(keyA account)
-{
-	std::set<keyBL>	company(m_BlockRelation[account]);
-
-	DBManager::instance().Query("DELETE FROM messenger_block_list%s WHERE account='%s' OR companion='%s'",
-			get_table_postfix(), account.c_str(), account.c_str());
-
-	for (std::set<keyT>::iterator iter = company.begin(); iter != company.end(); ++iter)	//@fixme541
-	{
-		this->RemoveFromList(account, *iter);
-	}
-
-	for (std::set<keyBL>::iterator iter = company.begin(); iter != company.end();)
-	{
-		company.erase(iter++);
-	}
-
-	company.clear();
-}
-#endif
-
 void MessengerManager::Logout(MessengerManager::keyA account)
 {
 	if (m_set_loginAccount.find(account) == m_set_loginAccount.end())
@@ -502,103 +119,9 @@ void MessengerManager::Logout(MessengerManager::keyA account)
 		++it2;
 	}
 
-#ifdef ENABLE_MESSENGER_TEAM
-	std::set<MessengerManager::keyT>::iterator it5;
-	
-	for (it5 = m_InverseTeamRelation[account].begin(); it5 != m_InverseTeamRelation[account].end(); ++it5)
-	{
-		SendTeamLogout(*it5, account);
-	}
-
-	std::map<keyT, std::set<keyT> >::iterator it6 = m_TeamRelation.begin();
-
-	while (it6 != m_TeamRelation.end())
-	{
-		it6->second.erase(account);
-		++it6;
-	}
-	m_TeamRelation.erase(account);
-#endif
-
-	#ifdef ENABLE_MESSENGER_BLOCK
-	std::set<MessengerManager::keyBL>::iterator it61;
-	
-	for (it61 = m_InverseBlockRelation[account].begin(); it61 != m_InverseBlockRelation[account].end(); ++it61)
-	{
-		SendBlockLogout(*it61, account);
-	}
-
-	std::map<keyBL, std::set<keyBL> >::iterator it3 = m_BlockRelation.begin();
-
-	while (it3 != m_BlockRelation.end())
-	{
-		it3->second.erase(account);
-		++it3;
-	}
-	m_BlockRelation.erase(account);
-	#endif
-
 	m_Relation.erase(account);
 	//m_map_stMobile.erase(account);
 }
-
-#ifdef CROSS_CHANNEL_FRIEND_REQUEST
-void MessengerManager::RegisterRequestToAdd(const char* name, const char* targetName)
-{
-	uint32_t dw1 = GetCRC32(name, strlen(name));
-	uint32_t dw2 = GetCRC32(targetName, strlen(targetName));
-
-	char buf[64]{0,};
-	snprintf(buf, sizeof(buf), "%u:%u", dw1, dw2);
-	buf[63] = '\0';
-
-	uint32_t dwComplex = GetCRC32(buf, strlen(buf));
-
-	m_set_requestToAdd.insert(dwComplex);
-}
-
-// stage 1: starts on the core where "ch" resides. Validate ch and move to stage 2
-void MessengerManager::P2PRequestToAdd_Stage1(LPCHARACTER ch, const char* targetName)
-{
-	LPCHARACTER pkTarget = CHARACTER_MANAGER::Instance().FindPC(targetName);
-
-	if (!pkTarget)
-	{
-		if (!ch || !ch->IsPC())
-			return;
-
-		if (quest::CQuestManager::instance().GetPCForce(ch->GetPlayerID())->IsRunning() == true)
-		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("The other party cannot receive friend additions."));
-			return;
-		}
-
-		TPacketGGMessengerRequest p2pp{};
-		p2pp.header = HEADER_GG_MESSENGER_REQUEST_ADD;
-		strlcpy(p2pp.account, ch->GetName(), CHARACTER_NAME_MAX_LEN + 1);
-		strlcpy(p2pp.target, targetName, CHARACTER_NAME_MAX_LEN + 1);
-		P2P_MANAGER::Instance().Send(&p2pp, sizeof(TPacketGGMessengerRequest));
-	}
-	else // if we have both, just continue normally
-		RequestToAdd(ch, pkTarget);
-}
-
-// stage 2: ends up on the core where the target resides
-void MessengerManager::P2PRequestToAdd_Stage2(const char* characterName, LPCHARACTER target)
-{
-	if (!target || !target->IsPC())
-		return;
-
-	if (quest::CQuestManager::instance().GetPCForce(target->GetPlayerID())->IsRunning())
-		return;
-
-	if (target->IsBlockMode(BLOCK_MESSENGER_INVITE))
-		return;// could return some response back to the player, but fuck it
-
-	MessengerManager::Instance().RegisterRequestToAdd(characterName, target->GetName());
-	target->ChatPacket(CHAT_TYPE_COMMAND, "messenger_auth %s", characterName);
-}
-#endif
 
 void MessengerManager::RequestToAdd(LPCHARACTER ch, LPCHARACTER target)
 {
@@ -607,7 +130,7 @@ void MessengerManager::RequestToAdd(LPCHARACTER ch, LPCHARACTER target)
 
 	if (quest::CQuestManager::instance().GetPCForce(ch->GetPlayerID())->IsRunning() == true)
 	{
-	    ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"상대방이 친구 추가를 받을 수 없는 상태입니다."));
+	    ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 친구 추가를 받을 수 없는 상태입니다."));
 	    return;
 	}
 
@@ -662,12 +185,12 @@ void MessengerManager::__AddToList(MessengerManager::keyA account, MessengerMana
 
 	if (d)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"<메신져> %s 님을 친구로 추가하였습니다."), companion.c_str());
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<메신져> %s 님을 친구로 추가하였습니다."), companion.c_str());
 	}
 
 	LPCHARACTER tch = CHARACTER_MANAGER::instance().FindPC(companion.c_str());
 
-	if (tch || P2P_MANAGER::Instance().Find(companion.c_str()))
+	if (tch)
 		SendLogin(account, companion);
 	else
 		SendLogout(account, companion);
@@ -711,19 +234,7 @@ void MessengerManager::__RemoveFromList(MessengerManager::keyA account, Messenge
 	LPDESC d = ch ? ch->GetDesc() : NULL;
 
 	if (d)
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"<메신져> %s 님을 메신저에서 삭제하였습니다."), companion.c_str());
-	LPCHARACTER tch = CHARACTER_MANAGER::Instance().FindPC(companion.c_str());
-	if (tch && tch->GetDesc())
-	{
-		TPacketGCMessenger p;
-		p.header		= HEADER_GC_MESSENGER;
-		p.size			= sizeof(TPacketGCMessenger) + sizeof(BYTE) + account.size();
-
-		BYTE bLen		= account.size();
-		tch->GetDesc()->BufferedPacket(&p, sizeof(p));
-		tch->GetDesc()->BufferedPacket(&bLen, sizeof(BYTE));
-		tch->GetDesc()->Packet(account.c_str(), account.size());
-	}
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<메신져> %s 님을 메신저에서 삭제하였습니다."), companion.c_str());
 }
 
 void MessengerManager::RemoveFromList(MessengerManager::keyA account, MessengerManager::keyA companion)
@@ -762,19 +273,20 @@ void MessengerManager::RemoveAllList(keyA account)
 		return;
 	// @fixme142 END
 
-	/* SQL Data 삭제 */
+
 	DBManager::instance().Query("DELETE FROM messenger_list%s WHERE account='%s' OR companion='%s'",
 			get_table_postfix(), __account, __account);
 
-	/* 내가 가지고있는 리스트 삭제 */
+
 	for (std::set<keyT>::iterator iter = company.begin();
 			iter != company.end();
 			iter++ )
 	{
 		this->RemoveFromList(account, *iter);
+		this->RemoveFromList(*iter, account); // @fixme183
 	}
 
-	/* 복사한 데이타 삭제 */
+
 	for (std::set<keyT>::iterator iter = company.begin();
 			iter != company.end();
 			)
@@ -899,4 +411,4 @@ void MessengerManager::SendLogout(MessengerManager::keyA account, MessengerManag
 	d->BufferedPacket(&bLen, sizeof(BYTE));
 	d->Packet(companion.c_str(), companion.size());
 }
-
+//martysama0134's 2022

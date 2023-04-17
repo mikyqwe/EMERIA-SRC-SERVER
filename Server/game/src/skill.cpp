@@ -78,9 +78,6 @@ struct SPointOnType
 #ifdef ENABLE_WOLFMAN_CHARACTER
 	{ "BLEEDING_PCT",	POINT_BLEEDING_PCT	},
 #endif
-#ifdef STRONG_AGAINST_MONSTER_BONUS_IN_SKILL_P
-	{ "MONSTER",	POINT_ATTBONUS_MONSTER	},
-#endif
 	{ "\n",		POINT_NONE		},
 };
 
@@ -303,7 +300,7 @@ bool CSkillManager::Initialize(TSkillTable * pTab, int iSize)
 
 	if (!bError)
 	{
-		// 기존 테이블의 내용을 지운다.
+
 		itertype(m_map_pkSkillProto) it = m_map_pkSkillProto.begin();
 
 		while (it != m_map_pkSkillProto.end()) {
@@ -313,7 +310,7 @@ bool CSkillManager::Initialize(TSkillTable * pTab, int iSize)
 
 		m_map_pkSkillProto.clear();
 
-		// 새로운 내용을 삽입
+
 		it = map_pkSkillProto.begin();
 
 		while (it != map_pkSkillProto.end())
@@ -349,9 +346,9 @@ CSkillProto * CSkillManager::Get(const char * c_pszSkillName)
 		if (!strcasecmp(it->second->szName, c_pszSkillName))
 			return it->second;
 
-		++it;	//@fixme541
+		it++;
 	}
 
 	return NULL;
 }
-
+//martysama0134's 2022

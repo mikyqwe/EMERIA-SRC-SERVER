@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "char.h"
 #include "../../common/CommonDefines.h"
-
 TJobInitialPoints JobInitialPoints[JOB_MAX_NUM] =
 /*
    {
@@ -16,34 +15,34 @@ TJobInitialPoints JobInitialPoints[JOB_MAX_NUM] =
    }
  */
 {
-	// str con dex int 초기HP 초기SP  CON/HP INT/SP  HP랜덤/lv   MP랜덤/lv  초기stam  stam/con stam/lv
 	{   6,  4,  3,  3,  600,   200,     40,    20,    36, 44,     18, 22,     800,      5,      1, 3  }, // JOB_WARRIOR  16
 	{   4,  3,  6,  3,  650,   200,     40,    20,    36, 44,     18, 22,     800,      5,      1, 3  }, // JOB_ASSASSIN 16
 	{   5,  3,  3,  5,  650,   200,     40,    20,    36, 44,     18, 22,     800,      5,      1, 3  }, // JOB_SURA	 16
 	{   3,  4,  3,  6,  700,   200,     40,    20,    36, 44,     18, 22,     800,      5,      1, 3  },  // JOB_SHAMANa  16
 #ifdef ENABLE_WOLFMAN_CHARACTER
-	{   2,  6,  6,  2,  600,   200,     40,    20,    36, 44,     18, 22,     800,      5,      1, 3  }, // JOB_WOLFMAN  16  // TODO: 4개능력치 초기값 외에 다른 스탯 필요 (기획자한테 요청)
+	{   2,  6,  6,  2,  600,   200,     40,    20,    36, 44,     18, 22,     800,      5,      1, 3  },
 #endif
 };
 
 #ifdef M2S_BIO_SYSTEM
 const std::vector<TBioTable> BioMissions = {
 	// id	lvl				items		   count	%		  time				 bonus
-	  {0,	30,		{30006,30220,50109},	10,		80,		60*5,			{54, 50}},
-	  {1,	40,		{30047,30221,50109},	15,		80,		60*5,			{1, 3000}},
-	  {2,	50,		{30015,30222,50113},	20,		80,		60*5,			{15, 7}},
-	  {3,	60,		{30050,30223,50113},	20,		70,		60*5,			{16, 7}},
-	  {4,	70,		{30165,30224,50113},	25,		50,		60*5,			{53, 120}},
-	  {5,	80,		{30166,30225,50113},	25,		70,		60*5,			{115, 5}},
-	  {6,	85,		{30167,30226,50114},	35,		60,		60*5,		{63, 15}},
-	  {7,	90,		{30168,30227,50114},	100,	50,		60*5,		{73, 5}},
-	  {8,	94,		{30193,30252,50114},	50,		50,		60*5,		{71, 5}},
-	  {9,	100,	{30195,31043,50110},	50,		50,		60*5,		{72, 5}},
-	  {10,	110,	{30196,30251,50110},	35,		50,		60*5,		{74, 5}},
-	  {11,	120,	{53251,53252,50110},	5,		40,		60*5,		{17, 10}},
+	  {0,	30,		{30006,30220,50109},	10,		80,		0,			{54, 50}},
+	  {1,	40,		{30047,30221,50109},	15,		80,		0,			{1, 3000}},
+	  {2,	50,		{30015,30222,50113},	20,		80,		0,			{15, 7}},
+	  {3,	60,		{30050,30223,50113},	20,		70,		0,			{16, 7}},
+	  {4,	70,		{30165,30224,50113},	25,		70,		0,			{53, 120}},
+	  {5,	80,		{30166,30225,50113},	25,		70,		0,			{115, 5}},
+	  {6,	85,		{30167,30226,50114},	35,		60,		0,		{63, 15}},
+	  {7,	90,		{30168,30227,50114},	100,	50,		0,		{73, 5}},
+	  {8,	94,		{30193,30252,50114},	50,		50,		0,		{71, 5}},
+	  {9,	100,	{30195,31043,50110},	50,		50,		0,		{72, 5}},
+	  {10,	110,	{30196,30251,50110},	35,		50,		0,		{74, 5}},
+	  {11,	120,	{53251,53252,50110},	5,		40,		0,		{17, 10}},
 };
 
 #endif
+
 
 const TMobRankStat MobRankStats[MOB_RANK_MAX_NUM] =
 /*
@@ -81,6 +80,7 @@ TBattleTypeStat BattleTypeStats[BATTLE_TYPE_MAX_NUM] =
 };
 
 const DWORD * exp_table = NULL;
+
 
 #ifdef NEW_PET_SYSTEM
 DWORD * exppet_table = NULL;
@@ -133,6 +133,7 @@ const DWORD Pet_SKill_TablePerc[3][20] =
 
 DWORD exppet_table_common[121];
 #endif
+
 
 const DWORD exp_table_common[PLAYER_MAX_LEVEL_CONST + 1] =
 {
@@ -235,7 +236,7 @@ const DWORD exp_table_common[PLAYER_MAX_LEVEL_CONST + 1] =
 	1676898443,
 	1844588288,
 	2029047116,
-	2050000000,	//	99레벨 일 때 필요경험치 (100레벨이 되기 위한)
+	2050000000,
 	2150000000u,	//	100
 	2210000000u,
 	2250000000u,
@@ -276,8 +277,7 @@ const DWORD exp_table_common[PLAYER_MAX_LEVEL_CONST + 1] =
 const int * aiPercentByDeltaLev = NULL;
 const int * aiPercentByDeltaLevForBoss = NULL;
 
-// 적과 나와의 레벨차이에 의한 계산에 사용되는 테이블
-// MIN(MAX_EXP_DELTA_OF_LEV - 1, (적렙 + 15) - 내렙))
+
 const int aiPercentByDeltaLevForBoss_euckr[MAX_EXP_DELTA_OF_LEV] =
 {
 	1,      // -15  0
@@ -570,9 +570,6 @@ const DWORD guild_exp_table[GUILD_MAX_LEVEL+1] =
 	42000000UL
 };
 
-// INTERNATIONAL_VERSION 길드경험치
-
-// INTERNATIONAL_VERSION 길드경험치
 const DWORD guild_exp_table2[GUILD_MAX_LEVEL+1] =
 {
 	0,
@@ -597,9 +594,6 @@ const DWORD guild_exp_table2[GUILD_MAX_LEVEL+1] =
 	4000000UL,
 	16800000UL
 };
-// END_OF_INTERNATIONAL_VERSION 길드경험치
-
-// END_OF_INTERNATIONAL_VERSION 길드경험치
 
 const int aiMobEnchantApplyIdx[MOB_ENCHANTS_MAX_NUM] =
 {
@@ -657,9 +651,6 @@ const int aiWeaponSocketQty[WEAPON_NUM_TYPES] =
 #ifdef ENABLE_WOLFMAN_CHARACTER
 	3, // WEAPON_CLAW
 #endif
-#ifdef __NEW_ARROW_SYSTEM__
-	0, // WEAPON_UNLIMITED_ARROW
-#endif
 };
 
 const int aiArmorSocketQty[ARMOR_NUM_TYPES] =
@@ -670,22 +661,9 @@ const int aiArmorSocketQty[ARMOR_NUM_TYPES] =
 	0, // ARMOR_WRIST,
 	0, // ARMOR_FOOTS,
 	0  // ARMOR_ACCESSORY
-#ifdef ENABLE_NEW_TALISMAN_GF
-	, 0 // ARMOR_TALISMAN
-#endif
-#ifdef ENABLE_NEW_TALISMAN_SLOTS
-	, 0 // ARMOR_TALISMAN_2
-	, 0 // ARMOR_TALISMAN_3
-	, 0 // ARMOR_TALISMAN_4
-	, 0 // ARMOR_TALISMAN_5
-	, 0 // ARMOR_TALISMAN_6
-#endif
 };
 
 TItemAttrMap g_map_itemAttr;
-#ifdef ENABLE_USE_DIFFERENT_TABLE_FOR_COSTUME_ATTRIBUTE
-TItemAttrMap g_map_itemCostumeAttr;
-#endif
 TItemAttrMap g_map_itemRare;
 
 const TApplyInfo aApplyInfo[MAX_APPLY_NUM] =
@@ -780,16 +758,16 @@ const TApplyInfo aApplyInfo[MAX_APPLY_NUM] =
 	{ POINT_PC_BANG_DROP_BONUS	},		// 76
 	// END_PC_BANG_ITEM_ADD
 
-	{ POINT_NONE,		},				// 77 사용시 HP 소모 APPLY_EXTRACT_HP_PCT
+	{ POINT_NONE,		},
 
-	{ POINT_RESIST_WARRIOR,		},		// 78 무사에게 저항 APPLY_RESIST_WARRIOR
-	{ POINT_RESIST_ASSASSIN,	},		// 79 자객에게 저항 APPLY_RESIST_ASSASSIN
-	{ POINT_RESIST_SURA,		},		// 80 수라에게 저항 APPLY_RESIST_SURA
-	{ POINT_RESIST_SHAMAN,		},		// 81 무당에게 저항 APPLY_RESIST_SHAMAN
-	{ POINT_ENERGY				},		// 82 기력
-	{ POINT_DEF_GRADE			},		// 83 방어력. DEF_GRADE_BONUS는 클라에서 두배로 보여지는 의도된 버그(...)가 있다.
-	{ POINT_COSTUME_ATTR_BONUS	},		// 84 코스튬에 붙은 속성에 대해서만 보너스를 주는 기력
-	{ POINT_MAGIC_ATT_BONUS_PER },			// 85 마법 공격력 +x%
+	{ POINT_RESIST_WARRIOR,		},
+	{ POINT_RESIST_ASSASSIN,	},
+	{ POINT_RESIST_SURA,		},
+	{ POINT_RESIST_SHAMAN,		},
+	{ POINT_ENERGY				},
+	{ POINT_DEF_GRADE			},
+	{ POINT_COSTUME_ATTR_BONUS	},
+	{ POINT_MAGIC_ATT_BONUS_PER },
 	{ POINT_MELEE_MAGIC_ATT_BONUS_PER		},			// 86 APPLY_MELEE_MAGIC_ATTBONUS_PER
 	{ POINT_RESIST_ICE,			},   // APPLY_RESIST_ICE,	87
 	{ POINT_RESIST_EARTH,		},   // APPLY_RESIST_EARTH,	88
@@ -800,15 +778,15 @@ const TApplyInfo aApplyInfo[MAX_APPLY_NUM] =
 #ifdef ENABLE_WOLFMAN_CHARACTER
 	{ POINT_BLEEDING_REDUCE,		},	// APPLY_BLEEDING_REDUCE, 		92
 	{ POINT_BLEEDING_PCT,			},	// APPLY_BLEEDING_PCT, 			93
-	{ POINT_ATTBONUS_WOLFMAN,		},	// APPLY_ATTBONUS_WOLFMAN,		94 수인족에게 강함
-	{ POINT_RESIST_WOLFMAN,			},	// APPLY_RESIST_WOLFMAN,		95 수인족에게 저항
-	{ POINT_RESIST_CLAW,			},	// APPLY_RESIST_CLAW,			96 CLAW에게 저항
+	{ POINT_ATTBONUS_WOLFMAN,		},
+	{ POINT_RESIST_WOLFMAN,			},
+	{ POINT_RESIST_CLAW,			},
 #else
 	{ POINT_NONE,					},	// APPLY_BLEEDING_REDUCE, 		92
 	{ POINT_NONE,					},	// APPLY_BLEEDING_PCT, 			93
-	{ POINT_NONE,					},	// APPLY_ATTBONUS_WOLFMAN,		94 수인족에게 강함
-	{ POINT_NONE,					},	// APPLY_RESIST_WOLFMAN,		95 수인족에게 저항
-	{ POINT_NONE,					},	// APPLY_RESIST_CLAW,			96 CLAW에게 저항
+	{ POINT_NONE,					},
+	{ POINT_NONE,					},
+	{ POINT_NONE,					},
 #endif
 
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
@@ -822,36 +800,6 @@ const TApplyInfo aApplyInfo[MAX_APPLY_NUM] =
 #else
 	{ POINT_NONE,					},	// APPLY_RESIST_MAGIC_REDUCTION,98
 #endif
-#ifdef ENABLE_NEW_TALISMAN_GF
-	{ POINT_ATTBONUS_ELEC,	},	// POINT_ATTBONUS_ELEC, 99
-	{ POINT_ATTBONUS_FIRE,	},	// POINT_ATTBONUS_FIRE, 100
-	{ POINT_ATTBONUS_ICE,	},	// POINT_ATTBONUS_ICE, 101
-	{ POINT_ATTBONUS_WIND,	},	// POINT_ATTBONUS_WIND, 102
-	{ POINT_ATTBONUS_EARTH,	},	// POINT_ATTBONUS_EARTH, 103
-	{ POINT_ATTBONUS_DARK,	},	// POINT_ATTBONUS_DARK, 104
-	{ POINT_RESIST_HUMAN, },
-
-	{ POINT_RESIST_SWORD_REDUCTION, },		
-	{ POINT_RESIST_TWOHAND_REDUCTION, },	
-	{ POINT_RESIST_DAGGER_REDUCTION, },	
-	{ POINT_RESIST_BELL_REDUCTION, },		
-	{ POINT_RESIST_FAN_REDUCTION, },		
-	{ POINT_RESIST_BOW_REDUCTION, },
-
-	{ POINT_ATTBONUS_ZODIAC, },
-	{ POINT_ATTBONUS_DESERT, },
-	{ POINT_ATTBONUS_INSECT, },
-#ifdef ENABLE_WOLFMAN_CHARACTER
-	{ POINT_RESIST_CLAW_REDUCTION, },
-#endif	
-#endif
-#ifdef ENABLE_BONUS_BOSS
-    { POINT_ATTBONUS_BOSS,   },
-#endif
-#ifdef ENABLE_BONUS_METIN
-    { POINT_ATTBONUS_METIN,   },
-#endif
-	//{ POINT_FISHING_RARE,   },		// APPLY_FISHING_RARE
 };
 
 const int aiItemMagicAttributePercentHigh[ITEM_ATTRIBUTE_MAX_LEVEL] =
@@ -1040,9 +988,6 @@ const char * c_apszPrivNames[MAX_PRIV_NUM] =
 	"돈이 나올 확률",
 	"돈 대박이 나올 확률",
 	"경험치 배율",
-#ifdef ENABLE_DECORUM
-	"Decorum Rate",
-#endif	
 };
 
 const int aiPolymorphPowerByLevel[SKILL_MAX_LEVEL + 1] =
@@ -1107,28 +1052,28 @@ TGuildWarInfo KOR_aGuildWarInfo[GUILD_WAR_TYPE_MAX_NUM] =
 };
 
 //
-// 악세서리 소켓용 수치들
+
 //
 
-// 다이아몬드로 소켓을 추가할 때 확률
+
 const int aiAccessorySocketAddPct[ITEM_ACCESSORY_SOCKET_MAX_NUM] =
 {
 	50, 50, 50
 };
 
-// 악세서리 수치 값의 몇%만큼의 성능을 추가하는지
+
 const int aiAccessorySocketEffectivePct[ITEM_ACCESSORY_SOCKET_MAX_NUM + 1] =
 {
 	0, 10, 20, 40
 };
 
-// 소켓 지속시간 24, 12, 6
+
 const int aiAccessorySocketDegradeTime[ITEM_ACCESSORY_SOCKET_MAX_NUM + 1] =
 {
 	0, 3600 * 24, 3600 * 12, 3600 * 6
 };
 
-// 소켓 장착 성공률
+
 const int aiAccessorySocketPutPct[ITEM_ACCESSORY_SOCKET_MAX_NUM + 1] =
 {
 	90, 80, 70, 0
@@ -1228,10 +1173,9 @@ TValueName c_aApplyTypeNames[] =
     { "RESIST_ASSASSIN",	APPLY_RESIST_ASSASSIN},
     { "RESIST_SURA",		APPLY_RESIST_SURA},
     { "RESIST_SHAMAN",	APPLY_RESIST_SHAMAN},
-    // by mhh game/affect.h 정의되어있음. INFINITE_AFFECT_DURATION = 0x1FFFFFFF
     { "INFINITE_AFFECT_DURATION", 0x1FFFFFFF	},
-	{ "ENERGY", APPLY_ENERGY },		//	기력
-	{ "COSTUME_ATTR_BONUS", APPLY_COSTUME_ATTR_BONUS },		//	기력
+	{ "ENERGY", APPLY_ENERGY },
+	{ "COSTUME_ATTR_BONUS", APPLY_COSTUME_ATTR_BONUS },
 	{ "MAGIC_ATTBONUS_PER",	APPLY_MAGIC_ATTBONUS_PER	},
     { "MELEE_MAGIC_ATTBONUS_PER",	APPLY_MELEE_MAGIC_ATTBONUS_PER	},
 
@@ -1249,29 +1193,7 @@ TValueName c_aApplyTypeNames[] =
 #ifdef ENABLE_MAGIC_REDUCTION_SYSTEM
 	{ "RESIST_MAGIC_REDUCTION",APPLY_RESIST_MAGIC_REDUCTION },
 #endif
-#ifdef ENABLE_NEW_TALISMAN_GF
-	{ "ATTBONUS_ELEC",APPLY_ATTBONUS_ELEC },
-	{ "ATTBONUS_FIRE",APPLY_ATTBONUS_FIRE },
-	{ "ATTBONUS_ICE",APPLY_ATTBONUS_ICE },
-	{ "ATTBONUS_WIND",APPLY_ATTBONUS_WIND },
-	{ "ATTBONUS_EARTH",APPLY_ATTBONUS_EARTH },
-	{ "ATTBONUS_DARK",APPLY_ATTBONUS_DARK },
-	{ "RESIST_HUMAN",APPLY_RESIST_HUMAN },
 
-	{ "RESIST_SWORD_REDUCTION",APPLY_RESIST_SWORD_REDUCTION },
-	{ "RESIST_TWOHAND_REDUCTION",APPLY_RESIST_TWOHAND_REDUCTION },
-	{ "RESIST_DAGGER_REDUCTION",APPLY_RESIST_DAGGER_REDUCTION },
-	{ "RESIST_BELL_REDUCTION",APPLY_RESIST_BELL_REDUCTION },	
-	{ "RESIST_FAN_REDUCTION",APPLY_RESIST_FAN_REDUCTION },
-	{ "RESIST_BOW_REDUCTION",APPLY_RESIST_BOW_REDUCTION },
-
-	{ "ATTBONUS_ZODIAC",APPLY_ATTBONUS_ZODIAC },
-	{ "ATTBONUS_DESERT",APPLY_ATTBONUS_DESERT },
-	{ "ATTBONUS_INSECT",APPLY_ATTBONUS_INSECT },
-#ifdef ENABLE_WOLFMAN_CHARACTER
-	{ "RESIST_CLAW_REDUCTION",APPLY_RESIST_CLAW_REDUCTION },
-#endif
-#endif
     { NULL,		0			}
 };
 // from import_item_proto.c
@@ -1597,3 +1519,5 @@ const DWORD THuntingRandomItem_81_90[12][2] =
 };
 #endif
 
+
+//martysama0134's 2022

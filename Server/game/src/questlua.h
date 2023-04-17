@@ -3,7 +3,7 @@
 
 #include "quest.h"
 #include "buffer_manager.h"
-#include "../../common/CommonDefines.h"
+
 extern int test_server;
 extern int speed_server;
 
@@ -35,16 +35,12 @@ namespace quest
 	extern void RegisterBattleArenaFunctionTable();
 	extern void RegisterDanceEventFunctionTable();
 	extern void RegisterDragonLairFunctionTable();
-#if defined(__SHIP_DEFENSE__)
-	extern void RegisterShipDefenseManagerFunctionTable();
-#endif
-
 	extern void RegisterSpeedServerFunctionTable();
 	extern void RegisterDragonSoulFunctionTable();
-
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	extern void	Register67BonusNewFunctionTable();
+#ifdef ENABLE_QUEST_DND_EVENT
+	extern void RegisterDNDFunctionTable();
 #endif
+
 	extern void combine_lua_string(lua_State* L, std::ostringstream &s);
 #if defined(__DUNGEON_INFO_SYSTEM__)
 	struct FUpdateDungeonRanking
@@ -53,10 +49,6 @@ namespace quest
 		FUpdateDungeonRanking(std::string strQuestName) : m_strQuestName(strQuestName) {}
 		void operator () (LPCHARACTER ch);
 	};
-#endif
-
-#ifdef ENABLE_DECORUM
-	extern void RegisterDecorumLuaFunctionTable();
 #endif
 	struct FSetWarpLocation
 	{
@@ -107,6 +99,17 @@ namespace quest
 		void operator() (LPENTITY ent);
 	};
 
+#ifdef ENABLE_NEWSTUFF
+	struct FSendChatPacket
+	{
+		DWORD m_chat_type;
+		std::string m_text;
+
+		FSendChatPacket(DWORD chat_type, std::string text) : m_chat_type(chat_type), m_text(text) {}
+		void operator() (LPENTITY ent);
+	};
+#endif
+
 	struct FSendPacketToEmpire
 	{
 		TEMP_BUFFER buf;
@@ -153,7 +156,6 @@ namespace quest
 		FBuildLuaGuildWarList(lua_State * L);
 		void operator() (DWORD g1, DWORD g2);
 	};
-
 }
 #endif /*__HEADER_QUEST_LUA__*/
-
+//martysama0134's 2022

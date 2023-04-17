@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include "questmanager.h"
@@ -30,4 +29,4 @@ namespace quest
 		CQuestManager::instance(). AddLuaFunctionTable("DragonLair", dl_functions);
 	}
 }
-
+//martysama0134's 2022

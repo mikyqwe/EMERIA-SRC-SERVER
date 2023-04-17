@@ -11,9 +11,6 @@ const std::string g_astGradeName[] =
 	"grade_rare",
 	"grade_ancient",
 	"grade_legendary",
-#ifdef ENABLE_DS_GRADE_MYTH
-    "grade_myth",
-#endif
 };
 
 const std::string g_astStepName[] =
@@ -175,7 +172,6 @@ bool DragonSoulTable::ReadBasicApplys()
 		TVecApplys vecApplys;
 		int n = pChild->GetRowCount();
 
-		// BasicApply Group은 Key가 1부터 시작함.
 		for (int j = 1; j <= n; j++)
 		{
 			std::stringstream ss;
@@ -657,7 +653,6 @@ bool DragonSoulTable::GetWeight(BYTE ds_type, BYTE grade_idx, BYTE step_index, B
 			return true;
 		}
 	}
-	// default group을 살펴봄.
 	pDragonSoulGroup = m_pWeightTableNode->GetChildNode("default");
 	if (NULL != pDragonSoulGroup)
 	{
@@ -903,3 +898,4 @@ DragonSoulTable::~DragonSoulTable ()
 	if (m_pLoader)
 		delete m_pLoader;
 }
+//martysama0134's 2022

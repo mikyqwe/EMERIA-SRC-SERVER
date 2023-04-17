@@ -28,10 +28,10 @@ class CPoly
 		int		insert(const std::string & s, int tok);
 		int		find(const std::string & s);
 		void		emit(int t,int tval);
-		void		match(int t); 
-		void		expo(); 
-		void		factor(); 
-		void		term(); 
+		void		match(int t);
+		void		expo();
+		void		factor();
+		void		term();
 		int		lexan();
 		void		error();
 		void		expr();
@@ -53,4 +53,5 @@ class CPoly
 
 };
 
-#endif 
+#endif
+//martysama0134's 2022

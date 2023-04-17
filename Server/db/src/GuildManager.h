@@ -8,31 +8,23 @@
 #include "../../libsql/libsql.h"
 #include "../../libpoly/Poly.h"
 
+enum
+{
+    GUILD_WARP_WAR_CHANNEL = 99
+};
+
 class CGuildWarReserve;
 
 struct TGuildDeclareInfo
 {
 	BYTE bType;
 	DWORD dwGuildID[2];
-#ifdef __IMPROVED_GUILD_WAR__
-	int iMaxPlayer;
-	int iMaxScore;
-	DWORD	flags;
-	int		custom_map_index;
-#endif
-	TGuildDeclareInfo(BYTE _bType, DWORD _dwGuildID1, DWORD _dwGuildID2
-#ifdef __IMPROVED_GUILD_WAR__
-		, int _iMaxPlayer, int _iMaxScore, DWORD _flags, int _custom_map_index
-#endif
-	)
+
+	TGuildDeclareInfo(BYTE _bType, DWORD _dwGuildID1, DWORD _dwGuildID2)
 		: bType(_bType)
-#ifdef __IMPROVED_GUILD_WAR__
-		, iMaxPlayer(_iMaxPlayer), iMaxScore(_iMaxScore), flags(_flags), custom_map_index(_custom_map_index)
-#endif
 	{
 		dwGuildID[0] = _dwGuildID1;
 		dwGuildID[1] = _dwGuildID2;
-
 	}
 
 	bool operator < (const TGuildDeclareInfo& r) const
@@ -45,12 +37,6 @@ struct TGuildDeclareInfo
 		bType = r.bType;
 		dwGuildID[0] = r.dwGuildID[0];
 		dwGuildID[1] = r.dwGuildID[1];
-#ifdef __IMPROVED_GUILD_WAR__
-		iMaxPlayer = r.iMaxPlayer;
-		iMaxScore = r.iMaxScore;
-		flags = r.flags;
-		custom_map_index = r.custom_map_index;
-#endif
 		return *this;
 	}
 };
@@ -62,21 +48,14 @@ struct TGuildWaitStartInfo
 	long			lWarPrice;
 	long			lInitialScore;
 	CGuildWarReserve *	pkReserve;
-#ifdef __IMPROVED_GUILD_WAR__
-	int					iMaxPlayer;
-	int					iMaxScore;
-	DWORD	flags;
-	int		custom_map_index;
-#endif
-	TGuildWaitStartInfo(BYTE _bType, DWORD _g1, DWORD _g2, long _lWarPrice, long _lInitialScore, CGuildWarReserve * _pkReserve
-#ifdef __IMPROVED_GUILD_WAR__
-		, int _iMaxPlayer, int _iMaxScore, DWORD _flags, int _custom_map_index
-#endif
-	)
+
+	TGuildWaitStartInfo(BYTE _bType,
+			DWORD _g1,
+			DWORD _g2,
+			long _lWarPrice,
+			long _lInitialScore,
+			CGuildWarReserve * _pkReserve)
 		: bType(_bType), lWarPrice(_lWarPrice), lInitialScore(_lInitialScore), pkReserve(_pkReserve)
-#ifdef __IMPROVED_GUILD_WAR__
-		, iMaxPlayer(_iMaxPlayer), iMaxScore(_iMaxScore), flags(_flags), custom_map_index(_custom_map_index)
-#endif
 	{
 		GID[0] = _g1;
 		GID[1] = _g2;
@@ -95,34 +74,14 @@ struct TGuildWarPQElement
 	DWORD	GID[2];
 	DWORD	iScore[2];
 	DWORD	iBetScore[2];
-#ifdef __IMPROVED_GUILD_WAR__
-	int		iMaxPlayer;
-	int		iMaxScore;
-	DWORD	flags;
-	int		custom_map_index;
-#endif
-	TGuildWarPQElement(BYTE _bType, DWORD GID1, DWORD GID2
-#ifdef __IMPROVED_GUILD_WAR__
-		, int _iMaxPlayer, int _iMaxScore, DWORD _flags, int _custom_map_index
-#endif
-	) 
-		: bEnd(false), bType(_bType)
-#ifdef __IMPROVED_GUILD_WAR__
-		, iMaxPlayer(_iMaxPlayer), iMaxScore(_iMaxScore), flags(_flags), custom_map_index(_custom_map_index)
-#endif
 
+	TGuildWarPQElement(BYTE _bType, DWORD GID1, DWORD GID2) : bEnd(false), bType(_bType)
 	{
 		bType = _bType;
 		GID[0] = GID1;
 		GID[1] = GID2;
 		iScore[0] = iScore[1] = 0;
 		iBetScore[0] = iBetScore[1] = 0;
-#ifdef __IMPROVED_GUILD_WAR__
-		iMaxPlayer = _iMaxPlayer;
-		iMaxScore = _iMaxScore;
-		flags = _flags;
-		custom_map_index = _custom_map_index;		
-#endif
 	}
 };
 
@@ -191,7 +150,7 @@ class CGuildWarReserve
 	void	SetLastNoticeMin(int iMin) { m_iLastNoticeMin = iMin; }
 
     private:
-	CGuildWarReserve();  
+	CGuildWarReserve();
 
 	TGuildWarReserve				m_data;
 	// <login, <guild, gold>>
@@ -214,36 +173,19 @@ class CGuildManager : public singleton<CGuildManager>
 	void	Update();
 
 	void	OnSetup(CPeer * peer);
-#ifdef __IMPROVED_GUILD_WAR__
-	void	StartWar(BYTE bType, DWORD GID1, DWORD GID2, CGuildWarReserve * pkReserve, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-#else
 	void	StartWar(BYTE bType, DWORD GID1, DWORD GID2, CGuildWarReserve * pkReserve = NULL);
-#endif
+
 	void	UpdateScore(DWORD guild_gain_point, DWORD guild_opponent, int iScore, int iBetScore);
 
-#ifdef __IMPROVED_GUILD_WAR__
-	void	AddDeclare(BYTE bType, DWORD guild_from, DWORD guild_to, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-	void	RemoveDeclare(DWORD guild_from, DWORD guild_to, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-#else
 	void	AddDeclare(BYTE bType, DWORD guild_from, DWORD guild_to);
 	void	RemoveDeclare(DWORD guild_from, DWORD guild_to);
-#endif
+
 	bool	TakeBetPrice(DWORD dwGuildTo, DWORD dwGuildFrom, long lWarPrice);
 
 	bool	WaitStart(TPacketGuildWar * p);
-#ifdef GUILD_WAR_COUNTER
-	void	GetWarStatisticsInfo(std::vector<TGuildWarReserve>& p_vec);
-	void	WarStatistics(CPeer* peer, DWORD handle, const char* data);
-	bool	LoadWarStatisticsData(DWORD warID);
-	void	LoadWarStatisticsInfo(DWORD warID, TGuildWarReserve& t, bool isP2P);
-#endif
-#ifdef __IMPROVED_GUILD_WAR__
-	void	RecvWarEnd(DWORD GID1, DWORD GID2, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-	void	RecvWarOver(DWORD dwGuildWinner, DWORD dwGuildLoser, bool bDraw, long lWarPrice, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-#else
+
 	void	RecvWarEnd(DWORD GID1, DWORD GID2);
 	void	RecvWarOver(DWORD dwGuildWinner, DWORD dwGuildLoser, bool bDraw, long lWarPrice);
-#endif
 
 	void	ChangeLadderPoint(DWORD GID, int change);
 
@@ -268,11 +210,8 @@ class CGuildManager : public singleton<CGuildManager>
 	void	ProcessReserveWar();
 	bool	Bet(DWORD dwID, const char * c_pszLogin, DWORD dwGold, DWORD dwGuild);
 
-#ifdef __IMPROVED_GUILD_WAR__
-	void	CancelWar(DWORD GID1, DWORD GID2, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-#else
 	void	CancelWar(DWORD GID1, DWORD GID2);
-#endif
+
 	bool	ChangeMaster(DWORD dwGID, DWORD dwFrom, DWORD dwTo);
 
     private:
@@ -296,7 +235,7 @@ class CGuildManager : public singleton<CGuildManager>
 	std::map<DWORD, TGuild>					m_map_kGuild;
 	std::map<DWORD, std::map<DWORD, time_t> >		m_mapGuildWarEndTime;
 
-	std::set<TGuildDeclareInfo>				m_DeclareMap; 
+	std::set<TGuildDeclareInfo>				m_DeclareMap;
 	std::map<DWORD, std::map<DWORD, TGuildWarInfo> >	m_WarMap;
 
 	typedef std::pair<time_t, TGuildWarPQElement *>	stPairGuildWar;
@@ -313,13 +252,10 @@ class CGuildManager : public singleton<CGuildManager>
 	std::map<DWORD, CGuildWarReserve *>			m_map_kWarReserve;
 	CPoly							polyPower;
 	CPoly							polyHandicap;
-#ifdef GUILD_WAR_COUNTER
-	std::map<DWORD, TGuildWarReserve> m_warStatisticsInfo;
-	std::map<DWORD, std::vector<war_static_ptr>> m_warStatisticsData;
-#endif
 
 	// GID Ranking
 	std::map<DWORD, int>					map_kLadderPointRankingByGID;
 };
 
 #endif
+//martysama0134's 2022

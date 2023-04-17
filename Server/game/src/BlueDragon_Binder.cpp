@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include "BlueDragon_Binder.h"
@@ -215,4 +214,4 @@ unsigned int BlueDragon_GetIndexFactor(const char* container, const size_t idx, 
 
 	return ret;
 }
-
+//martysama0134's 2022

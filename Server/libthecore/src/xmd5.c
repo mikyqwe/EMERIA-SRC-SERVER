@@ -20,7 +20,7 @@
  * - License along with this library; if not, write to the Free Software       -
  * - Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA -
  */
- 
+
 /*
  * md5.h and md5.c are based off of md5hl.c, md5c.c, and md5.h from libmd, which in turn is
  * based off the FreeBSD libmd library.  Their respective copyright notices follow:
@@ -77,7 +77,7 @@ void byteReverse(unsigned char *buf, unsigned longs)
 char *
 lutil_md5_file (const char *filename, char *buf)
 {
-    unsigned char buffer[BUFSIZ]; 
+    unsigned char buffer[BUFSIZ];
     MD5_CTX ctx;
     int f,i,j;
 
@@ -108,8 +108,8 @@ lutil_md5_data (const unsigned char *data, unsigned int len, char *buf)
     MD5Update(&ctx,data,len);
     return MD5End(&ctx, buf);
 }
-                                   
-                                  
+
+
 /* Non-Interface Methods */
 
 /* from md5hl.c */
@@ -198,7 +198,7 @@ void MD5Update(MD5_CTX *ctx, unsigned char const *buf, unsigned len)
 }
 
 /*
- * Final wrapup - pad to 64-byte boundary with the bit pattern 
+ * Final wrapup - pad to 64-byte boundary with the bit pattern
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
 void MD5Final(unsigned char digest[16], MD5_CTX *ctx)
@@ -343,3 +343,4 @@ void MD5Transform(uint32_t buf[4], uint32_t const in[16])
 }
 
 #endif // #ifndef __FreeBSD__
+//martysama0134's 2022

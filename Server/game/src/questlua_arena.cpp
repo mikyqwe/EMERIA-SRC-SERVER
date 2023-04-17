@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "questmanager.h"
 #include "char.h"
@@ -131,4 +130,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("arena", arena_functions);
 	}
 }
-
+//martysama0134's 2022

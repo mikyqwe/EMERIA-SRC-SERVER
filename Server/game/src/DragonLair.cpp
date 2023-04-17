@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "config.h"
 
@@ -238,7 +237,7 @@ void CDragonLairManager::OnDragonDead(LPCHARACTER pDragon, DWORD KillerGuildID)
 
 	iter->second->OnDragonDead( pDragon );
 
-	// 애들 다 집으로 보내고 맵 없애기
+
 
 	tag_DragonLair_Collapse_EventInfo* info;
 	info = AllocEventInfo<tag_DragonLair_Collapse_EventInfo>();
@@ -251,4 +250,4 @@ void CDragonLairManager::OnDragonDead(LPCHARACTER pDragon, DWORD KillerGuildID)
 
 	LairMap_.erase( iter );
 }
-
+//martysama0134's 2022

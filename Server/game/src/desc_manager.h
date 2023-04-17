@@ -2,8 +2,6 @@
 #define __INC_METIN_II_GAME_DESC_MANAGER_H__
 
 #include <boost/unordered_map.hpp>
-#include <unordered_map>
-#include <unordered_set>
 
 #include "../../common/stl.h"
 #include "../../common/length.h"
@@ -11,7 +9,6 @@
 
 class CLoginKey;
 class CClientPackageCryptInfo;
-typedef struct SPacketGGHandshakeValidate TPacketGGHandshakeValidate;
 
 class DESC_MANAGER : public singleton<DESC_MANAGER>
 {
@@ -23,12 +20,6 @@ class DESC_MANAGER : public singleton<DESC_MANAGER>
 		typedef std::map<DWORD, LPDESC>					DESC_ACCOUNTID_MAP;
 		typedef boost::unordered_map<std::string, LPDESC>	DESC_LOGINNAME_MAP;
 		typedef std::map<DWORD, DWORD>					DESC_HANDLE_RANDOM_KEY_MAP;
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-	using PairedStringDWORD = std::pair<std::string, DWORD>;
-	typedef std::vector<PairedStringDWORD> AcceptHostHandshakeVector;
-	typedef std::vector<PairedStringDWORD> IntrusiveHostCountVector;
-	typedef std::vector<PairedStringDWORD> IntruderHostVector;
-#endif
 
 	public:
 		DESC_MANAGER();
@@ -42,19 +33,6 @@ class DESC_MANAGER : public singleton<DESC_MANAGER>
 		void			DestroyDesc(LPDESC d, bool erase_from_set = true);
 
 		DWORD			CreateHandshake();
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-	void AcceptHandshake(const char* c_szHost, DWORD dwHandshakeTime = 0);
-	bool IsIntrusiveHandshake(const char* c_szHost);
-
-	void SetIntrusiveCount(const char* c_szHost, bool bReset = false);
-	int GetIntrusiveCount(const char* c_szHost);
-
-	void SetIntruder(const char* c_szHost, DWORD dwDelayHandshakeTime);
-	bool IsIntruder(const char* c_szHost);
-
-	void AllowHandshake(const char* c_szHost);
-#endif
-
 
 		LPCLIENT_DESC		CreateConnectionDesc(LPFDWATCH fdw, const char * host, WORD port, int iPhaseWhenSucceed, bool bRetryWhenClosed);
 		void			TryConnect();
@@ -91,9 +69,6 @@ class DESC_MANAGER : public singleton<DESC_MANAGER>
 		bool			LoadClientPackageCryptInfo(const char* pDirName);
 		void			SendClientPackageCryptKey( LPDESC desc );
 		void			SendClientPackageSDBToLoadMap( LPDESC desc, const char* pMapName );
-#ifdef OFFLINE_SHOP
-		void			BroadcastOnlineCount(DWORD dwOnlinePlayers, DWORD dwOnlineShops);
-#endif
 #ifdef __FreeBSD__
 		static void		NotifyClientPackageFileChanged( const std::string& fileName, eFileUpdatedOptions eUpdateOption );
 #endif
@@ -111,12 +86,6 @@ class DESC_MANAGER : public singleton<DESC_MANAGER>
 		//DESC_ACCOUNTID_MAP		m_AccountIDMap;
 		DESC_LOGINNAME_MAP		m_map_loginName;
 		std::map<DWORD, CLoginKey *>	m_map_pkLoginKey;
-		
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-		AcceptHostHandshakeVector m_vecAcceptHostHandshake;
-		IntrusiveHostCountVector m_vecIntrusiveHostCount;
-		IntruderHostVector m_vecIntruderHost;
-#endif
 
 		int				m_iSocketsConnected;
 
@@ -128,23 +97,7 @@ class DESC_MANAGER : public singleton<DESC_MANAGER>
 		bool			m_bDestroyed;
 
 		CClientPackageCryptInfo*	m_pPackageCrypt;
-
-
-
-private:
-		LPEVENT	m_pkDescManagerGarbageCollector;
-		std::unordered_map<std::string, std::tuple<DWORD, int, bool>> m_connection_mapper;
-		std::unordered_set<std::string> s_handshake_whitelist;
-
-	bool	GetHostHandshake(const struct sockaddr_in & c_rSockAddr);
-	int	GetHostConnectionCount(const struct sockaddr_in & c_rSockAddr);
-	void	RegisterInstrusiveConnection(const std::string & sHost);
-	bool	IsIntrusiveConnection(const std::string & sHost);
-	bool	IsOnHandshakeWhitelist(const struct sockaddr_in & c_rSockAddr);
-
-public:
-	void	AddToHandshakeWhiteList(const TPacketGGHandshakeValidate * pack);
-	void	ConnectionCollector();
 };
 
 #endif
+//martysama0134's 2022

@@ -11,7 +11,7 @@
 //     - Added Unicode support
 //
 //     Version 1.1 - 2002 March 10
-//     - Added example to XGetopt.cpp module header 
+//     - Added example to XGetopt.cpp module header
 //
 // This software is released into the public domain.
 // You are free to use it in any way you like.
@@ -226,3 +226,4 @@ int getopt(int argc, TCHAR *argv[], TCHAR *optstring)
 }
 
 #endif // #ifdef __WIN32__
+//martysama0134's 2022

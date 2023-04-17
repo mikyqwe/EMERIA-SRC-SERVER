@@ -59,4 +59,4 @@ bool CFSM::GotoState(CState & NewState)
 	m_pNewState = &NewState;
 	return true;
 }
-
+//martysama0134's 2022

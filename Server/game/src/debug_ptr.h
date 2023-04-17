@@ -172,3 +172,4 @@ struct hash<DebugPtr<T> > {
 
 #endif // DEBUG_ALLOC
 #endif // _DEBUG_PTR_H_
+//martysama0134's 2022

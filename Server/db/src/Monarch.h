@@ -68,3 +68,4 @@ class CMonarch : public singleton<CMonarch>
 };
 
 #endif
+//martysama0134's 2022

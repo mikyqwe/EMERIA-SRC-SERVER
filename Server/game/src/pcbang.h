@@ -1,4 +1,3 @@
-
 typedef unsigned long PCBang_IP;
 typedef unsigned long PCBang_ID;
 
@@ -23,4 +22,4 @@ class CPCBangManager : public singleton<CPCBangManager>
 
 		bool IsPCBangIP(const char* c_szIP);
 };
-
+//martysama0134's 2022

@@ -32,3 +32,4 @@ class CConfig : public singleton<CConfig>
 };
 
 #endif
+//martysama0134's 2022

@@ -83,17 +83,13 @@ namespace quest
 			bool		RunState(QuestState& qs);
 
 			PC *		GetPC(unsigned int pc);
-			PC *		GetPCForce(unsigned int pc);	// 현재 PC를 바꾸지 않고 PC 포인터를 가져온다.
+			PC *		GetPCForce(unsigned int pc);
 
 			unsigned int	GetCurrentNPCRace();
 			const string & 	GetCurrentQuestName();
 			unsigned int	FindNPCIDByName(const string& name);
 
 			//void		SetCurrentNPCCharacterPtr(LPCHARACTER ch) { m_pkCurrentNPC = ch; }
-#ifdef ENABLE_MELEY_LAIR_DUNGEON
-			LPCHARACTER		GetCurrentNPCAttackCharacterPtr();
-			void		Attack(unsigned int pc, unsigned int npc);
-#endif
 			LPCHARACTER		GetCurrentNPCCharacterPtr();
 
 			void		SetCurrentEventIndex(int index) { m_iRunningEventIndex = index; }
@@ -105,6 +101,11 @@ namespace quest
 			LPITEM		GetCurrentItem();
 			void		ClearCurrentItem();
 			void		SetCurrentItem(LPITEM item);
+#ifdef ENABLE_QUEST_DND_EVENT
+			LPITEM		GetCurrentDNDItem();
+			void		ClearCurrentDNDItem();
+			void		SetCurrentDNDItem(LPITEM item);
+#endif
 			void		AddServerTimer(const string& name, DWORD arg, LPEVENT event);
 			void		ClearServerTimer(const string& name, DWORD arg);
 			void		ClearServerTimerNotCancel(const string& name, DWORD arg);
@@ -124,6 +125,12 @@ namespace quest
 #ifdef ENABLE_QUEST_DIE_EVENT
 			void		Die(unsigned int pc, unsigned int npc);
 #endif
+#ifdef ENABLE_QUEST_BOOT_EVENT
+			bool		Boot();
+#endif
+#ifdef ENABLE_QUEST_DND_EVENT
+			bool		DND(uint32_t pc, LPITEM item_dnd, LPITEM item_victim, bool bReceiveAll);
+#endif
 			void		LevelUp(unsigned int pc);
 			void		AttrIn(unsigned int pc, LPCHARACTER ch, int attr);
 			void		AttrOut(unsigned int pc, LPCHARACTER ch, int attr);
@@ -140,7 +147,7 @@ namespace quest
 			void		Letter(DWORD pc);
 			void		Letter(DWORD pc, DWORD quest_index, int state);
 
-			void		ItemInformer(unsigned int pc, unsigned int vnum);	//독일선물기능
+			void		ItemInformer(unsigned int pc, unsigned int vnum);
 
 			//
 
@@ -291,7 +298,6 @@ namespace quest
 			static bool ExecuteQuestScript(PC& pc, DWORD quest_index, const int state, const char* code, const int code_size, vector<AArgScript*>* pChatScripts = NULL, bool bUseCache = true);
 
 
-		// begin_other_pc_blcok, end_other_pc_block을 위한 객체들.
 		public:
 			void		BeginOtherPCBlock(DWORD pid);
 			void		EndOtherPCBlock();
@@ -310,3 +316,4 @@ namespace quest
 };
 
 #endif
+//martysama0134's 2022

@@ -45,12 +45,12 @@ INLINE static DWORD f(DWORD x)
 /*
 static void GOST_ECB_Encrypt(DWORD * N1, DWORD * N2, const DWORD * KeyAddress)
 {
-    register DWORD n1, n2; // As named in the GOST 
+    register DWORD n1, n2; // As named in the GOST
 
     n1 = *N1;
     n2 = *N2;
 
-    // Instead of swapping halves, swap names each round 
+    // Instead of swapping halves, swap names each round
     n2 ^= f(n1+KeyAddress[0]);
     n1 ^= f(n2+KeyAddress[1]);
     n2 ^= f(n1+KeyAddress[2]);
@@ -87,7 +87,7 @@ static void GOST_ECB_Encrypt(DWORD * N1, DWORD * N2, const DWORD * KeyAddress)
     n2 ^= f(n1+KeyAddress[1]);
     n1 ^= f(n2+KeyAddress[0]);
 
-    // There is no swap after the last round 
+    // There is no swap after the last round
     *N1 = n2;
     *N2 = n1;
 }
@@ -102,12 +102,12 @@ int GOST_Encrypt(DWORD * DstBuffer, const DWORD * SrcBuffer, const DWORD * KeyAd
 
     for (i = 0; i < (Length >> 2); i = i+2)
     {
-	register DWORD n1, n2; // As named in the GOST 
+	register DWORD n1, n2; // As named in the GOST
 
 	n1 = N1;
 	n2 = N2;
 
-	// Instead of swapping halves, swap names each round 
+	// Instead of swapping halves, swap names each round
 	n2 ^= f(n1+KeyAddress[0]);
 	n1 ^= f(n2+KeyAddress[1]);
 	n2 ^= f(n1+KeyAddress[2]);
@@ -147,7 +147,7 @@ int GOST_Encrypt(DWORD * DstBuffer, const DWORD * SrcBuffer, const DWORD * KeyAd
     	N1 = n2;
 	N2 = n1;
     	//GOST_ECB_Encrypt(&N1, &N2, KeyAddress);
-	// XOR plaintext with initial vector, 
+	// XOR plaintext with initial vector,
 	// move rezult to ciphertext and to initial vector
 	DstBuffer[i]   = SrcBuffer[i] ^ N1;
 	N1             = DstBuffer[i];
@@ -162,7 +162,7 @@ int GOST_Encrypt(DWORD * DstBuffer, const DWORD * SrcBuffer, const DWORD * KeyAd
 
 // ************ GOST CBC decryption **************
 int GOST_Decrypt(DWORD * DstBuffer, const DWORD * SrcBuffer, const DWORD * KeyAddress, DWORD Length, DWORD *IVector)
-{   
+{
     DWORD i;
     DWORD N1, N2, dwTmp;
 
@@ -171,12 +171,12 @@ int GOST_Decrypt(DWORD * DstBuffer, const DWORD * SrcBuffer, const DWORD * KeyAd
 
     for (i = 0; i < (Length >> 2); i = i + 2)
     {
-	register DWORD n1, n2; // As named in the GOST 
+	register DWORD n1, n2; // As named in the GOST
 
 	n1 = N1;
 	n2 = N2;
 
-	// Instead of swapping halves, swap names each round 
+	// Instead of swapping halves, swap names each round
 	n2 ^= f(n1+KeyAddress[0]);
 	n1 ^= f(n2+KeyAddress[1]);
 	n2 ^= f(n1+KeyAddress[2]);
@@ -213,11 +213,11 @@ int GOST_Decrypt(DWORD * DstBuffer, const DWORD * SrcBuffer, const DWORD * KeyAd
 	n2 ^= f(n1+KeyAddress[1]);
 	n1 ^= f(n2+KeyAddress[0]);
 
-	// There is no swap after the last round 
+	// There is no swap after the last round
 	N1 = n2;
 	N2 = n1;
 	//GOST_ECB_Encrypt(&N1, &N2, KeyAddress);
-	// XOR  encrypted text with encrypted initial vector (we get rezult - decrypted text), 
+	// XOR  encrypted text with encrypted initial vector (we get rezult - decrypted text),
 	// move encrypted text to new initial vector.
 	// We need dwTmp because SrcBuffer may be the same as DstBuffer
 	dwTmp        = SrcBuffer[i] ^ N1;
@@ -231,4 +231,4 @@ int GOST_Decrypt(DWORD * DstBuffer, const DWORD * SrcBuffer, const DWORD * KeyAd
 
     return Length;
 }
-
+//martysama0134's 2022

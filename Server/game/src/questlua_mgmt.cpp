@@ -59,4 +59,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("mgmt", mgmt_functions);
 	}
 }
-
+//martysama0134's 2022

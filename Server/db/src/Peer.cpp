@@ -193,5 +193,4 @@ bool CPeer::CheckItemIDRangeCollision(TItemIDRangeTable itemRange)
 
 	return true;
 }
-
-
+//martysama0134's 2022

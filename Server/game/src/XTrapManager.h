@@ -1,4 +1,3 @@
-
 #ifndef _XTRAP_MANAGER_H_
 #define _XTRAP_MANAGER_H_
 
@@ -67,4 +66,4 @@ private:
 };
 
 #endif /* _XTRAP_MANAGER_H_ */
-
+//martysama0134's 2022

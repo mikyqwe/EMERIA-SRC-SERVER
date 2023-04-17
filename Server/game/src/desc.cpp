@@ -11,7 +11,6 @@
 #include "sectree_manager.h"
 #include "p2p.h"
 #include "buffer_manager.h"
-//#include "sequence.h"
 #include "guild.h"
 #include "guild_manager.h"
 #include "TrafficProfiler.h"
@@ -20,11 +19,13 @@
 #include "log.h"
 #include "shutdown_manager.h"
 
+#ifdef ENABLE_SEQUENCE_SYSTEM
+#include "sequence.h"
+#endif
+
 extern int max_bytes_written;
 extern int current_bytes_written;
 extern int total_bytes_written;
-
-
 
 DESC::DESC()
 {
@@ -38,10 +39,6 @@ DESC::~DESC()
 void DESC::Initialize()
 {
 	m_bDestroyed = false;
-
-#ifdef HANDSHAKE_FIX
-	tt_creation_time = get_global_time();
-#endif
 
 	m_pInputProcessor = NULL;
 	m_lpFdw = NULL;
@@ -84,7 +81,9 @@ void DESC::Initialize()
 	m_bPong = true;
 	m_bChannelStatusRequested = false;
 
-	//m_iCurrentSequence = 0;
+#ifdef ENABLE_SEQUENCE_SYSTEM
+	m_iCurrentSequence = 0;
+#endif
 
 	m_dwMatrixRows = m_dwMatrixCols = 0;
 	m_bMatrixTryCount = 0;
@@ -111,7 +110,9 @@ void DESC::Initialize()
 
 	m_pkDisconnectEvent = NULL;
 
-	//m_seq_vector.clear();
+#ifdef ENABLE_SEQUENCE_SYSTEM
+	m_seq_vector.clear();
+#endif
 }
 
 void DESC::Destroy()
@@ -174,7 +175,9 @@ void DESC::Destroy()
 		m_sock = INVALID_SOCKET;
 	}
 
-	//m_seq_vector.clear();
+#ifdef ENABLE_SEQUENCE_SYSTEM
+	m_seq_vector.clear();
+#endif
 }
 
 EVENTFUNC(ping_event)
@@ -240,7 +243,7 @@ bool DESC::Setup(LPFDWATCH _fdw, socket_t _fd, const struct sockaddr_in & c_rSoc
 	m_wPort			= c_rSockAddr.sin_port;
 	m_dwHandle		= _handle;
 
-	//NOTE: 이걸 나라별로 다르게 잡아야할 이유가 있나?
+
 	m_lpOutputBuffer = buffer_new(DEFAULT_PACKET_BUFFER_SIZE * 2);
 
 	m_iMinInputBufferLen = MAX_INPUT_LEN >> 1;
@@ -255,18 +258,13 @@ bool DESC::Setup(LPFDWATCH _fdw, socket_t _fd, const struct sockaddr_in & c_rSoc
 
 	info->desc = this;
 	assert(m_pkPingEvent == NULL);
+
 	m_pkPingEvent = event_create(ping_event, info, ping_event_second_cycle);
 
 #ifndef _IMPROVED_PACKET_ENCRYPTION_
-	thecore_memcpy(m_adwEncryptionKey, "My34aKcd5628efa0", sizeof(DWORD) * 4);
-	thecore_memcpy(m_adwDecryptionKey, "My34aKcd5628efa0", sizeof(DWORD) * 4);
+	thecore_memcpy(m_adwEncryptionKey, "1234abcd5678efgh", sizeof(DWORD) * 4);
+	thecore_memcpy(m_adwDecryptionKey, "1234abcd5678efgh", sizeof(DWORD) * 4);
 #endif // _IMPROVED_PACKET_ENCRYPTION_
-
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-	// Set host handshake time
-	DESC_MANAGER::instance().AcceptHandshake(m_stHost.c_str(),
-		thecore_pulse() + PASSES_PER_SEC(INTRUSIVE_HANDSHAKE_PULSE));
-#endif
 
 	// Set Phase to handshake
 	SetPhase(PHASE_HANDSHAKE);
@@ -310,7 +308,7 @@ int DESC::ProcessInput()
 
 		int iBytesProceed = 0;
 
-		// false가 리턴 되면 다른 phase로 바뀐 것이므로 다시 프로세스로 돌입한다!
+
 		while (!m_pInputProcessor->Process(this, buffer_read_peek(m_lpInputBuffer), buffer_size(m_lpInputBuffer), iBytesProceed))
 		{
 			buffer_read_proceed(m_lpInputBuffer, iBytesProceed);
@@ -324,7 +322,7 @@ int DESC::ProcessInput()
 	{
 		int iBytesProceed = 0;
 
-		// false가 리턴 되면 다른 phase로 바뀐 것이므로 다시 프로세스로 돌입한다!
+
 		while (!m_pInputProcessor->Process(this, buffer_read_peek(m_lpInputBuffer), buffer_size(m_lpInputBuffer), iBytesProceed))
 		{
 			buffer_read_proceed(m_lpInputBuffer, iBytesProceed);
@@ -337,9 +335,9 @@ int DESC::ProcessInput()
 	{
 		int iSizeBuffer = buffer_size(m_lpInputBuffer);
 
-		// 8바이트 단위로만 처리한다. 8바이트 단위에 부족하면 잘못된 암호화 버퍼를 복호화
-		// 할 가능성이 있으므로 짤라서 처리하기로 한다.
-		if (iSizeBuffer & 7) // & 7은 % 8과 같다. 2의 승수에서만 가능
+
+
+		if (iSizeBuffer & 7)
 			iSizeBuffer -= iSizeBuffer & 7;
 
 		if (iSizeBuffer > 0)
@@ -357,7 +355,7 @@ int DESC::ProcessInput()
 
 			int iBytesProceed = 0;
 
-			// false가 리턴 되면 다른 phase로 바뀐 것이므로 다시 프로세스로 돌입한다!
+
 			while (!m_pInputProcessor->Process(this, buffer_read_peek(lpBufferDecrypt), buffer_size(lpBufferDecrypt), iBytesProceed))
 			{
 				if (iBytesProceed > iSizeBuffer)
@@ -433,12 +431,18 @@ void DESC::Packet(const void * c_pvData, int iSize)
 {
 	assert(iSize > 0);
 
-	if (m_iPhase == PHASE_CLOSE) // 끊는 상태면 보내지 않는다.
+	if (m_iPhase == PHASE_CLOSE)
 		return;
+
+#ifdef ENABLE_SYSLOG_PACKET_SENT
+	std::string stName = GetCharacter()? GetCharacter()->GetName() : GetHostName();
+	sys_log(0, "SENT HEADER : %u to %s  (size %d) ", *(static_cast<const BYTE*>(c_pvData)) , stName.c_str(), iSize );
+#endif
+
 
 	if (m_stRelayName.length() != 0)
 	{
-		// Relay 패킷은 암호화하지 않는다.
+
 		TPacketGGRelay p;
 
 		p.bHeader = HEADER_GG_RELAY;
@@ -507,7 +511,7 @@ void DESC::Packet(const void * c_pvData, int iSize)
 			}
 			else
 			{
-				// 암호화에 필요한 충분한 버퍼 크기를 확보한다.
+
 				/* buffer_adjust_size(m_lpOutputBuffer, iSize + 8); */
 				DWORD * pdwWritePoint = (DWORD *) buffer_write_peek(m_lpOutputBuffer);
 
@@ -550,7 +554,7 @@ void DESC::SetPhase(int _phase)
 	switch (m_iPhase)
 	{
 		case PHASE_CLOSE:
-			// 메신저가 캐릭터단위가 되면서 삭제
+
 			//MessengerManager::instance().Logout(GetAccountTable().login);
 			m_pInputProcessor = &m_inputClose;
 			break;
@@ -560,8 +564,7 @@ void DESC::SetPhase(int _phase)
 			break;
 
 		case PHASE_SELECT:
-			// 메신저가 캐릭터단위가 되면서 삭제
-			//MessengerManager::instance().Logout(GetAccountTable().login); // 의도적으로 break 안검
+
 		case PHASE_LOGIN:
 		case PHASE_LOADING:
 #ifndef _IMPROVED_PACKET_ENCRYPTION_
@@ -893,7 +896,7 @@ void DESC::DisconnectOfSameLogin()
 		if (m_pkDisconnectEvent)
 			return;
 
-		GetCharacter()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetCharacter()->GetLanguage(),"다른 컴퓨터에서 로그인 하여 접속을 종료 합니다."));
+		GetCharacter()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("다른 컴퓨터에서 로그인 하여 접속을 종료 합니다."));
 		DelayedDisconnect(5);
 	}
 	else
@@ -912,7 +915,8 @@ bool DESC::IsAdminMode()
 	return m_bAdminMode;
 }
 
-/* BYTE DESC::GetSequence()
+#ifdef ENABLE_SEQUENCE_SYSTEM
+BYTE DESC::GetSequence()
 {
 	return gc_abSequence[m_iCurrentSequence];
 }
@@ -921,7 +925,8 @@ void DESC::SetNextSequence()
 {
 	if (++m_iCurrentSequence == SEQUENCE_MAX_NUM)
 		m_iCurrentSequence = 0;
-} */
+}
+#endif
 
 void DESC::SendLoginSuccessPacket()
 {
@@ -937,6 +942,10 @@ void DESC::SendLoginSuccessPacket()
 
 	for (int i = 0; i < PLAYER_PER_ACCOUNT; ++i)
 	{
+#ifdef ENABLE_NEWSTUFF
+		if (!g_stProxyIP.empty())
+			rTable.players[i].lAddr=inet_addr(g_stProxyIP.c_str());
+#endif
 		CGuild* g = CGuildManager::instance().GetLinkedGuild(rTable.players[i].dwID);
 
 		if (g)
@@ -1092,7 +1101,8 @@ DWORD DESC::GetBillingExpireSecond()
 	return m_dwBillingExpireSecond;
 }
 
-/* void DESC::push_seq(BYTE hdr, BYTE seq)
+#ifdef ENABLE_SEQUENCE_SYSTEM
+void DESC::push_seq(BYTE hdr, BYTE seq)
 {
 	if (m_seq_vector.size()>=20)
 	{
@@ -1101,7 +1111,8 @@ DWORD DESC::GetBillingExpireSecond()
 
 	seq_t info = { hdr, seq };
 	m_seq_vector.push_back(info);
-} */
+}
+#endif
 
 BYTE DESC::GetEmpire()
 {
@@ -1131,4 +1142,4 @@ void DESC::ChatPacket(BYTE type, const char * format, ...)
 
 	Packet(buf.read_peek(), buf.size());
 }
-
+//martysama0134's 2022

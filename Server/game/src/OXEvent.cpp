@@ -159,7 +159,7 @@ bool COXEventManager::ShowQuizList(LPCHARACTER pkChar)
 		}
 	}
 
-	pkChar->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(pkChar->GetLanguage(),"총 퀴즈 수: %d"), c);
+	pkChar->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("총 퀴즈 수: %d"), c);
 	return true;
 }
 
@@ -305,17 +305,17 @@ bool COXEventManager::CheckAnswer(bool answer)
 			}
 			else
 			{
-				pkChar->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(pkChar->GetLanguage(), "정답입니다!"));
+				pkChar->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("정답입니다!"));
 				// pkChar->CreateFly(number(FLY_FIREWORK1, FLY_FIREWORK6), pkChar);
 				char chatbuf[256];
 				int len = snprintf(chatbuf, sizeof(chatbuf),
 						"%s %u %u", number(0, 1) == 1 ? "cheer1" : "cheer2", (DWORD)pkChar->GetVID(), 0);
 
-				// 리턴값이 sizeof(chatbuf) 이상일 경우 truncate되었다는 뜻..
+
 				if (len < 0 || len >= (int) sizeof(chatbuf))
 					len = sizeof(chatbuf) - 1;
 
-				// \0 문자 포함
+
 				++len;
 
 				TPacketGCChat pack_chat;
@@ -394,7 +394,7 @@ bool COXEventManager::CloseEvent()
 			pkChar->WarpSet(EMPIRE_START_X(pkChar->GetEmpire()), EMPIRE_START_Y(pkChar->GetEmpire()));
 	}
 
-	m_map_char.clear();
+	Initialize(); // @fixme157 (instead of simply doing m_map_char.clear();)
 
 	return true;
 }
@@ -414,7 +414,7 @@ bool COXEventManager::LogWinner()
 	return true;
 }
 
-bool COXEventManager::GiveItemToAttender(DWORD dwItemVnum, short count)
+bool COXEventManager::GiveItemToAttender(DWORD dwItemVnum, WORD count)
 {
 	itertype(m_map_attender) iter = m_map_attender.begin();
 
@@ -431,4 +431,4 @@ bool COXEventManager::GiveItemToAttender(DWORD dwItemVnum, short count)
 
 	return true;
 }
-
+//martysama0134's 2022

@@ -526,4 +526,4 @@ BOOL CTextFileLoader::GetTokenString(const std::string & c_rstrKey, std::string 
 
 	return TRUE;
 }
-
+//martysama0134's 2022

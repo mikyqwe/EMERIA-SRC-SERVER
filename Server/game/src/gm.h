@@ -18,4 +18,4 @@ typedef struct sGM
 extern std::set<std::string> g_set_Host;
 extern std::map<std::string, tGM> g_map_GM;
 #endif
-
+//martysama0134's 2022

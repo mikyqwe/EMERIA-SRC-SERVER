@@ -42,3 +42,4 @@ class CBlockCountry : public singleton<CBlockCountry>
 };
 
 #endif
+//martysama0134's 2022

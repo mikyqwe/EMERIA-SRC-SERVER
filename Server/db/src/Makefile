@@ -1,16 +1,17 @@
-CC = g++11
+CC = gcc10
+CXX = g++10
 
 DB_VERSION = $(shell cat ../../__REVISION__)
 
 INCDIR =
 LIBDIR =
-BINDIR = ../../../
+BINDIR = ..
 OBJDIR = .obj
 $(shell if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi)
 
 # LIST_OF_CONSTANTS BEGIN
 ENABLE_GCC_AUTODEPEND = 1
-ENABLE_STATIC = 1
+ENABLE_STATIC = 0
 # LIST_OF_CONSTANTS END
 
 # Depend Path File
@@ -19,10 +20,13 @@ DEPFILE = Depend
 endif
 
 # Project Flags
-CFLAGS = -m32 -g -Wall  -Wl,-rpath=/usr/local/lib/gcc11 -w -O2 -pipe -fno-rtti -fno-exceptions -Wno-long-long -pthread -D_THREAD_SAFE
+CFLAGS  = -m32 -g -Wall -O2 -pipe -fno-rtti -fno-exceptions -Wno-long-long -pthread -D_THREAD_SAFE
+CFLAGS += -Wno-deprecated-declarations -Wno-nonnull-compare -Wno-deprecated-declarations -Wno-array-bounds -Wno-address
+CFLAGS += -Wno-int-in-bool-context -Wno-format-truncation
+CXXFLAGS = -std=c++20 -Wl,-rpath=/usr/local/lib/gcc10
 
 ifeq ($(ENABLE_STATIC), 1)
-	CFLAGS += -static
+CFLAGS += -static
 endif
 
 # Version defines
@@ -33,7 +37,7 @@ INCDIR += -I../../../Extern/include/boost
 
 # MySQL
 INCDIR += -I/usr/local/include/mysql
-LIBS += /usr/local/lib/mysql/libmysqlclient.a /usr/lib/libz.a /usr/lib/libssl.a /usr/lib/libcrypto.a
+LIBS += /usr/local/lib/mysql/libmysqlclient.a /usr/lib/libz.a
 
 # Project Libraries
 INCDIR += -I/usr/local/include
@@ -43,13 +47,16 @@ LIBDIR += -I../../../Extern/lib
 LIBDIR += -L../../libthecore/lib -L../../libsql -L../../libpoly -L../../libgame/lib
 LIBS += -lthecore -lsql -lpoly -lgame -lm
 
+# OpenSSL
+LIBS += -lssl -lcrypto
+
 # PROJECT_SRC_FILES BEGIN
-CPPFILE = buffer_manager.cpp Config.cpp NetBase.cpp Peer.cpp PeerBase.cpp Main.cpp Lock.cpp DBManager.cpp \
+CPPFILE = Config.cpp NetBase.cpp Peer.cpp PeerBase.cpp Main.cpp Lock.cpp DBManager.cpp \
 		  Cache.cpp LoginData.cpp ClientManager.cpp ClientManagerPlayer.cpp ClientManagerLogin.cpp \
-		  ClientManagerBoot.cpp ClientManagerParty.cpp ClientManagerGuild.cpp  GuildManager.cpp HB.cpp \
+		  ClientManagerBoot.cpp ClientManagerParty.cpp ClientManagerGuild.cpp GuildManager.cpp HB.cpp \
 		  PrivManager.cpp MoneyLog.cpp ItemAwardManager.cpp ClientManagerEventFlag.cpp Marriage.cpp \
 		  Monarch.cpp BlockCountry.cpp ItemIDRangeManager.cpp ClientManagerHorseName.cpp version.cpp \
-		  AuctionManager.cpp ProtoReader.cpp ClientManagerOfflineShop.cpp CsvReader.cpp
+		  ProtoReader.cpp CsvReader.cpp ClientManagerOfflineshop.cpp OfflineshopCache.cpp
 # PROJECT_SRC_FILES END
 
 # PROJECT_OBJ_FILES BEGIN
@@ -60,20 +67,19 @@ endif
 # PROJECT_OBJ_FILES END
 
 # Target Paths
-# MAIN_TARGET = $(BINDIR)/db_r$(DB_VERSION)
-MAIN_TARGET = $(BINDIR)/db
+MAIN_TARGET = $(BINDIR)/db_r$(DB_VERSION)
 
 default: $(MAIN_TARGET)
 
 $(MAIN_TARGET): $(CPPOBJS)
 	@echo linking $(MAIN_TARGET)
-	@$(CC) $(CFLAGS) $(LIBDIR) $(CPPOBJS) $(LIBS) -o $(MAIN_TARGET)
+	@$(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBDIR) $(CPPOBJS) $(LIBS) -o $(MAIN_TARGET)
 
 $(OBJDIR)/%.o: %.cpp
 	@echo compiling $<
-	@$(CC) $(CFLAGS) $(INCDIR) -c $< -o $@
+	@$(CXX) $(CFLAGS) $(CXXFLAGS) $(INCDIR) -c $< -o $@
 ifeq ($(ENABLE_GCC_AUTODEPEND), 1)
-	@$(CC) -MM -MG -MP $(CFLAGS) $(INCDIR) -c $< -o $(OBJDIR)/$*.d
+	@$(CXX) -MM -MG -MP $(CFLAGS) $(CXXFLAGS) $(INCDIR) -c $< -o $(OBJDIR)/$*.d
 	@sed -i '' -e's/$*.o:/$(OBJDIR)\/$*.o:/g' $(OBJDIR)/$*.d
 endif
 

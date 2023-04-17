@@ -120,7 +120,7 @@ bool is_blocked_country_ip(const char *user_ip)
 #endif
 	{
 		dev_log(LOG_INFO, "BLOCKED_COUNTRY_IP (%s) : YES", user_ip);
-		return true;	// 아이피가 괴상하니 일단 블럭처리
+		return true;
 	}
 	ip_number = htonl(st_addr.s_addr);
 
@@ -149,3 +149,4 @@ bool is_block_exception(const char *login)
 
 	return false;
 }
+//martysama0134's 2022

@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "locale_service.h"
 #include <sstream>
+
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 #include "HAntiMultipleFarm.h"
 #endif
@@ -171,17 +172,20 @@ void P2P_MANAGER::Login(LPDESC d, const TPacketGGLogin * p)
 	pkCCI->lMapIndex = p->lMapIndex;
 	pkCCI->pkDesc = d;
 	pkCCI->bChannel = p->bChannel;
+	
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	strlcpy(pkCCI->cMAIf, p->cMAIf, sizeof(pkCCI->cMAIf));
-#endif
+#endif	
+	
 	sys_log(0, "P2P: Login %s", pkCCI->szName);
 
 	CGuildManager::instance().P2PLoginMember(pkCCI->dwPID);
 	CPartyManager::instance().P2PLogin(pkCCI->dwPID, pkCCI->szName);
+
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	CAntiMultipleFarm::instance().P2PLogin(pkCCI->cMAIf, pkCCI->dwPID, p->i8BlockState);
 #endif
-	// CCI가 생성시에만 메신저를 업데이트하면 된다.
+
 	if (UpdateP2P) {
 		std::string name(pkCCI->szName);
 	    MessengerManager::instance().P2PLogin(name);
@@ -216,6 +220,7 @@ void P2P_MANAGER::Logout(CCI * pkCCI)
 	CPartyManager::instance().P2PLogout(pkCCI->dwPID);
 	MessengerManager::instance().P2PLogout(name);
 	marriage::CManager::instance().Logout(pkCCI->dwPID);
+
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	CAntiMultipleFarm::instance().P2PLogout(pkCCI->cMAIf, pkCCI->dwPID, is_warping);
 #endif
@@ -297,20 +302,4 @@ void P2P_MANAGER::GetP2PHostNames(std::string& hostNames)
 	}
 	hostNames += oss.str();
 }
-
-#ifdef ENABLE_MAINTENANCE_SYSTEM
-void P2P_MANAGER::SendBuffered(const void * c_pvData, int iSize, LPDESC except)
-{
-	TR1_NS::unordered_set<LPDESC>::iterator it = m_set_pkPeers.begin();
-
-	while (it != m_set_pkPeers.end())
-	{
-		LPDESC pkDesc = *it++;
-
-		if (except == pkDesc)
-			continue;
-
-		pkDesc->BufferedPacket(c_pvData, iSize);
-	}
-}
-#endif
+//martysama0134's 2022

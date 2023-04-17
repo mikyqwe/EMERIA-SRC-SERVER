@@ -1,4 +1,3 @@
-
 #ifndef HACK_SHIELD_IMPL_H_
 #define HACK_SHIELD_IMPL_H_
 
@@ -56,4 +55,4 @@ class CHackShieldImpl
 };
 
 #endif /* HACK_SHIELD_IMPL_H_ */
-
+//martysama0134's 2022

@@ -1,5 +1,6 @@
 #ifndef __INC_METIN_II_GAME_SAFEBOX_H__
 #define __INC_METIN_II_GAME_SAFEBOX_H__
+#include <memory>
 
 class CHARACTER;
 class CItem;
@@ -16,7 +17,7 @@ class CSafebox
 		LPITEM		Remove(DWORD dwPos);
 		void		ChangeSize(int iSize);
 
-		bool		MoveItem(BYTE bCell, BYTE bDestCell, short count);
+		bool		MoveItem(BYTE bCell, BYTE bDestCell, BYTE count);
 		LPITEM		GetItem(BYTE bCell);
 
 		void		Save();
@@ -31,7 +32,7 @@ class CSafebox
 
 		LPCHARACTER	m_pkChrOwner;
 		LPITEM		m_pkItems[SAFEBOX_MAX_NUM];
-		CGrid *		m_pkGrid;
+		std::unique_ptr<CGrid>		m_pkGrid; // @fixme191
 		int		m_iSize;
 		long		m_lGold;
 
@@ -39,3 +40,4 @@ class CSafebox
 };
 
 #endif
+//martysama0134's 460ea0c504d227c3e92ba87763869d8d

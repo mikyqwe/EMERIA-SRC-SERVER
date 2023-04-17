@@ -69,15 +69,14 @@ namespace quest
 	ALUA(horse_summon)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 		if (ch->IsRidingMount())
 			return 0;
 #endif
-		// 소환하면 멀리서부터 달려오는지 여부
+
 		bool bFromFar = lua_isboolean(L, 1) ? lua_toboolean(L, 1) : false;
 
-		// 소환수의 vnum
+
 		DWORD horseVnum= lua_isnumber(L, 2) ? lua_tonumber(L, 2) : 0;
 
 		const char* name = lua_isstring(L, 3) ? lua_tostring(L, 3) : 0;
@@ -225,10 +224,10 @@ namespace quest
 
 	ALUA(horse_set_name)
 	{
-		// 리턴값
-		// 0 : 소유한 말이 없다
-		// 1 : 잘못된 이름이다
-		// 2 : 이름 바꾸기 성공
+
+
+
+
 
 		if ( lua_isstring(L, -1) != true ) return 0;
 
@@ -284,20 +283,22 @@ namespace quest
 
 		return 1;
 	}
-// #ifdef ENABLE_NEWSTUFF
-	// ALUA(horse_set_stat0)
-	// {
-		// int m_health = MINMAX(0, lua_tonumber(L, 1), 50);
-		// int m_stamina = MINMAX(0, lua_tonumber(L, 2), 200);
 
-		// LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
+#ifdef ENABLE_NEWSTUFF
+	ALUA(horse_set_stat0)
+	{
+		int iHealth = MINMAX(0, lua_tonumber(L, 1), 50);
+		int iStamina = MINMAX(0, lua_tonumber(L, 2), 200);
 
-		// ch->UpdateHorseHealth(m_health - ch->GetHorseHealth());
-		// ch->UpdateHorseStamina(m_stamina - ch->GetHorseStamina());
+		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 
-		// return 0;
-	// }
-// #endif
+		ch->UpdateHorseHealth(iHealth - ch->GetHorseHealth());
+		ch->UpdateHorseStamina(iStamina - ch->GetHorseStamina());
+
+		return 0;
+	}
+#endif
+
 	void RegisterHorseFunctionTable()
 	{
 		luaL_reg horse_functions[] =
@@ -322,17 +323,15 @@ namespace quest
 			{ "feed",			horse_feed				},
 			{ "set_name",		horse_set_name			},
 			{ "get_name",		horse_get_name			},
-// #ifdef ENABLE_NEWSTUFF
+#ifdef ENABLE_NEWSTUFF
 			// horse.set_stat0(health, stamina) -- /do_horse_set_stat
-			// { "set_stat0",		horse_set_stat0			},	// [return nothing]
-// #endif
+			{ "set_stat0",		horse_set_stat0			},	// [return nothing]
+			{ "set_stat",		horse_set_stat0			},	// alias
+#endif
 			{ NULL,				NULL					}
 		};
 
 		CQuestManager::instance().AddLuaFunctionTable("horse", horse_functions);
 	}
 }
-
-
-
-
+//martysama0134's 2022

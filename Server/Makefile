@@ -1,19 +1,20 @@
-CC=gcc
-CXX=g++
+CC = gcc10
+CXX = g++10
 
 PLATFORM = $(shell file /bin/ls | cut -d' ' -f3 | cut -d'-' -f1)
 BSD_VERSION = $(shell uname -v 2>&1 | cut -d' ' -f2 | cut -d'.' -f1)
 SVR_VERSION = $(shell cat __REVISION__)
 
-# default: libthecore libpoly libgame liblua libsql libserverkey game db
+.PHONY:  liblua libsql libgame libpoly libthecore game db
+
 default: liblua libsql libgame libpoly libthecore game db
 	@echo "--------------------------------------"
 	@echo "Build Done"
 	@echo "--------------------------------------"
 
 liblua: .
-	$(MAKE) -C $@/.lua50 clean
-	$(MAKE) -C $@/.lua50
+	$(MAKE) -C $@/5.0 clean
+	$(MAKE) -C $@/5.0
 
 libsql: .
 	@touch $@/Depend
@@ -38,12 +39,6 @@ libthecore: .
 	$(MAKE) -C $@/src dep
 	$(MAKE) -C $@/src clean
 	$(MAKE) -C $@/src
-
-libserverkey: .
-	@touch $@/Depend
-	$(MAKE) -C $@ dep
-	$(MAKE) -C $@ clean
-	$(MAKE) -C $@
 
 game: .
 	@touch $@/src/Depend
@@ -70,6 +65,15 @@ strip:
 	$(MAKE) -C game/src strip
 	$(MAKE) -C db/src strip
 
+clean:
+	$(MAKE) -C liblua/5.0 clean
+	$(MAKE) -C libsql clean
+	$(MAKE) -C libgame/src clean
+	$(MAKE) -C libpoly clean
+	$(MAKE) -C libthecore/src clean
+	$(MAKE) -C game/src clean
+	$(MAKE) -C db/src clean
+
 all:
 	@echo "--------------------------------------"
 	@echo "Update Revision"
@@ -81,8 +85,12 @@ all:
 	@echo "Full Build Start"
 	@echo "--------------------------------------"
 
-	$(MAKE) -C liblua/.lua50 clean
-	$(MAKE) -C liblua/.lua50
+	$(MAKE) -C liblua/5.0 clean
+	$(MAKE) -C liblua/5.0
+
+	# $(MAKE) -C liblua/5.2 clean
+	# $(MAKE) -C liblua/5.2 freebsd
+	# $(MAKE) -C liblua/5.2 local
 
 	@touch libsql/Depend
 	$(MAKE) -C libsql dep
@@ -103,11 +111,6 @@ all:
 	$(MAKE) -C libthecore/src dep
 	$(MAKE) -C libthecore/src clean
 	$(MAKE) -C libthecore/src
-
-	@touch libserverkey/Depend
-	$(MAKE) -C libserverkey dep
-	$(MAKE) -C libserverkey clean
-	$(MAKE) -C libserverkey
 
 	@touch game/src/Depend
 	$(MAKE) -C game/src dep

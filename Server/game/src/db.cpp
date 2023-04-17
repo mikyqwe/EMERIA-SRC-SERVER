@@ -2,7 +2,7 @@
 #include <sstream>
 #include "../../common/billing.h"
 #include "../../common/length.h"
-#include "../../common/CommonDefines.h"
+
 #include "db.h"
 
 #include "config.h"
@@ -22,19 +22,17 @@
 #include "auth_brazil.h"
 #include "shutdown_manager.h"
 
-//중국 passpod 전용 함수
+
 bool CheckPasspod(const char * account)
 {
 	char szQuery[1024];
-
 	snprintf(szQuery, sizeof(szQuery), "SELECT ID FROM passpod WHERE Login='%s'", account);
-	SQLMsg * pMsg = DBManager::instance().DirectQuery(szQuery);
 
+	auto pMsg = DBManager::instance().DirectQuery(szQuery);
 	if (!pMsg)
 	{
 		//fprintf(stderr, "cannot get the MATRIX\n");
 		sys_log(0, "cannot get the PASSPOD");
-		delete pMsg;
 		return false;
 	}
 
@@ -42,13 +40,8 @@ bool CheckPasspod(const char * account)
 	{
 		puts(szQuery);
 		sys_log(0, "[PASSPOD]DirectQuery failed(%s)", szQuery);
-
-		delete pMsg;
 		return false;
 	}
-
-	delete pMsg;
-
 	return true;
 }
 
@@ -86,11 +79,10 @@ void DBManager::Query(const char * c_pszFormat, ...)
 	vsnprintf(szQuery, sizeof(szQuery), c_pszFormat, args);
 	va_end(args);
 
-	std::string sQuery(szQuery);	//@fixme456
-	m_sql.AsyncQuery(sQuery.substr(0, sQuery.find_first_of(";") == -1 ? sQuery.length() : sQuery.find_first_of(";")).c_str());
+	m_sql.AsyncQuery(szQuery);
 }
 
-SQLMsg * DBManager::DirectQuery(const char * c_pszFormat, ...)
+std::unique_ptr<SQLMsg> DBManager::DirectQuery(const char * c_pszFormat, ...)
 {
 	char szQuery[4096];
 	va_list args;
@@ -99,9 +91,7 @@ SQLMsg * DBManager::DirectQuery(const char * c_pszFormat, ...)
 	vsnprintf(szQuery, sizeof(szQuery), c_pszFormat, args);
 	va_end(args);
 
-	//return m_sql_direct.DirectQuery(szQuery);
-	std::string sQuery(szQuery);	//@fixme456
-	return m_sql_direct.DirectQuery(sQuery.substr(0, sQuery.find_first_of(";") == -1 ? sQuery.length() : sQuery.find_first_of(";")).c_str());
+	return m_sql_direct.DirectQuery(szQuery);
 }
 
 bool DBManager::IsConnected()
@@ -434,7 +424,7 @@ void DBManager::FlushBilling(bool bForce)
 void DBManager::CheckBilling()
 {
 	std::vector<DWORD> vec;
-	vec.push_back(0); // 카운트를 위해 미리 비워둔다.
+	vec.push_back(0);
 
 	//sys_log(0, "CheckBilling: map size %d", m_map_pkLoginData.size());
 
@@ -451,13 +441,12 @@ void DBManager::CheckBilling()
 		}
 	}
 
-	vec[0] = vec.size() - 1; // 비워둔 곳에 사이즈를 넣는다, 사이즈 자신은 제외해야 하므로 -1
+	vec[0] = vec.size() - 1;
 	db_clientdesc->DBPacket(HEADER_GD_BILLING_CHECK, 0, &vec[0], sizeof(DWORD) * vec.size());
 }
 
 void DBManager::SendLoginPing(const char * c_pszLogin)
 {
-#ifndef HANDSHAKE_FIX
 	TPacketGGLoginPing ptog;
 
 	ptog.bHeader = HEADER_GG_LOGIN_PING;
@@ -471,9 +460,7 @@ void DBManager::SendLoginPing(const char * c_pszLogin)
 	{
 		g_pkAuthMasterDesc->Packet(&ptog, sizeof(TPacketGGLoginPing));
 	}
-#endif
 }
-
 
 void DBManager::SendAuthLogin(LPDESC d)
 {
@@ -698,7 +685,7 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 					M2_DELETE(pinfo);
 					break;
 				}
-				//위치 변경 - By SeMinZ
+
 				d->SetLogin(pinfo->login);
 
 				sys_log(0, "QID_AUTH_LOGIN: START %u %p", qi->dwIdent, get_pointer(d));
@@ -707,7 +694,7 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 				{
 #ifdef ENABLE_BRAZIL_AUTH_FEATURE // @warme006
 					{
-						// 계정이 없으면 새로 만들어야 한다
+
 						// @fixme138 1. PASSWORD('%s') -> %s 2. pinfo->passwd wrapped inside mysql_hash_password(%s).c_str()
 						ReturnQuery(QID_BRAZIL_CREATE_ID, qi->dwIdent, pinfo,
 								"INSERT INTO account(login, password, social_id, create_time) "
@@ -825,7 +812,7 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 
 					int nPasswordDiff = strcmp(szEncrytPassword, szPassword);
 
-					//OpenID : OpenID 의 경우, 비밀번호 체크를 하지 않는다.
+
 					if (openid_server)
 					{
 						nPasswordDiff = 0;
@@ -870,7 +857,6 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 					else
 					{
 						{
-							//stBlockData >= 0 == 날짜가 BlockDate 보다 미래
 							if (strncmp(szCreateDate, g_stBlockDate.c_str(), 8) >= 0)
 							{
 								LoginFailure(d, "BLKLOGIN");
@@ -885,7 +871,7 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 							#else
 							snprintf(szQuery, sizeof(szQuery), "UPDATE account SET last_play=NOW() WHERE id=%u", dwID);
 							#endif
-							std::auto_ptr<SQLMsg> msg( DBManager::instance().DirectQuery(szQuery) );
+							auto msg( DBManager::instance().DirectQuery(szQuery) );
 						}
 
 						TAccountTable & r = d->GetAccountTable();
@@ -1080,7 +1066,6 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 						if (pkItem)
 						{
 							sys_log(0, "GIVE LOTTO SUCCESS TO %s (pid %u)", ch->GetName(), qi->dwIdent);
-							//ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"아이템 획득: %s"), pkItem->GetName(ch->GetLanguage()));
 
 							pkItem->SetSocket(0, pMsg->Get()->uiInsertID);
 							pkItem->SetSocket(1, pdw[2]);
@@ -1236,6 +1221,19 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 				{
 					sys_log(0, "[AUTH_BRAZIL] : Succeed to create a new account %s", pinfo->login) ;
 
+#ifdef __WIN32__
+					ReturnQuery(QID_AUTH_LOGIN, qi->dwIdent, pinfo,
+							"SELECT PASSWORD('%s'),password,securitycode,social_id,id,status,availDt - NOW() > 0,"
+							"UNIX_TIMESTAMP(silver_expire),"
+							"UNIX_TIMESTAMP(gold_expire),"
+							"UNIX_TIMESTAMP(safebox_expire),"
+							"UNIX_TIMESTAMP(autoloot_expire),"
+							"UNIX_TIMESTAMP(fish_mind_expire),"
+							"UNIX_TIMESTAMP(marriage_fast_expire),"
+							"UNIX_TIMESTAMP(money_drop_rate_expire),"
+							"UNIX_TIMESTAMP(create_time)"
+							" FROM account WHERE login='%s'", pinfo->passwd, pinfo->login);
+#else
 					// @fixme138 1. PASSWORD('%s') -> %s 2. pinfo->passwd wrapped inside mysql_hash_password(%s).c_str()
 					ReturnQuery(QID_AUTH_LOGIN, qi->dwIdent, pinfo,
 							"SELECT '%s',password,securitycode,social_id,id,status,availDt - NOW() > 0,"
@@ -1248,7 +1246,8 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 							"UNIX_TIMESTAMP(money_drop_rate_expire),"
 							"UNIX_TIMESTAMP(create_time)"
 							" FROM account WHERE login='%s'",
-							mysql_hash_password(pinfo->passwd).c_str(), pinfo->login) ;
+							mysql_hash_password(pinfo->passwd).c_str(), pinfo->login);
+#endif
 				}
 			}
 			break;
@@ -1280,7 +1279,11 @@ const std::vector<std::string>& DBManager::GetGreetMessage()
 	return m_vec_GreetMessage;
 }
 
+#ifdef ENABLE_LONG_LONG
+void DBManager::SendMoneyLog(BYTE type, DWORD vnum, long long gold)
+#else
 void DBManager::SendMoneyLog(BYTE type, DWORD vnum, int gold)
+#endif
 {
 	if (!gold)
 		return;
@@ -1303,7 +1306,7 @@ void VCardUse(LPCHARACTER CardOwner, LPCHARACTER CardTaker, LPITEM item)
 
 	db_clientdesc->DBPacket(HEADER_GD_VCARD, 0, &p, sizeof(TPacketGDVCard));
 
-	CardTaker->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(CardTaker->GetLanguage(),"%d분의 결제시간이 추가 되었습니다. (결제번호 %d)"), item->GetSocket(1) / 60, item->GetSocket(0));
+	CardTaker->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d분의 결제시간이 추가 되었습니다. (결제번호 %d)"), item->GetSocket(1) / 60, item->GetSocket(0));
 
 	LogManager::instance().VCardLog(p.dwID, CardTaker->GetX(), CardTaker->GetY(), g_stHostname.c_str(),
 			CardOwner->GetName(), CardOwner->GetDesc()->GetHostName(),
@@ -1374,7 +1377,7 @@ void AccountDB::SetLocale(const std::string & stLocale)
 	m_sql_direct.QueryLocaleSet();
 }
 
-SQLMsg* AccountDB::DirectQuery(const char * query)
+std::unique_ptr<SQLMsg> AccountDB::DirectQuery(const char * query)
 {
 	return m_sql_direct.DirectQuery(query);
 }
@@ -1439,7 +1442,7 @@ enum EAccountQID
 	QID_SPAM_DB,
 };
 
-// 10분마다 리로드
+
 static LPEVENT s_pkReloadSpamEvent = NULL;
 
 EVENTINFO(reload_spam_event_info)
@@ -1454,7 +1457,7 @@ EVENTFUNC(reload_spam_event)
 	return PASSES_PER_SEC(g_uiSpamReloadCycle);
 }
 
-//#define ENABLE_SPAMDB_REFRESH
+// #define ENABLE_SPAMDB_REFRESH
 void LoadSpamDB()
 {
 	AccountDB::instance().ReturnQuery(QID_SPAM_DB, 0, NULL, "SELECT word, score FROM spam_db WHERE type='SPAM'");
@@ -1494,3 +1497,4 @@ void AccountDB::AnalyzeReturnQuery(SQLMsg * pMsg)
 
 	M2_DELETE(qi);
 }
+//martysama0134's 2022

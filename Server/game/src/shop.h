@@ -1,11 +1,9 @@
 #ifndef __INC_METIN_II_GAME_SHOP_H__
 #define __INC_METIN_II_GAME_SHOP_H__
 
-#include "../../common/service.h"
-
 enum
 {
-	SHOP_MAX_DISTANCE = 1000,
+	SHOP_MAX_DISTANCE = 1000
 };
 
 class CGrid;
@@ -16,33 +14,23 @@ class CShop
 	public:
 		typedef struct shop_item
 		{
-			DWORD	vnum;		// 아이템 번호
-			DWORD	price;		// °ˇ°Y	
-#ifdef ENABLE_MULTISHOP
-			DWORD	wPriceVnum;
-			DWORD	wPrice;
+			DWORD	vnum;
+#ifdef ENABLE_LONG_LONG
+			long long		price;
+#else
+			long			price;
 #endif
-#ifdef ENABLE_CHEQUE_SYSTEM
-			int	cheque_price;
-#endif			
-			short	count;		// 아이템 개수
 
+			WORD			count;
 			LPITEM	pkItem;
-			int		itemid;		// 아이템 고유아이디
+			int		itemid;
+
 			shop_item()
 			{
 				vnum = 0;
 				price = 0;
-#ifdef ENABLE_CHEQUE_SYSTEM
-				cheque_price = 0;
-#endif
-#ifdef ENABLE_MULTISHOP
-				wPriceVnum = 0;
-				wPrice = 0;
-#endif
 				count = 0;
 				itemid = 0;
-
 				pkItem = NULL;
 			}
 		} SHOP_ITEM;
@@ -51,29 +39,42 @@ class CShop
 		virtual ~CShop(); // @fixme139 (+virtual)
 
 		bool	Create(DWORD dwVnum, DWORD dwNPCVnum, TShopItemTable * pItemTable);
-		void	SetShopItems(TShopItemTable * pItemTable, short bItemCount);
+		void	SetShopItems(TShopItemTable * pItemTable, BYTE bItemCount);
 
 		virtual void	SetPCShop(LPCHARACTER ch);
 		virtual bool	IsPCShop()	{ return m_pkPC ? true : false; }
 
-		// 게스트 추가/삭제
+
 		virtual bool	AddGuest(LPCHARACTER ch,DWORD owner_vid, bool bOtherEmpire);
 		void	RemoveGuest(LPCHARACTER ch);
 
-		// 물건 구입
-		virtual int	Buy(LPCHARACTER ch, BYTE pos);
 
-		// 게스트에게 패킷을 보냄
+#ifdef ENABLE_LONG_LONG
+		virtual long long	Buy(LPCHARACTER ch, BYTE pos
+#ifdef ENABLE_BUY_STACK_FROM_SHOP
+, bool multiple = false
+#endif
+);
+#else
+		virtual int	Buy(LPCHARACTER ch, BYTE pos
+#ifdef ENABLE_BUY_STACK_FROM_SHOP
+, bool multiple = false
+#endif
+);
+#endif
+
+
 		void	BroadcastUpdateItem(BYTE pos);
 
-		// 판매중인 아이템의 갯수를 알려준다.
+
 		int		GetNumberByVnum(DWORD dwVnum);
 
-		// 아이템이 상점에 등록되어 있는지 알려준다.
+
 		virtual bool	IsSellingItem(DWORD itemID);
 
 		DWORD	GetVnum() { return m_dwVnum; }
 		DWORD	GetNPCVnum() { return m_dwNPCVnum; }
+
 	protected:
 		void	Broadcast(const void * data, int bytes);
 
@@ -85,9 +86,10 @@ class CShop
 
 		typedef TR1_NS::unordered_map<LPCHARACTER, bool> GuestMapType;
 		GuestMapType m_map_guest;
-		std::vector<SHOP_ITEM>		m_itemVector;	// 이 상점에서 취급하는 물건들
+		std::vector<SHOP_ITEM>		m_itemVector;
 
 		LPCHARACTER			m_pkPC;
 };
 
 #endif
+//martysama0134's 2022

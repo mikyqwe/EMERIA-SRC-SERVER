@@ -90,16 +90,8 @@ namespace quest
 			return 1;
 		}
 
-		/*
-		if (CManager::instance().FindLandByGuild((DWORD) lua_tonumber(L, 1)))
-			lua_pushboolean(L, true);
-		else
-			lua_pushboolean(L, false);
-		*/
-
-		std::auto_ptr<SQLMsg> pmsg(DBManager::instance().DirectQuery("SELECT COUNT(*) FROM land%s WHERE guild_id = %d", get_table_postfix(), (DWORD)lua_tonumber(L,1)));
-
-		if ( pmsg->Get()->uiNumRows > 0 )
+		auto pmsg(DBManager::instance().DirectQuery("SELECT COUNT(*) FROM land%s WHERE guild_id = %d", get_table_postfix(), (DWORD)lua_tonumber(L,1)));
+		if (pmsg->Get()->uiNumRows > 0)
 		{
 			MYSQL_ROW row = mysql_fetch_row(pmsg->Get()->pSQLResult);
 
@@ -167,3 +159,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("building", functions);
 	}
 };
+//martysama0134's 2022

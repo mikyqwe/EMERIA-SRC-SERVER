@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "horsename_manager.h"
 #include "desc_client.h"
@@ -74,4 +73,4 @@ void CHorseNameManager::Validate(LPCHARACTER pChar)
 		}
 	}
 }
-
+//martysama0134's 2022

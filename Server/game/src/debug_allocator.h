@@ -169,3 +169,4 @@ T* get_pointer(T* p) {
 }
 
 #endif // _DEBUG_ALLOCATOR_H_
+//martysama0134's 2022

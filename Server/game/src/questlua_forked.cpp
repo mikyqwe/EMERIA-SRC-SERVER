@@ -278,4 +278,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("forked", forked_functions);
 	}
 }
-
+//martysama0134's 2022

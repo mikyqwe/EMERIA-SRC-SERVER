@@ -19,10 +19,6 @@
 #include "item_manager.h"
 #include "item_manager_private_types.h"
 #include "group_text_parse_tree.h"
-#ifdef __INGAME_WIKI__
-	#include "../../common/in_game_wiki.h"
-	#include "mob_manager.h"
-#endif
 
 std::vector<CItemDropInfo> g_vec_pkCommonDropItem[MOB_RANK_MAX_NUM];
 
@@ -83,7 +79,7 @@ bool ITEM_MANAGER::ReadCommonDropItemFile(const char * c_pszFileName)
 
 			if (!ITEM_MANAGER::instance().GetVnumByOriginalName(d[i].szItemName, dwItemVnum))
 			{
-				// 이름으로 못찾으면 번호로 검색
+
 				str_to_number(dwItemVnum, d[i].szItemName);
 				if (!ITEM_MANAGER::instance().GetTable(dwItemVnum))
 				{
@@ -289,21 +285,6 @@ bool ITEM_MANAGER::ReadSpecialDropItemFile(const char * c_pszFileName)
 					sys_log(0,"        name %s count %d prob %d rare %d", name.c_str(), iCount, iProb, iRarePct);
 					pkGroup->AddItem(dwVnum, iCount, iProb, iRarePct);
 
-#ifdef __INGAME_WIKI__
-					auto pTableTemp = GetTable(dwVnum);
-					DWORD addVnum = dwVnum;
-					DWORD startRefineVnum = GetWikiItemStartRefineVnum(dwVnum);
-					
-					if (pTableTemp && (pTableTemp->bType == ITEM_WEAPON || pTableTemp->bType == ITEM_ARMOR) && startRefineVnum != addVnum)
-						addVnum = (startRefineVnum != 0 ? startRefineVnum : addVnum);
-					
-					CommonWikiData::TWikiItemOriginInfo origin_info;
-					origin_info.set_vnum(iVnum);
-					origin_info.set_is_mob(false);
-					
-					m_itemOriginMap[addVnum].push_back(origin_info);
-#endif
-
 					// CHECK_UNIQUE_GROUP
 					if (iVnum < 30000)
 					{
@@ -467,7 +448,7 @@ bool ITEM_MANAGER::ConvSpecialDropItemFile()
 				// @fixme148 END
 				else
 				{
-					//    1   "기술 수련서"   1   100
+
 					if (0 == dwVnum)
 						fprintf(fp, "	%d	%s	%d	%d\n", k, name.c_str(), iCount, iProb);
 					else
@@ -670,25 +651,6 @@ bool ITEM_MANAGER::ReadMonsterDropItemGroup(const char * c_pszFileName)
 
 					sys_log(0,"        %s count %d rare %d", name.c_str(), iCount, iRarePct);
 					pkGroup->AddItem(dwVnum, iCount, iPartPct, iRarePct);
-#ifdef __INGAME_WIKI__
-					CommonWikiData::TWikiInfoTable* tbl;
-					if ((tbl = GetItemWikiInfo(dwVnum)) && !tbl->origin_vnum)
-						tbl->origin_vnum = iMobVnum;
-
-					auto pTableTemp = GetTable(dwVnum);
-					DWORD currVnum = dwVnum;
-					DWORD startRefineVnum = GetWikiItemStartRefineVnum(dwVnum);
-					
-					if (pTableTemp && (pTableTemp->bType == ITEM_WEAPON || pTableTemp->bType == ITEM_ARMOR) && startRefineVnum != currVnum)
-						currVnum = (startRefineVnum != 0 ? startRefineVnum : currVnum);
-					
-					CommonWikiData::TWikiItemOriginInfo origin_info;
-					origin_info.set_vnum(iMobVnum);
-					origin_info.set_is_mob(true);
-					
-					m_itemOriginMap[currVnum].push_back(origin_info);
-					CMobManager::instance().GetMobWikiInfo(iMobVnum).push_back(CommonWikiData::TWikiMobDropInfo(dwVnum, iCount));
-#endif
 					continue;
 				}
 
@@ -746,32 +708,12 @@ bool ITEM_MANAGER::ReadMonsterDropItemGroup(const char * c_pszFileName)
 					}
 
 					float fPercent = atof(pTok->at(2).c_str());
-					int iPercent = atoi(pTok->at(2).c_str());
 
 					DWORD dwPct = (DWORD)(10000.0f * fPercent);
 
 					sys_log(0,"        name %s pct %d count %d", name.c_str(), dwPct, iCount);
-					pkGroup->AddItem(dwVnum, dwPct, iPercent, iCount);
-					// pkGroup->AddItem(dwVnum, dwPct, iCount);
-#ifdef __INGAME_WIKI__
-					CommonWikiData::TWikiInfoTable* tbl;
-					if ((tbl = GetItemWikiInfo(dwVnum)) && !tbl->origin_vnum)
-						tbl->origin_vnum = iMobVnum;
+					pkGroup->AddItem(dwVnum, dwPct, iCount);
 
-					auto pTableTemp = GetTable(dwVnum);
-					DWORD currVnum = dwVnum;
-					DWORD startRefineVnum = GetWikiItemStartRefineVnum(dwVnum);
-					
-					if (pTableTemp && (pTableTemp->bType == ITEM_WEAPON || pTableTemp->bType == ITEM_ARMOR) && startRefineVnum != currVnum)
-						currVnum = startRefineVnum != 0 ? startRefineVnum : currVnum;
-
-					CommonWikiData::TWikiItemOriginInfo origin_info;
-					origin_info.set_vnum(iMobVnum);
-					origin_info.set_is_mob(true);
-					
-					m_itemOriginMap[currVnum].push_back(origin_info);
-					CMobManager::instance().GetMobWikiInfo(iMobVnum).push_back(CommonWikiData::TWikiMobDropInfo(dwVnum, iCount));
-#endif
 					continue;
 				}
 
@@ -821,25 +763,7 @@ bool ITEM_MANAGER::ReadMonsterDropItemGroup(const char * c_pszFileName)
 
 					sys_log(0,"        name %s pct %d count %d", name.c_str(), dwPct, iCount);
 					pkLevelItemGroup->AddItem(dwItemVnum, dwPct, iCount);
-#ifdef __INGAME_WIKI__
-					CommonWikiData::TWikiInfoTable* tbl;
-					if ((tbl = GetItemWikiInfo(dwItemVnum)) && !tbl->origin_vnum)
-						tbl->origin_vnum = iMobVnum;
 
-					auto pTableTemp = GetTable(dwItemVnum);
-					DWORD currVnum = dwItemVnum;
-					DWORD startRefineVnum = GetWikiItemStartRefineVnum(dwItemVnum);
-					
-					if (pTableTemp && (pTableTemp->bType == ITEM_WEAPON || pTableTemp->bType == ITEM_ARMOR) && startRefineVnum != currVnum)
-						currVnum = startRefineVnum != 0 ? startRefineVnum : currVnum;
-
-					CommonWikiData::TWikiItemOriginInfo origin_info;
-					origin_info.set_vnum(iMobVnum);
-					origin_info.set_is_mob(true);
-					
-					m_itemOriginMap[currVnum].push_back(origin_info);
-					CMobManager::instance().GetMobWikiInfo(iMobVnum).push_back(CommonWikiData::TWikiMobDropInfo(dwItemVnum, iCount));
-#endif
 					continue;
 				}
 
@@ -983,7 +907,7 @@ bool ITEM_MANAGER::ReadDropItemGroup(const char * c_pszFileName)
 				}
 
 				float fPercent = atof(pTok->at(1).c_str());
-				int iPercent = atoi(pTok->at(1).c_str());
+
 				DWORD dwPct = (DWORD)(10000.0f * fPercent);
 
 				int iCount = 1;
@@ -1001,9 +925,7 @@ bool ITEM_MANAGER::ReadDropItemGroup(const char * c_pszFileName)
 				}
 
 				sys_log(0,"        %s %d %d", name.c_str(), dwPct, iCount);
-				pkGroup->AddItem(dwVnum, dwPct, iPercent, iCount);
-				// pkGroup->AddItem(dwVnum, dwPct, iCount);
-
+				pkGroup->AddItem(dwVnum, dwPct, iCount);
 				continue;
 			}
 
@@ -1035,3 +957,4 @@ bool ITEM_MANAGER::ReadItemVnumMaskTable(const char * c_pszFileName)
 	fclose(fp);
 	return true;
 }
+//martysama0134's 2022

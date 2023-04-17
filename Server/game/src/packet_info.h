@@ -9,7 +9,9 @@ typedef struct SPacketElement
 	std::string	stName;
 	int		iCalled;
 	DWORD	dwLoad;
-	//bool	bSequencePacket;
+// #ifdef ENABLE_SEQUENCE_SYSTEM
+	bool	bSequencePacket;
+// #endif
 } TPacketElement;
 
 class CPacketInfo
@@ -18,7 +20,7 @@ class CPacketInfo
 		CPacketInfo();
 		virtual ~CPacketInfo();
 
-		void Set(int header, int size, const char * c_pszName);
+		void Set(int header, int size, const char * c_pszName, bool bSeq=false);
 		bool Get(int header, int * size, const char ** c_ppszName);
 
 		void Start();
@@ -26,8 +28,10 @@ class CPacketInfo
 
 		void Log(const char * c_pszFileName);
 
-		//bool IsSequence(int header);
-		//void SetSequence(int header, bool bSeq);
+#ifdef ENABLE_SEQUENCE_SYSTEM
+		bool IsSequence(int header);
+		void SetSequence(int header, bool bSeq);
+#endif
 
 	private:
 		TPacketElement * GetElement(int header);
@@ -62,3 +66,4 @@ class CPacketInfoUDP : public CPacketInfo
 };
 
 #endif
+//martysama0134's 2022

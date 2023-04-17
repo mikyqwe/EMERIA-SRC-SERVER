@@ -67,7 +67,7 @@ struct FCollectEntity {
 	}
 	template<typename F>
 	void ForEach(F& f) {
-		auto it = result.begin();
+		std::vector<LPENTITY>::iterator it = result.begin();
 		for ( ; it != result.end(); ++it) {
 			LPENTITY entity = *it;
 			f(entity);
@@ -87,11 +87,15 @@ class SECTREE
 
 		template <class _Func> LPENTITY	find_if (_Func & func) const
 		{
-			auto it_tree = m_neighbor_list.begin();
+#ifdef __clang__
+			LPSECTREE_LIST::const_iterator it_tree = m_neighbor_list.begin();
+#else
+			LPSECTREE_LIST::iterator it_tree = m_neighbor_list.begin();
+#endif
 
 			while (it_tree != m_neighbor_list.end())
 			{
-				auto it_entity = (*it_tree)->m_set_entity.begin();
+				ENTITY_SET::iterator it_entity = (*it_tree)->m_set_entity.begin();
 
 				while (it_entity != (*it_tree)->m_set_entity.end())
 				{
@@ -111,7 +115,11 @@ class SECTREE
 		{
 			// <Factor> Using snapshot copy to avoid side-effects
 			FCollectEntity collector;
-			auto it = m_neighbor_list.begin();
+#ifdef __clang__
+			LPSECTREE_LIST::const_iterator it = m_neighbor_list.begin();
+#else
+			LPSECTREE_LIST::iterator it = m_neighbor_list.begin();
+#endif
 			for ( ; it != m_neighbor_list.end(); ++it)
 			{
 				LPSECTREE sectree = *it;
@@ -128,11 +136,15 @@ class SECTREE
 
 		template <class _Func> void for_each_for_find_victim(_Func & func)
 		{
-			auto it_tree = m_neighbor_list.begin();
+#ifdef __clang__
+			LPSECTREE_LIST::const_iterator it_tree = m_neighbor_list.begin();
+#else
+			LPSECTREE_LIST::iterator it_tree = m_neighbor_list.begin();
+#endif
 
 			while (it_tree != m_neighbor_list.end())
 			{
-				//첫번째를 찾으면 바로 리턴
+
 				if ( (*(it_tree++))->for_each_entity_for_find_victim(func) )
 					return;
 			}
@@ -143,7 +155,7 @@ class SECTREE
 
 			while (it != m_set_entity.end())
 			{
-				//정상적으로 찾으면 바로 리턴
+
 				if ( func(*it++) )
 					return true;
 			}
@@ -176,9 +188,9 @@ class SECTREE
 		DWORD				GetAttribute(long x, long y);
 		bool				IsAttr(long x, long y, DWORD dwFlag);
 
-		void				CloneAttribute(LPSECTREE tree); // private map 처리시 사용
+		void				CloneAttribute(LPSECTREE tree);
 
-		int				GetEventAttribute(long x, long y); // 20050313 현재는 사용하지 않음
+		int				GetEventAttribute(long x, long y);
 
 		void				SetAttribute(DWORD x, DWORD y, DWORD dwAttr);
 		void				RemoveAttribute(DWORD x, DWORD y, DWORD dwAttr);
@@ -209,3 +221,4 @@ class SECTREE
 };
 
 #endif
+//martysama0134's 2022

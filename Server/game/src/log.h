@@ -54,12 +54,10 @@ class LogManager : public singleton<LogManager>
 		void		CharLog(LPCHARACTER ch, DWORD dw, const char * c_pszText, const char * c_pszHint);
 
 		void		LoginLog(bool isLogin, DWORD dwAccountID, DWORD dwPID, BYTE bLevel, BYTE bJob, DWORD dwPlayTime);
+#ifdef ENABLE_LONG_LONG
+		void		MoneyLog(BYTE type, DWORD vnum, long long gold);
+#else
 		void		MoneyLog(BYTE type, DWORD vnum, int gold);
-#if defined(__BL_MAILBOX__)
-		void		MailLog(const char* const szName, const char* const szWho, const char* const szTitle, const char* const szMessage, const bool bIsGM, const DWORD dwItemVnum, const DWORD dwItemCount, const int iYang, const int iWon);
-#endif
-#if defined(__BL_SOUL_ROULETTE__)
-		void		SoulRouletteLog(const char* table, const char* Name, const int vnum, const int count, const bool state);
 #endif
 		void		HackLog(const char * c_pszHackName, const char * c_pszLogin, const char * c_pszName, const char * c_pszIP);
 		void		HackLog(const char * c_pszHackName, LPCHARACTER ch);
@@ -79,25 +77,22 @@ class LogManager : public singleton<LogManager>
 		void		QuestRewardLog(const char * c_pszQuestName, DWORD dwPID, DWORD dwLevel, int iValue1, int iValue2);
 		void		DetailLoginLog(bool isLogin, LPCHARACTER ch);
 		void		DragonSlayLog(DWORD dwGuildID, DWORD dwDragonVnum, DWORD dwStartTime, DWORD dwEndTime);
-#ifdef OFFLINE_SHOP
-		void		OfflineShopLog(DWORD dwAID, const char * pszItem, const char * action);
-#endif
 		void		HackShieldLog(unsigned long ErrorCode, LPCHARACTER ch);
 		void		InvalidServerLog(enum eLocalization eLocaleType, const char* pcszIP, const char* pszRevision);
-
-#ifdef ENABLE_DECORUM
-		void		MatchHistory(DWORD dwMainPID, std::set<DWORD> & setTeam, std::set<DWORD> & setOpponent, TPartecipantStat * pStat, BYTE bArena, BYTE bResult, DWORD dwTime, DWORD dwArenaID, BYTE bLobbyType);
-#endif
-#ifdef ENABLE_ACCE_COSTUME_SYSTEM
-		void	AcceLog(DWORD dwPID, DWORD x, DWORD y, DWORD item_vnum, DWORD item_uid, int item_count, int abs_chance, bool success);
-#endif
 		void		ChatLog(DWORD where, DWORD who_id, const char* who_name, DWORD whom_id, const char* whom_name, const char* type, const char* msg, const char* ip);
-
+#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+		void		AcceLog(DWORD dwPID, DWORD x, DWORD y, DWORD item_vnum, DWORD item_uid, int item_count, int abs_chance, bool success);
+#endif
+#ifdef ENABLE_NEW_OFFLINESHOP_LOGS
+		void		OfflineshopLog(const DWORD dwOwnerID, const DWORD dwItemID, const char* fmt, ...);
+#endif
 		size_t EscapeString(char* dst, size_t dstSize, const char *src, size_t srcSize);
+	private:
 		void		Query(const char * c_pszFormat, ...);
-private:
+
 		CAsyncSQL	m_sql;
 		bool		m_bIsConnect;
 };
 
 #endif
+//martysama0134's 2022

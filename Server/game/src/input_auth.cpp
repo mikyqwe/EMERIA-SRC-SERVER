@@ -10,7 +10,6 @@
 #include "locale_service.h"
 #include "auth_brazil.h"
 #include "db.h"
-#include "check_server.h"
 
 #ifndef __WIN32__
 	#include "limit_time.h"
@@ -31,12 +30,12 @@ bool FN_IS_VALID_LOGIN_STRING(const char *str)
 
 	for (tmp = str; *tmp; ++tmp)
 	{
-		// 알파벳과 수자만 허용
+
 		if (isdigit(*tmp) || isalpha(*tmp))
 			continue;
 
 #ifdef ENABLE_ACCOUNT_W_SPECIALCHARS
-		// 캐나다는 몇몇 특수문자 허용
+
 		switch (*tmp)
 		{
 			case ' ':
@@ -75,13 +74,6 @@ CInputAuth::CInputAuth()
 
 void CInputAuth::Login(LPDESC d, const char * c_pData)
 {
-#ifdef ENABLE_LIMIT_TIME
-	if (!CCheckServer::Instance().IsValid())
-	{
-		exit(1);
-		return;
-	}
-#endif
 	TPacketCGLogin3 * pinfo = (TPacketCGLogin3 *) c_pData;
 
 	if (!g_bAuthServer)
@@ -92,7 +84,7 @@ void CInputAuth::Login(LPDESC d, const char * c_pData)
 		return;
 	}
 
-	// string 무결성을 위해 복사
+
 	char login[LOGIN_MAX_LEN + 1];
 	trim_and_lower(pinfo->login, login, sizeof(login));
 
@@ -187,6 +179,19 @@ void CInputAuth::Login(LPDESC d, const char * c_pData)
 	// END_OF_CHANNEL_SERVICE_LOGIN
 	else
 	{
+#ifdef __WIN32__
+		DBManager::instance().ReturnQuery(QID_AUTH_LOGIN, dwKey, p,
+				"SELECT PASSWORD('%s'),password,securitycode,social_id,id,status,availDt - NOW() > 0,"
+				"UNIX_TIMESTAMP(silver_expire),"
+				"UNIX_TIMESTAMP(gold_expire),"
+				"UNIX_TIMESTAMP(safebox_expire),"
+				"UNIX_TIMESTAMP(autoloot_expire),"
+				"UNIX_TIMESTAMP(fish_mind_expire),"
+				"UNIX_TIMESTAMP(marriage_fast_expire),"
+				"UNIX_TIMESTAMP(money_drop_rate_expire),"
+				"UNIX_TIMESTAMP(create_time)"
+				" FROM account WHERE login='%s'", szPasswd, szLogin);
+#else
 		// @fixme138 1. PASSWORD('%s') -> %s 2. szPasswd wrapped inside mysql_hash_password(%s).c_str()
 		DBManager::instance().ReturnQuery(QID_AUTH_LOGIN, dwKey, p,
 				"SELECT '%s',password,securitycode,social_id,id,status,availDt - NOW() > 0,"
@@ -200,28 +205,22 @@ void CInputAuth::Login(LPDESC d, const char * c_pData)
 				"UNIX_TIMESTAMP(create_time)"
 				" FROM account WHERE login='%s'",
 				mysql_hash_password(szPasswd).c_str(), szLogin);
+#endif
 	}
 }
 
 void CInputAuth::LoginOpenID(LPDESC d, const char * c_pData)
 {
-#ifdef ENABLE_LIMIT_TIME
-	if (!CCheckServer::Instance().IsValid())
-	{
-		exit(1);
-		return;
-	}
-#endif
 	//OpenID test code.
 	TPacketCGLogin5 *tempInfo1 = (TPacketCGLogin5 *)c_pData;
 
-	//일본 웹 서버에 인증키 확인 요청을 보낸다.
+
 	char* authKey = tempInfo1->authKey;
 	char returnID[LOGIN_MAX_LEN + 1] = {0};
 
 	int test_url_get_protocol = auth_OpenID(authKey, inet_ntoa(d->GetAddr().sin_addr), returnID);
 
-	//인증 실패. 에러 처리
+
 	if (0!=test_url_get_protocol)
 	{
 		LoginFailure(d, "OpenID Fail");
@@ -243,7 +242,7 @@ void CInputAuth::LoginOpenID(LPDESC d, const char * c_pData)
 		return;
 	}
 
-	// string 무결성을 위해 복사
+
 	char login[LOGIN_MAX_LEN + 1];
 	trim_and_lower(pinfo->login, login, sizeof(login));
 
@@ -338,6 +337,19 @@ void CInputAuth::LoginOpenID(LPDESC d, const char * c_pData)
 	// END_OF_CHANNEL_SERVICE_LOGIN
 	else
 	{
+#ifdef __WIN32__
+		DBManager::instance().ReturnQuery(QID_AUTH_LOGIN, dwKey, p,
+				"SELECT PASSWORD('%s'),password,securitycode,social_id,id,status,availDt - NOW() > 0,"
+				"UNIX_TIMESTAMP(silver_expire),"
+				"UNIX_TIMESTAMP(gold_expire),"
+				"UNIX_TIMESTAMP(safebox_expire),"
+				"UNIX_TIMESTAMP(autoloot_expire),"
+				"UNIX_TIMESTAMP(fish_mind_expire),"
+				"UNIX_TIMESTAMP(marriage_fast_expire),"
+				"UNIX_TIMESTAMP(money_drop_rate_expire),"
+				"UNIX_TIMESTAMP(create_time)"
+				" FROM account WHERE login='%s'", szLogin);
+#else
 		// @fixme138 1. PASSWORD('%s') -> %s 2. szPasswd wrapped inside mysql_hash_password(%s).c_str()
 		DBManager::instance().ReturnQuery(QID_AUTH_LOGIN, dwKey, p,
 				"SELECT '%s',password,securitycode,social_id,id,status,availDt - NOW() > 0,"
@@ -351,6 +363,7 @@ void CInputAuth::LoginOpenID(LPDESC d, const char * c_pData)
 				"UNIX_TIMESTAMP(create_time)"
 				" FROM account WHERE login='%s'",
 				mysql_hash_password(szPasswd).c_str(), szLogin);
+#endif
 	}
 }
 
@@ -424,7 +437,7 @@ int CInputAuth::auth_OpenID(const char *authKey, const char *ipAddr, char *rID)
 	    return 3;
 	}
 
-	//결과값 파싱
+
 	char buffer[1024];
 	strcpy(buffer, reply);
 
@@ -449,7 +462,7 @@ int CInputAuth::auth_OpenID(const char *authKey, const char *ipAddr, char *rID)
 		return 4;
 	}
 
-	if (0 != strcmp("OK", success))		//에러 처리
+	if (0 != strcmp("OK", success))
 	{
 		int returnNumber = 0;
 		str_to_number(returnNumber, id);
@@ -513,7 +526,6 @@ int CInputAuth::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 			Login(d, c_pData);
 			break;
 
-		//2012.07.19 OpenID : 김용욱
 		case HEADER_CG_LOGIN5_OPENID:
 			if (openid_server)
 				LoginOpenID(d, c_pData);
@@ -586,3 +598,4 @@ void CInputAuth::PasspodAnswer(LPDESC d, const char * c_pData)
 
 //	sys_log(0, "PASSPOD %s %d", Confirm.login, Confirm.passpod);
 }
+//martysama0134's 2022

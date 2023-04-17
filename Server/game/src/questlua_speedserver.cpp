@@ -199,4 +199,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("speedserver", speed_server_functions);
 	}
 }
-
+//martysama0134's 2022

@@ -6,10 +6,27 @@
 #include "CsvReader.h"
 
 #include <sstream>
-#include "../../common/CommonDefines.h"
-#include "../../common/service.h"
 
 using namespace std;
+
+#define ENABLE_NUMERIC_FIELD
+#ifdef ENABLE_NUMERIC_FIELD
+bool _IsNumericString(const std::string& trimInputString)
+{
+	if (trimInputString.empty())
+		return false;
+	bool isNumber = true;
+	for (auto& c : trimInputString)
+	{
+		if (!std::isdigit(c) && c != '-' && c != '+')
+		{
+			isNumber = false;
+			break;
+		}
+	}
+	return isNumber;
+}
+#endif
 
 inline string trim_left(const string& str)
 {
@@ -27,23 +44,22 @@ string trim(const string& str){return trim_left(trim_right(str));}
 
 static string* StringSplit(string strOrigin, string strTok)
 {
-    unsigned int cutAt;                       //?????
-    int index = 0;                            //??????
-    string* strResult = new string[30];		  //??return ???
+    unsigned int cutAt;
+    int index = 0;
+    string* strResult = new string[30];
 
-    //strTok????????
     while ((cutAt = strOrigin.find_first_of(strTok)) != strOrigin.npos)
     {
-       if (cutAt > 0)  //??????0????(???)
+       if (cutAt > 0)
        {
-            strResult[index++] = strOrigin.substr(0, cutAt);  //???????
+            strResult[index++] = strOrigin.substr(0, cutAt);
        }
-       strOrigin = strOrigin.substr(cutAt+1);  //?????????????
+       strOrigin = strOrigin.substr(cutAt+1);
     }
 
-    if(strOrigin.length() > 0)  //?????????
+    if(strOrigin.length() > 0)
     {
-        strResult[index++] = strOrigin.substr(0, cutAt);  //???????????
+        strResult[index++] = strOrigin.substr(0, cutAt);
     }
 
 	for( int i=0;i<index;i++)
@@ -51,43 +67,42 @@ static string* StringSplit(string strOrigin, string strTok)
 		strResult[i] = trim(strResult[i]);
 	}
 
-    return strResult;  //??return
+    return strResult;
 }
 
 
 
 int get_Item_Type_Value(string inputString)
 {
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arType[] = {"ITEM_NONE", "ITEM_WEAPON",
 		"ITEM_ARMOR", "ITEM_USE",
 		"ITEM_AUTOUSE", "ITEM_MATERIAL",
 		"ITEM_SPECIAL", "ITEM_TOOL",
-		"ITEM_LOTTERY", "ITEM_ELK",					//9?
+		"ITEM_LOTTERY", "ITEM_ELK",
 
 		"ITEM_METIN", "ITEM_CONTAINER",
 		"ITEM_FISH", "ITEM_ROD",
 		"ITEM_RESOURCE", "ITEM_CAMPFIRE",
 		"ITEM_UNIQUE", "ITEM_SKILLBOOK",
-		"ITEM_QUEST", "ITEM_POLYMORPH",				//19?
+		"ITEM_QUEST", "ITEM_POLYMORPH",
 
 		"ITEM_TREASURE_BOX", "ITEM_TREASURE_KEY",
 		"ITEM_SKILLFORGET", "ITEM_GIFTBOX",
 		"ITEM_PICK", "ITEM_HAIR",
 		"ITEM_TOTEM", "ITEM_BLEND",
-		"ITEM_COSTUME", "ITEM_DS",					//29?
+		"ITEM_COSTUME", "ITEM_DS",
 
 		"ITEM_SPECIAL_DS",	"ITEM_EXTRACT",
-		"ITEM_SECONDARY_COIN",						//32?
+		"ITEM_SECONDARY_COIN",
 
-		"ITEM_RING",								//33
-		"ITEM_BELT",								//34? (EItemTypes ??? ?? 34)
-		"ITEM_RUNE",								//36
-		"ITEM_RUNE_RED",							//37
-		"ITEM_RUNE_BLUE",							//38
-		"ITEM_RUNE_GREEN",							//39
-		"ITEM_RUNE_YELLOW",							//40
-		"ITEM_RUNE_BLACK",							//41
-//#endif
+		"ITEM_RING",
+		"ITEM_BELT",
+		"ITEM_PET", "ITEM_MEDIUM", // 36,37
+		"ITEM_GACHA" // 38
 	};
 
 
@@ -109,40 +124,25 @@ int get_Item_Type_Value(string inputString)
 
 int get_Item_SubType_Value(unsigned int type_value, string inputString)
 {
-	static string arSub1[] = { "WEAPON_SWORD", "WEAPON_DAGGER", "WEAPON_BOW", "WEAPON_TWO_HANDED", "WEAPON_BELL", "WEAPON_FAN", "WEAPON_ARROW", "WEAPON_MOUNT_SPEAR",
-	"WEAPON_CLAW", "WEAPON_UNLIMITED_ARROW", "WEAPON_BOUQUET"};
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
+	static string arSub1[] = { "WEAPON_SWORD", "WEAPON_DAGGER", "WEAPON_BOW", "WEAPON_TWO_HANDED",
+				"WEAPON_BELL", "WEAPON_FAN", "WEAPON_ARROW", "WEAPON_MOUNT_SPEAR", "WEAPON_CLAW", "WEAPON_QUIVER", "WEAPON_BOUQUET"};
 	static string arSub2[] = { "ARMOR_BODY", "ARMOR_HEAD", "ARMOR_SHIELD", "ARMOR_WRIST", "ARMOR_FOOTS",
-				"ARMOR_NECK", "ARMOR_EAR", 
-				#ifdef ENABLE_NEW_TALISMAN_GF
-				"ARMOR_TALISMAN", 
-				#endif
-				#ifdef ENABLE_NEW_TALISMAN_SLOTS
-				"ARMOR_TALISMAN_2", 
-				"ARMOR_TALISMAN_3", 
-				"ARMOR_TALISMAN_4", 
-				"ARMOR_TALISMAN_5", 
-				"ARMOR_TALISMAN_6", 
-				#endif
-				"ARMOR_NUM_TYPES"};
+				"ARMOR_NECK", "ARMOR_EAR", "ARMOR_NUM_TYPES"};
 	static string arSub3[] = { "USE_POTION", "USE_TALISMAN", "USE_TUNING", "USE_MOVE", "USE_TREASURE_BOX", "USE_MONEYBAG", "USE_BAIT",
 				"USE_ABILITY_UP", "USE_AFFECT", "USE_CREATE_STONE", "USE_SPECIAL", "USE_POTION_NODELAY", "USE_CLEAR",
 				"USE_INVISIBILITY", "USE_DETACHMENT", "USE_BUCKET", "USE_POTION_CONTINUE", "USE_CLEAN_SOCKET",
 				"USE_CHANGE_ATTRIBUTE", "USE_ADD_ATTRIBUTE", "USE_ADD_ACCESSORY_SOCKET", "USE_PUT_INTO_ACCESSORY_SOCKET",
 				"USE_ADD_ATTRIBUTE2", "USE_RECIPE", "USE_CHANGE_ATTRIBUTE2", "USE_BIND", "USE_UNBIND", "USE_TIME_CHARGE_PER", "USE_TIME_CHARGE_FIX", "USE_PUT_INTO_BELT_SOCKET", "USE_PUT_INTO_RING_SOCKET",
-				"USE_CHANGE_COSTUME_ATTR", "USE_RESET_COSTUME_ATTR" /*,"USE_UNK33", "USE_CHANGE_ATTRIBUTE_PLUS"*/
-#ifdef CHANGE_PETSYSTEM
-				, "USE_CHANGE_LV_P"
-#endif
-};
+				"USE_CHANGE_COSTUME_ATTR", "USE_RESET_COSTUME_ATTR", "USE_UNK33", "USE_CHANGE_ATTRIBUTE_PLUS"};
 	static string arSub4[] = { "AUTOUSE_POTION", "AUTOUSE_ABILITY_UP", "AUTOUSE_BOMB", "AUTOUSE_GOLD", "AUTOUSE_MONEYBAG", "AUTOUSE_TREASURE_BOX"};
 	static string arSub5[] = { "MATERIAL_LEATHER", "MATERIAL_BLOOD", "MATERIAL_ROOT", "MATERIAL_NEEDLE", "MATERIAL_JEWEL",
 		"MATERIAL_DS_REFINE_NORMAL", "MATERIAL_DS_REFINE_BLESSED", "MATERIAL_DS_REFINE_HOLLY"};
 	static string arSub6[] = { "SPECIAL_MAP", "SPECIAL_KEY", "SPECIAL_DOC", "SPECIAL_SPIRIT"};
-	static string arSub7[] = { "TOOL_FISHING_ROD"
-								#ifdef ENABLE_NEW_TALISMAN_GF
-								, "TOOL_TALISMAN_ROD"
-								#endif
-								};
+	static string arSub7[] = { "TOOL_FISHING_ROD" };
 	static string arSub8[] = { "LOTTERY_TICKET", "LOTTERY_INSTANT" };
 	static string arSub10[] = { "METIN_NORMAL", "METIN_GOLD" };
 	static string arSub12[] = { "FISH_ALIVE", "FISH_DEAD"};
@@ -151,7 +151,7 @@ int get_Item_SubType_Value(unsigned int type_value, string inputString)
 						"RESOURCE_STONE", "RESOURCE_METIN", "RESOURCE_ORE" };
 	static string arSub16[] = { "UNIQUE_NONE", "UNIQUE_BOOK", "UNIQUE_SPECIAL_RIDE", "UNIQUE_3", "UNIQUE_4", "UNIQUE_5",
 					"UNIQUE_6", "UNIQUE_7", "UNIQUE_8", "UNIQUE_9", "USE_SPECIAL"};
-	static string arSub28[] = { "COSTUME_BODY", "COSTUME_HAIR", "COSTUME_MOUNT", "COSTUME_ACCE", "COSTUME_WEAPON", "COSTUME_AURA" };
+	static string arSub28[] = { "COSTUME_BODY", "COSTUME_HAIR", "COSTUME_MOUNT", "COSTUME_ACCE", "COSTUME_WEAPON" };
 	static string arSub29[] = { "DS_SLOT1", "DS_SLOT2", "DS_SLOT3", "DS_SLOT4", "DS_SLOT5", "DS_SLOT6" };
 	static string arSub31[] = { "EXTRACT_DRAGON_SOUL", "EXTRACT_DRAGON_HEART" };
 
@@ -188,16 +188,12 @@ int get_Item_SubType_Value(unsigned int type_value, string inputString)
 		arSub29,	//30
 		arSub31,	//31
 		0,			//32
-		0,			//33 ??
-		0,			//34 ??
-//#ifdef ENABLE_SYSTEM_RUNE
+		0,
+		0,
 		0,			//35
 		0,			//36
 		0,			//37
 		0,			//38
-		0,			//39
-		0,			//40
-//#endif
 	};
 	static int arNumberOfSubtype[_countof(arSubType)] = {
 		0,
@@ -233,29 +229,23 @@ int get_Item_SubType_Value(unsigned int type_value, string inputString)
 		sizeof(arSub29)/sizeof(arSub29[0]),
 		sizeof(arSub31)/sizeof(arSub31[0]),
 		0, // 32
-		0, // 33 ??
-		0, // 34 ??
-//#ifdef ENABLE_SYSTEM_RUNE
-		0,			//35
-		0,			//36
-		0,			//37
-		0,			//38
-		0,			//39
-		0,			//40
-//#endif
+		0,
+		0,
+		0, // 35
+		0, // 36
+		0, // 37
+		0, // 38
 	};
 
 
 	assert(_countof(arSubType) > type_value && "Subtype rule: Out of range!!");
 
-	// assert ? ??? ?..
 	if (_countof(arSubType) <= type_value)
 	{
 		sys_err("SubType : Out of range!! (type_value: %d, count of registered subtype: %d", type_value, _countof(arSubType));
 		return -1;
 	}
 
-	//??? ??? ???? ???? ????? ????, ??? 0 ??
 	if (arSubType[type_value]==0) {
 		return 0;
 	}
@@ -263,9 +253,9 @@ int get_Item_SubType_Value(unsigned int type_value, string inputString)
 
 	int retInt = -1;
 	//cout << "SubType : " << subTypeStr << " -> ";
+	string tempInputString = trim(inputString);
 	for (int j=0;j<arNumberOfSubtype[type_value];j++) {
 		string tempString = arSubType[type_value][j];
-		string tempInputString = trim(inputString);
 		if	(tempInputString.compare(tempString)==0)
 		{
 			//cout << j << " ";
@@ -284,7 +274,10 @@ int get_Item_SubType_Value(unsigned int type_value, string inputString)
 
 int get_Item_AntiFlag_Value(string inputString)
 {
-
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arAntiFlag[] = {"ANTI_FEMALE", "ANTI_MALE", "ANTI_MUSA", "ANTI_ASSASSIN", "ANTI_SURA", "ANTI_MUDANG",
 							"ANTI_GET", "ANTI_DROP", "ANTI_SELL", "ANTI_EMPIRE_A", "ANTI_EMPIRE_B", "ANTI_EMPIRE_C",
 							"ANTI_SAVE", "ANTI_GIVE", "ANTI_PKDROP", "ANTI_STACK", "ANTI_MYSHOP", "ANTI_SAFEBOX", "ANTI_WOLFMAN",
@@ -292,13 +285,13 @@ int get_Item_AntiFlag_Value(string inputString)
 
 
 	int retValue = 0;
-	string* arInputString = StringSplit(inputString, "|");				//??? ?? ??? ???? ?? ??.
+	string* arInputString = StringSplit(inputString, "|");
 	for(unsigned int i =0;i<sizeof(arAntiFlag)/sizeof(arAntiFlag[0]);i++) {
 		string tempString = arAntiFlag[i];
-		for (unsigned int j=0; j<30 ; j++)		//?? 30? ????. (????)
+		for (unsigned int j=0; j<30 ; j++)
 		{
 			string tempString2 = arInputString[j];
-			if (tempString2.compare(tempString)==0) {				//????? ??.
+			if (tempString2.compare(tempString)==0) {
 				retValue = retValue + pow((float)2,(float)i);
 			}
 
@@ -314,20 +307,23 @@ int get_Item_AntiFlag_Value(string inputString)
 
 int get_Item_Flag_Value(string inputString)
 {
-
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arFlag[] = {"ITEM_TUNABLE", "ITEM_SAVE", "ITEM_STACKABLE", "COUNT_PER_1GOLD", "ITEM_SLOW_QUERY", "ITEM_UNIQUE",
 			"ITEM_MAKECOUNT", "ITEM_IRREMOVABLE", "CONFIRM_WHEN_USE", "QUEST_USE", "QUEST_USE_MULTIPLE",
 			"QUEST_GIVE", "ITEM_QUEST", "LOG", "STACKABLE", "SLOW_QUERY", "REFINEABLE", "IRREMOVABLE", "ITEM_APPLICABLE"};
 
 
 	int retValue = 0;
-	string* arInputString = StringSplit(inputString, "|");				//??? ?? ??? ???? ?? ??.
+	string* arInputString = StringSplit(inputString, "|");
 	for(unsigned int i =0;i<sizeof(arFlag)/sizeof(arFlag[0]);i++) {
 		string tempString = arFlag[i];
-		for (unsigned int j=0; j<30 ; j++)		//?? 30? ????. (????)
+		for (unsigned int j=0; j<30 ; j++)
 		{
 			string tempString2 = arInputString[j];
-			if (tempString2.compare(tempString)==0) {				//????? ??.
+			if (tempString2.compare(tempString)==0) {
 				retValue = retValue + pow((float)2,(float)i);
 			}
 
@@ -343,27 +339,26 @@ int get_Item_Flag_Value(string inputString)
 
 int get_Item_WearFlag_Value(string inputString)
 {
-
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arWearrFlag[] = {"WEAR_BODY", "WEAR_HEAD", "WEAR_FOOTS", "WEAR_WRIST", "WEAR_WEAPON", "WEAR_NECK", "WEAR_EAR", "WEAR_SHIELD", "WEAR_UNIQUE",
-					"WEAR_ARROW", "WEAR_HAIR", "WEAR_ABILITY", "WEAR_COSTUME_BODY", "WEAR_COSTUME_HAIR", "WEAR_COSTUME_SASH", "WEAR_COSTUME_AURA", 
-					#ifdef ENABLE_NEW_TALISMAN_GF
-					#ifdef ENABLE_NEW_TALISMAN_SLOTS
-					"WEAR_TALISMAN", "WEAR_TALISMAN_2", "WEAR_TALISMAN_3", "WEAR_TALISMAN_4", "WEAR_TALISMAN_5", "WEAR_TALISMAN_6"
-					#else
-					"WEAR_TALISMAN"
-					#endif
-					#endif
-					};
+					"WEAR_ARROW", "WEAR_HAIR", "WEAR_ABILITY", "WEAR_COSTUME_BODY"
+#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+					,"WEAR_COSTUME_ACCE"
+#endif
+	};
 
 
 	int retValue = 0;
-	string* arInputString = StringSplit(inputString, "|");				//??? ?? ??? ???? ?? ??.
+	string* arInputString = StringSplit(inputString, "|");
 	for(unsigned int i =0;i<sizeof(arWearrFlag)/sizeof(arWearrFlag[0]);i++) {
 		string tempString = arWearrFlag[i];
-		for (unsigned int j=0; j<30 ; j++)		//?? 30? ????. (????)
+		for (unsigned int j=0; j<30 ; j++)
 		{
 			string tempString2 = arInputString[j];
-			if (tempString2.compare(tempString)==0) {				//????? ??.
+			if (tempString2.compare(tempString)==0) {
 				retValue = retValue + pow((float)2,(float)i);
 			}
 
@@ -379,17 +374,20 @@ int get_Item_WearFlag_Value(string inputString)
 
 int get_Item_Immune_Value(string inputString)
 {
-
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arImmune[] = {"PARA","CURSE","STUN","SLEEP","SLOW","POISON","TERROR"};
 
 	int retValue = 0;
-	string* arInputString = StringSplit(inputString, "|");				//??? ?? ??? ???? ?? ??.
+	string* arInputString = StringSplit(inputString, "|");
 	for(unsigned int i =0;i<sizeof(arImmune)/sizeof(arImmune[0]);i++) {
 		string tempString = arImmune[i];
-		for (unsigned int j=0; j<30 ; j++)		//?? 30? ????. (????)
+		for (unsigned int j=0; j<30 ; j++)
 		{
 			string tempString2 = arInputString[j];
-			if (tempString2.compare(tempString)==0) {				//????? ??.
+			if (tempString2.compare(tempString)==0) {
 				retValue = retValue + pow((float)2,(float)i);
 			}
 
@@ -408,6 +406,10 @@ int get_Item_Immune_Value(string inputString)
 
 int get_Item_LimitType_Value(string inputString)
 {
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arLimitType[] = {"LIMIT_NONE", "LEVEL", "STR", "DEX", "INT", "CON", "PC_BANG", "REAL_TIME", "REAL_TIME_FIRST_USE", "TIMER_BASED_ON_WEAR"};
 
 	int retInt = -1;
@@ -430,6 +432,10 @@ int get_Item_LimitType_Value(string inputString)
 
 int get_Item_ApplyType_Value(string inputString)
 {
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arApplyType[] = {"APPLY_NONE", "APPLY_MAX_HP", "APPLY_MAX_SP", "APPLY_CON", "APPLY_INT", "APPLY_STR", "APPLY_DEX", "APPLY_ATT_SPEED",
 			"APPLY_MOV_SPEED", "APPLY_CAST_SPEED", "APPLY_HP_REGEN", "APPLY_SP_REGEN", "APPLY_POISON_PCT", "APPLY_STUN_PCT",
 			"APPLY_SLOW_PCT", "APPLY_CRITICAL_PCT", "APPLY_PENETRATE_PCT", "APPLY_ATTBONUS_HUMAN", "APPLY_ATTBONUS_ANIMAL",
@@ -449,13 +455,6 @@ int get_Item_ApplyType_Value(string inputString)
 			"APPLY_RESIST_ICE", "APPLY_RESIST_EARTH", "APPLY_RESIST_DARK", "APPLY_ANTI_CRITICAL_PCT", "APPLY_ANTI_PENETRATE_PCT",
 			"APPLY_BLEEDING_REDUCE", "APPLY_BLEEDING_PCT", "APPLY_ATTBONUS_WOLFMAN", "APPLY_RESIST_WOLFMAN", "APPLY_RESIST_CLAW",
 			"APPLY_ACCEDRAIN_RATE", "APPLY_RESIST_MAGIC_REDUCTION" // 97,98
-			#ifdef ENABLE_NEW_TALISMAN_GF
-			, "APPLY_ATTBONUS_ELECT", "APPLY_ATTBONUS_FIRE", "APPLY_ATTBONUS_ICE", "APPLY_ATTBONUS_WIND", "APPLY_ATTBONUS_EARTH", "APPLY_ATTBONUS_DARK",
-			"APPLY_RESIST_HUMAN", "APPLY_RESIST_SWORD_REDUCTION", "APPLY_RESIST_TWOHAND_REDUCTION", "APPLY_RESIST_DAGGER_REDUCTION", 
-			"APPLY_RESIST_BELL_REDUCTION", "APPLY_RESIST_FAN_REDUCTION", "APPLY_RESIST_BOW_REDUCTION", "APPLY_ATTBONUS_ZODIAC", "APPLY_ATTBONUS_DESERT",
-			"APPLY_ATTBONUS_INSECT", "APPLY_RESIST_CLAW_REDUCTION", "APPLY_ATTBONUS_BOSS"
-			#endif
-
 	};
 
 	int retInt = -1;
@@ -477,11 +476,14 @@ int get_Item_ApplyType_Value(string inputString)
 }
 
 
-//??? ???? ???.
 
 
 int get_Mob_Rank_Value(string inputString)
 {
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arRank[] = {"PAWN", "S_PAWN", "KNIGHT", "S_KNIGHT", "BOSS", "KING"};
 
 	int retInt = -1;
@@ -504,6 +506,10 @@ int get_Mob_Rank_Value(string inputString)
 
 int get_Mob_Type_Value(string inputString)
 {
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arType[] = { "MONSTER", "NPC", "STONE", "WARP", "DOOR", "BUILDING", "PC", "POLYMORPH_PC", "HORSE", "GOTO"};
 
 	int retInt = -1;
@@ -525,6 +531,10 @@ int get_Mob_Type_Value(string inputString)
 
 int get_Mob_BattleType_Value(string inputString)
 {
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arBattleType[] = { "MELEE", "RANGE", "MAGIC", "SPECIAL", "POWER", "TANKER", "SUPER_POWER", "SUPER_TANKER"};
 
 	int retInt = -1;
@@ -546,6 +556,10 @@ int get_Mob_BattleType_Value(string inputString)
 
 int get_Mob_Size_Value(string inputString)
 {
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arSize[] = { "SMALL", "MEDIUM", "BIG"}; //@fixme201 SAMLL to SMALL
 
 	int retInt = 0;
@@ -567,17 +581,21 @@ int get_Mob_Size_Value(string inputString)
 
 int get_Mob_AIFlag_Value(string inputString)
 {
-	string arAIFlag[] = {"AGGR","NOMOVE","COWARD","NOATTSHINSU","NOATTCHUNJO","NOATTJINNO","ATTMOB","BERSERK","STONESKIN","GODSPEED","DEATHBLOW","REVIVE"};
-
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
+	string arAIFlag[] = {"AGGR","NOMOVE","COWARD","NOATTSHINSU","NOATTCHUNJO","NOATTJINNO","ATTMOB","BERSERK","STONESKIN","GODSPEED","DEATHBLOW","REVIVE",
+	};
 
 	int retValue = 0;
-	string* arInputString = StringSplit(inputString, ",");				//??? ?? ??? ???? ?? ??.
+	string* arInputString = StringSplit(inputString, ",");
 	for(unsigned int i =0;i<sizeof(arAIFlag)/sizeof(arAIFlag[0]);i++) {
 		string tempString = arAIFlag[i];
-		for (unsigned int j=0; j<30 ; j++)		//?? 30? ????. (????)
+		for (unsigned int j=0; j<30 ; j++)
 		{
 			string tempString2 = arInputString[j];
-			if (tempString2.compare(tempString)==0) {				//????? ??.
+			if (tempString2.compare(tempString)==0) {
 				retValue = retValue + pow((float)2,(float)i);
 			}
 
@@ -592,17 +610,21 @@ int get_Mob_AIFlag_Value(string inputString)
 }
 int get_Mob_RaceFlag_Value(string inputString)
 {
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arRaceFlag[] = {"ANIMAL","UNDEAD","DEVIL","HUMAN","ORC","MILGYO","INSECT","FIRE","ICE","DESERT","TREE",
 		"ATT_ELEC","ATT_FIRE","ATT_ICE","ATT_WIND","ATT_EARTH","ATT_DARK"};
 
 	int retValue = 0;
-	string* arInputString = StringSplit(inputString, ",");				//??? ?? ??? ???? ?? ??.
+	string* arInputString = StringSplit(inputString, ",");
 	for(unsigned int i =0;i<sizeof(arRaceFlag)/sizeof(arRaceFlag[0]);i++) {
 		string tempString = arRaceFlag[i];
-		for (unsigned int j=0; j<30 ; j++)		//?? 30? ????. (????)
+		for (unsigned int j=0; j<30 ; j++)
 		{
 			string tempString2 = arInputString[j];
-			if (tempString2.compare(tempString)==0) {				//????? ??.
+			if (tempString2.compare(tempString)==0) {
 				retValue = retValue + pow((float)2,(float)i);
 			}
 
@@ -617,16 +639,20 @@ int get_Mob_RaceFlag_Value(string inputString)
 }
 int get_Mob_ImmuneFlag_Value(string inputString)
 {
+#ifdef ENABLE_NUMERIC_FIELD
+	if (_IsNumericString(inputString))
+		return std::stoi(inputString);
+#endif
 	string arImmuneFlag[] = {"STUN","SLOW","FALL","CURSE","POISON","TERROR", "REFLECT"};
 
 	int retValue = 0;
-	string* arInputString = StringSplit(inputString, ",");				//??? ?? ??? ???? ?? ??.
+	string* arInputString = StringSplit(inputString, ",");
 	for(unsigned int i =0;i<sizeof(arImmuneFlag)/sizeof(arImmuneFlag[0]);i++) {
 		string tempString = arImmuneFlag[i];
-		for (unsigned int j=0; j<30 ; j++)		//?? 30? ????. (????)
+		for (unsigned int j=0; j<30 ; j++)
 		{
 			string tempString2 = arInputString[j];
-			if (tempString2.compare(tempString)==0) {				//????? ??.
+			if (tempString2.compare(tempString)==0) {
 				retValue = retValue + pow((float)2,(float)i);
 			}
 
@@ -644,14 +670,12 @@ int get_Mob_ImmuneFlag_Value(string inputString)
 
 #ifndef __DUMP_PROTO__
 
-//? ???? ?????.
 bool Set_Proto_Mob_Table(TMobTable *mobTable, cCsvTable &csvTable,std::map<int,const char*> &nameMap)
 {
 	int col = 0;
 	str_to_number(mobTable->dwVnum, csvTable.AsStringByIndex(col++));
 	strlcpy(mobTable->szName, csvTable.AsStringByIndex(col++), sizeof(mobTable->szName));
 
-	//3. ??? ?? ????.
 	map<int,const char*>::iterator it;
 	it = nameMap.find(mobTable->dwVnum);
 	if (it != nameMap.end()) {
@@ -812,11 +836,9 @@ bool Set_Proto_Item_Table(TItemTable *itemTable, cCsvTable &csvTable,std::map<in
 		col = col + 1;
 	}
 
-	// vnum ? vnum range ??.
 	{
 		std::string s(csvTable.AsStringByIndex(0));
 		unsigned int pos = s.find("~");
-		// vnum ??? '~'? ??? ??
 		if (std::string::npos == pos)
 		{
 			itemTable->dwVnum = dataArray[0];
@@ -840,7 +862,6 @@ bool Set_Proto_Item_Table(TItemTable *itemTable, cCsvTable &csvTable,std::map<in
 	}
 
 	strlcpy(itemTable->szName, csvTable.AsStringByIndex(1), sizeof(itemTable->szName));
-	//??? ?? ????.
 	map<int,const char*>::iterator it;
 	it = nameMap.find(itemTable->dwVnum);
 	if (it != nameMap.end()) {
@@ -851,7 +872,7 @@ bool Set_Proto_Item_Table(TItemTable *itemTable, cCsvTable &csvTable,std::map<in
 	}
 	itemTable->bType = dataArray[2];
 	itemTable->bSubType = dataArray[3];
-	itemTable->bSize = dataArray[4];
+	itemTable->bSize = MINMAX(1, dataArray[4], 3); // @fixme179
 	itemTable->dwAntiFlags = dataArray[5];
 	itemTable->dwFlags = dataArray[6];
 	itemTable->dwWearFlags = dataArray[7];
@@ -899,3 +920,4 @@ bool Set_Proto_Item_Table(TItemTable *itemTable, cCsvTable &csvTable,std::map<in
 }
 
 #endif
+//martysama0134's 2022

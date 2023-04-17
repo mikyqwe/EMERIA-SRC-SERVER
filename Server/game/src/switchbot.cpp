@@ -270,7 +270,7 @@ void CSwitchbot::SwitchItems()
 			if (desc)
 			{
 				char buf[255];
-				int len = snprintf(buf, sizeof(buf), LC_TEXT("Ho trovato un bonus per: %s (Slot: %d)."), pkItem->GetName(pkOwner->GetLanguage()), bSlot + 1);
+				int len = snprintf(buf, sizeof(buf), LC_TEXT("I found a bonus for: %s (Slot: %d)."), pkItem->GetName(), bSlot + 1);
 
 				TPacketGCWhisper pack;
 				pack.bHeader = HEADER_GC_WHISPER;

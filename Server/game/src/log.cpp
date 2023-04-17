@@ -7,7 +7,6 @@
 #include "desc.h"
 #include "item.h"
 
-
 static char	__escape_hint[1024];
 
 LogManager::LogManager() : m_bIsConnect(false)
@@ -108,6 +107,18 @@ void LogManager::LoginLog(bool isLogin, DWORD dwAccountID, DWORD dwPID, BYTE bLe
 			get_table_postfix(), isLogin ? "'LOGIN'" : "'LOGOUT'", g_bChannel, dwAccountID, dwPID, bLevel, bJob, dwPlayTime);
 }
 
+#ifdef ENABLE_LONG_LONG
+void LogManager::MoneyLog(BYTE type, DWORD vnum, long long gold)
+{
+	if (type == MONEY_LOG_RESERVED || type >= MONEY_LOG_TYPE_MAX_NUM)
+	{
+		sys_err("TYPE ERROR: type %d vnum %u gold %lld", type, vnum, gold);
+		return;
+	}
+
+	Query("INSERT DELAYED INTO money_log%s VALUES (NOW(), %d, %d, %lld)", get_table_postfix(), type, vnum, gold);
+}
+#else
 void LogManager::MoneyLog(BYTE type, DWORD vnum, int gold)
 {
 	LOG_LEVEL_CHECK_N_RET(LOG_LEVEL_MAX);
@@ -119,10 +130,10 @@ void LogManager::MoneyLog(BYTE type, DWORD vnum, int gold)
 
 	Query("INSERT DELAYED INTO money_log%s VALUES (NOW(), %d, %d, %d)", get_table_postfix(), type, vnum, gold);
 }
-
+#endif
 void LogManager::HackLog(const char * c_pszHackName, const char * c_pszLogin, const char * c_pszName, const char * c_pszIP)
 {
-	//LOG_LEVEL_CHECK_N_RET(LOG_LEVEL_MID);
+	LOG_LEVEL_CHECK_N_RET(LOG_LEVEL_MID);
 	m_sql.EscapeString(__escape_hint, sizeof(__escape_hint), c_pszHackName, strlen(c_pszHackName));
 
 	Query("INSERT INTO hack_log (time, login, name, ip, server, why) VALUES(NOW(), '%s', '%s', '%s', '%s', '%s')", c_pszLogin, c_pszName, c_pszIP, g_stHostname.c_str(), __escape_hint);
@@ -145,13 +156,6 @@ void LogManager::HackCRCLog(const char * c_pszHackName, const char * c_pszLogin,
 	LOG_LEVEL_CHECK_N_RET(LOG_LEVEL_MID);
 	Query("INSERT INTO hack_crc_log (time, login, name, ip, server, why, crc) VALUES(NOW(), '%s', '%s', '%s', '%s', '%s', %u)", c_pszLogin, c_pszName, c_pszIP, g_stHostname.c_str(), c_pszHackName, dwCRC);
 }
-
-#if defined(__BL_SOUL_ROULETTE__)
-void LogManager::SoulRouletteLog(const char* table, const char* Name, const int vnum, const int count, const bool state)
-{
-	Query("INSERT INTO %s%s (name, vnum, count, state, date) VALUES('%s', '%d', '%d', '%s', NOW())", table, get_table_postfix(), Name, vnum, count, (state ? "OK" : "ERROR"));
-}
-#endif
 
 void LogManager::PCBangLoginLog(DWORD dwPCBangID, const char* c_szPCBangIP, DWORD dwPlayerID, DWORD dwPlayTime)
 {
@@ -345,13 +349,6 @@ void LogManager::DragonSlayLog(DWORD dwGuildID, DWORD dwDragonVnum, DWORD dwStar
 			dwGuildID, dwDragonVnum, dwStartTime, dwEndTime);
 }
 
-#ifdef OFFLINE_SHOP
-void LogManager::OfflineShopLog(DWORD dwAID, const char * pszItem, const char * action)
-{
-	Query("INSERT INTO offlineshop_log (account_id, action, item, time) VALUES ('%d', '%s', '%s', NOW())", dwAID, action, pszItem);
-}
-#endif
-
 void LogManager::HackShieldLog(unsigned long ErrorCode, LPCHARACTER ch)
 {
 	LOG_LEVEL_CHECK_N_RET(LOG_LEVEL_MAX);
@@ -400,12 +397,19 @@ void LogManager::InvalidServerLog(enum eLocalization eLocaleType, const char* pc
 	Query("INSERT INTO invalid_server_log(locale_type, log_date, ip, revision) VALUES(%d, NOW(), '%s', '%s')", eLocaleType, pcszIP, __escape_hint);
 }
 
-#if defined(__BL_MAILBOX__)
-void LogManager::MailLog(const char* const szName, const char* const szWho, const char* const szTitle, const char* const szMessage, const bool bIsGM, const DWORD dwItemVnum, const DWORD dwItemCount, const int iYang, const int iWon)
-{
-	Query("INSERT DELAYED INTO mailbox_log%s (name, who, title, message, gm, gold, won, ivnum, icount, date) "
-		"VALUES('%s', '%s', '%s', '%s', %d, %d, %d, %lu, %lu, NOW()) ",
-		get_table_postfix(), szName, szWho, szTitle, szMessage, bIsGM, iYang, iWon, dwItemVnum, dwItemCount);
+#ifdef ENABLE_NEW_OFFLINESHOP_LOGS
+void LogManager::OfflineshopLog(const DWORD dwOwnerID, const DWORD dwItemID, const char* fmt, ...) {
+	static char szLog[1024]="\0";
+
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(szLog, sizeof(szLog), fmt, args);
+	va_end(args);
+
+	static char szEscaped[2048] = "\0";
+	m_sql.EscapeString(szEscaped, sizeof(szEscaped), szLog, strlen(szLog));
+
+	Query("INSERT INTO `player`.`offlineshop_logs` (`owner_id`, `item_id`, `what`, `when`) VALUES( %u, %u, '%s', NOW())", dwOwnerID, dwItemID, szEscaped);
 }
 #endif
 
@@ -415,36 +419,4 @@ void LogManager::AcceLog(DWORD dwPID, DWORD x, DWORD y, DWORD item_vnum, DWORD i
 	Query("INSERT DELAYED INTO acce%s (pid, time, x, y, item_vnum, item_uid, item_count, item_abs_chance, success) VALUES(%u, NOW(), %u, %u, %u, %u, %d, %d, %d)", get_table_postfix(), dwPID, x, y, item_vnum, item_uid, item_count, abs_chance, success ? 1 : 0);
 }
 #endif
-
-#ifdef ENABLE_DECORUM
-void LogManager::MatchHistory(DWORD dwMainPID, std::set<DWORD> & setTeam, std::set<DWORD> & setOpponent, TPartecipantStat * pStat, BYTE bArena, BYTE bResult, DWORD dwTime, DWORD dwArenaID, BYTE bLobbyType)
-{
-	char szColumns[QUERY_MAX_LEN];
-	char szValues[QUERY_MAX_LEN];
-	
-	int iLen = snprintf(szColumns, sizeof(szColumns), "main_pid, damage_inflicted, damage_received, kills, death, arena_type, arena_result, time, arena_id, lobby_type");
-	int iValueLen = snprintf(szValues, sizeof(szValues), "%u, %u, %d, %d, %u, %u, %u, FROM_UNIXTIME(%u), %u, %u",
-				dwMainPID, pStat->dwDamageInflict, pStat->dwDamageRecive, pStat->dwKill, pStat->dwDeath, bArena, bResult, dwTime, dwArenaID, bLobbyType);
-	
-	int i = 1;
-	std::set<DWORD>::iterator it = setTeam.begin();
-	for (; it != setTeam.end(); it++)
-	{
-		if (*it == dwMainPID) continue;
-		
-		iLen += snprintf(szColumns + iLen, sizeof(szColumns) - iLen, ", team_pid%d", i);
-		iValueLen += snprintf(szValues + iValueLen, sizeof(szValues) - iValueLen, ", %u", *it);
-		i++;
-	}
-	
-	i = 1;
-	it = setOpponent.begin();
-	for (; it != setOpponent.end(); it++, i++)
-	{
-		iLen += snprintf(szColumns + iLen, sizeof(szColumns) - iLen, ", opponent_pid%d", i);
-		iValueLen += snprintf(szValues + iValueLen, sizeof(szValues) - iValueLen, ", %u", *it);
-	}
-	
-	Query("INSERT DELAYED INTO match_history%s (%s) VALUES(%s)", get_table_postfix(), szColumns, szValues);
-}
-#endif
+//martysama0134's 2022

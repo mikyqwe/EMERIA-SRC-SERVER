@@ -145,7 +145,6 @@ namespace quest
 		if (ch->GetGuild())
 			ch->GetGuild()->GuildWarEntryAccept((DWORD) lua_tonumber(L, 1), ch);
 
-
 		return 0;
 	}
 
@@ -305,12 +304,12 @@ namespace quest
 
 	ALUA(guild_change_master)
 	{
-		// 리턴값
-		//	0 : 입력한 이름이 잘못되었음 ( 문자열이 아님 )
-		//	1 : 길드장이 아님
-		//	2 : 지정한 이름의 길드원이 없음
-		//	3 : 요청 성공
-		//	4 : 길드가 없음
+
+
+
+
+
+
 
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 
@@ -346,23 +345,20 @@ namespace quest
 
 	ALUA(guild_change_master_with_limit)
 	{
-		// 인자
-		//  arg0 : 새 길드장 이름
-		//  arg1 : 새 길드장 레벨 제한
-		//  arg2 : resign_limit 제한 시간
-		//  arg3 : be_other_leader 제한 시간
-		//  arg4 : be_other_member 제한 시간
-		//  arg5 : 캐시템인가 아닌가
+
+
+
+
 		//
-		// 리턴값
-		//	0 : 입력한 이름이 잘못되었음 ( 문자열이 아님 )
-		//	1 : 길드장이 아님
-		//	2 : 지정한 이름의 길드원이 없음
-		//	3 : 요청 성공
-		//	4 : 길드가 없음
-		//	5 : 지정한 이름이 온라인이 아님
-		//	6 : 지정한 캐릭터 레벨이 기준레벨보다 낮음
-		//	7 : 새 길드장이 be_other_leader 제한에 걸림
+
+
+
+
+
+
+
+
+
 
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 
@@ -613,7 +609,7 @@ namespace quest
 		lua_pushnumber(L, guild_exp_table2[MINMAX(0, lua_tonumber(L, 1) ,GUILD_MAX_LEVEL)]);
 		return 1;
 	}
-	
+
 	ALUA(guild_offer_exp0)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
@@ -638,7 +634,6 @@ namespace quest
 			offer *= 100;
 
 			if (pGuild->OfferExp(ch, offer))
-
 			{
 				lua_pushboolean(L, true);
 			}
@@ -688,28 +683,46 @@ namespace quest
 			{ "change_master_with_limit",			guild_change_master_with_limit			},
 #ifdef ENABLE_NEWSTUFF
 			{ "get_id0",				guild_get_id0				},	// get guild id [return lua number]
+			{ "get_id",					guild_get_id0				},	// alias
 			{ "get_sp0",				guild_get_sp0				},	// get guild sp [return lua number]
+			{ "get_sp",					guild_get_sp0				},	// alias
 			{ "get_maxsp0",				guild_get_maxsp0			},	// get guild maxsp [return lua number]
+			{ "get_maxsp",				guild_get_maxsp0			},	// alias
 			{ "get_money0",				guild_get_money0			},	// get money guild [return lua number]
+			{ "get_money",				guild_get_money0			},	// alias
 			{ "get_max_member0",		guild_get_max_member0		},	// get max joinable members [return lua number]
-			{ "get_total_member_level0",	guild_get_total_member_level0	},	// get the sum of all the members' level [return lua number]
+			{ "get_max_member",			guild_get_max_member0		},	// alias
+			{ "get_total_member_level0",guild_get_total_member_level0	},	// get the sum of all the members' level [return lua number]
+			{ "get_total_member_level",	guild_get_total_member_level0	},	// alias
 			{ "has_land0",				guild_has_land0				},	// get whether guild has a land or not [return lua boolean]
+			{ "has_land",				guild_has_land0				},	// alias
 			{ "get_win_count0",			guild_get_win_count0		},	// get guild wins [return lua number]
+			{ "get_win_count",			guild_get_win_count0		},	// alias
 			{ "get_draw_count0",		guild_get_draw_count0		},	// get guild draws [return lua number]
+			{ "get_draw_count",			guild_get_draw_count0		},	// alias
 			{ "get_loss_count0",		guild_get_loss_count0		},	// get guild losses [return lua number]
+			{ "get_loss_count",			guild_get_loss_count0		},	// alias
 			{ "add_comment0",			guild_add_comment0			},	// add a comment into guild notice board [return nothing]
+			{ "add_comment",			guild_add_comment0			},	// alias
 			// guild.ladder_point0(point)
 			{ "set_ladder_point0",		guild_set_ladder_point0		},	// set guild ladder points [return nothing]
+			{ "set_ladder_point",		guild_set_ladder_point0		},	// alias
 			// guild.set_war_data0(win, draw, loss)
 			// { "set_war_data0",			guild_set_war_data0			},	// set guild win/draw/loss [return nothing]
 			{ "get_skill_level0",		guild_get_skill_level0		},	// get guild skill level [return lua number]
+			{ "get_skill_level",		guild_get_skill_level0		},	// alias
 			{ "set_skill_level0",		guild_set_skill_level0		},	// set guild skill level [return nothing]
+			{ "set_skill_level",		guild_set_skill_level0		},	// alias
 			{ "get_skill_point0",		guild_get_skill_point0		},	// get guild skill points [return lua number]
-			{ "set_skill_point0",		guild_set_skill_point0		},	// set guild skill points [return nothing]			
+			{ "get_skill_point",		guild_get_skill_point0		},	// alias
+			{ "set_skill_point0",		guild_set_skill_point0		},	// set guild skill points [return nothing]
+			{ "set_skill_point",		guild_set_skill_point0		},	// alias
 			{ "get_exp_level0",			guild_get_exp_level0		},	// get how much exp is necessary for such <level> [return lua number]
+			{ "get_exp_level",			guild_get_exp_level0		},	// alias
 			{ "offer_exp0",				guild_offer_exp0			},	// give player's <exp> to guild [return lua boolean=successfulness]
+			{ "offer_exp",				guild_offer_exp0			},	// alias
 			{ "give_exp0",				guild_give_exp0				},	// give <exp> to guild [return nothing]
-
+			{ "give_exp",				guild_give_exp0				},	// alias
 #endif
 			{ NULL,						NULL						}
 		};
@@ -717,4 +730,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("guild", guild_functions);
 	}
 }
-
+//martysama0134's 2022

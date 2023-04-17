@@ -31,7 +31,7 @@ namespace quest
 			return 0;
 		}
 
-		if (ch->FindAffect(AFFECT_QUEST_START_IDX, applyOn)) // 퀘스트로 인해 같은 곳에 효과가 걸려있으면 스킵
+		if (ch->FindAffect(AFFECT_QUEST_START_IDX, applyOn))
 			return 0;
 
 		long value = (long) lua_tonumber(L, 2);
@@ -62,14 +62,14 @@ namespace quest
 		return 0;
 	}
 
-	ALUA(affect_remove_bad) // 나쁜 효과를 없앰
+	ALUA(affect_remove_bad)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 		ch->RemoveBadAffect();
 		return 0;
 	}
 
-	ALUA(affect_remove_good) // 좋은 효과를 없앰
+	ALUA(affect_remove_good)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 		ch->RemoveGoodAffect();
@@ -104,7 +104,7 @@ namespace quest
 		return 0;
 	}
 
-	ALUA(affect_remove_hair) // 헤어 효과를 없앤다.
+	ALUA(affect_remove_hair)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 
@@ -123,7 +123,7 @@ namespace quest
 		return 1;
 	}
 
-	// 현재 캐릭터가 AFFECT_TYPE affect를 갖고있으면 bApplyOn 값을 반환하고 없으면 nil을 반환하는 함수.
+
 	// usage :	applyOn = affect.get_apply(AFFECT_TYPE)
 	ALUA(affect_get_apply_on)
 	{
@@ -175,7 +175,7 @@ namespace quest
 
 		return 0;
 	}
-	
+
 #ifdef NEW_PET_SYSTEM
 	int affect_pet_bonus(lua_State * L)
 	{
@@ -205,6 +205,7 @@ namespace quest
 		return 0;
 	}
 #endif	
+
 
 	ALUA(affect_add_collect_point)
 	{
@@ -308,3 +309,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("affect", affect_functions);
 	}
 };
+//martysama0134's 2022

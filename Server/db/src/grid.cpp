@@ -3,6 +3,7 @@
 #include "../../libthecore/include/memcpy.h"
 #include "../../common/stl.h"
 #include "grid.h"
+#include <algorithm>
 
 CGrid::CGrid(int w, int h) : m_iWidth(w), m_iHeight(h)
 {
@@ -13,7 +14,7 @@ CGrid::CGrid(int w, int h) : m_iWidth(w), m_iHeight(h)
 CGrid::CGrid(CGrid * pkGrid, int w, int h) : m_iWidth(w), m_iHeight(h)
 {
 	m_pGrid = new char[m_iWidth * m_iHeight];
-	int iSize = std::MIN(w * h, pkGrid->m_iWidth * pkGrid->m_iHeight);
+	int iSize = std::min(w * h, pkGrid->m_iWidth * pkGrid->m_iHeight);
 	thecore_memcpy(m_pGrid, pkGrid->m_pGrid, sizeof(char) * iSize);
 }
 
@@ -29,7 +30,7 @@ void CGrid::Clear()
 
 int CGrid::FindBlank(int w, int h)
 {
-	// 크기가 더 크다면 확인할 필요 없이 그냥 리턴
+
 	if (w > m_iWidth || h > m_iHeight)
 		return -1;
 
@@ -87,7 +88,7 @@ bool CGrid::IsEmpty(int iPos, int w, int h)
 {
 	int iRow = iPos / m_iWidth;
 
-	// Grid 안쪽인가를 먼저 검사
+
 	if (iRow + h > m_iHeight)
 		return false;
 
@@ -127,4 +128,4 @@ unsigned int CGrid::GetSize()
 {
 	return m_iWidth * m_iHeight;
 }
-
+//martysama0134's 2022

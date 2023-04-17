@@ -1,12 +1,3 @@
-/*********************************************************************
- * date        : 2007.02.24
- * file        : blend_item.cpp
- * author      : mhh
- * description :
- */
-
-#define _blend_item_cpp_
-
 #include "stdafx.h"
 #include "constants.h"
 #include "log.h"
@@ -14,6 +5,7 @@
 #include "locale_service.h"
 #include "item.h"
 #include "blend_item.h"
+
 #define DO_ALL_BLEND_INFO(iter)	for (iter=s_blend_info.begin(); iter!=s_blend_info.end(); ++iter)
 
 
@@ -166,11 +158,6 @@ static int FN_random_index()
 	return 0;
 }
 
-// 충기환의 확률 테이블
-// blend.txt에서 확률도 받도록 고치면 깔끔하겠지만
-// 각 나라별로 item proto 등을 따로 관리하므로,
-// 혼란이 올 수 있어 이렇게 추가한다.
-// by rtsummit
 
 static int FN_ECS_random_index()
 {
@@ -241,4 +228,4 @@ bool	Blend_Item_find(DWORD item_vnum)
 	}
 	return false;
 }
-
+//martysama0134's 2022

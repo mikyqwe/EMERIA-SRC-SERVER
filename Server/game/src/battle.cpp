@@ -21,19 +21,7 @@
 #include "sectree.h"
 #include "ani.h"
 #include "locale_service.h"
-#include "log.h"
-#include "questmanager.h"
-#include "questlua.h"
-#include "dungeon.h"
 #include "../../common/CommonDefines.h"
-#include "../../common/length.h"
-#ifdef ENABLE_DECORUM
-#include "decorum_arena.h"
-#endif
-#if defined(__SHIP_DEFENSE__)
-#	include "ShipDefense.h"
-#endif
-#define RACEFLAG_ALL 1 
 
 int battle_hit(LPCHARACTER ch, LPCHARACTER victim, int & iRetDam);
 
@@ -60,14 +48,7 @@ bool timed_event_cancel(LPCHARACTER ch)
 		return true;
 	}
 
-	/* RECALL_DELAY
-	   차후 전투로 인해 귀환부 딜레이가 취소 되어야 할 경우 주석 해제
-	   if (ch->m_pk_RecallEvent)
-	   {
-	   event_cancel(&ch->m_pkRecallEvent);
-	   return true;
-	   }
-	   END_OF_RECALL_DELAY */
+
 
 	return false;
 }
@@ -104,11 +85,9 @@ bool battle_is_icedamage(LPCHARACTER pAttacker, LPCHARACTER pVictim)
 
 bool battle_is_attackable(LPCHARACTER ch, LPCHARACTER victim)
 {
-	// 상대방이 죽었으면 중단한다.
 	if (victim->IsDead())
 		return false;
 
-	// 안전지대면 중단
 	{
 		SECTREE	*sectree = NULL;
 
@@ -124,48 +103,6 @@ bool battle_is_attackable(LPCHARACTER ch, LPCHARACTER victim)
 	if (!battle_is_icedamage(ch, victim))
 		return false;
 #endif
-
-//#define ENABLE_NEMERE_CAN_ATTACK
-#ifdef ENABLE_NEMERE_CAN_ATTACK
-
-	if (ch->IsPC() && victim->IsNPC())
-	{
-		if (ch->GetDungeon() && ch->GetMapIndex() >= 3520000 && ch->GetMapIndex() < 3530000)
-		{
-			LPDUNGEON pDungeon = CDungeonManager::instance().FindByMapIndex(ch->GetMapIndex());
-
-			if (victim->GetRaceNum() == 6151)									// value boss "Szel"
-			{
-				if (pDungeon->GetFlag("level") == 4 && !ch->IsAffectFlag(AFF_HOSIN))                // al piano 4 possono attaccare solo con buff benedizione
-				{
-					return false;
-				}
-				else if (pDungeon->GetFlag("level") == 7 && !ch->IsAffectFlag(AFF_GICHEON))           // al piano 7 possono attaccare solo con buff aiuto del drago
-				{
-					return false;
-				}
-			}
-
-/* 			if (victim->GetRaceNum() == 8058)						// value metin "Metin del Freddo"
-			{
-				if (ch->GetJob() == JOB_ASSASSIN || ch->GetJob() == JOB_WARRIOR || ch->GetJob() == JOB_SURA)                // al piano 6 possono attaccare la metin solo SHAMANI
-				{
-					return false;
-				}
-			}
-
-			if (victim->GetRaceNum() == 20399 && pDungeon->GetFlag("level") == 9)              	// value Colonna             
-			{
-				if (!ch->GetJob() == JOB_SHAMAN || !ch->GetJob() == JOB_ASSASSIN)               // al piano 9 possono attaccare la colonna solo SHAMANI e NINJA
-				{
-					return false;
-				}
-			} */
-		}
-	}
-
-#endif
-	// 내가 죽었으면 중단한다.
 	if (ch->IsStun() || ch->IsDead())
 		return false;
 
@@ -181,24 +118,12 @@ bool battle_is_attackable(LPCHARACTER ch, LPCHARACTER victim)
 		}
 	}
 
-#if defined(__SHIP_DEFENSE__)
-	if (CShipDefenseManager::Instance().CanAttack(ch, victim))
-		return true;
-
-	if (CShipDefenseManager::Instance().IsFakeHydra(victim->GetRaceNum()))
-		return false;
-#endif
-
 	if (IS_CASTLE_MAP(ch->GetMapIndex()) && false==castle_can_attack(ch, victim))
 			return false;
 
 	if (CArenaManager::instance().CanAttack(ch, victim) == true)
 		return true;
 
-#ifdef ENABLE_DECORUM
-	if (CDecoredArenaManager::instance().IsArenaMap(ch->GetMapIndex()) == true)
-		return CDecoredArenaManager::instance().CanAttack(ch, victim);
-#endif
 	return CPVPManager::instance().CanAttack(ch, victim);
 }
 
@@ -219,30 +144,21 @@ int battle_melee_attack(LPCHARACTER ch, LPCHARACTER victim)
 	if (test_server&&ch->IsPC())
 		sys_log(0, "battle_melee_attack : [%s] attack to [%s]", ch->GetName(), victim->GetName());
 
-	// 거리 체크
 	int distance = DISTANCE_APPROX(ch->GetX() - victim->GetX(), ch->GetY() - victim->GetY());
 
 	if (!victim->IsBuilding())
 	{
-		int max = 325;
+		int max = 300;
 
 		if (false == ch->IsPC())
 		{
-			// 몬스터의 경우 몬스터 공격 거리를 사용
 			max = (int) (ch->GetMobAttackRange() * 1.15f);
 		}
 		else
 		{
-			// PC일 경우 상대가 melee 몹일 경우 몹의 공격 거리가 최대 공격 거리
 			if (false == victim->IsPC() && BATTLE_TYPE_MELEE == victim->GetMobBattleType())
 				max = MAX(300, (int) (victim->GetMobAttackRange() * 1.15f));
 		}
-
-#if defined(__SHIP_DEFENSE__)
-		// PC melee attack on HUGE_RACE Hydra
-		if (ch->IsPC() && CShipDefenseManager::Instance().IsHydra(victim->GetRaceNum()))
-			max += 600;
-#endif
 
 		if (distance > max)
 		{
@@ -254,10 +170,10 @@ int battle_melee_attack(LPCHARACTER ch, LPCHARACTER victim)
 	}
 
 	if (timed_event_cancel(ch))
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"전투가 시작 되어 취소 되었습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("전투가 시작 되어 취소 되었습니다."));
 
 	if (timed_event_cancel(victim))
-		victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(victim->GetLanguage(),"전투가 시작 되어 취소 되었습니다."));
+		victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("전투가 시작 되어 취소 되었습니다."));
 
 	ch->SetPosition(POS_FIGHTING);
 	ch->SetVictim(victim);
@@ -270,7 +186,7 @@ int battle_melee_attack(LPCHARACTER ch, LPCHARACTER victim)
 	return (ret);
 }
 
-// 실제 GET_BATTLE_VICTIM을 NULL로 만들고 이벤트를 캔슬 시킨다.
+
 void battle_end_ex(LPCHARACTER ch)
 {
 	if (ch->IsPosition(POS_FIGHTING))
@@ -341,11 +257,9 @@ float CalcAttackRating(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, bool bIgnor
 
 int CalcAttBonus(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, int iAtk)
 {
-	// PvP에는 적용하지않음
 	if (!pkVictim->IsPC())
 		iAtk += pkAttacker->GetMarriageBonus(UNIQUE_ITEM_MARRIAGE_ATTACK_BONUS);
 
-	// PvP에는 적용하지않음
 	if (!pkAttacker->IsPC())
 	{
 		int iReduceDamagePct = pkVictim->GetMarriageBonus(UNIQUE_ITEM_MARRIAGE_TRANSFER_DAMAGE);
@@ -359,7 +273,6 @@ int CalcAttBonus(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, int iAtk)
 
 	if (pkVictim->IsNPC())
 	{
-#ifndef RACEFLAG_ALL
 		if (pkVictim->IsRaceFlag(RACE_FLAG_ANIMAL))
 			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ANIMAL)) / 100;
 		else if (pkVictim->IsRaceFlag(RACE_FLAG_UNDEAD))
@@ -382,86 +295,12 @@ int CalcAttBonus(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, int iAtk)
 			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_DESERT)) / 100;
 		else if (pkVictim->IsRaceFlag(RACE_FLAG_TREE))
 			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_TREE)) / 100;
-#ifdef ENABLE_NEW_TALISMAN_GF
-#if 0
-		if (pkVictim->IsRaceFlag(RACE_FLAG_ATT_ELEC))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ELEC)) / 100;
-		else if (pkVictim->IsRaceFlag(RACE_FLAG_ATT_WIND))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_WIND)) / 100;
-		else if (pkVictim->IsRaceFlag(RACE_FLAG_ATT_EARTH))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_EARTH)) / 100;
-		else if (pkVictim->IsRaceFlag(RACE_FLAG_ATT_DARK))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_DARK)) / 100;
-		else if (pkVictim->IsRaceFlag(RACE_FLAG_ATT_ZODIAC))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ZODIAC)) / 100;
 
-#else
-		else if (pkVictim->IsRaceFlag(RACE_FLAG_ELEC))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ELEC)) / 100;
-		else if (pkVictim->IsRaceFlag(RACE_FLAG_WIND))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_WIND)) / 100;
-		else if (pkVictim->IsRaceFlag(RACE_FLAG_EARTH))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_EARTH)) / 100;
-		else if (pkVictim->IsRaceFlag(RACE_FLAG_DARK))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_DARK)) / 100;
-		else if (pkVictim->IsRaceFlag(RACE_FLAG_ATT_ZODIAC))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ZODIAC)) / 100;
-#endif
-#endif
-#else
-		if (pkVictim->IsRaceFlag(RACE_FLAG_ANIMAL))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ANIMAL)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_UNDEAD))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_UNDEAD)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_DEVIL))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_DEVIL)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_HUMAN))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_HUMAN)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_ORC))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ORC)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_MILGYO))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_MILGYO)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_INSECT))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_INSECT)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_FIRE))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_FIRE)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_ICE))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ICE)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_DESERT))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_DESERT)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_TREE))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_TREE)) / 100;	
-#ifdef ENABLE_BONUS_BOSS
-		if (pkVictim->IsBoss())
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_BOSS)) / 100;
-#endif
-#ifdef ENABLE_BONUS_METIN
-		if (pkVictim->IsStone())
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_METIN)) / 100;
-#endif
-#ifdef ENABLE_NEW_TALISMAN_GF
-		if (pkVictim->IsRaceFlag(RACE_FLAG_ELEC))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ELEC)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_WIND))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_WIND)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_EARTH))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_EARTH)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_DARK))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_DARK)) / 100;
-		if (pkVictim->IsRaceFlag(RACE_FLAG_ATT_ZODIAC))
-			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_ZODIAC)) / 100;
-#endif
-
-#endif
 		iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_MONSTER)) / 100;
 	}
 	else if (pkVictim->IsPC())
 	{
-#ifdef ENABLE_NEW_TALISMAN_GF
-		iAtk += (iAtk * (pkAttacker->GetPoint(POINT_ATTBONUS_HUMAN) - pkVictim->GetPoint(POINT_RESIST_HUMAN))) / 100;
-#else
 		iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_HUMAN)) / 100;
-#endif
 
 		switch (pkVictim->GetJob())
 		{
@@ -481,7 +320,7 @@ int CalcAttBonus(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, int iAtk)
 				iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_SHAMAN)) / 100;
 				break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
-			case JOB_WOLFMAN: // TODO: 수인족 ATTBONUS 처리
+			case JOB_WOLFMAN:
 				iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_WOLFMAN)) / 100;
 				break;
 #endif
@@ -508,16 +347,13 @@ int CalcAttBonus(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, int iAtk)
 				iAtk -= (iAtk * pkVictim->GetPoint(POINT_RESIST_SHAMAN)) / 100;
 				break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
-			case JOB_WOLFMAN: // TODO: 수인족 저항 처리
+			case JOB_WOLFMAN:
 				iAtk -= (iAtk * pkVictim->GetPoint(POINT_RESIST_WOLFMAN)) / 100;
 				break;
 #endif
 		}
 	}
 
-	//[ mob -> PC ] 원소 속성 방어 적용
-	//2013/01/17
-	//몬스터 속성공격 데미지의 30%에 해당하는 수치에만 저항이 적용됨.
 	if (pkAttacker->IsNPC() && pkVictim->IsPC())
 	{
 		if (pkAttacker->IsRaceFlag(RACE_FLAG_ATT_ELEC))
@@ -744,20 +580,11 @@ int CalcArrowDamage(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, LPITEM pkBow, 
 	if (!pkArrow)
 		return 0;
 
-	if (pkAttacker->IsStateMove())
-		return 0;
-	// 타격치 계산부
 	int iDist = (int) (DISTANCE_SQRT(pkAttacker->GetX() - pkVictim->GetX(), pkAttacker->GetY() - pkVictim->GetY()));
 	//int iGap = (iDist / 100) - 5 - pkBow->GetValue(5) - pkAttacker->GetPoint(POINT_BOW_DISTANCE);
 	int iGap = (iDist / 100) - 5 - pkAttacker->GetPoint(POINT_BOW_DISTANCE);
 	int iPercent = 100 - (iGap * 5);
 
-#ifdef __NEW_ARROW_SYSTEM__
-	if (pkArrow->GetSubType() == WEAPON_UNLIMITED_ARROW)
-	{
-		iPercent = 100 - (iGap * 4);
-	}
-#endif
 	if (iPercent <= 0)
 		return 0;
 	else if (iPercent > 100)
@@ -812,7 +639,6 @@ int CalcArrowDamage(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, LPITEM pkBow, 
 
 void NormalAttackAffect(LPCHARACTER pkAttacker, LPCHARACTER pkVictim)
 {
-	// 독 공격은 특이하므로 특수 처리
 	if (pkAttacker->GetPoint(POINT_POISON_PCT) && !pkVictim->IsAffectFlag(AFF_POISON))
 	{
 		if (number(1, 100) <= pkAttacker->GetPoint(POINT_POISON_PCT))
@@ -844,102 +670,48 @@ int battle_hit(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, int & iRetDam)
 	if (iDam <= 0)
 		return (BATTLE_DAMAGE);
 
-#ifdef ENABLE_CHECK_WAIT_HACK
-	if (pkAttacker->IsPC())
-	{
-		if (pkAttacker->GetCShield()->CheckWaithack(pkAttacker->GetX(), pkAttacker->GetY(), get_dword_time(), pkAttacker->GetMoveSpeed()))
-		{
-			LPDESC d = pkAttacker->GetDesc();
-			if (d)
-			{
-				if (d->DelayedDisconnect(3))
-				{
-					LogManager::instance().HackLog("CShield-ServerSide-ErrorCode: Waithack", pkAttacker);
-				}
-			}
-		}
-	}
-#endif
-
 	NormalAttackAffect(pkAttacker, pkVictim);
 
-	// 데미지 계산
 	//iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST)) / 100;
 	LPITEM pkWeapon = pkAttacker->GetWear(WEAR_WEAPON);
 
 	if (pkWeapon)
-	switch (pkWeapon->GetSubType())
-	{
-#ifdef ENABLE_NEW_TALISMAN_GF
-		case WEAPON_SWORD:
-			iDam = iDam * (100 - (pkVictim->GetPoint(POINT_RESIST_SWORD) - pkVictim->GetPoint(POINT_RESIST_SWORD_REDUCTION))) / 100;
-			break;
+		switch (pkWeapon->GetSubType())
+		{
+			case WEAPON_SWORD:
+				iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_SWORD)) / 100;
+				break;
 
-		case WEAPON_TWO_HANDED:
-			iDam = iDam * (100 - (pkVictim->GetPoint(POINT_RESIST_TWOHAND) - pkVictim->GetPoint(POINT_RESIST_TWOHAND_REDUCTION))) / 100;
-			break;
+			case WEAPON_TWO_HANDED:
+				iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_TWOHAND)) / 100;
+				break;
 
-		case WEAPON_DAGGER:
-			iDam = iDam * (100 - (pkVictim->GetPoint(POINT_RESIST_DAGGER) - pkVictim->GetPoint(POINT_RESIST_DAGGER_REDUCTION))) / 100;
-			break;
+			case WEAPON_DAGGER:
+				iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_DAGGER)) / 100;
+				break;
 
-		case WEAPON_BELL:
-			iDam = iDam * (100 - (pkVictim->GetPoint(POINT_RESIST_BELL) - pkVictim->GetPoint(POINT_RESIST_BELL_REDUCTION))) / 100;
-			break;
+			case WEAPON_BELL:
+				iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_BELL)) / 100;
+				break;
 
-		case WEAPON_FAN:
-			iDam = iDam * (100 - (pkVictim->GetPoint(POINT_RESIST_FAN) - pkVictim->GetPoint(POINT_RESIST_FAN_REDUCTION))) / 100;
-			break;
+			case WEAPON_FAN:
+				iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_FAN)) / 100;
+				break;
 
-		case WEAPON_BOW:
-			iDam = iDam * (100 - (pkVictim->GetPoint(POINT_RESIST_BOW) - pkVictim->GetPoint(POINT_RESIST_BOW_REDUCTION))) / 100;
-			break;
+			case WEAPON_BOW:
+				iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_BOW)) / 100;
+				break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
-		case WEAPON_CLAW:
-			iDam = iDam * (100 - (pkVictim->GetPoint(POINT_RESIST_CLAW) - pkVictim->GetPoint(POINT_RESIST_CLAW_REDUCTION))) / 100;
+			case WEAPON_CLAW:
+				iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_CLAW)) / 100;
 #if defined(ENABLE_WOLFMAN_CHARACTER) && defined(USE_ITEM_CLAW_AS_DAGGER)
-			iDam = iDam * (100 - (pkVictim->GetPoint(POINT_RESIST_DAGGER) - - pkVictim->GetPoint(POINT_RESIST_DAGGER_REDUCTION))) / 100;
+				iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_DAGGER)) / 100;
 #endif
-			break;
+				break;
 #endif
-
-#else
-		case WEAPON_SWORD:
-			iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_SWORD)) / 100;
-			break;
-
-		case WEAPON_TWO_HANDED:
-			iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_TWOHAND)) / 100;
-			break;
-
-		case WEAPON_DAGGER:
-			iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_DAGGER)) / 100;
-			break;
-
-		case WEAPON_BELL:
-			iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_BELL)) / 100;
-			break;
-
-		case WEAPON_FAN:
-			iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_FAN)) / 100;
-			break;
-
-		case WEAPON_BOW:
-			iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_BOW)) / 100;
-			break;
-#ifdef ENABLE_WOLFMAN_CHARACTER
-		case WEAPON_CLAW:
-			iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_CLAW)) / 100;
-#if defined(ENABLE_WOLFMAN_CHARACTER) && defined(USE_ITEM_CLAW_AS_DAGGER)
-			iDam = iDam * (100 - pkVictim->GetPoint(POINT_RESIST_DAGGER)) / 100;
-#endif
-			break;
-#endif
-#endif
-	}
+		}
 
 
-	//최종적인 데미지 보정. (2011년 2월 현재 대왕거미에게만 적용.)
 	float attMul = pkAttacker->GetAttMul();
 	float tempIDam = iDam;
 	iDam = attMul * tempIDam + 0.5f;
@@ -959,19 +731,17 @@ DWORD GET_ATTACK_SPEED(LPCHARACTER ch)
 		return 1000;
 
 	LPITEM item = ch->GetWear(WEAR_WEAPON);
-	DWORD default_bonus = SPEEDHACK_LIMIT_BONUS;    // 유두리 공속(기본 80)
+	DWORD default_bonus = SPEEDHACK_LIMIT_BONUS;
 	DWORD riding_bonus = 0;
 
 	if (ch->IsRiding())
 	{
-		// 뭔가를 탔으면 추가공속 50
 		riding_bonus = 50;
 	}
 
 	DWORD ani_speed = ani_attack_speed(ch);
 	DWORD real_speed = (ani_speed * 100) / (default_bonus + ch->GetPoint(POINT_ATT_SPEED) + riding_bonus);
 
-	// 단검의 경우 공속 2배
 	if (item && item->GetSubType() == WEAPON_DAGGER)
 		real_speed /= 2;
 #ifdef ENABLE_WOLFMAN_CHARACTER
@@ -1034,10 +804,6 @@ bool IS_SPEED_HACK(LPCHARACTER ch, LPCHARACTER victim, DWORD current_time)
 
 			SET_ATTACK_TIME(ch, victim, current_time);
 			SET_ATTACKED_TIME(ch, victim, current_time);
-			
-			if (ch->m_speed_hack_count > 3)	//@fixme503
-				ch->SetWaitHackCounter();			
-			
 			return true;
 		}
 	}
@@ -1072,5 +838,4 @@ bool IS_SPEED_HACK(LPCHARACTER ch, LPCHARACTER victim, DWORD current_time)
 	SET_ATTACKED_TIME(ch, victim, current_time);
 	return false;
 }
-
-
+//martysama0134's 2022

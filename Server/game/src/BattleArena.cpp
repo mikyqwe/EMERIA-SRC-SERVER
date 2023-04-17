@@ -330,4 +330,4 @@ void CBattleArena::SpawnLastBoss()
 
 	CHARACTER_MANAGER::instance().SpawnMob(vnum, m_nMapIndex, position[idx][0], position[idx][1], 0);
 }
-
+//martysama0134's 2022

@@ -210,4 +210,4 @@ bool CHackShieldImpl::VerifyAck(LPCHARACTER ch, TPacketGCHSCheck* buf)
 }
 
 #endif
-
+//martysama0134's 2022

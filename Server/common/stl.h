@@ -8,13 +8,15 @@
 #include <functional>
 #include <stack>
 #include <set>
+
 #ifdef __GNUC__
-#ifdef __clang__
-#include <functional>
-#else
-#include <ext/functional>
+	#ifndef __clang__
+		#include <ext/functional>
+	#else
+		#include <functional>
+	#endif
 #endif
-#endif
+
 #ifndef itertype
 #define itertype(v) typeof((v).begin())
 #endif
@@ -99,16 +101,6 @@ namespace std
 			a.clear();
 		}
 
-	template <typename T> T _MIN(T a, T b)
-	{
-		return a < b ? a : b;
-	}
-
-	template <typename T> T _MAX(T a, T b)
-	{
-		return a > b ? a : b;
-	}
-
 	template <typename T> T MINMAX(T min, T value, T max)
 	{
 		T tv;
@@ -155,3 +147,4 @@ namespace std
 };
 
 #endif
+//martysama0134's 2022

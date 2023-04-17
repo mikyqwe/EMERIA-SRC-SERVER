@@ -70,4 +70,4 @@ TEST( allocator, character_alloc )
 	EXPECT_TRUE( CHARACTER::GetFreeBlockCount() == 1 );
 #endif
 }
-
+//martysama0134's 2022

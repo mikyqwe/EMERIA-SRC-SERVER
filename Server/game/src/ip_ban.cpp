@@ -192,30 +192,6 @@ bool LoadBanIP(const char * filename)
 	return true;
 }
 
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-bool BanIP(struct in_addr in, const char* c_szIP)
-{
-	if (IsBanIP(in))
-		return false;
-
-	FILE* pFile = fopen("BANIP", "a");
-	if (!pFile)
-	{
-		sys_log(0, "cannot open BANIP");
-		return false;
-	}
-
-	fprintf(pFile, "%s\n", c_szIP);
-	fclose(pFile);
-
-	mapBanIP.clear();
-	if (LoadBanIP("BANIP"))
-		return true;
-
-	return false;
-}
-#endif
-
 bool IsBanIP(struct in_addr in)
 {
 	IP ip(in);
@@ -394,3 +370,4 @@ int main(int argc, char **argv)
 }
 
 #endif
+//martysama0134's 2022

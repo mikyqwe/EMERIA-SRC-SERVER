@@ -5,6 +5,13 @@
 
 #include <cryptopp/cryptlib.h>
 
+#ifdef __clang__
+namespace CryptoPP
+{
+	typedef BYTE byte;
+}
+#endif
+
 // Forward declaration
 class KeyAgreement;
 
@@ -58,3 +65,4 @@ class Cipher {
 #endif // _IMPROVED_PACKET_ENCRYPTION_
 
 #endif // __CIPHER_H__
+//martysama0134's 2022

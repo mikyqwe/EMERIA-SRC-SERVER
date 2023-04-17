@@ -10,7 +10,7 @@
 #define MID_SQRT		MID_NUMBER + 2
 #define MID_FRACTION		MID_NUMBER + 3
 
-class CBase  
+class CBase
 {
     public:
 	bool isSymbol();
@@ -23,3 +23,4 @@ class CBase
 };
 
 #endif
+//martysama0134's 2022

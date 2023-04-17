@@ -37,4 +37,4 @@ typedef struct _D3DCOLORVALUE
 typedef D3DXVECTOR3 D3DVECTOR;
 
 #endif
-
+//martysama0134's 2022

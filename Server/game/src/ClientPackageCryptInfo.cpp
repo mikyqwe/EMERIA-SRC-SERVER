@@ -222,4 +222,4 @@ bool CClientPackageCryptInfo::GetRelatedMapSDBStreams(const char* pMapName, BYTE
 
 	return true;
 }
-
+//martysama0134's 2022

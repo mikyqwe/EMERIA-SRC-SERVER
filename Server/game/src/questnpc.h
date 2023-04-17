@@ -21,13 +21,13 @@ namespace quest
 	class NPC
 	{
 		public:
-			// 인자가 없는 스크립트들
+
 			// first: state number
 			typedef map<int, AStateScriptType> AQuestScriptType;
 			// first: quest number
 			typedef map<unsigned int, AQuestScriptType> QuestMapType;
 
-			// 인자가 있는 스크립트들
+
 			// first: state number
 			typedef map<int, vector<AArgScript> > AArgQuestScriptType;
 			// first: quest number
@@ -53,11 +53,14 @@ namespace quest
 			bool	OnClick(PC& pc);
 			bool	OnKill(PC& pc);
 			bool	OnPartyKill(PC& pc);
-#ifdef ENABLE_MELEY_LAIR_DUNGEON
-			bool	OnAttack(PC& pc);
-#endif
 #ifdef ENABLE_QUEST_DIE_EVENT
 			bool	OnDie(PC& pc);
+#endif
+#ifdef ENABLE_QUEST_BOOT_EVENT
+			bool	OnBoot(PC& pc);
+#endif
+#ifdef ENABLE_QUEST_DND_EVENT
+			bool	OnDND(PC & pc, bool bReceiveAll);
 #endif
 			bool	OnTimer(PC& pc);
 			bool	OnLevelUp(PC& pc);
@@ -75,7 +78,7 @@ namespace quest
 			bool	OnChat(PC& pc);
 			bool	HasChat();
 
-			bool	OnItemInformer(PC& pc,unsigned int vnum);	// 독일 선물 기능 테스트
+			bool	OnItemInformer(PC& pc,unsigned int vnum);
 
 			bool	OnTarget(PC& pc, DWORD dwQuestIndex, const char * c_pszTargetName, const char * c_pszVerb, bool & bRet);
 			bool	OnUnmount(PC& pc);
@@ -139,3 +142,4 @@ namespace quest
 		}
 }
 #endif
+//martysama0134's 2022

@@ -156,4 +156,4 @@ bool CStmt::Fetch()
 {
 	return !mysql_stmt_fetch(m_pkStmt);
 }
-
+//martysama0134's 2022

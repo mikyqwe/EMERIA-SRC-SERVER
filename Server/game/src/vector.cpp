@@ -69,4 +69,4 @@ float GetDegreeDelta(float iDegree, float iDegree2)
 
 	return fabs(iDegree - iDegree2);
 }
-
+//martysama0134's 2022

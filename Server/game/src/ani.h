@@ -15,5 +15,4 @@ void ani_print_attack_speed();
 DWORD ani_combo_speed(LPCHARACTER ch, BYTE combo);
 
 #endif	/* _ani_h_ */
-
-
+//martysama0134's 2022

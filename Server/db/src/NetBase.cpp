@@ -52,3 +52,4 @@ void CNetPoller::Destroy()
 
 	thecore_destroy();
 }
+//martysama0134's 2022

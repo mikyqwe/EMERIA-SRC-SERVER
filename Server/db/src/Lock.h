@@ -25,3 +25,4 @@ class CLock
 	bool	m_bLocked;
 };
 #endif
+//martysama0134's 2022

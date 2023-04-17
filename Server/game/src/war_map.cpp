@@ -13,10 +13,6 @@
 #include "db.h"
 #include "packet.h"
 #include "locale_service.h"
-#include <boost/algorithm/string/replace.hpp>
-#ifdef GUILD_WAR_COUNTER
-#include "desc_client.h"
-#endif
 
 EVENTINFO(war_map_info)
 {
@@ -63,14 +59,6 @@ EVENTFUNC(war_end_event)
 		pMap->ExitAll();
 		return PASSES_PER_SEC(5);
 	}
-#ifdef GUILD_WAR_COUNTER
-	else if (info->iStep == 1)
-	{
-		++info->iStep;
-		pMap->SaveCounterData();
-		return PASSES_PER_SEC(5);
-	}
-#endif
 	else
 	{
 		pMap->SetEndEvent(NULL);
@@ -107,18 +95,8 @@ void CWarMap::STeamData::Initialize()
 	set_pidJoiner.clear();
 }
 
-CWarMap::CWarMap(long lMapIndex, const TGuildWarInfo & r_info, TWarMapInfo * pkWarMapInfo, DWORD dwGuildID1, DWORD dwGuildID2
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-#ifdef GUILD_WAR_COUNTER
-	,DWORD warDBID
-#endif
-)
+CWarMap::CWarMap(long lMapIndex, const TGuildWarInfo & r_info, TWarMapInfo * pkWarMapInfo, DWORD dwGuildID1, DWORD dwGuildID2)
 {
-#ifdef GUILD_WAR_COUNTER
-	warID=warDBID;
-#endif
 	m_kMapInfo = *pkWarMapInfo;
 	m_kMapInfo.lMapIndex = lMapIndex;
 
@@ -127,22 +105,10 @@ CWarMap::CWarMap(long lMapIndex, const TGuildWarInfo & r_info, TWarMapInfo * pkW
 	m_TeamData[0].Initialize();
 	m_TeamData[0].dwID = dwGuildID1;
 	m_TeamData[0].pkGuild = CGuildManager::instance().TouchGuild(dwGuildID1);
-#ifdef __IMPROVED_GUILD_WAR__
-	m_TeamData[0].iMaxPlayer = iMaxPlayer;
-	m_TeamData[0].iMaxScore = iMaxScore;
-	m_TeamData[0].flags = flags;
-	m_TeamData[0].custom_map_index = custom_map_index;
-#endif
 
 	m_TeamData[1].Initialize();
 	m_TeamData[1].dwID = dwGuildID2;
 	m_TeamData[1].pkGuild = CGuildManager::instance().TouchGuild(dwGuildID2);
-#ifdef __IMPROVED_GUILD_WAR__
-	m_TeamData[1].iMaxPlayer = iMaxPlayer;
-	m_TeamData[1].iMaxScore = iMaxScore;
-	m_TeamData[1].flags = flags;
-	m_TeamData[1].custom_map_index = custom_map_index;
-#endif
 	m_iObserverCount = 0;
 
 	war_map_info* info = AllocEventInfo<war_map_info>();
@@ -174,28 +140,19 @@ CWarMap::~CWarMap()
 
 	sys_log(0, "WarMap::~WarMap : map index %d", GetMapIndex());
 
-#ifdef GUILD_WAR_COUNTER
-	for (itertype(m_set_pkChr) it = m_set_pkChr.begin(); it != m_set_pkChr.end(); ++it)
-	{
-		LPCHARACTER ch = CHARACTER_MANAGER::Instance().FindByPID(it->first);
-		if (ch && ch->GetDesc())
-		{
-			sys_log(0, "WarMap::~WarMap : disconnecting %s", ch->GetName());
-			DESC_MANAGER::instance().DestroyDesc(ch->GetDesc());
-		}
-	}
-#else
 	itertype(m_set_pkChr) it = m_set_pkChr.begin();
+
 	while (it != m_set_pkChr.end())
 	{
 		LPCHARACTER ch = *(it++);
+
 		if (ch->GetDesc())
 		{
 			sys_log(0, "WarMap::~WarMap : disconnecting %s", ch->GetName());
 			DESC_MANAGER::instance().DestroyDesc(ch->GetDesc());
 		}
 	}
-#endif
+
 	m_set_pkChr.clear();
 }
 
@@ -260,43 +217,7 @@ DWORD CWarMap::GetGuildID(BYTE bIdx)
 	assert(bIdx < 2);
 	return m_TeamData[bIdx].dwID;
 }
-#ifdef __IMPROVED_GUILD_WAR__
-int CWarMap::GetCurrentPlayer(BYTE bIdx)
-{
-	assert(bIdx < 2);
-	return m_TeamData[bIdx].iMemberCount;
-}
 
-int CWarMap::GetMaxPlayer(BYTE bIdx)
-{
-	assert(bIdx < 2);
-	return m_TeamData[bIdx].iMaxPlayer;
-}
-
-int CWarMap::GetCurrentScore(BYTE bIdx)
-{
-	assert(bIdx < 2);
-	return m_TeamData[bIdx].iScore;
-}
-
-int CWarMap::GetMaxScore(BYTE bIdx)
-{
-	assert(bIdx < 2);
-	return m_TeamData[bIdx].iMaxScore;
-}
-
-DWORD CWarMap::GetWarFlags(BYTE bIdx)
-{
-	assert(bIdx < 2);
-	return m_TeamData[bIdx].flags;
-}
-
-int CWarMap::GetCustomMapIndex(BYTE bIdx)
-{
-	assert(bIdx < 2);
-	return m_TeamData[bIdx].custom_map_index;
-}
-#endif
 CGuild * CWarMap::GetGuild(BYTE bIdx)
 {
 	return m_TeamData[bIdx].pkGuild;
@@ -383,11 +304,11 @@ void CWarMap::STeamData::AppendMember(LPCHARACTER ch)
 
 void CWarMap::STeamData::RemoveMember(LPCHARACTER ch)
 {
-	// set_pidJoiner 는 누적 인원을 계산하기 때문에 제거하지 않는다
+
 	--iMemberCount;
 }
 
-#ifndef GUILD_WAR_COUNTER
+
 struct FSendUserCount
 {
 	char buf1[30];
@@ -405,33 +326,17 @@ struct FSendUserCount
 		ch->ChatPacket(CHAT_TYPE_COMMAND, buf2);
 	}
 };
-#endif
 
 void CWarMap::UpdateUserCount()
 {
-#ifdef GUILD_WAR_COUNTER
-	char buf1[30];
-	char buf2[128];
-	snprintf(buf1, sizeof(buf1), "ObserverCount %d", m_iObserverCount);
-	snprintf(buf2, sizeof(buf2), "WarUC %u %d %u %d %d", m_TeamData[0].dwID, m_TeamData[0].GetCurJointerCount(), m_TeamData[1].dwID, m_TeamData[1].GetCurJointerCount(), m_iObserverCount);
-	for (itertype(m_set_pkChr) it = m_set_pkChr.begin(); it != m_set_pkChr.end(); ++it)
-	{
-		LPCHARACTER ch = CHARACTER_MANAGER::Instance().FindByPID(it->first);
-		if (ch)
-		{
-			ch->ChatPacket(CHAT_TYPE_COMMAND, buf1);
-			ch->ChatPacket(CHAT_TYPE_COMMAND, buf2);
-		}
-	}
-#else
 	FSendUserCount f(
 			m_TeamData[0].dwID,
 			m_TeamData[0].GetAccumulatedJoinerCount(),
 			m_TeamData[1].dwID,
 			m_TeamData[1].GetAccumulatedJoinerCount(),
 			m_iObserverCount);
+
 	std::for_each(m_set_pkChr.begin(), m_set_pkChr.end(), f);
-#endif
 }
 
 void CWarMap::IncMember(LPCHARACTER ch)
@@ -458,17 +363,11 @@ void CWarMap::IncMember(LPCHARACTER ch)
 		if (gid == m_TeamData[0].dwID)
 		{
 			m_TeamData[0].AppendMember(ch);
-#ifdef GUILD_WAR_COUNTER
-			RegisterStatics(ch);
-#endif
 
 		}
 		else if (gid == m_TeamData[1].dwID)
 		{
 			m_TeamData[1].AppendMember(ch);
-#ifdef GUILD_WAR_COUNTER
-			RegisterStatics(ch);
-#endif
 
 		}
 
@@ -483,28 +382,19 @@ void CWarMap::IncMember(LPCHARACTER ch)
 		++m_iObserverCount;
 		sys_log(0, "WarMap +o %d", m_iObserverCount);
 		ch->SetObserverMode(true);
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Puoi partecipare alla guerra tra Gilde in modalita' spettatore."));
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Quando scegli il personaggio comparira' l'icona."));		
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("관전 모드로 길드전에 참가하셨습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("자신을 선택하시면 밖으로 나갈 수 있는 <관람 종료> 버튼이 나옵니다."));
 	}
+
+	UpdateUserCount();
+
+	m_set_pkChr.insert(ch);
 
 	LPDESC d = ch->GetDesc();
-	SendWarPacket(d);
 
-#ifdef GUILD_WAR_COUNTER
-	m_set_pkChr.emplace(ch->GetPlayerID(),false);
-	std::vector<war_static_ptr> list;
-	UpdateStatic(ch, GUILD_STATIC_LOAD, list);
-	if (!isWarMember)
-	{
-		std::vector<war_static_ptr> list;
-		UpdateStatic(ch, GUILD_STATIC_UPDATE_OBSERVER, list);
-	}
-#else
-	m_set_pkChr.insert(ch);
+	SendWarPacket(d);
 	SendScorePacket(0, d);
 	SendScorePacket(1, d);
-	UpdateUserCount();
-#endif
 }
 
 void CWarMap::DecMember(LPCHARACTER ch)
@@ -553,29 +443,13 @@ void CWarMap::DecMember(LPCHARACTER ch)
 
 		sys_log(0, "WarMap -o %d", m_iObserverCount);
 		ch->SetObserverMode(false);
-#ifdef GUILD_WAR_COUNTER
-		std::vector<war_static_ptr> m_list;
-		UpdateStatic(NULL, GUILD_STATIC_UPDATE_OBSERVER, m_list);
-#endif
 	}
-#ifdef GUILD_WAR_COUNTER
-	itertype(war_static) it = war_static.find(ch->GetPlayerID());
-	if (it != war_static.end())
-	{
-		it->second.online = false;
-		std::vector<war_static_ptr> m_list;
-		m_list.clear();
-		m_list.emplace_back(it->second);
-		UpdateStatic(NULL, GUILD_STATIC_UPDATE_ONLINE, m_list);
-	}
-	m_set_pkChr.erase(ch->GetPlayerID());
-#else
+
 	UpdateUserCount();
+
 	m_set_pkChr.erase(ch);
-#endif
 }
 
-#ifndef GUILD_WAR_COUNTER
 struct FExitGuildWar
 {
 	void operator() (LPCHARACTER ch)
@@ -586,21 +460,11 @@ struct FExitGuildWar
 		}
 	}
 };
-#endif
 
 void CWarMap::ExitAll()
 {
-#ifdef GUILD_WAR_COUNTER
-	for (itertype(m_set_pkChr) it = m_set_pkChr.begin(); it != m_set_pkChr.end(); ++it)
-	{
-		LPCHARACTER ch = CHARACTER_MANAGER::Instance().FindByPID(it->first);
-		if (ch)
-			ch->ExitToSavedLocation();
-	}
-#else
 	FExitGuildWar f;
 	std::for_each(m_set_pkChr.begin(), m_set_pkChr.end(), f);
-#endif
 }
 
 void CWarMap::CheckWarEnd()
@@ -616,8 +480,8 @@ void CWarMap::CheckWarEnd()
 		if (m_pkTimeoutEvent)
 			return;
 
-		Notice(LC_TEXT("Non ci sono avversari."));
-		Notice(LC_TEXT("Se non ci sono avversari la guerra tra Gilde viene automaticamente terminata."));
+		Notice(LC_TEXT("길드전에 참가한 상대방 길드원이 아무도 없습니다."));
+		Notice(LC_TEXT("1분 이내에 아무도 접속하지 않으면 길드전이 자동 종료됩니다."));
 
 		sys_log(0, "CheckWarEnd: Timeout begin %u vs %u", m_TeamData[0].dwID, m_TeamData[1].dwID);
 
@@ -640,11 +504,7 @@ int CWarMap::GetRewardGold(BYTE bWinnerIdx)
 
 void CWarMap::Draw()
 {
-	CGuildManager::instance().RequestWarOver(m_TeamData[0].dwID, m_TeamData[1].dwID, 0, 0
-#ifdef __IMPROVED_GUILD_WAR__
-		, 0, 0, 0, 0
-#endif
-	);
+	CGuildManager::instance().RequestWarOver(m_TeamData[0].dwID, m_TeamData[1].dwID, 0, 0);
 }
 
 void CWarMap::Timeout()
@@ -663,7 +523,7 @@ void CWarMap::Timeout()
 
 	if (get_dword_time() - m_dwStartTime < 60000 * 5)
 	{
-		Notice(LC_TEXT("Siccome la guerra tra Gilde e' terminata anticipatamente, il risultato e un pareggio."));
+		Notice(LC_TEXT("길드전이 일찍 종료되어 무승부로 판정 되었습니다. (5분이 지나지 않음)"));
 		dwWinner = 0;
 		dwLoser = 0;
 	}
@@ -709,22 +569,13 @@ void CWarMap::Timeout()
 			m_TeamData[0].dwID, m_TeamData[1].dwID, dwWinner, dwLoser, iRewardGold, m_kMapInfo.lMapIndex);
 
 	if (dwWinner)
-		CGuildManager::instance().RequestWarOver(dwWinner, dwLoser, dwWinner, iRewardGold
-#ifdef __IMPROVED_GUILD_WAR__
-			, m_TeamData[0].iMaxPlayer, m_TeamData[0].iMaxScore, m_TeamData[0].flags, m_TeamData[0].custom_map_index
-#endif
-		);
+		CGuildManager::instance().RequestWarOver(dwWinner, dwLoser, dwWinner, iRewardGold);
 	else
-		CGuildManager::instance().RequestWarOver(m_TeamData[0].dwID, m_TeamData[1].dwID, dwWinner, iRewardGold
-#ifdef __IMPROVED_GUILD_WAR__
-			, m_TeamData[0].iMaxPlayer, m_TeamData[0].iMaxScore, m_TeamData[0].flags, m_TeamData[0].custom_map_index
-#endif
-		);
+		CGuildManager::instance().RequestWarOver(m_TeamData[0].dwID, m_TeamData[1].dwID, dwWinner, iRewardGold);
 
 	m_bTimeout = true;
 }
 
-#ifndef GUILD_WAR_COUNTER
 namespace
 {
 	struct FPacket
@@ -756,42 +607,18 @@ namespace
 		const char * m_psz;
 	};
 };
-#endif
 
 void CWarMap::Notice(const char * psz)
 {
-#ifdef GUILD_WAR_COUNTER
-	for (itertype(m_set_pkChr) it = m_set_pkChr.begin(); it != m_set_pkChr.end(); ++it)
-	{
-		LPCHARACTER ch = CHARACTER_MANAGER::Instance().FindByPID(it->first);
-		if (ch)
-			ch->ChatPacket(CHAT_TYPE_NOTICE, "%s", psz);
-	}
-#else
 	FNotice f(psz);
 	std::for_each(m_set_pkChr.begin(), m_set_pkChr.end(), f);
-#endif
 }
 
-#ifdef GUILD_WAR_COUNTER
-void CWarMap::Packet(const void* p, int size, bool broadcast)
-{
-	for (itertype(m_set_pkChr) it = m_set_pkChr.begin(); it != m_set_pkChr.end(); ++it)
-	{
-		if (broadcast && !it->second)
-			continue;
-		LPCHARACTER ch = CHARACTER_MANAGER::Instance().FindByPID(it->first);
-		if (ch)
-			ch->GetDesc()->Packet(p, size);
-	}
-}
-#else
 void CWarMap::Packet(const void * p, int size)
 {
 	FPacket f(p, size);
 	std::for_each(m_set_pkChr.begin(), m_set_pkChr.end(), f);
 }
-#endif
 
 void CWarMap::SendWarPacket(LPDESC d)
 {
@@ -806,11 +633,7 @@ void CWarMap::SendWarPacket(LPDESC d)
 	pack2.dwGuildOpp	= m_TeamData[1].dwID;
 	pack2.bType		= CGuildManager::instance().TouchGuild(m_TeamData[0].dwID)->GetGuildWarType(m_TeamData[1].dwID);
 	pack2.bWarState	= CGuildManager::instance().TouchGuild(m_TeamData[0].dwID)->GetGuildWarState(m_TeamData[1].dwID);
-#ifdef __IMPROVED_GUILD_WAR__
-	pack2.iMaxPlayer = m_TeamData[0].iMaxPlayer;
-	pack2.iMaxScore = m_TeamData[0].iMaxScore;
-	pack2.flags = m_TeamData[0].flags;
-#endif
+
 	d->BufferedPacket(&pack, sizeof(pack));
 	d->Packet(&pack2, sizeof(pack2));
 }
@@ -844,9 +667,7 @@ void CWarMap::UpdateScore(DWORD g1, int score1, DWORD g2, int score2)
 		if (m_TeamData[idx].iScore != score1)
 		{
 			m_TeamData[idx].iScore = score1;
-#ifndef GUILD_WAR_COUNTER
 			SendScorePacket(idx);
-#endif
 		}
 	}
 
@@ -855,9 +676,7 @@ void CWarMap::UpdateScore(DWORD g1, int score1, DWORD g2, int score2)
 		if (m_TeamData[idx].iScore != score2)
 		{
 			m_TeamData[idx].iScore = score2;
-#ifndef GUILD_WAR_COUNTER
 			SendScorePacket(idx);
-#endif
 		}
 	}
 
@@ -869,21 +688,17 @@ bool CWarMap::CheckScore()
 	if (m_bEnded)
 		return true;
 
-	// 30초 이후 부터 확인한다.
+
 	if (get_dword_time() - m_dwStartTime < 30000)
 		return false;
 
-	// 점수가 같으면 체크하지 않는다.
+
 	if (m_TeamData[0].iScore == m_TeamData[1].iScore)
 		return false;
 
-#ifdef __IMPROVED_GUILD_WAR__
-	int iEndScore = m_TeamData[0].iMaxScore;
-#else
 	int iEndScore = m_WarInfo.iEndScore;
 
 	if (test_server) iEndScore /= 10;
-#endif
 
 	DWORD dwWinner;
 	DWORD dwLoser;
@@ -917,12 +732,7 @@ bool CWarMap::CheckScore()
 			dwWinner,
 			iRewardGold);
 
-
-	CGuildManager::instance().RequestWarOver(dwWinner, dwLoser, dwWinner, iRewardGold
-#ifdef __IMPROVED_GUILD_WAR__
-		, m_TeamData[0].iMaxPlayer, m_TeamData[0].iMaxScore, m_TeamData[0].flags, m_TeamData[0].custom_map_index
-#endif
-	);
+	CGuildManager::instance().RequestWarOver(dwWinner, dwLoser, dwWinner, iRewardGold);
 	return true;
 }
 
@@ -996,9 +806,6 @@ void CWarMap::OnKill(LPCHARACTER killer, LPCHARACTER ch)
 	{
 		case WAR_MAP_TYPE_NORMAL:
 			SendGuildWarScore(dwKillerGuild, dwDeadGuild, 1, ch->GetLevel());
-#ifdef GUILD_WAR_COUNTER
-			SendKillNotice(killer,ch);
-#endif
 			break;
 
 		case WAR_MAP_TYPE_FLAG:
@@ -1122,7 +929,6 @@ EVENTFUNC(war_reset_flag_event)
 	return 0;
 }
 
-#ifndef GUILD_WAR_COUNTER
 struct FRemoveFlagAffect
 {
 	void operator() (LPCHARACTER ch)
@@ -1131,7 +937,6 @@ struct FRemoveFlagAffect
 			ch->RemoveAffect(AFFECT_WAR_FLAG);
 	}
 };
-#endif
 
 void CWarMap::ResetFlag()
 {
@@ -1144,20 +949,8 @@ void CWarMap::ResetFlag()
 	if (m_bEnded)
 		return;
 
-#ifdef GUILD_WAR_COUNTER
-	for (itertype(m_set_pkChr) it = m_set_pkChr.begin(); it != m_set_pkChr.end(); ++it)
-	{
-		LPCHARACTER ch = CHARACTER_MANAGER::Instance().FindByPID(it->first);
-		if (ch)
-		{
-			if (ch->FindAffect(AFFECT_WAR_FLAG))
-				ch->RemoveAffect(AFFECT_WAR_FLAG);
-		}
-	}
-#else
 	FRemoveFlagAffect f;
 	std::for_each(m_set_pkChr.begin(), m_set_pkChr.end(), f);
-#endif
 
 	RemoveFlag(0);
 	RemoveFlag(1);
@@ -1194,10 +987,10 @@ bool CWarMapManager::LoadWarMapInfo(const char * c_pszFileName)
 	k->bType = WAR_MAP_TYPE_NORMAL;
 
 	k->lMapIndex = 110;
-	k->posStart[0].x = 175 * 100 + 32000;
-	k->posStart[0].y = 240 * 100 + 0;
-	k->posStart[1].x = 326 * 100 + 32000;
-	k->posStart[1].y = 239 * 100 + 0;
+	k->posStart[0].x = 48 * 100 + 32000;
+	k->posStart[0].y = 52 * 100 + 0;
+	k->posStart[1].x = 183 * 100 + 32000;
+	k->posStart[1].y = 206 * 100 + 0;
 	k->posStart[2].x = 141 * 100 + 32000;
 	k->posStart[2].y = 117 * 100 + 0;
 
@@ -1246,14 +1039,7 @@ bool CWarMapManager::GetStartPosition(long lMapIndex, BYTE bIdx, PIXEL_POSITION 
 	return true;
 }
 
-long CWarMapManager::CreateWarMap(const TGuildWarInfo& guildWarInfo, DWORD dwGuildID1, DWORD dwGuildID2
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-#ifdef GUILD_WAR_COUNTER
-	, DWORD warID
-#endif
-)
+long CWarMapManager::CreateWarMap(const TGuildWarInfo& guildWarInfo, DWORD dwGuildID1, DWORD dwGuildID2)
 {
 	TWarMapInfo * pkInfo = GetWarMapInfo(guildWarInfo.lMapIndex);
 	if (!pkInfo)
@@ -1266,14 +1052,7 @@ long CWarMapManager::CreateWarMap(const TGuildWarInfo& guildWarInfo, DWORD dwGui
 
 	if (lMapIndex)
 	{
-		m_mapWarMap.insert(std::make_pair(lMapIndex, M2_NEW CWarMap(lMapIndex, guildWarInfo, pkInfo, dwGuildID1, dwGuildID2
-#ifdef __IMPROVED_GUILD_WAR__
-			, iMaxPlayer, iMaxScore, flags, custom_map_index
-#endif
-#ifdef GUILD_WAR_COUNTER
-			, warID
-#endif
-		)));
+		m_mapWarMap.insert(std::make_pair(lMapIndex, M2_NEW CWarMap(lMapIndex, guildWarInfo, pkInfo, dwGuildID1, dwGuildID2)));
 	}
 
 	return lMapIndex;
@@ -1321,172 +1100,4 @@ void CWarMapManager::OnShutdown()
 	while (it != m_mapWarMap.end())
 		(it++)->second->Draw();
 }
-
-
-#ifdef GUILD_WAR_COUNTER
-void CWarMap::SaveCounterData()
-{
-	if (war_static.size())
-	{
-		std::vector<war_static_ptr> send_data;
-		for (itertype(war_static) it = war_static.begin(); it != war_static.end(); ++it)
-			send_data.emplace_back(it->second);
-		BYTE sub_index = SUB_GUILDWAR_LOADWAR;
-		int vecSize = send_data.size();
-		db_clientdesc->DBPacketHeader(HEADER_GD_GUILD_COUNTER, 0,  sizeof(BYTE) + sizeof(DWORD) + sizeof(int) + (send_data.size() * sizeof(war_static_ptr)));
-		db_clientdesc->Packet(&sub_index, sizeof(BYTE));
-		db_clientdesc->Packet(&warID, sizeof(DWORD));
-		db_clientdesc->Packet(&vecSize, sizeof(int));
-		if(vecSize)
-			db_clientdesc->Packet(send_data.data(), sizeof(war_static_ptr)*send_data.size());
-	}
-	war_static.clear();
-}
-void CWarMap::UpdateStatic(LPCHARACTER ch, BYTE sub_index, std::vector<war_static_ptr> m_list)
-{
-	TPacketGCGuildStatic p;
-	p.header = HEDAER_GC_GUILD_WAR;
-	p.sub_index = sub_index;
-	if (sub_index == GUILD_STATIC_LOAD)
-	{
-		if (!ch)
-			return;
-		itertype(m_set_pkChr) it = m_set_pkChr.find(ch->GetPlayerID());
-		if (it == m_set_pkChr.end())
-			return;
-		if (it->second)
-			return;
-
-		it->second = true;
-		if (war_static.size())
-		{
-			p.packet_size = war_static.size();
-			p.size = sizeof(p) + (sizeof(war_static_ptr) * war_static.size());
-			std::vector<war_static_ptr> m_data;
-			m_data.clear();
-			for (itertype(war_static) it = war_static.begin(); it != war_static.end(); ++it)
-				m_data.emplace_back(it->second);
-			ch->GetDesc()->BufferedPacket(&p, sizeof(p));
-			ch->GetDesc()->Packet(m_data.data(), sizeof(war_static_ptr)* p.packet_size);
-		}
-		else
-		{
-			p.sub_index = 99;
-			p.size = sizeof(p);
-			ch->GetDesc()->Packet(&p, sizeof(p));
-		}
-	}
-	else if (GUILD_STATIC_UPDATE_OBSERVER == sub_index)
-	{
-		p.size = sizeof(p) + sizeof(m_iObserverCount);
-		TEMP_BUFFER buf;
-		buf.write(&p, sizeof(p));
-		buf.write(&m_iObserverCount, sizeof(m_iObserverCount));
-		Packet(buf.read_peek(), buf.size(), true);
-	}
-	else
-	{
-		for (itertype(m_list) it = m_list.begin(); it != m_list.end(); ++it)
-			sys_err("name %s level %d empire %d race %d", it->name, it->level, it->empire, it->race);
-
-		p.size = sizeof(p) + (sizeof(war_static_ptr) * m_list.size());
-		p.packet_size = m_list.size();
-		TEMP_BUFFER buf;
-		buf.write(&p, sizeof(p));
-		buf.write(m_list.data(), sizeof(war_static_ptr) * p.packet_size);
-		Packet(buf.read_peek(), buf.size(), true);
-	}
-}
-
-void CWarMap::RegisterStatics(LPCHARACTER ch)
-{
-	itertype(war_static) it = war_static.find(ch->GetPlayerID());
-	if (it == war_static.end())
-	{
-		war_static_ptr ptr;
-		memset(&ptr, 0, sizeof(ptr));
-		ptr.empire = ch->GetEmpire();
-		strlcpy(ptr.name, ch->GetName(), sizeof(ptr.name));
-		ptr.pid = ch->GetPlayerID();
-		ptr.level = ch->GetLevel();
-		ptr.race = ch->GetRaceNum();
-		ptr.guild_id = ch->GetGuild()->GetID();
-		ptr.is_leader = ch->GetPlayerID() == ch->GetGuild()->GetMasterPID();
-		ptr.online = true;
-		war_static.emplace(ch->GetPlayerID(), ptr);
-
-		std::vector<war_static_ptr> m_list;
-		m_list.clear();
-		m_list.emplace_back(ptr);
-		UpdateStatic(NULL, GUILD_STATIC_ADD_MEMBER, m_list);
-	}
-	else
-	{
-		if (!it->second.online)
-		{
-			it->second.online = true;
-			std::vector<war_static_ptr> m_list;
-			m_list.clear();
-			m_list.emplace_back(it->second);
-			UpdateStatic(NULL, GUILD_STATIC_UPDATE_ONLINE, m_list);
-		}
-	}
-}
-
-void CWarMap::UpdateSpy(DWORD pid)
-{
-	itertype(war_static) spy_it = war_static.find(pid);
-	if (spy_it != war_static.end())
-	{
-		spy_it->second.spy = true;
-		std::vector<war_static_ptr> m_list;
-		m_list.clear();
-		m_list.emplace_back(spy_it->second);
-		UpdateStatic(NULL, GUILD_STATIC_SPY, m_list);
-	}
-}
-void CWarMap::SendKillNotice(LPCHARACTER killer, LPCHARACTER victim, long damage)
-{
-	if (m_bEnded)
-		return;
-	//DWORD team_ID = killer->GetProtectTime("guild_team");
-	//if (team_ID >= 1 && team_ID <= 2)
-	{
-		std::vector<war_static_ptr> m_list;
-		m_list.clear();
-		if (killer)
-		{
-			itertype(war_static) killer_it = war_static.find(killer->GetPlayerID());
-			if (killer_it != war_static.end())
-			{
-				if (damage > 0)
-				{
-					killer_it->second.skill_dmg += damage;
-					m_list.emplace_back(killer_it->second);
-					UpdateStatic(NULL, GUILD_STATIC_DMG, m_list);
-					return;
-				}
-				else
-				{
-					killer_it->second.kill += 1;
-					m_list.emplace_back(killer_it->second);
-				}
-			}
-		}
-
-		if (victim)
-		{
-			itertype(war_static) victim_it = war_static.find(victim->GetPlayerID());
-			if (victim_it != war_static.end())
-			{
-				victim_it->second.dead += 1;
-				m_list.emplace_back(victim_it->second);
-			}
-		}
-		UpdateStatic(NULL, GUILD_STATIC_KILL_DEAD, m_list);
-	}
-}
-
-
-#endif
-
+//martysama0134's 2022

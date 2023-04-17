@@ -21,3 +21,4 @@ extern TCHAR *optarg;
 int getopt(int argc, TCHAR *argv[], TCHAR *optstring);
 
 #endif //XGETOPT_H
+//martysama0134's 2022

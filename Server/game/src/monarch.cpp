@@ -39,7 +39,7 @@ struct FHealMyEmpire
 
 			if (ch->IsPC() && m_bEmpire == ch->GetEmpire())
 			{
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"군주가 내린 축복으로 모든 에너지가 가득 채워집니다"));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("군주가 내린 축복으로 모든 에너지가 가득 채워집니다"));
 				ch->PointChange(POINT_HP, ch->GetMaxHP() - ch->GetHP());
 				ch->PointChange(POINT_SP, ch->GetMaxSP() - ch->GetSP());
 				ch->EffectPacket(SE_SPUP_BLUE);
@@ -68,14 +68,14 @@ int CMonarch::HealMyEmpire(LPCHARACTER ch ,DWORD price)
 
 	if (!ch->IsMCOK(CHARACTER::MI_HEAL))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"%d 초 후에 군주의 축복을 사용할 수 있습니다"), ch->GetMCLTime(CHARACTER::MI_HEAL));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d 초 후에 군주의 축복을 사용할 수 있습니다"), ch->GetMCLTime(CHARACTER::MI_HEAL));
 
 		return 0;
 	}
 
 	if (!IsMoneyOk(price, Empire))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"국고에 돈이 부족합니다. 현재 : %u 필요금액 : %u"), GetMoney(Empire), price);
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("국고에 돈이 부족합니다. 현재 : %u 필요금액 : %u"), GetMoney(Empire), price);
 		return 0;
 	}
 
@@ -85,14 +85,14 @@ int CMonarch::HealMyEmpire(LPCHARACTER ch ,DWORD price)
 	f.m_bEmpire = Empire;
 	SECTREE_MANAGER::instance().for_each(iMapIndex, f);
 
-	// DB에 돈 삭감 보내기
+
 	SendtoDBDecMoney(price, Empire, ch);
 
-	// 쿨타임 설정
+
 	ch->SetMC(CHARACTER::MI_HEAL);
 
 	if (test_server)
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"[TEST_ONLY]현재 국고 : %d "), GetMoney(Empire) - price);
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[TEST_ONLY]현재 국고 : %d "), GetMoney(Empire) - price);
 	return 1;
 }
 
@@ -138,7 +138,7 @@ bool CMonarch::SendtoDBDecMoney(int Money, BYTE bEmpire, LPCHARACTER ch)
 	if (GetMoney(bEmpire) - Money < 0)
 		return false;
 
-	// 실제 줄이는 부분은 서버에 갔다 온 다음에 처리된다
+
 	int nEmpire = bEmpire;
 
 	db_clientdesc->DBPacketHeader(HEADER_GD_DEC_MONARCH_MONEY, ch->GetDesc()->GetHandle(), sizeof(int) + sizeof(int));
@@ -152,7 +152,7 @@ bool CMonarch::AddMoney(int Money, BYTE bEmpire)
 	if (bEmpire >= _countof(m_MonarchInfo.money))
 		return false;
 
-	// 20억 이상 입금 불가능
+
 	if (GetMoney(bEmpire) + Money > 2000000000)
 		return false;
 
@@ -237,7 +237,7 @@ void CMonarch::PowerUp(BYTE Empire, bool On)
 
 	m_PowerUp[Empire] = On;
 
-	// 군주 사자후 쿨타임
+
 	m_PowerUpCT[Empire] = thecore_pulse() + PASSES_PER_SEC(60 * 10);
 }
 
@@ -248,13 +248,13 @@ void CMonarch::DefenseUp(BYTE Empire, bool On)
 
 	m_DefenseUp[Empire] = On;
 
-	// 군주 금강권 쿨타임
+
 	m_DefenseUpCT[Empire] = thecore_pulse() + PASSES_PER_SEC(60 * 10);
 }
 
 bool IsMonarchWarpZone (int map_idx)
 {
-	// 아귀동굴, 천의동굴.
+
 	if (map_idx >= 10000)
 		map_idx /= 10000;
 
@@ -264,11 +264,12 @@ bool IsMonarchWarpZone (int map_idx)
 	case 302:
 	case 303:
 	case 304:
-		//던전
-	case 351: // 적룡성
-	case 352: // 백룡지성
+
+	case 351:
+	case 352:
 		return false;
 	}
 
 	return (map_idx != 208 && map_idx != 216 && map_idx != 217);
 }
+//martysama0134's 2022

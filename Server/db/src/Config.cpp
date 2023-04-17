@@ -67,7 +67,7 @@ bool CConfig::GetWord(FILE *fp, char *tar)
 
 			if ((c == ' ' || c == '\t' || c == '\n'))
 			{
-				// ÅÜ.
+
 				tar[i] = '\0';
 				return true;
 			}
@@ -144,7 +144,7 @@ bool CConfig::LoadFile(const char* filename)
 	}
 
 
-	// ÆÄÀÏ ´Ý´Â ºÎºÐ.
+
 	fclose(fp);
 	return true;
 }
@@ -247,4 +247,4 @@ bool CConfig::GetTwoValue(const char* key, DWORD * dest1, DWORD *dest2)
 
 	return true;
 }
-
+//martysama0134's 2022

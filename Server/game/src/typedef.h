@@ -99,6 +99,9 @@ enum EEntityTypes
 	ENTITY_CHARACTER,
 	ENTITY_ITEM,
 	ENTITY_OBJECT,
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	ENTITY_NEWSHOPS,
+#endif	
 };
 
 #ifndef itertype
@@ -106,4 +109,4 @@ enum EEntityTypes
 #endif
 
 #endif /* __INC_METIN_II_GAME_TYPEDEF_H__ */
-
+//martysama0134's 2022

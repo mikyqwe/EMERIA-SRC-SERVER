@@ -51,7 +51,12 @@ void CMoneyLog::Save()
 	*/
 }
 
+#ifdef ENABLE_LONG_LONG
+void CMoneyLog::AddLog(BYTE bType, DWORD dwVnum, long long iGold)
+#else
 void CMoneyLog::AddLog(BYTE bType, DWORD dwVnum, int iGold)
+#endif
 {
 	m_MoneyLogContainer[bType][dwVnum] += iGold;
 }
+//martysama0134's 2022

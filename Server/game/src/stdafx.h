@@ -10,10 +10,11 @@
 #include "debug_allocator.h"
 
 #include "../../libthecore/include/stdafx.h"
+
 #include "../../common/singleton.h"
-#include "../../common/CommonDefines.h"
 #include "../../common/utils.h"
 #include "../../common/service.h"
+#include "../../common/CommonDefines.h"
 
 #include <algorithm>
 #include <math.h>
@@ -24,29 +25,33 @@
 #include <string>
 #include <vector>
 
+
 #ifdef __GNUC__
-#if defined(CXX11_ENABLED) || defined(__clang__)
-        #include <unordered_map>
-        #include <unordered_set>
-        #define TR1_NS std
-        #define TR1_NS_BEGIN namespace TR1_NS {
-        #define TR1_NS_END }
-        #define TR1_NS_BLOCK(x) \
-            namespace TR1_NS {  \
-                x               \
-            }
-    #else
-		#include <float.h>
-		#include <tr1/unordered_map>
-		#include <tr1/unordered_set>
-		#define TR1_NS std::tr1
-	#endif
+#	include <float.h>
+#	if defined(CXX11_ENABLED) || defined(__clang__)
+#		include <unordered_map>
+#		include <unordered_set>
+#		define TR1_NS std
+#		define TR1_NS_BEGIN namespace TR1_NS {
+#		define TR1_NS_END }
+#		define TR1_NS_BLOCK(x) namespace TR1_NS { x }
+#	else
+#		include <tr1/unordered_map>
+#		include <tr1/unordered_set>
+#		define TR1_NS std::tr1
+#		define TR1_NS_BEGIN namespace std { namespace tr1 {
+#		define TR1_NS_END } }
+#		define TR1_NS_BLOCK(x) namespace std { namespace tr1 { x } }
+#	endif
 #else
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
-#define TR1_NS boost
-#define isdigit iswdigit
-#define isspace iswspace
+#	include <boost/unordered_map.hpp>
+#	include <boost/unordered_set.hpp>
+#	define TR1_NS boost
+#	define TR1_NS_BEGIN namespace TR1_NS {
+#	define TR1_NS_END }
+#	define TR1_NS_BLOCK(x) namespace TR1_NS { x }
+#	define isdigit iswdigit
+#	define isspace iswspace
 #endif
 
 #include "typedef.h"
@@ -66,4 +71,4 @@
 #define OUT
 
 #endif
-
+//martysama0134's 2022

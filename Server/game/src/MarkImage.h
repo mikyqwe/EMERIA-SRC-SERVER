@@ -16,7 +16,7 @@ struct SGuildMark
 	};
 
 	///////////////////////////////////////////////////////////////////////////////
-	Pixel m_apxBuf[SIZE];	// 실제 이미지
+	Pixel m_apxBuf[SIZE];
 
 	///////////////////////////////////////////////////////////////////////////////
 	void Clear();
@@ -38,11 +38,11 @@ struct SGuildMarkBlock
 	};
 
 	///////////////////////////////////////////////////////////////////////////////
-	Pixel	m_apxBuf[SIZE];	// 실제 이미지
+	Pixel	m_apxBuf[SIZE];
 
-	BYTE 	m_abCompBuf[MAX_COMP_SIZE];	// 압축된 데이터
-	lzo_uint m_sizeCompBuf;	// 압축된 크기
-	DWORD	m_crc;			// 압축된 데이터의 CRC
+	BYTE 	m_abCompBuf[MAX_COMP_SIZE];
+	lzo_uint m_sizeCompBuf;
+	DWORD	m_crc;
 
 	///////////////////////////////////////////////////////////////////////////////
 	DWORD	GetCRC() const;
@@ -87,9 +87,9 @@ class CGuildMarkImage
 
 		bool SaveMark(DWORD posMark, BYTE * pbMarkImage);
 		bool DeleteMark(DWORD posMark);
-		bool SaveBlockFromCompressedData(DWORD posBlock, const BYTE * pbComp, DWORD dwCompSize); // 서버 -> 클라이언트
+		bool SaveBlockFromCompressedData(DWORD posBlock, const BYTE * pbComp, DWORD dwCompSize);
 
-		DWORD GetEmptyPosition(); // 빈 마크 위치를 얻는다.
+		DWORD GetEmptyPosition();
 
 		void GetBlockCRCList(DWORD * crcList);
 		void GetDiffBlocks(const DWORD * crcList, std::map<BYTE, const SGuildMarkBlock *> & mapDiffBlocks);
@@ -109,3 +109,4 @@ class CGuildMarkImage
 };
 
 #endif
+//martysama0134's 2022

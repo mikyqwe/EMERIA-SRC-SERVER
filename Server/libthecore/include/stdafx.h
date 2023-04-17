@@ -1,6 +1,42 @@
 #ifndef __INC_LIBTHECORE_STDAFX_H__
 #define __INC_LIBTHECORE_STDAFX_H__
 
+
+#if !defined(CXX11_ENABLED) && __cplusplus >= 201103L
+	#define CXX11_ENABLED
+#endif
+
+#if !defined(_HAS_CXX11) && __cplusplus >= 201103L
+	#define _HAS_CXX11
+#endif
+
+#if !defined(_HAS_CXX14) && __cplusplus >= 201402L
+	#define _HAS_CXX14
+#endif
+
+#if !defined(_HAS_CXX17) && __cplusplus > 201402L
+	#define _HAS_CXX17
+#endif
+
+#if !defined(_HAS_CXX20) && __cplusplus > 201703L
+	#define _HAS_CXX20
+#endif
+
+#if defined(__clang__) || defined(_HAS_CXX11)
+#	ifndef __STDC_LIMIT_MACROS
+#		define __STDC_LIMIT_MACROS
+#	endif
+#	include <cinttypes>
+#	include <cstdint>
+#else
+#	include <inttypes.h>
+#	include <stdint.h>
+#	ifndef INT64_MAX
+#		define INT64_MAX 0x7fFFffFFffFFffFFLL
+#	endif
+#endif
+
+
 #if defined(__GNUC__)
 #define INLINE __inline__
 #elif defined(_MSC_VER)
@@ -35,11 +71,14 @@
 #define S_ISDIR(m)	(m & _S_IFDIR)
 #define snprintf _snprintf
 
+#ifndef WIN32
 struct timespec
 {
     time_t  tv_sec;         /* seconds */
     long    tv_nsec;        /* and nanoseconds */
 };
+#define strtof(str, endptr) (float)strtod(str, endptr)
+#endif
 
 #define __USE_SELECT__
 
@@ -49,7 +88,6 @@ struct timespec
 #define strlcat(dst, src, size) strcat_s(dst, size, src)
 #define strlcpy(dst, src, size) strncpy_s(dst, size, src, _TRUNCATE)
 #define strtoull(str, endptr, base) _strtoui64(str, endptr, base)
-#define strtof(str, endptr) (float)strtod(str, endptr)
 #define strcasecmp(s1, s2) stricmp(s1, s2)
 #define strncasecmp(s1, s2, n) strnicmp(s1, s2, n)
 #define atoll(str) _atoi64(str)
@@ -116,16 +154,12 @@ inline double rint(double x)
 #include <sys/event.h>
 #endif
 
-#endif
-
-#ifndef false
-#define false	0
-#define true	(!false)
+#define typeof(x) __typeof__(x)
 #endif
 
 #ifndef FALSE
 #define FALSE	false
-#define TRUE	(!FALSE)
+#define TRUE	true
 #endif
 
 #include "typedef.h"
@@ -143,3 +177,4 @@ inline double rint(double x)
 #include "memcpy.h"
 
 #endif // __INC_LIBTHECORE_STDAFX_H__
+//martysama0134's 2022

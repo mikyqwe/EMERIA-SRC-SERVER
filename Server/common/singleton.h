@@ -42,3 +42,4 @@ template <typename T> class singleton
 template <typename T> T * singleton <T>::ms_singleton = NULL;
 
 #endif
+//martysama0134's 2022

@@ -34,14 +34,9 @@ namespace fishing
 	extern void Simulation(int level, int count, int map_grade, LPCHARACTER ch);
 	extern void UseFish(LPCHARACTER ch, LPITEM item);
 	extern void Grill(LPCHARACTER ch, LPITEM item);
+
 	extern bool RefinableRod(LPITEM rod);
 	extern int RealRefineRod(LPCHARACTER ch, LPITEM rod);
 }
 #endif
-
-#ifdef ENABLE_NEW_FISHING_SYSTEM
-namespace fishingnew
-{
-	extern DWORD GetFishCatchedVnum(BYTE normal_chance, BYTE rare_chance, bool second);
-}
-#endif
+//martysama0134's 2022

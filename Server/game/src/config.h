@@ -1,10 +1,6 @@
-
 #ifndef __INC_METIN_II_GAME_CONFIG_H__
 #define __INC_METIN_II_GAME_CONFIG_H__
-#ifdef __ENABLE_TRASH_BIN__
-#include <boost/unordered_map.hpp>
-#endif
-#include "../../common/CommonDefines.h"
+
 enum
 {
 	ADDRESS_MAX_LEN = 15
@@ -46,7 +42,7 @@ extern bool g_bShoutAddonEnable;
 extern bool g_bGlobalShoutEnable;
 extern bool g_bDisablePrismNeed;
 extern bool g_bDisableEmotionMask;
-extern BYTE g_bItemCountLimit;
+extern WORD g_bItemCountLimit;
 extern DWORD g_dwItemBonusChangeTime;
 extern bool	g_bAllMountAttack;
 extern bool	g_bEnableBootaryCheck;
@@ -60,6 +56,7 @@ extern int g_iStatusPointSetMaxValue;
 extern int g_iShoutLimitLevel;
 extern DWORD g_dwSkillBookNextReadMin;
 extern DWORD g_dwSkillBookNextReadMax;
+extern std::string g_stProxyIP;
 // extern int g_iShoutLimitTime;
 extern int g_iDbLogLevel;
 extern int g_iSysLogLevel;
@@ -67,7 +64,7 @@ extern int g_aiItemDestroyTime[ITEM_DESTROY_TIME_MAX];
 extern bool	g_bDisableEmpireLanguageCheck;
 // #endif
 
-extern bool	g_bTrafficProfileOn;		///< true 이면 TrafficProfiler 를 켠다.
+extern bool	g_bTrafficProfileOn;
 
 extern BYTE	g_bChannel;
 
@@ -134,8 +131,8 @@ extern int VIEW_RANGE;
 extern int VIEW_BONUS_RANGE;
 
 extern bool g_bCheckMultiHack;
-extern bool g_protectNormalPlayer;      // 범법자가 "평화모드" 인 일반유저를 공격하지 못함
-extern bool g_noticeBattleZone;         // 중립지대에 입장하면 안내메세지를 알려줌
+extern bool g_protectNormalPlayer;
+extern bool g_noticeBattleZone;
 
 extern DWORD g_GoldDropTimeLimitValue;
 // #ifdef ENABLE_NEWSTUFF
@@ -154,24 +151,13 @@ extern bool bXTrapEnabled;
 
 extern int gPlayerMaxLevel;
 extern int gShutdownAge;
-extern int gShutdownEnable;	// 기본 0. config에서 지정해야함.
+extern int gShutdownEnable;
 
 extern bool gHackCheckEnable;
 
 extern bool g_BlockCharCreation;
-#ifdef OFFLINE_SHOP
-extern bool g_bIsOfflineShopServer;
-extern bool g_bOfflineShopNeedMoney;
-extern bool g_bOfflineShopNeedLevel;
-extern int g_iOfflineShopOwnerShipTime;
-extern int g_iOfflineShopSaveTime;
-extern int g_iOfflineShopMoney;
-extern int g_iOfflineShopLevel;
-#endif
+
 // missing begin
-#ifdef __AUCTION__
-extern int auction_server;
-#endif
 extern int speed_server;
 extern int openid_server;
 extern bool	g_bNoPasspod;
@@ -184,12 +170,6 @@ extern unsigned int g_uiSpamReloadCycle;
 
 extern void map_allow_log();
 // missing end
-#ifdef __ENABLE_TRASH_BIN__
-extern boost::unordered_map<DWORD,int> g_map_trash_bin_reward;
-extern std::vector<DWORD> g_vec_trash_bin_black_list;
-#endif
-#ifdef ENABLE_DECORUM
-extern bool g_bDecorumMaster;
-#endif
-#endif /* __INC_METIN_II_GAME_CONFIG_H__ */
 
+#endif /* __INC_METIN_II_GAME_CONFIG_H__ */
+//martysama0134's 2022

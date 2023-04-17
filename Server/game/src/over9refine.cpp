@@ -107,4 +107,4 @@ DWORD COver9RefineManager::GetMaterialVnum(DWORD baseVnum)
 
 	return 0;
 }
-
+//martysama0134's 2022

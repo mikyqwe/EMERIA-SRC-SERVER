@@ -87,7 +87,7 @@ namespace marriage
 			if (ch->GetPlayerID() == dwPID1 || ch->GetPlayerID() == dwPID2)
 				continue;
 
-			if (ch->GetLevel() < 10) // 10 레벨이하는 주지않는다.
+			if (ch->GetLevel() < 10)
 				continue;
 
 			//ch->AutoGiveItem(27003, 5);
@@ -122,9 +122,9 @@ namespace marriage
 		{
 			if (ch->IsPC())
 			{
-				// ExitToSavedLocation은 WarpSet을 부르는데 이 함수에서
-				// Sectree가 NULL이 된다. 추 후 SectreeManager로 부터는
-				// 이 캐릭터를 찾을 수 없으므로 아래 DestroyAll에서 별도 처리함
+
+
+
 				ch->ExitToSavedLocation();
 			}
 		}
@@ -384,3 +384,4 @@ namespace marriage
 	}
 
 }
+//martysama0134's 2022

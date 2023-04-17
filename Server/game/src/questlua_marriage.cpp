@@ -167,7 +167,7 @@ namespace quest
 		}
 		if (pMarriage->pWeddingInfo)
 		{
-			// 결혼식 끝내기 요청
+
 			pMarriage->RequestEndWedding();
 		}
 		return 0;
@@ -349,3 +349,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("marriage", marriage_functions);
 	}
 }
+//martysama0134's 2022

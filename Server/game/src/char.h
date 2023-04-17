@@ -2,10 +2,8 @@
 #define __INC_METIN_II_CHAR_H__
 
 #include <boost/unordered_map.hpp>
-#if defined(__DUNGEON_INFO_SYSTEM__)
-#	include "dungeon_info.h"
-#endif
 #include "../../common/stl.h"
+#include "stdafx.h"
 #include "entity.h"
 #include "FSM.h"
 #include "horse_rider.h"
@@ -15,32 +13,38 @@
 #include "affect_flag.h"
 #include "cuberenewal.h"
 #include "mining.h"
-#include "utils.h"
-#ifdef ENABLE_CSHIELD
-#include "cshieldLib.h"
-#endif
-#if defined(__BL_SOUL_ROULETTE__)
-#include "SoulRoulette.h"
-#endif
 #include "../../common/CommonDefines.h"
-#if defined(__BL_MAILBOX__)
-#include "MailBox.h"
+#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+#include <vector>
 #endif
-
+#if defined(__DUNGEON_INFO_SYSTEM__)
+#	include "dungeon_info.h"
+#endif
 #define ENABLE_ANTI_CMD_FLOOD
 #define ENABLE_OPEN_SHOP_WITH_ARMOR
 enum eMountType {MOUNT_TYPE_NONE=0, MOUNT_TYPE_NORMAL=1, MOUNT_TYPE_COMBAT=2, MOUNT_TYPE_MILITARY=3};
 eMountType GetMountLevelByVnum(DWORD dwMountVnum, bool IsNew);
 const DWORD GetRandomSkillVnum(BYTE bJob = JOB_MAX_NUM);
 
-
+#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
+class CMountSystem;
+#endif
 class CBuffOnAttributes;
 class CPetSystem;
 #ifdef NEW_PET_SYSTEM
 class CNewPetSystem;
 #endif
-#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
-class CMountSystem;
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+class CLootFilter;
+#endif
+
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+namespace offlineshop
+{
+	class CShop;
+	class CShopSafebox;
+	class CAuction;
+}
 #endif
 
 #define INSTANT_FLAG_DEATH_PENALTY		(1 << 0)
@@ -48,9 +52,6 @@ class CMountSystem;
 #define INSTANT_FLAG_EXCHANGE			(1 << 2)
 #define INSTANT_FLAG_STUN			(1 << 3)
 #define INSTANT_FLAG_NO_REWARD			(1 << 4)
-#ifdef OFFLINE_SHOP
-#define INSTANT_FLAG_OFFLINE_SHOP		(1 << 5)
-#endif
 
 #define AI_FLAG_NPC				(1 << 0)
 #define AI_FLAG_AGGRESSIVE			(1 << 1)
@@ -60,10 +61,6 @@ class CMountSystem;
 
 #define SET_OVER_TIME(ch, time)	(ch)->SetOverTime(time)
 
-#ifdef ENABLE_DECORUM
-class CDecoredArena;
-class CPVP;
-#endif
 extern int g_nPortalLimitTime;
 
 enum
@@ -94,16 +91,6 @@ enum
 	AI_CHANGE_ATTACK_POISITION_TIME_FAR = 1000,
 	AI_CHANGE_ATTACK_POISITION_DISTANCE = 100,
 	SUMMON_MONSTER_COUNT = 3,
-
-#ifdef ENABLE_OVER_KILL
-	OVER_KILL_FURY_LENGTH_TRIPLE = 10,
-	OVER_KILL_FURY_LENGTH_QUADRUPLE = 20,
-	OVER_KILL_FURY_LENGTH_PENTA = 30,
-	OVER_KILL_FURY_LENGTH_LEGENDARY = 45,
-	
-	OVER_KILL_TIME_SERIES = 6,
-#endif
-	
 };
 
 enum
@@ -132,7 +119,6 @@ enum EDamageType
 	DAMAGE_TYPE_NONE,
 	DAMAGE_TYPE_NORMAL,
 	DAMAGE_TYPE_NORMAL_RANGE,
-	//스킬
 	DAMAGE_TYPE_MELEE,
 	DAMAGE_TYPE_RANGE,
 	DAMAGE_TYPE_FIRE,
@@ -170,103 +156,97 @@ enum EPointTypes
 	POINT_MAX_HP,               // 6
 	POINT_SP,                   // 7
 	POINT_MAX_SP,               // 8
-	POINT_STAMINA,              // 9  스테미너
-	POINT_MAX_STAMINA,          // 10 최대 스테미너
+	POINT_STAMINA,              // 9
+	POINT_MAX_STAMINA,          // 10
 
 	POINT_GOLD,                 // 11
-	POINT_ST,                   // 12 근력
-	POINT_HT,                   // 13 체력
-	POINT_DX,                   // 14 민첩성
-	POINT_IQ,                   // 15 정신력
+	POINT_ST,                   // 12
+	POINT_HT,                   // 13
+	POINT_DX,                   // 14
+	POINT_IQ,                   // 15
 	POINT_DEF_GRADE,		// 16 ...
-	POINT_ATT_SPEED,            // 17 공격속도
-	POINT_ATT_GRADE,		// 18 공격력 MAX
-	POINT_MOV_SPEED,            // 19 이동속도
-	POINT_CLIENT_DEF_GRADE,	// 20 방어등급
-	POINT_CASTING_SPEED,        // 21 주문속도 (쿨다운타임*100) / (100 + 이값) = 최종 쿨다운 타임
-	POINT_MAGIC_ATT_GRADE,      // 22 마법공격력
-	POINT_MAGIC_DEF_GRADE,      // 23 마법방어력
-	POINT_EMPIRE_POINT,         // 24 제국점수
-	POINT_LEVEL_STEP,           // 25 한 레벨에서의 단계.. (1 2 3 될 때 보상, 4 되면 레벨 업)
-	POINT_STAT,                 // 26 능력치 올릴 수 있는 개수
-	POINT_SUB_SKILL,		// 27 보조 스킬 포인트
-	POINT_SKILL,		// 28 액티브 스킬 포인트
-	POINT_WEAPON_MIN,		// 29 무기 최소 데미지
-	POINT_WEAPON_MAX,		// 30 무기 최대 데미지
-	POINT_PLAYTIME,             // 31 플레이시간
-	POINT_HP_REGEN,             // 32 HP 회복률
-	POINT_SP_REGEN,             // 33 SP 회복률
+	POINT_ATT_SPEED,            // 17
+	POINT_ATT_GRADE,		// 18
+	POINT_MOV_SPEED,            // 19
+	POINT_CLIENT_DEF_GRADE,	// 20
+	POINT_CASTING_SPEED,        // 21
+	POINT_MAGIC_ATT_GRADE,      // 22
+	POINT_MAGIC_DEF_GRADE,      // 23
+	POINT_EMPIRE_POINT,         // 24
+	POINT_LEVEL_STEP,           // 25
+	POINT_STAT,                 // 26
+	POINT_SUB_SKILL,		// 27
+	POINT_SKILL,		// 28
+	POINT_WEAPON_MIN,		// 29
+	POINT_WEAPON_MAX,		// 30
+	POINT_PLAYTIME,             // 31
+	POINT_HP_REGEN,             // 32
+	POINT_SP_REGEN,             // 33
 
-	POINT_BOW_DISTANCE,         // 34 활 사정거리 증가치 (meter)
+	POINT_BOW_DISTANCE,         // 34
 
-	POINT_HP_RECOVERY,          // 35 체력 회복 증가량
-	POINT_SP_RECOVERY,          // 36 정신력 회복 증가량
+	POINT_HP_RECOVERY,          // 35
+	POINT_SP_RECOVERY,          // 36
 
-	POINT_POISON_PCT,           // 37 독 확률
-	POINT_STUN_PCT,             // 38 기절 확률
-	POINT_SLOW_PCT,             // 39 슬로우 확률
-	POINT_CRITICAL_PCT,         // 40 크리티컬 확률
-	POINT_PENETRATE_PCT,        // 41 관통타격 확률
-	POINT_CURSE_PCT,            // 42 저주 확률
+	POINT_POISON_PCT,           // 37
+	POINT_STUN_PCT,             // 38
+	POINT_SLOW_PCT,             // 39
+	POINT_CRITICAL_PCT,         // 40
+	POINT_PENETRATE_PCT,        // 41
+	POINT_CURSE_PCT,            // 42
 
-	POINT_ATTBONUS_HUMAN,       // 43 인간에게 강함
-	POINT_ATTBONUS_ANIMAL,      // 44 동물에게 데미지 % 증가
-	POINT_ATTBONUS_ORC,         // 45 웅귀에게 데미지 % 증가
-	POINT_ATTBONUS_MILGYO,      // 46 밀교에게 데미지 % 증가
-	POINT_ATTBONUS_UNDEAD,      // 47 시체에게 데미지 % 증가
-	POINT_ATTBONUS_DEVIL,       // 48 마귀(악마)에게 데미지 % 증가
-	POINT_ATTBONUS_INSECT,      // 49 벌레족
-	POINT_ATTBONUS_FIRE,        // 50 화염족
-	POINT_ATTBONUS_ICE,         // 51 빙설족
-	POINT_ATTBONUS_DESERT,      // 52 사막족
-	POINT_ATTBONUS_MONSTER,     // 53 모든 몬스터에게 강함
-	POINT_ATTBONUS_WARRIOR,     // 54 무사에게 강함
-	POINT_ATTBONUS_ASSASSIN,	// 55 자객에게 강함
-	POINT_ATTBONUS_SURA,		// 56 수라에게 강함
-	POINT_ATTBONUS_SHAMAN,		// 57 무당에게 강함
-	POINT_ATTBONUS_TREE,     	// 58 나무에게 강함 20050729.myevan UNUSED5
+	POINT_ATTBONUS_HUMAN,       // 43
+	POINT_ATTBONUS_ANIMAL,      // 44
+	POINT_ATTBONUS_ORC,         // 45
+	POINT_ATTBONUS_MILGYO,      // 46
+	POINT_ATTBONUS_UNDEAD,      // 47
+	POINT_ATTBONUS_DEVIL,       // 48
+	POINT_ATTBONUS_INSECT,      // 49
+	POINT_ATTBONUS_FIRE,        // 50
+	POINT_ATTBONUS_ICE,         // 51
+	POINT_ATTBONUS_DESERT,      // 52
+	POINT_ATTBONUS_MONSTER,     // 53
+	POINT_ATTBONUS_WARRIOR,     // 54
+	POINT_ATTBONUS_ASSASSIN,	// 55
+	POINT_ATTBONUS_SURA,		// 56
+	POINT_ATTBONUS_SHAMAN,		// 57
+	POINT_ATTBONUS_TREE,     	// 58
 
-	POINT_RESIST_WARRIOR,		// 59 무사에게 저항
-	POINT_RESIST_ASSASSIN,		// 60 자객에게 저항
-	POINT_RESIST_SURA,			// 61 수라에게 저항
-	POINT_RESIST_SHAMAN,		// 62 무당에게 저항
+	POINT_RESIST_WARRIOR,		// 59
+	POINT_RESIST_ASSASSIN,		// 60
+	POINT_RESIST_SURA,			// 61
+	POINT_RESIST_SHAMAN,		// 62
 
-	POINT_STEAL_HP,             // 63 생명력 흡수
-	POINT_STEAL_SP,             // 64 정신력 흡수
+	POINT_STEAL_HP,             // 63
+	POINT_STEAL_SP,             // 64
 
-	POINT_MANA_BURN_PCT,        // 65 마나 번
+	POINT_MANA_BURN_PCT,        // 65
+	POINT_DAMAGE_SP_RECOVER,    // 66
 
-	/// 피해시 보너스 ///
-
-	POINT_DAMAGE_SP_RECOVER,    // 66 공격당할 시 정신력 회복 확률
-
-	POINT_BLOCK,                // 67 블럭율
-	POINT_DODGE,                // 68 회피율
+	POINT_BLOCK,                // 67
+	POINT_DODGE,                // 68
 
 	POINT_RESIST_SWORD,         // 69
 	POINT_RESIST_TWOHAND,       // 70
 	POINT_RESIST_DAGGER,        // 71
 	POINT_RESIST_BELL,          // 72
 	POINT_RESIST_FAN,           // 73
-	POINT_RESIST_BOW,           // 74  화살   저항   : 대미지 감소
-	POINT_RESIST_FIRE,          // 75  화염   저항   : 화염공격에 대한 대미지 감소
-	POINT_RESIST_ELEC,          // 76  전기   저항   : 전기공격에 대한 대미지 감소
-	POINT_RESIST_MAGIC,         // 77  술법   저항   : 모든술법에 대한 대미지 감소
-	POINT_RESIST_WIND,          // 78  바람   저항   : 바람공격에 대한 대미지 감소
+	POINT_RESIST_BOW,           // 74
+	POINT_RESIST_FIRE,          // 75
+	POINT_RESIST_ELEC,          // 76
+	POINT_RESIST_MAGIC,         // 77
+	POINT_RESIST_WIND,          // 78
 
-	POINT_REFLECT_MELEE,        // 79 공격 반사
+	POINT_REFLECT_MELEE,        // 79
 
-	/// 특수 피해시 ///
-	POINT_REFLECT_CURSE,		// 80 저주 반사
-	POINT_POISON_REDUCE,		// 81 독데미지 감소
+	POINT_REFLECT_CURSE,		// 80
+	POINT_POISON_REDUCE,		// 81
 
-	/// 적 소멸시 ///
-	POINT_KILL_SP_RECOVER,		// 82 적 소멸시 MP 회복
+	POINT_KILL_SP_RECOVER,		// 82
 	POINT_EXP_DOUBLE_BONUS,		// 83
-	POINT_GOLD_DOUBLE_BONUS,		// 84
+	POINT_GOLD_DOUBLE_BONUS,	// 84
 	POINT_ITEM_DROP_BONUS,		// 85
 
-	/// 회복 관련 ///
 	POINT_POTION_BONUS,			// 86
 	POINT_KILL_HP_RECOVERY,		// 87
 
@@ -290,7 +270,7 @@ enum EPointTypes
 
 	POINT_HIT_HP_RECOVERY,		// 100
 	POINT_HIT_SP_RECOVERY, 		// 101
-	POINT_MANASHIELD,			// 102 흑신수호 스킬에 의한 마나쉴드 효과 정도
+	POINT_MANASHIELD,			// 102
 
 	POINT_PARTY_BUFFER_BONUS,		// 103
 	POINT_PARTY_SKILL_MASTER_BONUS,	// 104
@@ -299,112 +279,69 @@ enum EPointTypes
 	POINT_SP_RECOVER_CONTINUE,		// 106
 
 	POINT_STEAL_GOLD,			// 107
-	POINT_POLYMORPH,			// 108 변신한 몬스터 번호
-	POINT_MOUNT,			// 109 타고있는 몬스터 번호
+	POINT_POLYMORPH,			// 108
+	POINT_MOUNT,			// 109
 
 	POINT_PARTY_HASTE_BONUS,		// 110
 	POINT_PARTY_DEFENDER_BONUS,		// 111
-	POINT_STAT_RESET_COUNT,		// 112 피의 단약 사용을 통한 스텟 리셋 포인트 (1당 1포인트 리셋가능)
+	POINT_STAT_RESET_COUNT,		// 112
 
 	POINT_HORSE_SKILL,			// 113
 
-	POINT_MALL_ATTBONUS,		// 114 공격력 +x%
-	POINT_MALL_DEFBONUS,		// 115 방어력 +x%
-	POINT_MALL_EXPBONUS,		// 116 경험치 +x%
-	POINT_MALL_ITEMBONUS,		// 117 아이템 드롭율 x/10배
-	POINT_MALL_GOLDBONUS,		// 118 돈 드롭율 x/10배
+	POINT_MALL_ATTBONUS,		// 114
+	POINT_MALL_DEFBONUS,		// 115
+	POINT_MALL_EXPBONUS,		// 116
+	POINT_MALL_ITEMBONUS,		// 117
+	POINT_MALL_GOLDBONUS,		// 118
 
-	POINT_MAX_HP_PCT,			// 119 최대생명력 +x%
-	POINT_MAX_SP_PCT,			// 120 최대정신력 +x%
+	POINT_MAX_HP_PCT,			// 119
+	POINT_MAX_SP_PCT,			// 120
 
-	POINT_SKILL_DAMAGE_BONUS,		// 121 스킬 데미지 *(100+x)%
-	POINT_NORMAL_HIT_DAMAGE_BONUS,	// 122 평타 데미지 *(100+x)%
+	POINT_SKILL_DAMAGE_BONUS,		// 121
+	POINT_NORMAL_HIT_DAMAGE_BONUS,	// 122
 
 	// DEFEND_BONUS_ATTRIBUTES
-	POINT_SKILL_DEFEND_BONUS,		// 123 스킬 방어 데미지
-	POINT_NORMAL_HIT_DEFEND_BONUS,	// 124 평타 방어 데미지
+	POINT_SKILL_DEFEND_BONUS,		// 123
+	POINT_NORMAL_HIT_DEFEND_BONUS,	// 124
 	// END_OF_DEFEND_BONUS_ATTRIBUTES
 
 	// PC_BANG_ITEM_ADD
-	POINT_PC_BANG_EXP_BONUS,		// 125 PC방 전용 경험치 보너스
-	POINT_PC_BANG_DROP_BONUS,		// 126 PC방 전용 드롭률 보너스
+	POINT_PC_BANG_EXP_BONUS,		// 125
+	POINT_PC_BANG_DROP_BONUS,		// 126
 	// END_PC_BANG_ITEM_ADD
-	POINT_RAMADAN_CANDY_BONUS_EXP,			// 라마단 사탕 경험치 증가용
+	POINT_RAMADAN_CANDY_BONUS_EXP,		// 127
 
-	POINT_ENERGY = 128,					// 128 기력
+	POINT_ENERGY = 128,
 
-	// 기력 ui 용.
-	// 서버에서 쓰지 않기만, 클라이언트에서 기력의 끝 시간을 POINT로 관리하기 때문에 이렇게 한다.
-	// 아 부끄럽다
-	POINT_ENERGY_END_TIME = 129,					// 129 기력 종료 시간
+	POINT_ENERGY_END_TIME = 129,
 
 	POINT_COSTUME_ATTR_BONUS = 130,
 	POINT_MAGIC_ATT_BONUS_PER = 131,
 	POINT_MELEE_MAGIC_ATT_BONUS_PER = 132,
 
-	// 추가 속성 저항
-	POINT_RESIST_ICE = 133,          //   냉기 저항   : 얼음공격에 대한 대미지 감소
-	POINT_RESIST_EARTH = 134,        //   대지 저항   : 얼음공격에 대한 대미지 감소
-	POINT_RESIST_DARK = 135,         //   어둠 저항   : 얼음공격에 대한 대미지 감소
 
-	POINT_RESIST_CRITICAL = 136,		// 크리티컬 저항	: 상대의 크리티컬 확률을 감소
-	POINT_RESIST_PENETRATE = 137,		// 관통타격 저항	: 상대의 관통타격 확률을 감소
+	POINT_RESIST_ICE = 133,
+	POINT_RESIST_EARTH = 134,
+	POINT_RESIST_DARK = 135,
+
+	POINT_RESIST_CRITICAL = 136,
+	POINT_RESIST_PENETRATE = 137,
 
 #ifdef ENABLE_WOLFMAN_CHARACTER
 	POINT_BLEEDING_REDUCE = 138,
 	POINT_BLEEDING_PCT = 139,
 
-	POINT_ATTBONUS_WOLFMAN = 140,				// 140 수인족에게 강함
-	POINT_RESIST_WOLFMAN = 141,				// 141 수인족에게 저항
-	POINT_RESIST_CLAW = 142,					// 142 CLAW에 저항
+	POINT_ATTBONUS_WOLFMAN = 140,
+	POINT_RESIST_WOLFMAN = 141,
+	POINT_RESIST_CLAW = 142,
 #endif
+
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	POINT_ACCEDRAIN_RATE = 143,
 #endif
 #ifdef ENABLE_MAGIC_REDUCTION_SYSTEM
 	POINT_RESIST_MAGIC_REDUCTION = 144,
 #endif
-#ifdef __SPECIALSTAT_SYSTEM__
-	POINT_SPECIAL_STAT1,  //Fortuna
-	POINT_SPECIAL_STAT2,  //Agilita'
-	POINT_SPECIAL_STAT3,  //Carisma
-	POINT_SPECIAL_STAT4,  //Tenacia
-	POINT_SPECIAL_STAT5,  //Avidit?	POINT_SPECIAL_STAT6,  //Talento
-	POINT_SPECIAL_STAT_EFFECT,
-#endif
-#ifdef ENABLE_NEW_TALISMAN_GF
-	POINT_ATTBONUS_ELEC = 155,
-	POINT_ATTBONUS_WIND = 156,
-	POINT_ATTBONUS_EARTH = 157,
-	POINT_ATTBONUS_DARK = 158,
-	POINT_RESIST_HUMAN,
-
-	POINT_RESIST_SWORD_REDUCTION,		
-	POINT_RESIST_TWOHAND_REDUCTION,	
-	POINT_RESIST_DAGGER_REDUCTION,	
-	POINT_RESIST_BELL_REDUCTION,		
-	POINT_RESIST_FAN_REDUCTION,		
-	POINT_RESIST_BOW_REDUCTION,
-
-	POINT_ATTBONUS_ZODIAC,
-#ifdef ENABLE_WOLFMAN_CHARACTER
-	POINT_RESIST_CLAW_REDUCTION,
-#endif
-#endif
-#ifdef NEW_ADD_INVENTORY
-	POINT_BLACK = 190, 				// New_inventory
-#endif
-#ifdef ENABLE_CHEQUE_SYSTEM
-	POINT_CHEQUE = 207,
-#endif
-#ifdef ENABLE_BONUS_BOSS
-    POINT_ATTBONUS_BOSS = 138,
-#endif
-#ifdef ENABLE_BONUS_METIN
-    POINT_ATTBONUS_METIN = 139,
-#endif
-	POINT_FISHING_RARE = 174,
-	//POINT_MAX_NUM = 129	common/length.h
 };
 
 enum EPKModes
@@ -471,69 +408,26 @@ struct DynamicCharacterPtr {
 	uint32_t id;
 };
 
-#ifdef ENABLE_OVER_KILL
-struct SOverKillInfo
-{
-	DWORD last_kill_timestamp;
-	BYTE over_kill_counter;
-	
-	SOverKillInfo()
-	: last_kill_timestamp(0) , over_kill_counter(0)
-	{
-	}
-	
-	void SetLastKillTimeStamp(DWORD time_stamp)
-	{
-		last_kill_timestamp = time_stamp;
-	}	
-	
-	void SetOverKillCount(BYTE counter)
-	{
-		over_kill_counter = counter;
-	}
-	
-	BYTE GetOverKillCount()
-	{
-		return over_kill_counter;
-	}
-	
-	DWORD GetLastKillTimeStamp()
-	{
-		return last_kill_timestamp;
-	}
-};
 
-typedef SOverKillInfo* OVER_KILL_PTR;
-
-enum OverKillConst //to change bonus value
-{	
-	OVER_KILL_FURY_DAMAGE_BONUS = 5,
-	OVER_KILL_FURY_RECEIVED_DAMAGE_INCREASE = 5,
-	OVER_KILL_FURY_CRITICAL_BONUS = 5,
-	OVER_KILL_FURY_PENETRAL_BONUS = 5,
-	OVER_KILL_FURY_SPEED_ATT_BONUS = 8,
-};
-
-#endif
-
-/* 저장하는 데이터 */
 typedef struct character_point
 {
-	long			points[POINT_MAX_NUM];
+#ifdef ENABLE_LONG_LONG
+	long long			points[POINT_MAX_NUM];
+#else
+	int			points[POINT_MAX_NUM];
+#endif
 
 	BYTE			job;
 	BYTE			voice;
 
 	BYTE			level;
 	DWORD			exp;
+#ifdef ENABLE_LONG_LONG
+	long long		gold;
+#else
 	long			gold;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int			cheque;
+#endif
 
-#endif
-#ifdef NEW_ADD_INVENTORY
-	int 			envanter;
-#endif
 	int				hp;
 	int				sp;
 
@@ -546,13 +440,16 @@ typedef struct character_point
 #ifdef ENABLE_NEW_DETAILS_GUI
 	long			kill_log[KILL_MAX_NUM];
 #endif
-
 } CHARACTER_POINT;
 
-/* 저장되지 않는 캐릭터 데이터 */
+
 typedef struct character_point_instant
 {
-	long			points[POINT_MAX_NUM];
+#ifdef ENABLE_LONG_LONG
+	long long			points[POINT_MAX_NUM];
+#else
+	int			points[POINT_MAX_NUM];
+#endif
 
 	float			fRot;
 
@@ -566,23 +463,20 @@ typedef struct character_point_instant
 	DWORD			dwImmuneFlag;
 	DWORD			dwLastShoutPulse;
 
-	WORD			parts[PART_MAX_NUM];
+	DWORD			parts[PART_MAX_NUM];
 
-// 아... 진짜 욕을 안 할래야 안 할 수가 없다.
-// char는 인벤을 BYTE array로 grid를 관리하고, exchange나 cube는 CGrid로 grid를 관리하고 뭐냐 이거...
-// grid를 만들어 놨으면 grid를 쓰란 말이야!!!
-// ㅅㅂ 용혼석 인벤을 똑같이 따라서 만든 나도 잘못했다 ㅠㅠ
+
+
+
+
 	LPITEM			pItems[INVENTORY_AND_EQUIP_SLOT_MAX];
 	BYTE			bItemGrid[INVENTORY_AND_EQUIP_SLOT_MAX];
 
-	// 용혼석 인벤토리.
+
 	LPITEM			pDSItems[DRAGON_SOUL_INVENTORY_MAX_NUM];
 	WORD			wDSItemGrid[DRAGON_SOUL_INVENTORY_MAX_NUM];
 #ifdef FAST_EQUIP_WORLDARD
 	LPITEM 			pChangeEquipItem[CHANGE_EQUIP_SLOT_COUNT];
-#endif
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	LPITEM			pB67Item;
 #endif
 #ifdef ENABLE_SWITCHBOT
 	LPITEM			pSwitchbotItems[SWITCHBOT_SLOT_COUNT];
@@ -604,18 +498,14 @@ typedef struct character_point_instant
 	// by mhh
 	LPITEM			pCubeItems[CUBE_MAX_NUM];
 	LPCHARACTER		pCubeNpc;
-#ifdef CHANGELOOK_SYSTEM
-	LPITEM			pClMaterials[CL_WINDOW_MAX_MATERIALS];
-#endif
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
-	LPITEM	pAcceMaterials[ACCE_WINDOW_MAX_MATERIALS];
+	TItemPosEx				pAcceMaterials[ACCE_WINDOW_MAX_MATERIALS];
 #endif
-
 	LPCHARACTER			battle_victim;
 
 	BYTE			gm_level;
 
-	BYTE			bBasePart;	// 평상복 번호
+	BYTE			bBasePart;
 
 	int				iMaxStamina;
 
@@ -623,15 +513,6 @@ typedef struct character_point_instant
 
 	int				iDragonSoulActiveDeck;
 	LPENTITY		m_pDragonSoulRefineWindowOpener;
-#ifdef OFFLINE_SHOP
-	DWORD			real_owner;
-	DWORD			real_owner_aid;
-	bool			isOfflineShop;
-	int				leftTime;
-	BYTE			bSaveTime;
-	BYTE			bChannel;
-	DWORD			dwVID;
-#endif
 } CHARACTER_POINT_INSTANT;
 
 #define TRIGGERPARAM		LPCHARACTER ch, LPCHARACTER causer
@@ -657,9 +538,9 @@ class CTrigger
 EVENTINFO(char_event_info)
 {
 	DynamicCharacterPtr ch;
-	DWORD	dwPlayerID;
 };
 
+typedef std::map<VID, size_t> target_map;
 struct TSkillUseInfo
 {
 	int	    iHitCount;
@@ -668,20 +549,17 @@ struct TSkillUseInfo
 	DWORD   dwNextSkillUsableTime;
 	int	    iRange;
 	bool    bUsed;
-    bool    bSkillCD;
-    DWORD   dwHitCount;
 	DWORD   dwVID;
 	bool    isGrandMaster;
 
-	boost::unordered_map<VID, size_t> TargetVIDMap;
+	target_map TargetVIDMap;
 
 	TSkillUseInfo()
-		: iHitCount(0), iMaxHitCount(0), iSplashCount(0), dwNextSkillUsableTime(0), iRange(0), bUsed(false), bSkillCD(false), dwHitCount(0),
+		: iHitCount(0), iMaxHitCount(0), iSplashCount(0), dwNextSkillUsableTime(0), iRange(0), bUsed(false),
 		dwVID(0), isGrandMaster(false)
    	{}
 
 	bool    HitOnce(DWORD dwVnum = 0);
-	bool    IsSkillCooldown(DWORD dwVnum, float fSkillPower);
 
 	bool    UseSkill(bool isGrandMaster, DWORD vid, DWORD dwCooltime, int splashcount = 1, int hitcount = -1, int range = -1);
 	DWORD   GetMainTargetVID() const	{ return dwVID; }
@@ -699,12 +577,10 @@ class CAffect;
 class CGuild;
 class CSafebox;
 class CArena;
+
 class CShop;
 typedef class CShop * LPSHOP;
-#ifdef OFFLINE_SHOP
-class COfflineShop;
-typedef class COfflineShop * LPOFFLINESHOP;
-#endif
+
 class CMob;
 class CMobInstance;
 typedef struct SMobSkillInfo TMobSkillInfo;
@@ -724,44 +600,20 @@ enum e_overtime
 	OT_5HOUR,
 };
 
-//#define NEW_ICEDAMAGE_SYSTEM
+#define NEW_ICEDAMAGE_SYSTEM
 class CHARACTER : public CEntity, public CFSM, public CHorseRider
 {
 	protected:
 		//////////////////////////////////////////////////////////////////////////////////
-		// Entity 관련
 		virtual void	EncodeInsertPacket(LPENTITY entity);
 		virtual void	EncodeRemovePacket(LPENTITY entity);
 		//////////////////////////////////////////////////////////////////////////////////
-
-#ifdef ENABLE_RENEWAL_PVP
-public:
-	bool				IsInFight();
-	void				CheckPvPBonus(bool isAdd, bool* pvpSettingNew);
-	bool				CheckPvPUse(DWORD itemVnum);
-	bool				IsBlockPvP(DWORD itemVnum);
-	bool				CheckPvPSetting(BYTE settingIndex);
-protected:
-	bool				pvpSettings[PVP_BET];
-#endif
-
-#ifdef ENABLE_AURA_SYSTEM
-	public:
-		bool	GetAuraRefine() { return auraRefine; }
-		bool	GetAuraAbs() { return auraAbs; }
-		void	SetAuraAbs(bool bFlag) { auraAbs = bFlag; }
-		void	SetAuraRefine(bool bFlag) { auraRefine = bFlag; }
-	protected:
-		bool	auraAbs;
-		bool	auraRefine;
-#endif
 
 	public:
 		LPCHARACTER			FindCharacterInView(const char * name, bool bFindPCOnly);
 		void				UpdatePacket();
 
 		//////////////////////////////////////////////////////////////////////////////////
-		// FSM (Finite State Machine) 관련
 	protected:
 		CStateTemplate<CHARACTER>	m_stateMove;
 		CStateTemplate<CHARACTER>	m_stateBattle;
@@ -784,7 +636,6 @@ protected:
 
 	public:
 		DWORD GetAIFlag() const	{ return m_pointsInstant.dwAIFlag; }
-
 
 		void				SetAggressive();
 		bool				IsAggressive() const;
@@ -835,23 +686,21 @@ private:
 public:
 	DWORD			GetLastTargetInfoPulse() const	{ return dwLastTargetInfoPulse; }
 	void			SetLastTargetInfoPulse(DWORD pulse) { dwLastTargetInfoPulse = pulse; }
-#endif
+#endif		
+		
 	public:
 		DWORD			GetPlayerID() const	{ return m_dwPlayerID; }
 
 		void			SetPlayerProto(const TPlayerTable * table);
-		void			CreatePlayerProto(TPlayerTable & tab);	// 저장 시 사용
+		void			CreatePlayerProto(TPlayerTable & tab);
 
 		void			SetProto(const CMob * c_pkMob);
 		WORD			GetRaceNum() const;
 		WORD			GetPlayerRace() const;
 		void			Save();		// DelayedSave
-		void			SaveReal();	// 실제 저장
+		void			SaveReal();
 		void			FlushDelayedSaveItem();
 
-#ifdef ENABLE_NEW_AFFECT_POTION	
-		void			SetAffectPotion(LPITEM item);
-#endif	
 #ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
 		const char *		GetName(BYTE bLanguage = 0) const;
 		void 				SetLanguage(const char* language);
@@ -867,9 +716,6 @@ public:
 		void			SetName(const std::string& name) { m_stName = name; }
 
 		void			SetRace(BYTE race);
-#ifdef RENEWAL_DEAD_PACKET
-		DWORD			CalculateDeadTime(BYTE type);
-#endif
 		bool			ChangeSex();
 
 		DWORD			GetAID() const;
@@ -880,8 +726,6 @@ public:
 		BYTE			GetJob() const;
 		BYTE			GetCharType() const;
 
-		void RestoreTalismanBonus();
-
 		bool			IsPC() const		{ return GetDesc() ? true : false; }
 		bool			IsNPC()	const		{ return m_bCharType != CHAR_TYPE_PC; }
 		bool			IsMonster()	const	{ return m_bCharType == CHAR_TYPE_MONSTER; }
@@ -890,15 +734,6 @@ public:
 		bool			IsBuilding() const	{ return m_bCharType == CHAR_TYPE_BUILDING;  }
 		bool			IsWarp() const		{ return m_bCharType == CHAR_TYPE_WARP; }
 		bool			IsGoto() const		{ return m_bCharType == CHAR_TYPE_GOTO; }
-		bool            IsBoss()    const    { return GetMobRank() >= MOB_RANK_BOSS; }
-#ifdef ENABLE_MELEY_LAIR_DUNGEON
-		bool			IsMeley();
-		void				SetQuestNPCIDAttack(DWORD vid){ m_dwQuestNPCVIDAttack = vid;}
-		DWORD				GetQuestNPCIDAttack() const { return m_dwQuestNPCVIDAttack; }
-		LPCHARACTER			GetQuestNPCAttack() const;
-		DWORD				m_dwQuestNPCVIDAttack;
-
-#endif
 //		bool			IsPet() const		{ return m_bCharType == CHAR_TYPE_PET; }
 
 		DWORD			GetLastShoutPulse() const	{ return m_pointsInstant.dwLastShoutPulse; }
@@ -908,10 +743,12 @@ public:
 
 		BYTE			GetGMLevel() const;
 		BOOL 			IsGM() const;
+		
 #ifdef ENABLE_GIVE_BASIC_WEAPON
 		void			addbonus(LPCHARACTER ch);
 		void			additems(LPCHARACTER ch);
-#endif
+#endif		
+		
 		void			SetGMLevel();
 
 		DWORD			GetExp() const		{ return m_points.exp;	}
@@ -920,38 +757,21 @@ public:
 #ifdef NEW_PET_SYSTEM
 		DWORD			PetGetNextExp() const;
 #endif
-#ifdef __SPECIALSTAT_SYSTEM__
-		void			LoadStats(TSpecialStats * sdata);
-		bool			CanUpdateSpecialStat(BYTE s_stat);
-		bool			CanReadSpecialStatBooks();
-		bool			CanReadSpecialStatBookSkip();
-		void			SetSpecialStatsSkillBookTimeSkip();
-		void			SetSpecialStatsNextTimeReadBook();
-		void			SendSpecialStatsEffect();
-		BYTE			GetSpecialStats(BYTE s_stat);
-		void			UpdateSpecialStat(BYTE s_stat);
-		void			ChatSpecialStats();
-		void			ApplySpecialStatBuff(BYTE s_stat);
-		void			ApplySpecialStatAffect(BYTE s_stat, BYTE s_type, long s_value);
-		void			ClearSpecialStatAffect(BYTE s_stat);
-		void			SpecialStatsPacket();
-		void			SaveSpecialStats();
-
-#endif
-		LPCHARACTER		DistributeExp();	// 제일 많이 때린 사람을 리턴한다.
+		LPCHARACTER		DistributeExp();
 		void			DistributeHP(LPCHARACTER pkKiller);
 		void			DistributeSP(LPCHARACTER pkKiller, int iMethod=0);
+
 #ifdef __ENABLE_KILL_EVENT_FIX__
-        LPCHARACTER        GetMostAttacked();
+		LPCHARACTER		GetMostAttacked();
 #endif
 
 		void			SetPosition(int pos);
 		bool			IsPosition(int pos) const	{ return m_pointsInstant.position == pos ? true : false; }
 		int				GetPosition() const		{ return m_pointsInstant.position; }
 
-		void			SetPart(BYTE bPartPos, WORD wVal);
-		WORD			GetPart(BYTE bPartPos) const;
-		WORD			GetOriginalPart(BYTE bPartPos) const;
+		void			SetPart(BYTE bPartPos, DWORD wVal);
+		DWORD			GetPart(BYTE bPartPos) const;
+		DWORD			GetOriginalPart(BYTE bPartPos) const;
 
 		void			SetHP(int hp)		{ m_points.hp = hp; }
 		int				GetHP() const		{ return m_points.hp; }
@@ -982,8 +802,16 @@ public:
 		void			SetRealPoint(BYTE idx, int val);
 		int				GetRealPoint(BYTE idx) const;
 
+#ifdef ENABLE_LONG_LONG
+		void			SetPoint(BYTE idx, long long val);
+#else
 		void			SetPoint(BYTE idx, int val);
+#endif		
+#ifdef ENABLE_LONG_LONG
+		long long		GetPoint(BYTE idx) const;
+#else
 		int				GetPoint(BYTE idx) const;
+#endif
 		int				GetLimitPoint(BYTE idx) const;
 		int				GetPolymorphPoint(BYTE idx) const;
 
@@ -1024,17 +852,31 @@ public:
 		DWORD			GetPolymorphItemVnum() const;
 		DWORD			GetMonsterDrainSPPoint() const;
 
-		void			MainCharacterPacket();	// 내가 메인캐릭터라고 보내준다.
+		void			MainCharacterPacket();
 
 		void			ComputePoints();
 		void			ComputeBattlePoints();
-		void			PointChange(BYTE type, int amount, bool bAmount = false, bool bBroadcast = false);
+
+#ifdef ENABLE_LONG_LONG
+		void			PointChange(BYTE type, long long amount, bool bAmount = false, bool bBroadcast = false
+#ifdef __ENABLE_BLOCK_EXP__
+, bool bForceExp = false
+#endif
+		);
+#else
+		void			PointChange(BYTE type, int amount, bool bAmount = false, bool bBroadcast = false
+#ifdef __ENABLE_BLOCK_EXP__
+, bool bForceExp = false
+#endif
+		);
+#endif
+		
 		void			PointsPacket();
 		void			ApplyPoint(BYTE bApplyType, int iVal);
 #ifdef NEW_PET_SYSTEM
 		void			SendPetLevelUpEffect(int vid, int type, int value, int amount);
 #endif
-		void			CheckMaximumPoints();	// HP, SP 등의 현재 값이 최대값 보다 높은지 검사하고 높다면 낮춘다.
+		void			CheckMaximumPoints();
 
 		bool			Show(long lMapIndex, long x, long y, long z = LONG_MAX, bool bShowSpawnMotion = false);
 
@@ -1059,7 +901,7 @@ public:
 		bool			IsBlockMode(BYTE bFlag) const	{ return (m_pointsInstant.bBlockMode & bFlag)?true:false; }
 
 		bool			IsPolymorphed() const		{ return m_dwPolymorphRace>0; }
-		bool			IsPolyMaintainStat() const	{ return m_bPolyMaintainStat; } // 이전 스텟을 유지하는 폴리모프.
+		bool			IsPolyMaintainStat() const	{ return m_bPolyMaintainStat; }
 		void			SetPolymorph(DWORD dwRaceNum, bool bMaintainStat = false);
 		DWORD			GetPolymorphVnum() const	{ return m_dwPolymorphRace; }
 		int				GetPolymorphPower() const;
@@ -1082,20 +924,11 @@ public:
 		void			ResetChatCounter();
 		BYTE			IncreaseChatCounter();
 		BYTE			GetChatCounter() const;
+
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 		void ResetMountCounter();
 		BYTE IncreaseMountCounter();
 		BYTE GetMountCounter() const;
-#endif
-		
-#ifdef ENABLE_OVER_KILL
-		BYTE			GetOverKillCount();
-		void			SetOverKillCount(BYTE counter);
-		void			SetLastKillTimeStamp(DWORD time_stamp);
-		
-		DWORD 			GetLastKillTimeStamp();
-		
-		void			OverKillEvent();
 #endif
 
 	protected:
@@ -1114,6 +947,7 @@ public:
 #endif
 		CHARACTER_POINT		m_points;
 		CHARACTER_POINT_INSTANT	m_pointsInstant;
+
 		int				m_iMoveCount;
 		DWORD			m_dwPlayStartTime;
 		BYTE			m_bAddChrState;
@@ -1123,14 +957,6 @@ public:
 		BYTE			m_bChatCounter;
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 		BYTE m_bMountCounter;
-#endif
-
-#ifdef __SPECIALSTAT_SYSTEM__
-
-		BYTE special_stats[SPECIALSTATS_MAX];
-		time_t special_next_book_time;
-		bool special_next_book_time_skip;
-
 #endif
 		// End of Basic Points
 
@@ -1176,15 +1002,15 @@ public:
 		void			SetNowWalking(bool bWalkFlag);
 		void			ResetWalking()			{ SetNowWalking(m_bWalking); }
 
-		bool			Goto(long x, long y);	// 바로 이동 시키지 않고 목표 위치로 BLENDING 시킨다.
+		bool			Goto(long x, long y);
 		void			Stop();
 
-		bool			CanMove() const;		// 이동할 수 있는가?
+		bool			CanMove() const;
 
 		void			SyncPacket();
-		bool			Sync(long x, long y);	// 실제 이 메소드로 이동 한다 (각 종 조건에 의한 이동 불가가 없음)
-		bool			Move(long x, long y);	// 조건을 검사하고 Sync 메소드를 통해 이동 한다.
-		void			OnMove(bool bIsAttack = false);	// 움직일때 불린다. Move() 메소드 이외에서도 불릴 수 있다.
+		bool			Sync(long x, long y);
+		bool			Move(long x, long y);
+		void			OnMove(bool bIsAttack = false);
 		DWORD			GetMotionMode() const;
 		float			GetMoveMotionSpeed() const;
 		float			GetMoveSpeed() const;
@@ -1195,7 +1021,7 @@ public:
 		DWORD			GetLastMoveTime() const		{ return m_dwLastMoveTime; }
 		DWORD			GetLastAttackTime() const	{ return m_dwLastAttackTime; }
 
-		void			SetLastAttacked(DWORD time);	// 마지막으로 공격받은 시간 및 위치를 저장함
+		void			SetLastAttacked(DWORD time);
 
 		bool			SetSyncOwner(LPCHARACTER ch, bool bRemoveFromList = true);
 		bool			IsSyncOwner(LPCHARACTER ch) const;
@@ -1220,9 +1046,9 @@ public:
 	protected:
 		void			ClearSync();
 
-		DWORD			m_fSyncTime;
+		float			m_fSyncTime;
 		LPCHARACTER		m_pkChrSyncOwner;
-		CHARACTER_LIST	m_kLst_pkChrSyncOwned;	// 내가 SyncOwner인 자들
+		CHARACTER_LIST	m_kLst_pkChrSyncOwned;
 
 		PIXEL_POSITION	m_posDest;
 		PIXEL_POSITION	m_posStart;
@@ -1245,7 +1071,6 @@ public:
 		bool			m_bStaminaConsume;
 		// End
 
-		// Quickslot 관련
 	public:
 		void			SyncQuickslot(BYTE bType, BYTE bOldPos, BYTE bNewPos);
 		bool			GetQuickslot(BYTE pos, TQuickslot ** ppSlot);
@@ -1254,6 +1079,44 @@ public:
 		bool			SwapQuickslot(BYTE a, BYTE b);
 		void			ChainQuickslotItem(LPITEM pItem, BYTE bType, BYTE bOldPos);
 
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	public:
+		offlineshop::CShop*		GetOfflineShop() {return m_pkOfflineShop;}
+		void					SetOfflineShop(offlineshop::CShop* pkShop) {m_pkOfflineShop = pkShop;}
+		
+		offlineshop::CShop*		GetOfflineShopGuest() const {return m_pkOfflineShopGuest;}
+		void					SetOfflineShopGuest(offlineshop::CShop* pkShop) {m_pkOfflineShopGuest = pkShop;}
+		
+		offlineshop::CShopSafebox*
+								GetShopSafebox() {return m_pkShopSafebox;}
+		void					SetShopSafebox(offlineshop::CShopSafebox* pk);
+
+		void					SetAuction(offlineshop::CAuction* pk) {m_pkAuction = pk;}
+		void					SetAuctionGuest(offlineshop::CAuction* pk) {m_pkAuctionGuest = pk;}
+
+		offlineshop::CAuction*	GetAuction() {return m_pkAuction;}
+		offlineshop::CAuction*	GetAuctionGuest() const {return m_pkAuctionGuest;}
+
+
+		//offlineshop-updated 05/08/19
+		void					SetLookingOfflineshopOfferList(bool is) { m_bIsLookingOfflineshopOfferList = is; }
+		bool					IsLookingOfflineshopOfferList() { return m_bIsLookingOfflineshopOfferList; }
+		int						GetOfflineShopUseTime() const { return m_iOfflineShopUseTime; }
+		void					SetOfflineShopUseTime() { m_iOfflineShopUseTime = thecore_pulse(); }
+
+	private:
+		offlineshop::CShop*			m_pkOfflineShop;
+		offlineshop::CShop*			m_pkOfflineShopGuest;
+		offlineshop::CShopSafebox*	m_pkShopSafebox;
+		offlineshop::CAuction*		m_pkAuction;
+		offlineshop::CAuction*		m_pkAuctionGuest;
+
+		//offlineshop-updated 05/08/19
+		bool	m_bIsLookingOfflineshopOfferList;
+		// patch with warp check
+		int		m_iOfflineShopUseTime = 0;
+#endif
+
 	protected:
 		TQuickslot		m_quickslot[QUICKSLOT_MAX_NUM];
 
@@ -1261,7 +1124,7 @@ public:
 		// Affect
 	public:
 		void			StartAffectEvent();
-		void			ClearAffect(bool bSave=false, bool letBuffs=false);
+		void			ClearAffect(bool bSave=false);
 		void			ComputeAffect(CAffect * pkAff, bool bAdd);
 		bool			AddAffect(DWORD dwType, BYTE bApplyOn, long lApplyValue, DWORD dwFlag, long lDuration, long lSPCost, bool bOverride, bool IsCube = false);
 		void			RefreshAffect();
@@ -1274,7 +1137,7 @@ public:
 		void			LoadAffect(DWORD dwCount, TPacketAffectElement * pElements);
 		void			SaveAffect();
 
-		// Affect loading이 끝난 상태인가?
+
 		bool			IsLoadedAffect() const	{ return m_bIsLoadedAffect; }
 
 		bool			IsGoodAffect(BYTE bAffectType) const;
@@ -1300,26 +1163,16 @@ public:
 		void			DenyToParty(LPCHARACTER member);
 		void			AcceptToParty(LPCHARACTER member);
 
-		/// 자신의 파티에 다른 character 를 초대한다.
-		/**
-		 * @param	pchInvitee 초대할 대상 character. 파티에 참여 가능한 상태이어야 한다.
-		 *
-		 * 양측 character 의 상태가 파티에 초대하고 초대받을 수 있는 상태가 아니라면 초대하는 캐릭터에게 해당하는 채팅 메세지를 전송한다.
-		 */
+
+
 		void			PartyInvite(LPCHARACTER pchInvitee);
 
-		/// 초대했던 character 의 수락을 처리한다.
-		/**
-		 * @param	pchInvitee 파티에 참여할 character. 파티에 참여가능한 상태이어야 한다.
-		 *
-		 * pchInvitee 가 파티에 가입할 수 있는 상황이 아니라면 해당하는 채팅 메세지를 전송한다.
-		 */
+
+
 		void			PartyInviteAccept(LPCHARACTER pchInvitee);
 
-		/// 초대했던 character 의 초대 거부를 처리한다.
-		/**
-		 * @param [in]	dwPID 초대 했던 character 의 PID
-		 */
+
+
 		void			PartyInviteDeny(DWORD dwPID);
 
 		bool			BuildUpdatePartyPacket(TPacketGCPartyUpdate & out);
@@ -1331,60 +1184,39 @@ public:
 
 	protected:
 
-		/// 파티에 가입한다.
-		/**
-		 * @param	pkLeader 가입할 파티의 리더
-		 */
+
+
 		void			PartyJoin(LPCHARACTER pkLeader);
 
-		/**
-		 * 파티 가입을 할 수 없을 경우의 에러코드.
-		 * Error code 는 시간에 의존적인가에 따라 변경가능한(mutable) type 과 정적(static) type 으로 나뉜다.
-		 * Error code 의 값이 PERR_SEPARATOR 보다 낮으면 변경가능한 type 이고 높으면 정적 type 이다.
-		 */
+
 		enum PartyJoinErrCode {
-			PERR_NONE		= 0,	///< 처리성공
-			PERR_SERVER,			///< 서버문제로 파티관련 처리 불가
-			PERR_DUNGEON,			///< 캐릭터가 던전에 있음
-			PERR_OBSERVER,			///< 관전모드임
-			PERR_LVBOUNDARY,		///< 상대 캐릭터와 레벨차이가 남
-			PERR_LOWLEVEL,			///< 상대파티의 최고레벨보다 30레벨 낮음
-			PERR_HILEVEL,			///< 상대파티의 최저레벨보다 30레벨 높음
-			PERR_ALREADYJOIN,		///< 파티가입 대상 캐릭터가 이미 파티중
-			PERR_PARTYISFULL,		///< 파티인원 제한 초과
+			PERR_NONE		= 0,
+			PERR_SERVER,
+			PERR_DUNGEON,
+			PERR_OBSERVER,
+			PERR_LVBOUNDARY,
+			PERR_LOWLEVEL,
+			PERR_HILEVEL,
+			PERR_ALREADYJOIN,
+			PERR_PARTYISFULL,
 			PERR_SEPARATOR,			///< Error type separator.
-			PERR_DIFFEMPIRE,		///< 상대 캐릭터와 다른 제국임
-			PERR_DECORUM_ARENA,		///< A character is in an arena
-			PERR_MAX				///< Error code 최고치. 이 앞에 Error code 를 추가한다.
+			PERR_DIFFEMPIRE,
+			PERR_MAX
 		};
 
-		/// 파티 가입이나 결성 가능한 조건을 검사한다.
-		/**
-		 * @param 	pchLeader 파티의 leader 이거나 초대한 character
-		 * @param	pchGuest 초대받는 character
-		 * @return	모든 PartyJoinErrCode 가 반환될 수 있다.
-		 */
+
+
 		static PartyJoinErrCode	IsPartyJoinableCondition(const LPCHARACTER pchLeader, const LPCHARACTER pchGuest);
 
-		/// 파티 가입이나 결성 가능한 동적인 조건을 검사한다.
-		/**
-		 * @param 	pchLeader 파티의 leader 이거나 초대한 character
-		 * @param	pchGuest 초대받는 character
-		 * @return	mutable type 의 code 만 반환한다.
-		 */
+
+
 		static PartyJoinErrCode	IsPartyJoinableMutableCondition(const LPCHARACTER pchLeader, const LPCHARACTER pchGuest);
 
 		LPPARTY			m_pkParty;
 		DWORD			m_dwLastDeadTime;
 		LPEVENT			m_pkPartyRequestEvent;
 
-		/**
-		 * 파티초청 Event map.
-		 * key: 초대받은 캐릭터의 PID
-		 * value: event의 pointer
-		 *
-		 * 초대한 캐릭터들에 대한 event map.
-		 */
+
 		typedef std::map< DWORD, LPEVENT >	EventMap;
 		EventMap		m_PartyInviteEventMap;
 
@@ -1417,19 +1249,14 @@ public:
 		////////////////////////////////////////////////////////////////////////////////////////
 		// Item related
 	public:
-		bool			CanHandleItem(bool bSkipRefineCheck = false, bool bSkipObserver = false); // 아이템 관련 행위를 할 수 있는가?
+		bool			CanHandleItem(bool bSkipRefineCheck = false, bool bSkipObserver = false);
 
 		bool			IsItemLoaded() const	{ return m_bItemLoaded; }
 		void			SetItemLoaded()	{ m_bItemLoaded = true; }
 
 		void			ClearItem();
-#ifdef ENABLE_SORT_INVEN
-		void			SortInven(BYTE option);
-		DWORD			GetLastSortTime() const { return m_dwLastSortTime; }
-		void			SetLastSortTime(DWORD time) { m_dwLastSortTime = time; }
-#endif
-#ifdef __HIGHLIGHT_SYSTEM__
-		void			SetItem(TItemPos Cell, LPITEM item, bool isHighLight = false);
+#ifdef ENABLE_HIGHLIGHT_NEW_ITEM
+		void			SetItem(TItemPos Cell, LPITEM item, bool bWereMine = false);
 #else
 		void			SetItem(TItemPos Cell, LPITEM item);
 #endif
@@ -1441,15 +1268,10 @@ public:
 		LPITEM			GetWear(BYTE bCell) const;
 
 		// MYSHOP_PRICE_LIST
-		void			UseSilkBotary(void); 		/// 비단 보따리 아이템의 사용
+		void			UseSilkBotary(void);
 
-		/// DB 캐시로 부터 받아온 가격정보 리스트를 유저에게 전송하고 보따리 아이템 사용을 처리한다.
-		/**
-		 * @param [in] p	가격정보 리스트 패킷
-		 *
-		 * 접속한 후 처음 비단 보따리 아이템 사용 시 UseSilkBotary 에서 DB 캐시로 가격정보 리스트를 요청하고
-		 * 응답받은 시점에 이 함수에서 실제 비단보따리 사용을 처리한다.
-		 */
+
+
 		void			UseSilkBotaryReal(const TPacketMyshopPricelistHeader* p);
 		// END_OF_MYSHOP_PRICE_LIST
 
@@ -1465,13 +1287,13 @@ public:
 		// END_OF_ADD_REFINE_BUILDING
 
 		bool			RefineItem(LPITEM pkItem, LPITEM pkTarget);
-		bool			DropItem(TItemPos Cell,  short bCount=0);
+
+		bool			DropItem(TItemPos Cell,  WORD bCount=0);
+
 #ifdef ENABLE_SELL_ITEM
 		bool			SellItem(TItemPos Cell);
 #endif
-#ifdef NEW_ADD_INVENTORY
-		bool            Envanter_update();
-#endif
+
 		bool			GiveRecallItem(LPITEM item);
 		void			ProcessRecallItem(LPITEM item);
 
@@ -1495,20 +1317,24 @@ public:
 		bool			GiveItemFromSpecialItemGroup(DWORD dwGroupNum, std::vector <DWORD> &dwItemVnums,
 							std::vector <DWORD> &dwItemCounts, std::vector <LPITEM> &item_gets, int &count);
 
-		bool			MoveItem(TItemPos pos, TItemPos change_pos, short num);
+		bool			MoveItem(TItemPos pos, TItemPos change_pos, WORD num);
+
 		bool			PickupItem(DWORD vid);
 		bool			EquipItem(LPITEM item, int iCandidateCell = -1);
 		bool			UnequipItem(LPITEM item);
 
-		// 현재 item을 착용할 수 있는 지 확인하고, 불가능 하다면 캐릭터에게 이유를 알려주는 함수
+
 		bool			CanEquipNow(const LPITEM item, const TItemPos& srcCell = NPOS, const TItemPos& destCell = NPOS);
 
-		// 착용중인 item을 벗을 수 있는 지 확인하고, 불가능 하다면 캐릭터에게 이유를 알려주는 함수
+
 		bool			CanUnequipNow(const LPITEM item, const TItemPos& srcCell = NPOS, const TItemPos& destCell = NPOS);
 
 		bool			SwapItem(BYTE bCell, BYTE bDestCell);
-		LPITEM			AutoGiveItem(DWORD dwItemVnum, short bCount=1, int iRarePct = -1, bool bMsg = true);
+		
+		LPITEM			AutoGiveItem(DWORD dwItemVnum, WORD bCount=1, int iRarePct = -1, bool bMsg = true);
 		void			AutoGiveItem(LPITEM item, bool longOwnerShip = false);
+
+		bool			CanTakeInventoryItem(LPITEM item, TItemPos* pos);
 
 		int				GetEmptyInventory(BYTE size) const;
 		int				GetEmptyDragonSoulInventory(LPITEM pItem) const;
@@ -1535,21 +1361,17 @@ public:
 
 		void			SendEquipment(LPCHARACTER ch);
 		// End of Item
-
+		void ChangeGold(long long amount);
 	protected:
 
-		/// 한 아이템에 대한 가격정보를 전송한다.
-		/**
-		 * @param [in]	dwItemVnum 아이템 vnum
-		 * @param [in]	dwItemPrice 아이템 가격
-		 */
-#ifdef ENABLE_CHEQUE_SYSTEM
-		void			SendMyShopPriceListCmd(DWORD dwItemVnum, TItemPriceType ItemPrice);
+
+#ifdef ENABLE_LONG_LONG
+		void			SendMyShopPriceListCmd(DWORD dwItemVnum, long long dwItemPrice);
 #else
 		void			SendMyShopPriceListCmd(DWORD dwItemVnum, DWORD dwItemPrice);
 #endif
 
-		bool			m_bNoOpenedShop;	///< 이번 접속 후 개인상점을 연 적이 있는지의 여부(열었던 적이 없다면 true)
+		bool			m_bNoOpenedShop;
 
 		bool			m_bItemLoaded;
 		int				m_iRefineAdditionalCell;
@@ -1559,21 +1381,23 @@ public:
 	public:
 		////////////////////////////////////////////////////////////////////////////////////////
 		// Money related
+#ifdef ENABLE_LONG_LONG
+		long long		GetGold() const { return m_points.gold; }
+		void			SetGold(long long gold) { m_points.gold = gold; }
+#else
 		INT				GetGold() const		{ return m_points.gold;	}
 		void			SetGold(INT gold)	{ m_points.gold = gold;	}
-#ifdef NEW_ADD_INVENTORY
-		INT				Black_Envanter() const			{ return m_points.envanter; }
-		void			Set_Envanter_Black(INT black)	{ m_points.envanter = black; }
 #endif
 		bool			DropGold(INT gold);
+#ifdef ENABLE_LONG_LONG
+		long long		GetAllowedGold() const;
+		void			GiveGold(long long iAmount);
+#else
 		INT				GetAllowedGold() const;
-		void			GiveGold(INT iAmount);	// 파티가 있으면 파티 분배, 로그 등의 처리
-
-		// End of Money
-#ifdef ENABLE_CHEQUE_SYSTEM
-		int				GetCheque() const		{ return m_points.cheque; }
-		void			SetCheque(int cheque)	{ m_points.cheque = cheque; }
+		void			GiveGold(INT iAmount);
 #endif
+		// End of Money
+
 		////////////////////////////////////////////////////////////////////////////////////////
 		// Shop related
 	public:
@@ -1583,7 +1407,15 @@ public:
 
 		void			SetShopOwner(LPCHARACTER ch) { m_pkChrShopOwner = ch; }
 		LPCHARACTER		GetShopOwner() const { return m_pkChrShopOwner;}
-		void			OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, short bItemCount);
+
+		void			OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, BYTE bItemCount
+#ifdef KASMIR_PAKET_SYSTEM
+		, DWORD KasmirNpc, BYTE KasmirBaslik
+#endif
+		);
+#ifdef KASMIR_PAKET_SYSTEM
+		void			UseSilkBotaryKasmir(void);
+#endif		
 		
 		LPSHOP			GetMyShop() const { return m_pkMyShop; }
 		void			CloseMyShop();
@@ -1592,6 +1424,10 @@ public:
 
 		LPSHOP			m_pkShop;
 		LPSHOP			m_pkMyShop;
+#ifdef KASMIR_PAKET_SYSTEM
+		BYTE			m_bKasmirPaketBaslik;
+		bool			m_bKasmirPaketDurum;
+#endif
 		std::string		m_stShopSign;
 		LPCHARACTER		m_pkChrShopOwner;
 		// End of shop
@@ -1606,13 +1442,7 @@ public:
 	protected:
 		CExchange *		m_pkExchange;
 		// End of Exchange
-#if defined(__BL_SOUL_ROULETTE__)
-	public:
-		void SetSoulRoulette(CSoulRoulette* pt);
-		CSoulRoulette* GetSoulRoulette() const { return pSoulRoulette; }
-	private:
-		CSoulRoulette* pSoulRoulette;
-#endif
+
 		////////////////////////////////////////////////////////////////////////////////////////
 		// Battle
 	public:
@@ -1643,14 +1473,14 @@ public:
 		bool				CanFight() const;
 
 		bool				CanBeginFight() const;
-		void				BeginFight(LPCHARACTER pkVictim); // pkVictimr과 싸우기 시작한다. (강제적임, 시작할 수 있나 체크하려면 CanBeginFight을 사용)
+		void				BeginFight(LPCHARACTER pkVictim);
 
-		bool				CounterAttack(LPCHARACTER pkChr); // 반격하기 (몬스터만 사용)
+		bool				CounterAttack(LPCHARACTER pkChr);
 
 		bool				IsStun() const;
 		void				Stun();
 		bool				IsDead() const;
-		void				Dead(LPCHARACTER pkKiller = NULL, bool bImmediateDead=false);
+		void				Dead(LPCHARACTER pkKiller = NULL, bool bImmediateDead=true); // @fixme188 instant death false to true
 #ifdef NEW_PET_SYSTEM
 		void				SetImmortal(int st) { m_stImmortalSt = st; };
 		bool				IsImmortal() { return 1 == m_stImmortalSt; };
@@ -1683,7 +1513,7 @@ public:
 		void				UpdateAlignment(int iAmount);
 		int					GetAlignment() const;
 
-		//선악치 얻기
+
 		int					GetRealAlignment() const;
 		void				ShowAlignment(bool bShow);
 
@@ -1701,18 +1531,6 @@ public:
 		//
 		// HACK
 		//
-
-#ifdef ENABLE_AFK_MODE_SYSTEM
-	public:
-		void	SetAway(bool f) { m_isAway = f; }
-		bool	IsAway() { return m_isAway; }
-
-		int		GetLastPacketTime(){return lastPacket;} 
-		void	SetLastPacketTime(int newTime){lastPacket=newTime;} 
-
-		void StartUpdateCharacterEvent();
-#endif
-
 	public:
 		void SetComboSequence(BYTE seq);
 		BYTE GetComboSequence() const;
@@ -1744,7 +1562,7 @@ public:
 
 		DWORD				m_dwFlyTargetID;
 		std::vector<DWORD>	m_vec_dwFlyTargets;
-		TDamageMap			m_map_kDamage;	// 어떤 캐릭터가 나에게 얼마만큼의 데미지를 주었는가?
+		TDamageMap			m_map_kDamage;
 //		AttackLog			m_kAttackLog;
 		DWORD				m_dwKillerPID;
 
@@ -1767,8 +1585,8 @@ public:
 		BYTE				GetDropMetinStonePct() const { return m_bDropMetinStonePct; }
 
 	protected:
-		LPCHARACTER			m_pkChrStone;		// 나를 스폰한 돌
-		CHARACTER_SET		m_set_pkChrSpawnedBy;	// 내가 스폰한 놈들
+		LPCHARACTER			m_pkChrStone;
+		CHARACTER_SET		m_set_pkChrSpawnedBy;
 		DWORD				m_dwDropMetinStone;
 		BYTE				m_bDropMetinStonePct;
 		// End of Stone
@@ -1791,10 +1609,6 @@ public:
 		// ADD_GRANDMASTER_SKILL
 		bool				UseSkill(DWORD dwVnum, LPCHARACTER pkVictim, bool bUseGrandMaster = true);
 		void				ResetSkill();
-		bool				IsSkillCooldown(DWORD dwVnum, float fSkillPower) { return m_SkillUseInfo[dwVnum].IsSkillCooldown(dwVnum, fSkillPower) ? true : false; }
-#if defined(SKILL_COOLTIME_UPDATE)
-		void				ResetSkillCoolTimes();
-#endif
 		void				SetSkillLevel(DWORD dwVnum, BYTE bLev);
 		int					GetUsedSkillMasterType(DWORD dwVnum);
 
@@ -1802,9 +1616,7 @@ public:
 		// END_OF_ADD_GRANDMASTER_SKILL
 
 		bool				CheckSkillHitCount(const BYTE SkillID, const VID dwTargetVID);
-#ifdef SYSTEM_PDA
-		const DWORD*		GetUsableSkillList() const;
-#endif
+
 		bool				CanUseSkill(DWORD dwSkillVnum) const;
 		bool				IsUsableSkillMotion(DWORD dwMotionIndex) const;
 		int					GetSkillLevel(DWORD dwVnum) const;
@@ -1817,9 +1629,9 @@ public:
 
 		void				ComputePassiveSkill(DWORD dwVnum);
 		int					ComputeSkill(DWORD dwVnum, LPCHARACTER pkVictim, BYTE bSkillLevel = 0);
-
+#ifdef ENABLE_WOLFMAN_CHARACTER
 		int					ComputeSkillParty(DWORD dwVnum, LPCHARACTER pkVictim, BYTE bSkillLevel = 0);
-
+#endif
 		int					ComputeSkillAtPosition(DWORD dwVnum, const PIXEL_POSITION& posTarget, BYTE bSkillLevel = 0);
 		void				ComputeSkillPoints();
 
@@ -1836,17 +1648,9 @@ public:
 
 	private:
 		bool				m_bDisableCooltime;
-#ifdef ENABLE_SORT_INVEN
-		DWORD				m_dwLastSortTime;
-#endif
-		DWORD				m_dwLastSkillTime;	///< 마지막으로 skill 을 쓴 시간(millisecond).
+		DWORD				m_dwLastSkillTime;
 		// End of Skill
 
-#ifdef ENABLE_OVER_KILL
-		OVER_KILL_PTR		m_pOverKillInfo;
-#endif
-	
-		
 		// MOB_SKILL
 	public:
 		bool				HasMobSkill() const;
@@ -1901,23 +1705,14 @@ public:
 		// AI related
 	public:
 		void			AssignTriggers(const TMobTable * table);
-		LPCHARACTER		GetVictim() const;	// 공격할 대상 리턴
+		LPCHARACTER		GetVictim() const;
 		void			SetVictim(LPCHARACTER pkVictim);
 		LPCHARACTER		GetNearestVictim(LPCHARACTER pkChr);
-		LPCHARACTER		GetProtege() const;	// 보호해야 할 대상 리턴
+		LPCHARACTER		GetProtege() const;
 
 		bool			Follow(LPCHARACTER pkChr, float fMinimumDistance = 150.0f);
 		bool			Return();
 		bool			IsGuardNPC() const;
-		
-#ifdef ENABLE_DEFENSAWE_SHIP
-		bool			IsHydraMob() const;
-		bool			IsHydraMobLP(LPCHARACTER ch) const;
-		bool			IsHydraNPC() const;
-		bool			IsHydra() const;
-#endif
-
-		
 		bool			IsChangeAttackPosition(LPCHARACTER target) const;
 		void			ResetChangeAttackPositionTime() { m_dwLastChangeAttackPositionTime = get_dword_time() - AI_CHANGE_ATTACK_POISITION_TIME_NEAR;}
 		void			SetChangeAttackPositionTime() { m_dwLastChangeAttackPositionTime = get_dword_time();}
@@ -1937,8 +1732,8 @@ public:
 		////////////////////////////////////////////////////////////////////////////////////////
 		// Target
 	protected:
-		LPCHARACTER				m_pkChrTarget;		// 내 타겟
-		CHARACTER_SET	m_set_pkChrTargetedBy;	// 나를 타겟으로 가지고 있는 사람들
+		LPCHARACTER				m_pkChrTarget;
+		CHARACTER_SET	m_set_pkChrTargetedBy;
 
 	public:
 		void				SetTarget(LPCHARACTER pkChrTarget);
@@ -1959,20 +1754,12 @@ public:
 		void				ChangeSafeboxSize(BYTE bSize);
 		void				CloseSafebox();
 
-		/// 창고 열기 요청
-		/**
-		 * @param [in]	pszPassword 1자 이상 6자 이하의 창고 비밀번호
-		 *
-		 * DB 에 창고열기를 요청한다.
-		 * 창고는 중복으로 열지 못하며, 최근 창고를 닫은 시간으로 부터 10초 이내에는 열 지 못한다.
-		 */
+
+
 		void				ReqSafeboxLoad(const char* pszPassword);
 
-		/// 창고 열기 요청의 취소
-		/**
-		 * ReqSafeboxLoad 를 호출하고 CloseSafebox 하지 않았을 때 이 함수를 호출하면 창고를 열 수 있다.
-		 * 창고열기의 요청이 DB 서버에서 실패응답을 받았을 경우 이 함수를 사용해서 요청을 할 수 있게 해준다.
-		 */
+
+
 		void				CancelSafeboxLoad( void ) { m_bOpeningSafebox = false; }
 
 		void				SetMallLoadTime(int t) { m_iMallLoadTime = t; }
@@ -1989,7 +1776,7 @@ public:
 		CSafebox *			m_pkSafebox;
 		int					m_iSafeboxSize;
 		int					m_iSafeboxLoadTime;
-		bool				m_bOpeningSafebox;	///< 창고가 열기 요청 중이거나 열려있는가 여부, true 일 경우 열기요청이거나 열려있음.
+		bool				m_bOpeningSafebox;
 
 		CSafebox *			m_pkMall;
 		int					m_iMallLoadTime;
@@ -2023,7 +1810,7 @@ public:
 
 		void				HorseSummon(bool bSummon, bool bFromFar = false, DWORD dwVnum = 0, const char* name = 0);
 
-		LPCHARACTER			GetHorse() const			{ return m_chHorse; }	 // 현재 소환중인 말
+		LPCHARACTER			GetHorse() const			{ return m_chHorse; }
 		LPCHARACTER			GetRider() const; // rider on horse
 		void				SetRider(LPCHARACTER ch);
 
@@ -2059,6 +1846,7 @@ public:
 
 	public:
 #endif
+
 	protected:
 		LPCHARACTER			m_chHorse;
 		LPCHARACTER			m_chRider;
@@ -2069,20 +1857,7 @@ public:
 		BYTE				m_bSendHorseLevel;
 		BYTE				m_bSendHorseHealthGrade;
 		BYTE				m_bSendHorseStaminaGrade;
-#ifdef ENABLE_AFK_MODE_SYSTEM
-		bool				m_isAway;
-		int					lastPacket;
-#endif
-#ifdef ENABLE_DECORUM
-	//decorum arena
-	private:
-		CDecoredArena * m_pDecorumArena;
-		
-	public:
-		CDecoredArena* GetDecorumArena() const { return m_pDecorumArena; };
-		void SetDecorumArena(CDecoredArena* pArena) { m_pDecorumArena = pArena; };
-		void GoHomeFromArena();
-#endif
+
 		////////////////////////////////////////////////////////////////////////////////////////
 		// Detailed Log
 	public:
@@ -2118,7 +1893,7 @@ public:
 		////////////////////////////////////////////////////////////////////////////////////////
 		// Resists & Proofs
 	public:
-		bool				CannotMoveByAffect() const;	// 특정 효과에 의해 움직일 수 없는 상태인가?
+		bool				CannotMoveByAffect() const;
 		bool				IsImmune(DWORD dwImmuneFlag);
 		void				SetImmuneFlag(DWORD dw) { m_pointsInstant.dwImmuneFlag = dw; }
 
@@ -2136,11 +1911,13 @@ public:
 
 		void				SetQuestItemPtr(LPITEM item);
 		void				ClearQuestItemPtr();
-#ifdef ENABLE_BIOLOG_SYSTEM
-		int					GetBiologState(const std::string& state) const;
-		void				SetBiologState(const std::string& state, int szValue);
-#endif
 		LPITEM				GetQuestItemPtr() const;
+
+#ifdef ENABLE_QUEST_DND_EVENT
+		void				SetQuestDNDItemPtr(LPITEM item);
+		void				ClearQuestDNDItemPtr();
+		LPITEM				GetQuestDNDItemPtr() const;
+#endif
 
 		void				SetQuestBy(DWORD dwQuestVnum)	{ m_dwQuestByVnum = dwQuestVnum; }
 		DWORD				GetQuestBy() const			{ return m_dwQuestByVnum; }
@@ -2153,8 +1930,10 @@ public:
 	private:
 		DWORD				m_dwQuestNPCVID;
 		DWORD				m_dwQuestByVnum;
-		//LPITEM				m_pQuestItem;
-		DWORD				m_dwQuestItemVID{}; // @fixme304 (LPITEM -> DWORD) - DUPE_BUG
+		LPITEM				m_pQuestItem;
+#ifdef ENABLE_QUEST_DND_EVENT
+		LPITEM				m_pQuestDNDItem{nullptr};
+#endif
 
 		// Events
 	public:
@@ -2163,7 +1942,7 @@ public:
 		void				UpdateStateMachine(DWORD dwPulse);
 		void				SetNextStatePulse(int iPulseNext);
 
-		// 캐릭터 인스턴스 업데이트 함수. 기존엔 이상한 상속구조로 CFSM::Update 함수를 호출하거나 UpdateStateMachine 함수를 사용했는데, 별개의 업데이트 함수 추가함.
+
 		void				UpdateCharacter(DWORD dwPulse);
 
 	protected:
@@ -2178,35 +1957,21 @@ public:
 		void				SetWeddingMap(marriage::WeddingMap* pMap);
 		marriage::WeddingMap* GetWeddingMap() const { return m_pWeddingMap; }
 
-		void 	SetMarriageStatus(bool bstatus) { bIsMarriage = bstatus; }
-		void 	SetPartnerPID(DWORD	dwpid) { dwPartnerPID = dwpid; }
-		
-		bool	IsStillMarried()  const { return bIsMarriage; }
-		DWORD	GetPartnerPID()  const { return dwPartnerPID; }
-		
-		void			LoadMarriageInfo(DWORD dwCount, TPacketMarriageElement * pElements);
-
 	private:
 		marriage::WeddingMap* m_pWeddingMap;
 		LPCHARACTER			m_pkChrMarried;
-		
-	protected:
-		bool	bIsMarriage;
-		DWORD	dwPartnerPID;
 
 		// Warp Character
 	public:
 		void				StartWarpNPCEvent();
 		void                ChannelSwitch(int new_ch);
-
+		
 	public:
 		void				StartSaveEvent();
 		void				StartRecoveryEvent();
 		void				StartCheckSpeedHackEvent();
 		void				StartDestroyWhenIdleEvent();
-#ifdef ENABLE_DECORUM
-		void				StartDestroyEvent(DWORD dwSeconds);
-#endif
+
 		LPEVENT				m_pkDeadEvent;
 		LPEVENT				m_pkStunEvent;
 		LPEVENT				m_pkSaveEvent;
@@ -2220,12 +1985,6 @@ public:
 #endif
 		LPEVENT				m_pkFireEvent;
 		LPEVENT				m_pkWarpNPCEvent;
-#ifdef ENABLE_AFK_MODE_SYSTEM
-		LPEVENT				m_pkUpdateCharacter;
-#endif
-#ifdef ENABLE_DECORUM
-		LPEVENT				m_pkDestroyEvent;
-#endif
 		//DELAYED_WARP
 		//END_DELAYED_WARP
 
@@ -2236,13 +1995,12 @@ public:
 		LPEVENT				m_pkCheckSpeedHackEvent;
 		LPEVENT				m_pkDestroyWhenIdleEvent;
 		LPEVENT				m_pkPetSystemUpdateEvent;
-#ifdef OFFLINE_SHOP
-		LPEVENT				m_pkOfflineShopUpdateEvent;
-#endif
+
 #ifdef NEW_PET_SYSTEM
 		LPEVENT				m_pkNewPetSystemUpdateEvent;
 		LPEVENT				m_pkNewPetSystemExpireEvent;
 #endif
+
 		bool IsWarping() const { return m_pkWarpEvent ? true : false; }
 
 		bool				m_bHasPoisoned;
@@ -2266,12 +2024,11 @@ public:
 		int				m_aiPremiumTimes[PREMIUM_MAX_NUM];
 
 		// CHANGE_ITEM_ATTRIBUTES
-		// static const DWORD		msc_dwDefaultChangeItemAttrCycle;	///< 디폴트 아이템 속성변경 가능 주기
-		static const char		msc_szLastChangeItemAttrFlag[];		///< 최근 아이템 속성을 변경한 시간의 Quest Flag 이름
-		// static const char		msc_szChangeItemAttrCycleFlag[];		///< 아이템 속성병경 가능 주기의 Quest Flag 이름
+		static const char		msc_szLastChangeItemAttrFlag[];
 		// END_OF_CHANGE_ITEM_ATTRIBUTES
 
 		// PC_BANG_ITEM_ADD
+		
 	private :
 		bool m_isinPCBang;
 
@@ -2348,12 +2105,8 @@ public:
 		int 	m_iMyShopTime;
 		int		GetMyShopTime() const	{ return m_iMyShopTime; }
 		void	SetMyShopTime() { m_iMyShopTime = thecore_pulse(); }
-#ifdef OFFLINE_SHOP
-		int 	m_iMyOfflineShopTime;
-		int		GetMyOfflineShopTime() const	{ return m_iMyOfflineShopTime; }
-		void	SetMyOfflineShopTime() { m_iMyOfflineShopTime = thecore_pulse(); }
-#endif
-		// Hack 방지를 위한 체크.
+
+
 		bool	IsHack(bool bSendMsg = true, bool bCheckShopOwner = true, int limittime = g_nPortalLimitTime);
 
 		// MONARCH
@@ -2403,9 +2156,9 @@ public:
 		bool IsSiegeNPC() const;
 
 	private:
-		//중국 전용
-		//18세 미만 전용
-		//3시간 : 50 % 5 시간 0%
+
+
+
 		e_overtime m_eOverTime;
 
 	public:
@@ -2420,7 +2173,11 @@ public:
 		bool	CanDeposit() const;
 
 	private:
-		void	__OpenPrivateShop();
+		void	__OpenPrivateShop(
+#ifdef KASMIR_PAKET_SYSTEM
+		bool bKasmir = false
+#endif
+		);
 
 	public:
 		struct AttackedLog
@@ -2465,6 +2222,16 @@ public:
 
 		bool CanWarp () const;
 
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+	public:
+		CLootFilter* GetLootFilter();
+		void SetLootFilter();
+		void ClearLootFilter();
+
+	private:
+		CLootFilter* m_pLootFilter;
+#endif
+
 	private:
 		DWORD m_dwLastGoldDropTime;
 #ifdef ENABLE_NEWSTUFF
@@ -2500,32 +2267,19 @@ public:
 
 		typedef std::map <BYTE, CBuffOnAttributes*> TMapBuffOnAttrs;
 		TMapBuffOnAttrs m_map_buff_on_attrs;
-		// 무적 : 원활한 테스트를 위하여.
+
 	public:
 		void SetArmada() { cannot_dead = true; }
 		void ResetArmada() { cannot_dead = false; }
 	private:
 		bool cannot_dead;
+
 #ifdef __PET_SYSTEM__
 	private:
 		bool m_bIsPet;
 	public:
 		void SetPet() { m_bIsPet = true; }
 		bool IsPet() { return m_bIsPet; }
-#endif
-
-#if defined(__BL_MAILBOX__)
-	public:
-		int			GetMyMailBoxTime() const { return m_iMyMailBoxTime; }
-		void		SetMyMailBoxTime() { m_iMyMailBoxTime = thecore_pulse(); }
-		void		SetMailBox(CMailBox* m);
-		void		SetMailBoxLoading(const bool b) { bMailBoxLoading = b; }
-		bool		IsMailBoxLoading() const { return bMailBoxLoading; }
-		CMailBox*	GetMailBox() const { return m_pkMailBox; }
-	private:
-		CMailBox*	m_pkMailBox;
-		bool		bMailBoxLoading;
-		int 		m_iMyMailBoxTime;
 #endif
 
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
@@ -2547,6 +2301,7 @@ public:
 		int GetEggVid() { return m_eggvid; }
 
 #endif
+
 #ifdef NEW_ICEDAMAGE_SYSTEM
 	private:
 		DWORD m_dwNDRFlag;
@@ -2562,7 +2317,7 @@ public:
 		void ResetNoDamageAffectFlag();
 #endif
 
-	//최종 데미지 보정.
+
 	private:
 		float m_fAttMul;
 		float m_fDamMul;
@@ -2575,19 +2330,11 @@ public:
 	private:
 		bool IsValidItemPosition(TItemPos Pos) const;
 
-#if defined(BL_REMOTE_SHOP)
 	public:
-		DWORD GetLastRemoteTime() const { return dwLastRemoteTime; }
-		void SetLastRemoteTime(DWORD dwTime) { dwLastRemoteTime = dwTime; }
-	private:
-		DWORD dwLastRemoteTime;
-#endif
 
-	public:
-		//용혼석
 
-		// 캐릭터의 affect, quest가 load 되기 전에 DragonSoul_Initialize를 호출하면 안된다.
-		// affect가 가장 마지막에 로드되어 LoadAffect에서 호출함.
+
+
 		void	DragonSoul_Initialize();
 
 		bool	DragonSoul_IsQualified() const;
@@ -2596,28 +2343,29 @@ public:
 		int		DragonSoul_GetActiveDeck() const;
 		bool	DragonSoul_IsDeckActivated() const;
 		bool	DragonSoul_ActivateDeck(int deck_idx);
+
+		void	DragonSoul_DeactivateAll();
+
+
+
+
+		//
+
+
+
+
+		void	DragonSoul_CleanUp();
+
 #ifdef ENABLE_NEW_DETAILS_GUI
 		void	SendKillLog();
 #endif
-		void	DragonSoul_DeactivateAll();
-		// 반드시 ClearItem 전에 불러야 한다.
-		// 왜냐하면....
-		// 용혼석 하나 하나를 deactivate할 때마다 덱에 active인 용혼석이 있는지 확인하고,
-		// active인 용혼석이 하나도 없다면, 캐릭터의 용혼석 affect와, 활성 상태를 제거한다.
-		//
-		// 하지만 ClearItem 시, 캐릭터가 착용하고 있는 모든 아이템을 unequip하는 바람에,
-		// 용혼석 Affect가 제거되고, 결국 로그인 시, 용혼석이 활성화되지 않는다.
-		// (Unequip할 때에는 로그아웃 상태인지, 아닌지 알 수 없다.)
-		// 용혼석만 deactivate시키고 캐릭터의 용혼석 덱 활성 상태는 건드리지 않는다.
-		void	DragonSoul_CleanUp();
-		// 용혼석 강화창
 	public:
 		bool		DragonSoul_RefineWindow_Open(LPENTITY pEntity);
 		bool		DragonSoul_RefineWindow_Close();
 		LPENTITY	DragonSoul_RefineWindow_GetOpener() { return  m_pointsInstant.m_pDragonSoulRefineWindowOpener; }
 		bool		DragonSoul_RefineWindow_CanRefine();
 
-		//독일 선물 기능 패킷 임시 저장
+
 	private:
 		unsigned int itemAward_vnum;
 		char		 itemAward_cmd[20];
@@ -2640,17 +2388,9 @@ public:
 		void SetCmdAntiFloodPulse(int dwPulse){m_dwCmdAntiFloodPulse=dwPulse;}
 		void SetCmdAntiFloodCount(DWORD dwCount){m_dwCmdAntiFloodCount=dwCount;}
 #endif
-
-	//@fixme503
-	int waitHackCounter;
-	void ClearWaitHackCounter(void) { waitHackCounter = 0; }
-	void SetWaitHackCounter(void) { waitHackCounter = 1; }
-	int GetWaitHackCounter(void) const { return waitHackCounter; }
-	//@end_fixme503
-
 	private:
-		// SyncPosition을 악용하여 타유저를 이상한 곳으로 보내는 핵 방어하기 위하여,
-		// SyncPosition이 일어날 때를 기록.
+
+
 		timeval		m_tvLastSyncTime;
 		int			m_iSyncHackCount;
 	public:
@@ -2659,27 +2399,34 @@ public:
 		void			SetSyncHackCount(int iCount) { m_iSyncHackCount = iCount;}
 		int				GetSyncHackCount() { return m_iSyncHackCount; }
 
-#ifdef PRIVATESHOP_SEARCH_SYSTEM
+	// @fixme188 BEGIN
 	public:
-#ifdef ENABLE_CHEQUE_SYSTEM
-		void ShopSearchInfo(bool bNameOnly, BYTE bItemType, BYTE bItemSubType,long lMinGold, long lMaxGold, int bMinCheque, int bMaxCheque, const char* c_szItemName);
-#else
-		void ShopSearchInfo(bool bNameOnly, BYTE bItemType, BYTE bItemSubType,long lMinGold, long lMaxGold, const char* c_szItemName);
-#endif
-		void ShopSearchBuyItem(DWORD dwShopVID, BYTE bItemPos);
-#endif
+		void ResetRewardInfo() {
+			m_map_kDamage.clear();
+			if (!IsPC())
+				SetExp(0);
+		}
+		void DeadNoReward() {
+			if (!IsDead())
+				ResetRewardInfo();
+			Dead();
+		}
+	// @fixme188 END
 
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	protected:
 		bool	m_bAcceCombination, m_bAcceAbsorption;
 
 	public:
-		bool	isAcceOpened(bool bCombination) { return bCombination ? m_bAcceCombination : m_bAcceAbsorption; }
+		bool	IsAcceOpened(bool bCombination) {return bCombination ? m_bAcceCombination : m_bAcceAbsorption;}
+		bool	IsAcceOpened() {return (m_bAcceCombination || m_bAcceAbsorption);}
 		void	OpenAcce(bool bCombination);
 		void	CloseAcce();
 		void	ClearAcceMaterials();
 		bool	CleanAcceAttr(LPITEM pkItem, LPITEM pkTarget);
-		LPITEM*	GetAcceMaterials() { return m_pointsInstant.pAcceMaterials; }
+		std::vector<LPITEM>	GetAcceMaterials();
+		const TItemPosEx*	GetAcceMaterialsInfo();
+		void	SetAcceMaterial(int pos, LPITEM ptr);
 		bool	AcceIsSameGrade(long lGrade);
 		DWORD	GetAcceCombinePrice(long lGrade);
 		void	GetAcceCombineResult(DWORD & dwItemVnum, DWORD & dwMinAbs, DWORD & dwMaxAbs);
@@ -2690,37 +2437,6 @@ public:
 		void	RefineAcceMaterials();
 #endif
 
-#ifdef CHANGELOOK_SYSTEM
-	protected:
-		bool	m_bChangeLook;
-
-	public:
-		bool	isChangeLookOpened() { return m_bChangeLook; }
-		void	ChangeLookWindow(bool bOpen = false, bool bRequest = false);
-		void	ClearClWindowMaterials();
-		LPITEM*	GetClWindowMaterials() { return m_pointsInstant.pClMaterials; }
-		BYTE	CheckClEmptyMaterialSlot();
-		void	AddClMaterial(TItemPos tPos, BYTE bPos);
-		void	RemoveClMaterial(BYTE bPos);
-		void	RefineClMaterials();
-		bool	CleanTransmutation(LPITEM pkItem, LPITEM pkTarget);
-#endif
-
-#ifdef ANTY_WAIT_HACK
-	public:
-		void			SendWaitHack();
-		void			StartCheckWH();
-		bool			GetWHPass() { return m_dwWHPass; }
-		void			SetWHPass(bool s = true) { m_dwWHPass = s; }
-		const char*		GetLastWHRegex() { return m_stWHPass; }
-		void			SetLastWHRegex(const char* s) { strlcpy(m_stWHPass,s,sizeof(m_stWHPass)); }
-		BYTE			GetRealJob();
-	protected:
-		LPEVENT			m_pkCheckWH;
-		bool			m_dwWHPass;
-		char		m_stWHPass[33];
-
-#endif	
 #ifdef __SPECIAL_STORAGE_SYSTEM__
 	public:
 		void	SortSpecialStorage(BYTE window_type, bool stack = false);
@@ -2732,128 +2448,25 @@ public:
 		int		m_SortSpecialStoragePulse;
 #endif
 
-#ifdef OFFLINE_SHOP
-	public:
-		void			SetOfflineShop(LPOFFLINESHOP pkOfflineShop);
-		LPOFFLINESHOP	GetOfflineShop() const { return m_pkOfflineShop; }
-		bool			IsOwnerEditShopOffline() const { return m_IsEditModeOfflineShop ? true : false; }
-		void 			SetEditOfflineShopMode(bool b) { m_IsEditModeOfflineShop = b; }
-		void			SetOfflineShopOwner(LPCHARACTER ch) { m_pkChrOfflineShopOwner = ch; }
-		LPCHARACTER		GetOfflineShopOwner() const { return m_pkChrOfflineShopOwner; }
-		void			SetOfflineShopRealOwner(DWORD dwVID) { m_pointsInstant.real_owner = dwVID; }
-		DWORD			GetOfflineShopRealOwner() const { return m_pointsInstant.real_owner; }
-		void			SetOfflineShopRealOwnerAccountID(DWORD dwVID) { m_pointsInstant.real_owner_aid = dwVID; }
-		DWORD			GetOfflineShopRealOwnerAccountID() const { return m_pointsInstant.real_owner_aid; }
-		void			SetOfflineShopNPC(bool flag) { m_pointsInstant.isOfflineShop = flag; }
-		bool			IsOfflineShopNPC() const { return m_pointsInstant.isOfflineShop; }
-		void			OpenMyOfflineShop(const char * c_pszSign, TShopItemTable * pTable, BYTE bItemCount, BYTE bTime);
-		void			SetOfflineShopTimer(int iTime) { m_pointsInstant.leftTime = iTime; }
-		int				GetOfflineShopTimer() { return m_pointsInstant.leftTime; }
-		void			SetOfflineShopSaveTime(BYTE bSaveTime) { m_pointsInstant.bSaveTime = bSaveTime; }
-		BYTE			GetOfflineShopSaveTime() { return m_pointsInstant.bSaveTime; }
-		void			StartOfflineShopUpdateEvent(DWORD dwPlayerID);
-		void			StopOfflineShopUpdateEvent();
-		void			SetOfflineShopVID(DWORD dwVID) { m_pointsInstant.dwVID = dwVID; }
-		DWORD			GetOfflineShopVID() { return m_pointsInstant.dwVID; }
-	
-		bool			IsOwnerCreateShopOffline() const { return m_IsCreateModeOfflineShop ? true : false; }
-		void 			SetOfflineShopModeCreate(bool b) { m_IsCreateModeOfflineShop = b; }
-
-	protected:
-		LPOFFLINESHOP	m_pkOfflineShop;
-		LPCHARACTER		m_pkChrOfflineShopOwner;
-		bool			m_IsEditModeOfflineShop;
-		bool			m_IsCreateModeOfflineShop;
-#endif
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM
-	public:
-		void 	FuncHideCostume(int slot);
-		void 	FuncHideCostumeLoad();
-		int 	GetHideCostume(int wear) const ;
-		void 	SetHideCostumeUpdate();
-		int		GetSlotsCostume();
-		int 	GetSlotDefault(int slot);
-#endif
-		
-#ifdef ENABLE_EXPRESSING_EMOTION
-	struct EmotionsValues
-	{
-		int 	id_emotion;
-		DWORD 	tiempo_emotion;
-
-	}save_info_emotion,copy_info_emotion;
-
-	public:
-
-		void LoadingInfoEmotions();
-		void LoadInfoEmotions();
-		void LoadEmotions();
-		bool CheckEmotionList(int emotion);
-		int EmotionsList();
-		void InsertEmotion();
-		int CountEmotion();
-		void StartCheckTimeEmotion();
-		int get_time_emotion(int value);
-		int get_id_emotion(int value);
-
-
-	private:
-		LPEVENT	TimeEmotionUpdateTime;
-		std::vector<EmotionsValues> load_info_emotion;	
-#endif
-
+#if defined(__DUNGEON_INFO_SYSTEM__)
 public:
-	void				SetProtectTime(const std::string& flagname, int value);
-	int					GetProtectTime(const std::string& flagname) const;
+	void SetDungeonInfoOpen(bool bOpen = true) { m_bDungeonInfoOpen = bOpen; };
+	bool IsDungeonInfoOpen() { return m_bDungeonInfoOpen; }
+
+	void StartDungeonInfoReloadEvent();
+	void StopDungeonInfoReloadEvent();
+
+	bool UpdateDungeonRanking(const std::string c_strQuestName);
+
+	void SetLastDamage(int iLastDamage) { m_iLastDamage = iLastDamage; }
+	int GetLastDamage() { return m_iLastDamage; }
+
 protected:
-	std::map<std::string, int>  m_protection_Time;
-
-#ifdef __BATTLE_PASS__
-	public:
-		int iMonthBattlePass;
-		struct Struct_BattlePass{DWORD	count;	DWORD	status;};
-		void	Load_BattlePass();
-		void	ExternBattlePass();
-		void	DoMission(int index, long long count);
-		void	SendInfosBattlePass(int index);
-		void	FinalRewardBattlePass();
-		struct Infos_BattlePass{DWORD	vnum1;	DWORD	count1;	DWORD	vnum2;
-								DWORD	count2;	DWORD	vnum3;	DWORD	count3;
-								char	name[4096];		char	image[150];};
-		struct Infos_MissionsBP{DWORD	type;	DWORD	vnum;	DWORD	count;};
-		struct Infos_FinalBP{DWORD	f_vnum1;	DWORD	f_count1;	DWORD	f_vnum2;
-							 DWORD	f_count2;	DWORD	f_vnum3;	DWORD	f_count3;};
-		std::vector<Struct_BattlePass> v_counts;
-		std::vector<Infos_BattlePass> rewards_bp;
-		std::vector<Infos_MissionsBP> missions_bp;
-		std::vector<Infos_FinalBP> final_rewards;
+	bool m_bDungeonInfoOpen;
+	LPEVENT m_pkDungeonInfoReloadEvent;
+	int m_iLastDamage;
 #endif
-#ifdef ENABLE_DECORUM
-	private:
-		CPVP * m_pPvp;
-		
-	public:
-		CPVP * GetPvp() const { return m_pPvp; };
-		void SetPvp(CPVP* pPvp){m_pPvp = pPvp;};
-#endif
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	public:
 
-		bool	IsOpenCombSkillBook() const { return m_isOpenCombSkillBook ? true : false; }
-		void 	SetOpenCombSkillBook(bool b) { m_isOpenCombSkillBook = b; }
-		void 	DateItemAdd(LPITEM item){ date_item_add = item; }
-		LPITEM 	GetDateItemAdd(){ return date_item_add; }
-		LPITEM 	GetBonus67NewItem()const;
-
-
-	private:
-		bool m_isOpenCombSkillBook;
-		LPITEM date_item_add;
-#endif
-#ifdef WON_EXCHANGE
-	public:
-		void		WonExchange(BYTE bOption, WORD wValue);
-#endif
 #ifdef ENABLE_HUNTING_SYSTEM
 	public:
 		void CheckHunting(bool isLevelUp = 0);
@@ -2874,99 +2487,10 @@ protected:
 		int GetMinMaxExp(DWORD missionLevel, bool AskMax);
 		int GetRandomExp(DWORD missionLevel);
 #endif
-#if defined(__DUNGEON_INFO_SYSTEM__)
-public:
-	void SetDungeonInfoOpen(bool bOpen = true) { m_bDungeonInfoOpen = bOpen; };
-	bool IsDungeonInfoOpen() { return m_bDungeonInfoOpen; }
 
-	void StartDungeonInfoReloadEvent();
-	void StopDungeonInfoReloadEvent();
-
-	bool UpdateDungeonRanking(const std::string c_strQuestName);
-
-	void SetLastDamage(int iLastDamage) { m_iLastDamage = iLastDamage; }
-	int GetLastDamage() { return m_iLastDamage; }
-
-protected:
-	bool m_bDungeonInfoOpen;
-	LPEVENT m_pkDungeonInfoReloadEvent;
-	int m_iLastDamage;
-#endif
-
-public:
-	void	CheckSummonItems();
-#ifdef __REMOVE_PARTY_IN_SPECIFIC_MAP
-	bool	CanEnterParty();
-#endif
 #ifdef ENABLE_ANTI_EXP
 	bool	GetAntiExp();
 	void	SetAntiExp(bool newStatus);
-#endif
-
-#ifdef ENABLE_ANTI_MULTIPLE_FARM
-	public:
-		auto		HasBlockedDrops() -> bool;
-		auto		UpdateCharacterWarpCheck(bool state) -> void { bAFisWarping = state; }
-		auto		IsSetWarp() -> bool { return bAFisWarping; }
-
-	protected:
-		bool		bAFisWarping;
-#endif
-#ifdef ENABLE_CHECK_PICKUP_HACK
-	private:
-		DWORD m_dwLastPickupTime;
-	public:
-		void SetLastPickupTime() { m_dwLastPickupTime = get_dword_time(); }
-		DWORD GetLastPickupTime() { return m_dwLastPickupTime; }
-#endif
-#ifdef ENABLE_CHECK_GHOSTMODE
-	private:
-		DWORD m_dwCountGhostmodePoint;
-	public:
-		DWORD GetGhostmodeCount() { return m_dwCountGhostmodePoint; }
-		void AddGhostmodeCount() { m_dwCountGhostmodePoint += 1; }
-		void ResetGhostmodeCount() { m_dwCountGhostmodePoint = 0; }
-#endif
-#ifdef ENABLE_CHECK_WALLHACK
-	private:
-		DWORD m_dwCountWallhackPoint;
-	public:
-		DWORD GetWallhackCount() { return m_dwCountWallhackPoint; }
-		void AddWallhackCount() { m_dwCountWallhackPoint += 1; }
-		void ResetWallhackCount() { m_dwCountWallhackPoint = 0; }
-#endif
-#ifdef ENABLE_CSHIELD
-	private:
-		LPEVENT m_pkCShieldEvent;
-		LPEVENT m_pkCShieldDataEvent;
-		spCShield m_cshield;
-	public:
-		void StartCShieldEvent();
-		void StartCShieldDataEvent();
-		void SendCShieldPacket(bool start);
-		spCShield GetCShield() const { return m_cshield; }
-#endif
-
-#ifdef ENABLE_NEW_FISHING_SYSTEM
-	public:
-		LPEVENT m_pkFishingNewEvent;
-
-		void fishing_new_start();
-		void fishing_new_stop();
-		void fishing_new_catch();
-		void fishing_new_catch_failed();
-		void fishing_catch_decision(DWORD itemVnum);
-		void SetFishCatch(int i) { m_bFishCatch = i; }
-		BYTE GetFishCatch() { return m_bFishCatch; }
-		void SetLastCatchTime(DWORD i) { m_dwLastCatch = i; }
-		int GetLastCatchTime() { return m_dwLastCatch; }
-		void SetFishCatchFailed(int i) { m_dwCatchFailed = i; }
-		BYTE GetFishCatchFailed() { return m_dwCatchFailed; }
-
-	private:
-		BYTE m_bFishCatch;
-		DWORD m_dwCatchFailed;
-		int m_dwLastCatch;
 #endif
 
 #ifdef FAST_EQUIP_WORLDARD
@@ -2984,26 +2508,25 @@ public:
 
 #endif
 
-#ifdef ENABLE_DUNGEON_FUNC
-	protected:
-		int	m_iMonsterHpBlock;
+public:
+	void				SetProtectTime(const std::string& flagname, int value);
+	int					GetProtectTime(const std::string& flagname) const;
+protected:
+	std::map<std::string, int>  m_protection_Time;
+
+#ifdef ENABLE_ANTI_MULTIPLE_FARM
 	public:
-		void	BlockMonsterHP(BYTE hpPercentage);
-		void	UnblockMonsterHP() { m_iMonsterHpBlock = 0; }
-		bool	IsMonsterBlocked() { return m_iMonsterHpBlock > 0 ? true : false; }
-		int		GetMonsterHPBlock() const { return m_iMonsterHpBlock; }
-		int		CanDamageMonster(int damage);
+		auto		HasBlockedDrops() -> bool;
+		auto		UpdateCharacterWarpCheck(bool state) -> void { bAFisWarping = state; }
+		auto		IsSetWarp() -> bool { return bAFisWarping; }
+
+	protected:
+		bool		bAFisWarping;
 #endif
 
 };
 
 ESex GET_SEX(LPCHARACTER ch);
 
-#ifdef ENABLE_NEW_FISHING_SYSTEM
-EVENTINFO(fishingnew_event_info)
-{
-	DWORD pid, vnum, chance, sec;
-	fishingnew_event_info() : pid(0), vnum(0), chance(0), sec(0) {}
-};
 #endif
-#endif
+//martysama0134's 2022

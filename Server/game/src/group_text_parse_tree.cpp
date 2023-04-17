@@ -136,7 +136,7 @@ CGroupNode::CGroupNode()
 
 CGroupNode::~CGroupNode()
 {
-	for (TMapGroup::iterator it = m_mapChildNodes.begin(); it != m_mapChildNodes.end(); ++it)	//@fixme541
+	for (TMapGroup::iterator it = m_mapChildNodes.begin(); it != m_mapChildNodes.end(); it++)
 	{
 		delete it->second;
 	}
@@ -200,7 +200,7 @@ bool CGroupNode::GetRow(const std::string & c_rstrRowKey, OUT const CGroupNode::
 	return true;
 }
 
-// 참고로, idx랑 txt에 쓰여진 순서랑 관계 없음.
+
 bool CGroupNode::GetRow(int idx, OUT const CGroupNode::CGroupNodeRow ** ppRow) const
 {
 	if ((TMapRow::size_type)idx >= m_map_rows.size())
@@ -223,7 +223,6 @@ bool CGroupNode::GetGroupRow(const std::string& stGroupName, const std::string& 
 		if (pChildGroup->GetRow(stRow, ppRow))
 			return true;
 	}
-	// default group을 살펴봄.
 	pChildGroup = GetChildNode("default");
 	if (NULL != pChildGroup)
 	{
@@ -257,3 +256,4 @@ int CGroupNode::CGroupNodeRow::GetSize() const
 {
 	return m_vec_values.size();
 }
+//martysama0134's 2022

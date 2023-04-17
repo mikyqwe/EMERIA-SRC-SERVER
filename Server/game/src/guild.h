@@ -2,9 +2,6 @@
 #define __INC_GUILD_H
 
 #include "skill.h"
-#ifdef ENABLE_GUILD_REQUEST
-#include "packet.h"
-#endif
 
 typedef struct _SQLMsg SQLMsg;
 
@@ -19,7 +16,7 @@ enum
 	GUILD_POWER_PER_SKILL_LEVEL = 200,
 	GUILD_POWER_PER_LEVEL = 100,
 	GUILD_MINIMUM_LEADERSHIP = 40,
-	GUILD_WAR_MIN_MEMBER_COUNT = 3,
+	GUILD_WAR_MIN_MEMBER_COUNT = 8,
 	GUILD_LADDER_POINT_PER_LEVEL = 1000,
 	GUILD_CREATE_ITEM_VNUM = 70101,
 };
@@ -32,12 +29,12 @@ struct SGuildMaster
 
 typedef struct SGuildMember
 {
-	DWORD pid; // player 테이블의 id; primary key
-	BYTE grade; // 길드상의 플레이어의 계급 1 to 15 (1이 짱)
+	DWORD pid;
+	BYTE grade;
 	BYTE is_general;
 	BYTE job;
 	BYTE level;
-	DWORD offer_exp; // 공헌한 경험치
+	DWORD offer_exp;
 	BYTE _dummy;
 
 	std::string name;
@@ -75,7 +72,7 @@ typedef struct packet_guild_sub_info
 
 typedef struct SGuildGrade
 {
-	char grade_name[GUILD_GRADE_NAME_MAX_LEN+1]; // 8+1 길드장, 길드원 등의 이름
+	char grade_name[GUILD_GRADE_NAME_MAX_LEN+1];
 	BYTE auth_flag;
 } TGuildGrade;
 
@@ -114,9 +111,6 @@ typedef struct SGuildData
 	BYTE	abySkill[GUILD_SKILL_COUNT];
 
 	int		power;
-#ifdef ENABLE_GUILD_REQUEST
-	BYTE	empire;
-#endif
 	int		max_power;
 
 	int		ladder_point;
@@ -141,18 +135,13 @@ typedef struct SGuildWar
 	DWORD state;
 	BYTE type;
 	DWORD map_index;
-#ifdef __IMPROVED_GUILD_WAR__
-	int		max_score;
-	int		max_player;
-	DWORD	flags;
-	int		custom_map_index;
-#endif
 
-	SGuildWar(BYTE type) :
-		war_start_time(0), score(0), state(GUILD_WAR_RECV_DECLARE), type(type), map_index(0)
-#ifdef __IMPROVED_GUILD_WAR__
-		, max_score(0), max_player(0), flags(0), custom_map_index(0)
-#endif
+	SGuildWar(BYTE type)
+		: war_start_time(0),
+	score(0),
+	state(GUILD_WAR_RECV_DECLARE),
+	type(type),
+	map_index(0)
 	{
 	}
 	bool IsWarBegin() const
@@ -234,11 +223,8 @@ class CGuild
 		void		BroadcastMemberCountBonus();
 		// END_OF_GUILD_MEMBER_COUNT_BONUS
 
-#ifdef ENABLE_GENERAL_IN_GUILD
-		DWORD		GetGeneralMember();
-#endif
-		int			GetMaxGeneralCount() const	{ return 1 /*+ GetSkillLevel(GUILD_SKILL_DEUNGYONG)/3*/;}
-		int			GetGeneralCount() const		{ return m_general_count; }
+		int		GetMaxGeneralCount() const	{ return 1 /*+ GetSkillLevel(GUILD_SKILL_DEUNGYONG)/3*/;}
+		int		GetGeneralCount() const		{ return m_general_count; }
 
 		TGuildMember*	GetMember(DWORD pid);
 		DWORD			GetMemberPID(const std::string& strName);
@@ -270,7 +256,7 @@ class CGuild
 		bool		ChargeSP(LPCHARACTER ch, int iSP);
 
 		void		Chat(const char* c_pszText);
-		void		P2PChat(const char* c_pszText); // 길드 채팅
+		void		P2PChat(const char* c_pszText);
 
 		void		SkillUsableChange(DWORD dwSkillVnum, bool bUsable);
 		void		AdvanceLevel(int iLevel);
@@ -280,22 +266,18 @@ class CGuild
 		void		RequestWithdrawMoney(LPCHARACTER ch, int iGold);
 
 		void		RecvMoneyChange(int iGold);
-		void		RecvWithdrawMoneyGive(int iChangeGold); // bGive==1 이면 길드장에게 주는 걸 시도하고 성공실패를 디비에게 보낸다
+		void		RecvWithdrawMoneyGive(int iChangeGold);
 
 		int		GetGuildMoney() const	{ return m_data.gold; }
 
 		// War general
-#ifdef __IMPROVED_GUILD_WAR__
-		void		GuildWarPacket(DWORD guild_id, BYTE bWarType, BYTE bWarState, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-#else
 		void		GuildWarPacket(DWORD guild_id, BYTE bWarType, BYTE bWarState);
-#endif
 		void		SendEnemyGuild(LPCHARACTER ch);
 
 		int		GetGuildWarState(DWORD guild_id);
 		bool		CanStartWar(BYTE bGuildWarType);
 		DWORD		GetWarStartTime(DWORD guild_id);
-		bool		UnderWar(DWORD guild_id); // 전쟁중인가?
+		bool		UnderWar(DWORD guild_id);
 		DWORD		UnderAnyWar(BYTE bType = GUILD_WAR_TYPE_MAX_NUM);
 
 		// War map relative
@@ -309,22 +291,6 @@ class CGuild
 
 		// War state relative
 		void		NotifyGuildMaster(const char* msg);
-#ifdef __IMPROVED_GUILD_WAR__
-		void		RequestDeclareWar(DWORD guild_id, BYTE type, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-		void		RequestRefuseWar(DWORD guild_id, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-
-		bool		DeclareWar(DWORD guild_id, BYTE type, BYTE state, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-		void		RefuseWar(DWORD guild_id, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-		bool		WaitStartWar(DWORD guild_id, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#ifdef GUILD_WAR_COUNTER
-					, DWORD warID
-#endif
-		);
-		bool		CheckStartWar(DWORD guild_id);	// check if StartWar method fails (call it before StartWar)
-		void		StartWar(DWORD guild_id, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-		void		EndWar(DWORD guild_id);
-		void		ReserveWar(DWORD guild_id, BYTE type, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index);
-#else
 		void		RequestDeclareWar(DWORD guild_id, BYTE type);
 		void		RequestRefuseWar(DWORD guild_id);
 
@@ -335,7 +301,6 @@ class CGuild
 		void		StartWar(DWORD guild_id);
 		void		EndWar(DWORD guild_id);
 		void		ReserveWar(DWORD guild_id, BYTE type);
-#endif
 
 		// War points relative
 		void		SetWarScoreAgainstTo(DWORD guild_opponent, int newpoint);
@@ -351,40 +316,20 @@ class CGuild
 		int			GetGuildWarWinCount() const { return m_data.win; }
 		int			GetGuildWarDrawCount() const { return m_data.draw; }
 		int			GetGuildWarLossCount() const { return m_data.loss; }
-#ifdef ENABLE_GUILD_REQUEST
-	BYTE		GetEmpire()const { return m_data.empire; }
-	WORD		GetIndex()const { return m_request_index; }
-	void		SetIndex(WORD index) { m_request_index = index; }
-	bool		IsHaveRequest(DWORD pid);
-	void		SaveRequestData(const TGuild_request& t, bool isFirst = false);
-	void		RemoveRequestData(DWORD pid, bool isFirst = false, bool isFromMaster = false);
-	void		ReloadRequest();
-	std::vector<TGuild_request> m_request;
-#endif
+
 		bool		HasLand();
 
 		// GUILD_JOIN_BUG_FIX
-		/// character 에게 길드가입 초대를 한다.
-		/**
-		 * @param	pchInviter 초대한 character.
-		 * @param	pchInvitee 초대할 character.
-		 *
-		 * 초대하거나 받을수 없는 상태라면 해당하는 채팅 메세지를 전송한다.
-		 */
+
+
 		void		Invite( LPCHARACTER pchInviter, LPCHARACTER pchInvitee );
 
-		/// 길드초대에 대한 상대 character 의 수락을 처리한다.
-		/**
-		 * @param	pchInvitee 초대받은 character
-		 *
-		 * 길드에 가입가능한 상태가 아니라면 해당하는 채팅 메세지를 전송한다.
-		 */
+
+
 		void		InviteAccept( LPCHARACTER pchInvitee );
 
-		/// 길드초대에 대한 상대 character 의 거부를 처리한다.
-		/**
-		 * @param	dwPID 초대받은 character 의 PID
-		 */
+
+
 		void		InviteDeny( DWORD dwPID );
 		// END_OF_GUILD_JOIN_BUG_FIX
 
@@ -410,10 +355,7 @@ class CGuild
 		void LoadGuildData(SQLMsg* pmsg);
 		void LoadGuildGradeData(SQLMsg* pmsg);
 		void LoadGuildMemberData(SQLMsg* pmsg);
-#ifdef ENABLE_GUILD_REQUEST
-	WORD	m_request_index;
-	void LoadGuildRequestData(SQLMsg* pmsg);
-#endif
+
 		void __P2PUpdateGrade(SQLMsg* pmsg);
 
 		typedef std::map<DWORD, TGuildWar> TEnemyGuildContainer;
@@ -424,27 +366,24 @@ class CGuild
 		bool	abSkillUsable[GUILD_SKILL_COUNT];
 
 		// GUILD_JOIN_BUG_FIX
-		/// 길드 가입을 할 수 없을 경우의 에러코드.
+
 		enum GuildJoinErrCode {
-			GERR_NONE			= 0,	///< 처리성공
-			GERR_WITHDRAWPENALTY,		///< 탈퇴후 가입가능한 시간이 지나지 않음
-			GERR_COMMISSIONPENALTY,		///< 해산후 가입가능한 시간이 지나지 않음
-			GERR_ALREADYJOIN,			///< 길드가입 대상 캐릭터가 이미 길드에 가입해 있음
-			GERR_GUILDISFULL,			///< 길드인원 제한 초과
-			GERR_GUILD_IS_IN_WAR,		///< 길드가 현재 전쟁중
-			GERR_INVITE_LIMIT,			///< 길드원 가입 제한 상태
-			GERR_MAX				///< Error code 최고치. 이 앞에 Error code 를 추가한다.
+			GERR_NONE			= 0,
+			GERR_WITHDRAWPENALTY,
+			GERR_COMMISSIONPENALTY,
+			GERR_ALREADYJOIN,
+			GERR_GUILDISFULL,
+			GERR_GUILD_IS_IN_WAR,
+			GERR_INVITE_LIMIT,
+			GERR_MAX
 		};
 
-		/// 길드에 가입 가능한 조건을 검사한다.
-		/**
-		 * @param [in]	pchInvitee 초대받는 character
-		 * @return	GuildJoinErrCode
-		 */
+
+
 		GuildJoinErrCode	VerifyGuildJoinableCondition( const LPCHARACTER pchInvitee );
 
 		typedef std::map< DWORD, LPEVENT >	EventMap;
-		EventMap	m_GuildInviteEventMap;	///< 길드 초청 Event map. key: 초대받은 캐릭터의 PID
+		EventMap	m_GuildInviteEventMap;
 		// END_OF_GUILD_JOIN_BUG_FIX
 #ifdef ENABLE_D_NJGUILD
 	private:
@@ -484,3 +423,4 @@ template <class Func> void CGuild::ForEachOnMapMember (Func & f, long lMapIndex)
 #endif
 
 #endif
+//martysama0134's 2022

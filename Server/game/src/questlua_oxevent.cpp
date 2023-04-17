@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "questmanager.h"
 #include "char.h"
@@ -181,6 +180,7 @@ namespace quest
 			{	"get_oxquiz_fn",	oxevent_get_oxquiz_fn	}, // [return lua string]
 			{	"set_oxquiz_fn",	oxevent_set_oxquiz_fn	}, // [return nothing]
 			{	"set_oxquiz_fn0",	oxevent_set_oxquiz_fn0	}, // [return nothing]
+			{	"set_oxquiz_fn_ex",	oxevent_set_oxquiz_fn0	}, // [return nothing]
 #endif
 			{ NULL, NULL}
 		};
@@ -188,4 +188,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("oxevent", oxevent_functions);
 	}
 }
-
+//martysama0134's 2022

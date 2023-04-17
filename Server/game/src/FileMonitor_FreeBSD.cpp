@@ -134,3 +134,4 @@ void FileMonitorFreeBSD::AddWatch(const std::string& strFileName, PFN_FileChange
 	m_TriggeredEventLists.push_back( kTriggerEvent );
 	m_MonitoredEventLists.push_back( kMonitorEvent );
 }
+//martysama0134's 2022

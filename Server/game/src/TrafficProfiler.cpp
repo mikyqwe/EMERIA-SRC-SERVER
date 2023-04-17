@@ -90,3 +90,4 @@ void TrafficProfiler::InitializeProfiling()
 			*it = empty;
 	}
 }
+//martysama0134's 2022

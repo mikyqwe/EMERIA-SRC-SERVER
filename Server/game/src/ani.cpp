@@ -53,9 +53,6 @@ const char* FN_weapon_type(int weapon)
 #ifdef ENABLE_WOLFMAN_CHARACTER
 		FN_NAME(WEAPON_CLAW);
 #endif
-#ifdef __NEW_ARROW_SYSTEM__
-		FN_NAME(WEAPON_UNLIMITED_ARROW);
-#endif
 		FN_NAME(WEAPON_NUM_TYPES);
 	}
 
@@ -66,7 +63,6 @@ const char* FN_weapon_type(int weapon)
 class ANI
 {
 	protected:
-		// [종족][일반0탈것1][무기][콤보]
 		DWORD m_speed[MAIN_RACE_MAX_NUM][2][WEAPON_NUM_TYPES][9];
 
 	public:
@@ -137,16 +133,16 @@ ANI::ANI()
 bool ANI::load()
 {
 	const char*	dir_name[MAIN_RACE_MAX_NUM] = {
-		"data/pc/warrior",		// 무사(남)
-		"data/pc/assassin",		// 자객(여)
-		"data/pc/sura",			// 수라(남)
-		"data/pc/shaman",		// 무당(여)
-		"data/pc2/warrior",		// 무사(여)
-		"data/pc2/assassin",	// 자객(남)
-		"data/pc2/sura",		// 수라(여)
-		"data/pc2/shaman",		// 무당(남)
+		"data/pc/warrior",
+		"data/pc/assassin",
+		"data/pc/sura",
+		"data/pc/shaman",
+		"data/pc2/warrior",
+		"data/pc2/assassin",
+		"data/pc2/sura",
+		"data/pc2/shaman",
 #ifdef ENABLE_WOLFMAN_CHARACTER
-		"data/pc3/wolfman",		// 수인족
+		"data/pc3/wolfman",
 #endif
 	};
 
@@ -223,13 +219,11 @@ bool ANI::load_one_race(int race, const char *dir_name)
 
 		for (BYTE combo = 1; combo <= 8; ++combo)
 		{
-			// 말 안탔을 때
 			m_speed[race][0][weapon][combo] = load_one_weapon(dir_name, weapon, combo, false);
-			m_speed[race][0][weapon][0] = MIN(m_speed[race][0][weapon][0], m_speed[race][0][weapon][combo]); // 최소값
+			m_speed[race][0][weapon][0] = MIN(m_speed[race][0][weapon][0], m_speed[race][0][weapon][combo]);
 
-			// 말 탔을 때
 			m_speed[race][1][weapon][combo] = load_one_weapon(dir_name, weapon, combo, true);
-			m_speed[race][1][weapon][0] = MIN(m_speed[race][1][weapon][0], m_speed[race][1][weapon][combo]); // 최소값
+			m_speed[race][1][weapon][0] = MIN(m_speed[race][1][weapon][0], m_speed[race][1][weapon][combo]);
 
 			dev_log(LOG_DEB0, "combo%02d speed=%d horse=%d",
 					combo, m_speed[race][0][weapon][combo], m_speed[race][1][weapon][combo]);
@@ -274,9 +268,6 @@ DWORD ANI::attack_speed(int race, int weapon, BYTE combo, bool horse)
 #ifdef ENABLE_WOLFMAN_CHARACTER
 		case WEAPON_CLAW:
 #endif
-#ifdef __NEW_ARROW_SYSTEM__
-		case WEAPON_UNLIMITED_ARROW:
-#endif
 			break;
 		default:
 			return 1000;
@@ -317,12 +308,9 @@ const char* FN_weapon_string(int weapon)
 		case WEAPON_BELL:		return "BELL";
 		case WEAPON_FAN:		return "FAN";
 		case WEAPON_ARROW:		return "ARROW";
-		case WEAPON_MOUNT_SPEAR:	return "WEAPON_MOUNT_SPEAR";
+		case WEAPON_MOUNT_SPEAR:return "WEAPON_MOUNT_SPEAR";
 #ifdef ENABLE_WOLFMAN_CHARACTER
 		case WEAPON_CLAW:		return "CLAW";
-#endif
-#ifdef __NEW_ARROW_SYSTEM__
-		case WEAPON_UNLIMITED_ARROW:	return "ARROW_UNLIMITED";
 #endif
 	}
 
@@ -375,8 +363,7 @@ DWORD ani_attack_speed(LPCHARACTER ch)
 			ch->GetPoint(POINT_ATT_SPEED));
 	*/
 
-	/* 투핸디드 소드의 경우 삼연참공격과 승마시 */
-	/* 오류가 많아 한손검 속도로 생각하자       */
+
 	if (weapon == WEAPON_TWO_HANDED)
 		weapon = WEAPON_SWORD;
 
@@ -406,3 +393,4 @@ int main(int argc, char **argv)
 	exit(0);
 }
 #endif
+//martysama0134's 2022

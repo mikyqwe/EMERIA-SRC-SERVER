@@ -8,3 +8,4 @@ extern void MatrixCardRndCoordinate(unsigned long & rows, unsigned long & cols);
 #define MATRIX_CARD_COL(cols, i) ((cols >> ((4 - i - 1) * 8)) & 0x000000FF)
 
 #endif
+//martysama0134's 2022

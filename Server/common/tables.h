@@ -6,12 +6,9 @@
 #include "CommonDefines.h"
 #include "service.h"
 
-
 typedef	DWORD IDENT;
 
-/**
- * @version 05/06/10	Bang2ni - Myshop Pricelist ���� ��Ŷ HEADER_XX_MYSHOP_PRICELIST_XXX �߰�
- */
+
 enum
 {
 	HEADER_GD_LOGIN				= 1,
@@ -108,8 +105,8 @@ enum
 	HEADER_GD_BILLING_CHECK		= 106,
 	HEADER_GD_MALL_LOAD			= 107,
 
-	HEADER_GD_MYSHOP_PRICELIST_UPDATE	= 108,		///< �������� ���� ��û
-	HEADER_GD_MYSHOP_PRICELIST_REQ		= 109,		///< �������� ����Ʈ ��û
+	HEADER_GD_MYSHOP_PRICELIST_UPDATE	= 108,
+	HEADER_GD_MYSHOP_PRICELIST_REQ		= 109,
 
 	HEADER_GD_BLOCK_CHAT				= 110,
 
@@ -120,21 +117,21 @@ enum
 	// END_OF_PCBANG_IP_LIST_BY_AUTH
 
 	HEADER_GD_HAMMER_OF_TOR			= 114,
-	HEADER_GD_RELOAD_ADMIN			= 115,			///<��� ���� ��û
-	HEADER_GD_BREAK_MARRIAGE		= 116,			///< ��ȥ �ı�
-	HEADER_GD_ELECT_MONARCH			= 117,			///< ���� ��ǥ
-	HEADER_GD_CANDIDACY				= 118,			///< ���� ���
-	HEADER_GD_ADD_MONARCH_MONEY		= 119,			///< ���� �� ����
-	HEADER_GD_TAKE_MONARCH_MONEY	= 120,			///< ���� �� ����
-	HEADER_GD_COME_TO_VOTE			= 121,			///< ǥ��
-	HEADER_GD_RMCANDIDACY			= 122,			///< �ĺ� ���� (���)
-	HEADER_GD_SETMONARCH			= 123,			///<���ּ��� (���)
-	HEADER_GD_RMMONARCH			= 124,			///<���ֻ���
+	HEADER_GD_RELOAD_ADMIN			= 115,
+	HEADER_GD_BREAK_MARRIAGE		= 116,
+	HEADER_GD_ELECT_MONARCH			= 117,
+	HEADER_GD_CANDIDACY				= 118,
+	HEADER_GD_ADD_MONARCH_MONEY		= 119,
+	HEADER_GD_TAKE_MONARCH_MONEY	= 120,
+	HEADER_GD_COME_TO_VOTE			= 121,
+	HEADER_GD_RMCANDIDACY			= 122,
+	HEADER_GD_SETMONARCH			= 123,
+	HEADER_GD_RMMONARCH			= 124,
 	HEADER_GD_DEC_MONARCH_MONEY = 125,
 
 	HEADER_GD_CHANGE_MONARCH_LORD = 126,
-	HEADER_GD_BLOCK_COUNTRY_IP		= 127,		// ���뿪 IP-Block
-	HEADER_GD_BLOCK_EXCEPTION		= 128,		// ���뿪 IP-Block ����
+	HEADER_GD_BLOCK_COUNTRY_IP		= 127,
+	HEADER_GD_BLOCK_EXCEPTION		= 128,
 
 	HEADER_GD_REQ_CHANGE_GUILD_MASTER	= 129,
 
@@ -143,15 +140,9 @@ enum
 	HEADER_GD_UPDATE_HORSE_NAME		= 131,
 	HEADER_GD_REQ_HORSE_NAME		= 132,
 
-	HEADER_GD_DC					= 133,		// Login Key�� ����
+	HEADER_GD_DC					= 133,
 
 	HEADER_GD_VALID_LOGOUT			= 134,
-
-	// AUCTION
-#ifdef __AUCTION__
-	HEADER_GD_GET_AUCTION_LIST		= 135,
-	HEADER_GD_COMMAND_AUCTION		= 136,
-#endif
 
 	HEADER_GD_REQUEST_CHARGE_CASH	= 137,
 
@@ -159,33 +150,8 @@ enum
 
 	HEADER_GD_UPDATE_CHANNELSTATUS	= 139,
 	HEADER_GD_REQUEST_CHANNELSTATUS	= 140,
-
-#ifdef OFFLINE_SHOP
-	HEADER_GD_ADD_OFFLINESHOP_ITEM = 141,
-	HEADER_GD_DEL_OFFLINESHOP_ITEM = 142,
-	HEADER_GD_GET_OFFLINESHOP_ITEM = 143,
-	HEADER_GD_UPDATE_OFFLINESHOP_COUNT = 144,
-	HEADER_GD_OFFLINESHOP_CREATE = 145,
-	HEADER_GD_OFFLINESHOP_DESTROY = 146,
-#endif
-
-#ifdef GUILD_WAR_COUNTER
-	HEADER_GD_GUILD_COUNTER		= 150,
-#endif
-
-#ifdef ENABLE_DECORUM
-	HEADER_GD_DECORUM_SAVE					= 166,
-	HEADER_GD_DECORUM_END_SEASON			= 167,
-#endif
-
-#if defined(__BL_MAILBOX__)
-	HEADER_GD_MAILBOX_LOAD = 168,
-	HEADER_GD_MAILBOX_CHECK_NAME = 169,
-	HEADER_GD_MAILBOX_WRITE = 170,
-	HEADER_GD_MAILBOX_DELETE = 171,
-	HEADER_GD_MAILBOX_CONFIRM = 172,
-	HEADER_GD_MAILBOX_GET = 173,
-	HEADER_GD_MAILBOX_UNREAD = 174,
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	HEADER_GD_NEW_OFFLINESHOP		= 153,
 #endif
 	HEADER_GD_SETUP			= 0xff,
 
@@ -233,9 +199,6 @@ enum
 	HEADER_DG_PARTY_STATE_CHANGE	= 63,
 	HEADER_DG_PARTY_HEAL_USE		= 64,
 	HEADER_DG_PARTY_SET_MEMBER_LEVEL	= 65,
-#ifdef GUILD_WAR_COUNTER
-	HEADER_DG_GUILD_COUNTER = 66,
-#endif
 
 	HEADER_DG_TIME			= 90,
 	HEADER_DG_ITEM_ID_RANGE		= 91,
@@ -282,10 +245,6 @@ enum
 	HEADER_DG_DELETE_OBJECT		= 141,
 	HEADER_DG_UPDATE_LAND		= 142,
 
-#ifdef ENABLE_SPECIAL_AFFECT
-	HEADER_DG_SPECIAL_AFFECTS = 146,
-#endif
-
 	HEADER_DG_MARRIAGE_ADD		= 150,
 	HEADER_DG_MARRIAGE_UPDATE		= 151,
 	HEADER_DG_MARRIAGE_REMOVE		= 152,
@@ -295,23 +254,23 @@ enum
 	HEADER_DG_WEDDING_START		= 155,
 	HEADER_DG_WEDDING_END		= 156,
 
-	HEADER_DG_MYSHOP_PRICELIST_RES	= 157,		///< �������� ����Ʈ ����
-	HEADER_DG_RELOAD_ADMIN = 158, 				///< ��� ���� ���ε�
-	HEADER_DG_BREAK_MARRIAGE = 159,				///< ��ȥ �ı�
-	HEADER_DG_ELECT_MONARCH			= 160,			///< ���� ��ǥ
-	HEADER_DG_CANDIDACY				= 161,			///< ���� ���
-	HEADER_DG_ADD_MONARCH_MONEY		= 162,			///< ���� �� ����
-	HEADER_DG_TAKE_MONARCH_MONEY	= 163,			///< ���� �� ����
-	HEADER_DG_COME_TO_VOTE			= 164,			///< ǥ��
-	HEADER_DG_RMCANDIDACY			= 165,			///< �ĺ� ���� (���)
-	HEADER_DG_SETMONARCH			= 166,			///<���ּ��� (���)
-	HEADER_DG_RMMONARCH			= 167,			///<���ֻ���
+	HEADER_DG_MYSHOP_PRICELIST_RES	= 157,
+	HEADER_DG_RELOAD_ADMIN = 158,
+	HEADER_DG_BREAK_MARRIAGE = 159,
+	HEADER_DG_ELECT_MONARCH			= 160,
+	HEADER_DG_CANDIDACY				= 161,
+	HEADER_DG_ADD_MONARCH_MONEY		= 162,
+	HEADER_DG_TAKE_MONARCH_MONEY	= 163,
+	HEADER_DG_COME_TO_VOTE			= 164,
+	HEADER_DG_RMCANDIDACY			= 165,
+	HEADER_DG_SETMONARCH			= 166,
+	HEADER_DG_RMMONARCH			= 167,
 	HEADER_DG_DEC_MONARCH_MONEY = 168,
 
 	HEADER_DG_CHANGE_MONARCH_LORD_ACK = 169,
 	HEADER_DG_UPDATE_MONARCH_INFO	= 170,
-	HEADER_DG_BLOCK_COUNTRY_IP		= 171,		// ���뿪 IP-Block
-	HEADER_DG_BLOCK_EXCEPTION		= 172,		// ���뿪 IP-Block ���� account
+	HEADER_DG_BLOCK_COUNTRY_IP		= 171,
+	HEADER_DG_BLOCK_EXCEPTION		= 172,
 
 	HEADER_DG_ACK_CHANGE_GUILD_MASTER = 173,
 
@@ -321,43 +280,12 @@ enum
 	HEADER_DG_ACK_HORSE_NAME		= 176,
 
 	HEADER_DG_NEED_LOGIN_LOG		= 177,
-#ifdef __AUCTION__
-	HEADER_DG_AUCTION_RESULT	=	178,
-#endif
+
 	HEADER_DG_RESULT_CHARGE_CASH	= 179,
 	HEADER_DG_ITEMAWARD_INFORMER	= 180,	//gift notify
 	HEADER_DG_RESPOND_CHANNELSTATUS		= 181,
-#ifdef __SPECIALSTAT_SYSTEM__
-	HEADER_DG_SPECIALSTAT_LOAD_SUCCESS = 182,
-#endif
-
-#ifdef OFFLINE_SHOP
-	HEADER_DG_ADD_OFFLINESHOP_ITEM = 183,
-	HEADER_DG_DEL_OFFLINESHOP_ITEM = 184,
-	HEADER_DG_GET_OFFLINESHOP_ITEM = 185,
-	HEADER_DG_TOTAL_ONLINE = 186,
-#endif
-
-	HEADER_DG_MARRIAGE_LOAD		= 187,
-#ifdef __DUNGEON_FOR_GUILD__
-	HEADER_DG_GUILD_DUNGEON = 188,
-	HEADER_DG_GUILD_DUNGEON_CD = 189,
-	HEADER_DG_GUILD_DUNGEON_ST = 190,
-#endif
-
-#ifdef ENABLE_DECORUM
-	HEADER_DG_DECORUM_LOAD				= 191,
-	HEADER_DG_DECORUM_END_SEASON		= 192,
-#endif
-
-#ifdef ENABLE_EVENT_MANAGER
-	HEADER_DG_EVENT_MANAGER						= 212,
-#endif
-
-#if defined(__BL_MAILBOX__)
-	HEADER_DG_RESPOND_MAILBOX_LOAD = 214,
-	HEADER_DG_RESPOND_MAILBOX_CHECK_NAME = 215,
-	HEADER_DG_RESPOND_MAILBOX_UNREAD = 216,
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	HEADER_DG_NEW_OFFLINESHOP		= 190,
 #endif
 
 	HEADER_DG_MAP_LOCATIONS		= 0xfe,
@@ -367,8 +295,6 @@ enum
 	HEADER_PG_CONFIRM_PASSPOD = 2,
 
 };
-
-
 
 enum E_PASSPOD
 {
@@ -380,11 +306,6 @@ enum E_PASSPOD
 	E_PASSPOD_FAILED_EMPTY,
 };
 
-enum BlockSystem
-{
-	SYST_BLOCK,
-	SYST_FRIEND
-};
 
 typedef struct SRequestConfirmPasspod
 {
@@ -400,15 +321,6 @@ typedef struct SResultConfirmPasspod
 	int ret_code;
 	char login[LOGIN_MAX_LEN + 1];
 } ResultConfirmPasspod;
-
-#ifdef ENABLE_SPECIAL_AFFECT
-typedef struct SSpecialAffects
-{
-	DWORD aPids[3];
-	DWORD aGids[3];
-} TSpecialAffects;
-#endif
-
 /* ----------------------------------------------
  * table
  * ----------------------------------------------
@@ -416,22 +328,60 @@ typedef struct SSpecialAffects
 
 /* game Server -> DB Server */
 #pragma pack(1)
-
-typedef struct SShopItemTable
+enum ERequestChargeType
 {
-	DWORD		vnum;
-	short		count;
-#ifdef ENABLE_MULTISHOP
-	DWORD		wPriceVnum;
-	DWORD		wPrice;
+	ERequestCharge_Cash = 0,
+	ERequestCharge_Mileage,
+};
+
+typedef struct SRequestChargeCash
+{
+	DWORD		dwAID;		// id(primary key) - Account Table
+	DWORD		dwAmount;
+	ERequestChargeType	eChargeType;
+
+} TRequestChargeCash;
+
+typedef struct SSimplePlayer
+{
+	DWORD		dwID;
+	char		szName[CHARACTER_NAME_MAX_LEN + 1];
+	BYTE		byJob;
+	BYTE		byLevel;
+	DWORD		dwPlayMinutes;
+	BYTE		byST, byHT, byDX, byIQ;
+	DWORD		wMainPart;
+	BYTE		bChangeName;
+	DWORD		wHairPart;
+#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+	DWORD		wAccePart;
 #endif
-	TItemPos	pos;
-	DWORD		price;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int		cheque_price;
+	BYTE		bDummy[4];
+	long		x, y;
+	long		lAddr;
+	WORD		wPort;
+	BYTE		skill_group;
+} TSimplePlayer;
+
+typedef struct SAccountTable
+{
+	DWORD		id;
+	char		login[LOGIN_MAX_LEN + 1];
+	char		passwd[PASSWD_MAX_LEN + 1];
+	char		social_id[SOCIAL_ID_MAX_LEN + 1];
+#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
+	char		language[LANGUAGE_MAX_LEN + 1];
 #endif
-	BYTE		display_pos;
-} TShopItemTable;
+	char		status[ACCOUNT_STATUS_MAX_LEN + 1];
+	BYTE		bEmpire;
+	TSimplePlayer	players[PLAYER_PER_ACCOUNT];
+} TAccountTable;
+
+typedef struct SPacketDGCreateSuccess
+{
+	BYTE		bAccountCharacterIndex;
+	TSimplePlayer	player;
+} TPacketDGCreateSuccess;
 
 typedef struct TPlayerItemAttribute
 {
@@ -458,65 +408,6 @@ typedef struct SBioTable
 #endif
 
 
-enum ERequestChargeType
-{
-	ERequestCharge_Cash = 0,
-	ERequestCharge_Mileage,
-};
-
-typedef struct SRequestChargeCash
-{
-	DWORD		dwAID;		// id(primary key) - Account Table
-	DWORD		dwAmount;
-	ERequestChargeType	eChargeType;
-
-} TRequestChargeCash;
-
-typedef struct SSimplePlayer
-{
-	DWORD		dwID;
-	char		szName[CHARACTER_NAME_MAX_LEN + 1];
-	BYTE		byJob;
-	BYTE		byLevel;
-	DWORD		dwPlayMinutes;
-	BYTE		byST, byHT, byDX, byIQ;
-	WORD		wMainPart;
-	BYTE		bChangeName;
-	WORD		wHairPart;
-#ifdef ENABLE_ACCE_COSTUME_SYSTEM
-	WORD		wAccePart;
-#endif
-#ifdef ENABLE_AURA_SYSTEM
-	WORD		wAuraPart;
-#endif
-	BYTE		bDummy[4];
-	long		x, y;
-	long		lAddr;
-	WORD		wPort;
-	BYTE		skill_group;
-} TSimplePlayer;
-
-typedef struct SAccountTable
-{
-	DWORD		id;
-	char		login[LOGIN_MAX_LEN + 1];
-	char		passwd[PASSWD_MAX_LEN + 1];
-	char		social_id[SOCIAL_ID_MAX_LEN + 1];
-	#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
-	char		language[LANGUAGE_MAX_LEN + 1];
-	#endif
-	char		status[ACCOUNT_STATUS_MAX_LEN + 1];
-	BYTE		bEmpire;
-	TSimplePlayer	players[PLAYER_PER_ACCOUNT];
-} TAccountTable;
-
-typedef struct SPacketDGCreateSuccess
-{
-	BYTE		bAccountCharacterIndex;
-	TSimplePlayer	player;
-} TPacketDGCreateSuccess;
-
-
 typedef struct SPlayerItem
 {
 	DWORD	id;
@@ -525,14 +416,11 @@ typedef struct SPlayerItem
 	DWORD	count;
 
 	DWORD	vnum;
-	long	alSockets[ITEM_SOCKET_MAX_NUM];	// ���Ϲ�ȣ
+	long	alSockets[ITEM_SOCKET_MAX_NUM];
 
 	TPlayerItemAttribute    aAttr[ITEM_ATTRIBUTE_MAX_NUM];
 
 	DWORD	owner;
-#ifdef CHANGELOOK_SYSTEM
-	DWORD	transmutation;
-#endif
 } TPlayerItem;
 
 typedef struct SQuickslot
@@ -557,32 +445,6 @@ struct	THorseInfo
 	DWORD	dwHorseHealthDropTime;
 };
 
-#ifdef ENABLE_GEM_SYSTEM
-typedef struct SPlayerGemItems
-{
-	BYTE	bItemId;
-	BYTE	bSlotStatus;
-} TPlayerGemItems;
-
-typedef struct SGemShopTable
-{
-	DWORD	dwVnum;
-	BYTE	bCount;
-	DWORD	dwPrice;
-	DWORD	dwRow;
-} TGemShopTable;
-
-typedef struct SGemShopItem
-{
-	BYTE	slotIndex;
-	BYTE	status;
-	
-	DWORD	dwVnum;
-	BYTE	bCount;
-	DWORD	dwPrice;
-} TGemShopItem;
-#endif
-
 typedef struct SPlayerTable
 {
 	DWORD	id;
@@ -598,10 +460,12 @@ typedef struct SPlayerTable
 	short	st, ht, dx, iq;
 
 	DWORD	exp;
+#ifdef ENABLE_LONG_LONG
+	long long	gold;
+#else
 	INT		gold;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int	cheque;
 #endif
+
 	BYTE	dir;
 	INT		x, y, z;
 	INT		lMapIndex;
@@ -622,12 +486,18 @@ typedef struct SPlayerTable
 	short	skill_point;
 	short	sub_skill_point;
 	short	horse_skill_point;
+
 	TPlayerSkill skills[SKILL_MAX_NUM];
 
 	TQuickslot  quickslot[QUICKSLOT_MAX_NUM];
 
 	BYTE	part_base;
-	WORD	parts[PART_MAX_NUM];
+	DWORD	parts[PART_MAX_NUM];
+
+#ifdef ENABLE_AUTOMATIC_PICK_UP_SYSTEM
+	DWORD	dwPickUPMode;
+	//DWORD	dwRarityMode;
+#endif
 
 	short	stamina;
 
@@ -642,25 +512,10 @@ typedef struct SPlayerTable
 	DWORD	logoff_interval;
 
 	int		aiPremiumTimes[PREMIUM_MAX_NUM];
-
-#ifdef ENABLE_BATTLE_PASS
-	DWORD	dwBattlePassEndTime;
-#endif
-
 #ifdef ENABLE_NEW_DETAILS_GUI
 	long	kill_log[KILL_MAX_NUM];
 #endif
 } TPlayerTable;
-
-#ifdef __SPECIALSTAT_SYSTEM__
-typedef struct SSpecialStats
-{
-	BYTE s_stats[SPECIALSTATS_MAX];
-	time_t next_book_time;
-	bool skip_time_book;
-
-} TSpecialStats;
-#endif
 
 typedef struct SMobSkillLevel
 {
@@ -676,11 +531,11 @@ typedef struct SEntityTable
 typedef struct SMobTable : public SEntityTable
 {
 	char	szName[CHARACTER_NAME_MAX_LEN + 1];
-	#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
+#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
 	char	szLocaleName[LANGUAGE_MAX_NUM][CHARACTER_NAME_MAX_LEN + 1];
-	#else
+#else
 	char	szLocaleName[CHARACTER_NAME_MAX_LEN + 1];
-	#endif
+#endif
 
 	BYTE	bType;			// Monster, NPC
 	BYTE	bRank;			// PAWN, KNIGHT, KING
@@ -737,28 +592,6 @@ typedef struct SMobTable : public SEntityTable
 	BYTE	bRevivePoint;
 } TMobTable;
 
-#ifdef u1x
-typedef struct SRanking
-{
-	char	name[24];
-	BYTE	empire;
-	DWORD	value;
-} TRanking;
-typedef struct SPacketRankingGD
-{
-	TRanking	m_ranking_l[10];//level
-	TRanking	m_ranking_d_s[10]; // destroy stone
-	TRanking	m_ranking_k_m[10]; // m_rankingx_killed_monsters
-	TRanking	m_ranking_k_b[10]; // m_rankingx_killed_boss
-	TRanking	m_ranking_c_d[10]; // m_rankingx_completed_dungeon
-	TRanking	m_ranking_p[10]; // m_rankingx_playtime
-	TRanking	m_ranking_y[10]; //m_rankingx_yang
-	TRanking	m_ranking_g[10]; // m_rankingx_gaya
-	TRanking	m_ranking_c_f[10]; // m_rankingx_caught_fishes
-	TRanking	m_ranking_o_c[10]; // m_rankingx_opened_chest
-} TPacketRankingGD;
-#endif
-
 typedef struct SSkillTable
 {
 	DWORD	dwVnum;
@@ -803,13 +636,26 @@ typedef struct SSkillTable
 	DWORD	dwTargetRange;
 } TSkillTable;
 
+typedef struct SShopItemTable
+{
+	DWORD		vnum;
+	WORD		count;
+
+#ifdef ENABLE_LONG_LONG
+	long long	price;
+#else
+	DWORD		price;
+#endif
+	TItemPos	pos;
+	BYTE		display_pos;
+} TShopItemTable;
 
 typedef struct SShopTable
 {
 	DWORD		dwVnum;
 	DWORD		dwNPCVnum;
 
-	short		byItemCount;
+	BYTE		byItemCount;
 	TShopItemTable	items[SHOP_HOST_ITEM_MAX_NUM];
 } TShopTable;
 
@@ -838,9 +684,6 @@ typedef struct SItemApply
 
 typedef struct SItemTable : public SEntityTable
 {
-	BYTE GetType() { return bType; }
-	BYTE GetSubType() { return bSubType; }	
-	
 	DWORD		dwVnumRange;
 	char        szName[ITEM_NAME_MAX_LEN + 1];
 	#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
@@ -859,8 +702,13 @@ typedef struct SItemTable : public SEntityTable
 	DWORD	dwWearFlags;
 	DWORD	dwImmuneFlag;
 
-	DWORD       dwGold;
-	DWORD       dwShopBuyPrice;
+#ifdef ENABLE_LONG_LONG
+	long long	dwGold;
+	long long	dwShopBuyPrice;
+#else
+	DWORD		dwGold;
+	DWORD		dwShopBuyPrice;
+#endif
 
 	TItemLimit	aLimits[ITEM_LIMIT_MAX_NUM];
 	TItemApply	aApplies[ITEM_APPLY_MAX_NUM];
@@ -872,12 +720,12 @@ typedef struct SItemTable : public SEntityTable
 	BYTE	bSpecular;
 	BYTE	bGainSocketPct;
 
-	short int	sAddonType; // �⺻ �Ӽ�
+	short int	sAddonType;
 
-	// �Ʒ� limit flag���� realtime�� üũ �� ���� ����, ������ VNUM�� ������ ���ε�,
-	// ���� ������� �Ź� �����۸��� �ʿ��� ��쿡 LIMIT_MAX_NUM���� �������鼭 üũ�ϴ� ���ϰ� Ŀ�� �̸� ���� �� ��.
-	char		cLimitRealTimeFirstUseIndex;		// ������ limit �ʵ尪 �߿��� LIMIT_REAL_TIME_FIRST_USE �÷����� ��ġ (������ -1)
-	char		cLimitTimerBasedOnWearIndex;		// ������ limit �ʵ尪 �߿��� LIMIT_TIMER_BASED_ON_WEAR �÷����� ��ġ (������ -1)
+
+
+	char		cLimitRealTimeFirstUseIndex;
+	char		cLimitTimerBasedOnWearIndex;
 
 } TItemTable;
 
@@ -915,7 +763,7 @@ typedef struct SPlayerLoadPacket
 {
 	DWORD	account_id;
 	DWORD	player_id;
-	BYTE	account_index;	/* account ������ ��ġ */
+	BYTE	account_index;
 } TPlayerLoadPacket;
 
 typedef struct SPlayerCreatePacket
@@ -964,75 +812,6 @@ typedef struct SSafeboxChangeSizePacket
 	BYTE	bSize;
 } TSafeboxChangeSizePacket;
 
-#if defined(__BL_MAILBOX__)
-enum EMAILBOX
-{
-	MAILBOX_TAX = 5,
-	MAILBOX_REMAIN_DAY = 30,
-	MAILBOX_REMAIN_DAY_GM = 7,
-	MAILBOX_LEVEL_LIMIT = 20,
-	MAILBOX_PRICE_YANG = 1000,
-	MAILBOX_PAGE_SIZE = 9,
-	MAILBOX_PAGE_COUNT = 10,
-	MAILBOX_MAX_MAIL = MAILBOX_PAGE_SIZE * MAILBOX_PAGE_COUNT,
-};
-
-typedef struct SMailBoxRespondUnreadData
-{
-	SMailBoxRespondUnreadData() :
-		bHeader(0),
-		bItemMessageCount(0),
-		bCommonMessageCount(0),
-		bGMVisible(false) 
-	{}
-	BYTE bHeader;
-	BYTE bItemMessageCount;
-	BYTE bCommonMessageCount;
-	bool bGMVisible;
-} TMailBoxRespondUnreadData;
-
-typedef struct SMailBox
-{
-	char	szName[CHARACTER_NAME_MAX_LEN + 1];
-	BYTE	Index;
-} TMailBox;
-
-typedef struct packet_mailbox_add_data
-{
-	BYTE							bHeader;
-	BYTE							Index;
-	char							szFrom[CHARACTER_NAME_MAX_LEN + 1];
-	char							szMessage[100 + 1];
-	int								iYang;
-	int								iWon;
-	DWORD							ItemVnum;
-	DWORD							ItemCount;
-	long							alSockets[ITEM_SOCKET_MAX_NUM];
-	TPlayerItemAttribute			aAttr[ITEM_ATTRIBUTE_MAX_NUM];
-#if defined(__BL_TRANSMUTATION__)
-	DWORD							dwTransmutationVnum;
-#endif
-} TPacketGCMailBoxAddData;
-
-typedef struct packet_mailbox_message
-{
-	time_t							SendTime;
-	time_t							DeleteTime;
-	char							szTitle[25 + 1];
-	bool							bIsGMPost;
-	bool							bIsItemExist;
-	bool							bIsConfirm;
-} TPacketGCMailBoxMessage;
-
-typedef struct SMailBoxTable
-{
-	char szName[CHARACTER_NAME_MAX_LEN + 1];
-	bool bIsDeleted;
-	packet_mailbox_message Message;
-	packet_mailbox_add_data AddData;
-} TMailBoxTable;
-#endif
-
 typedef struct SSafeboxLoadPacket
 {
 	DWORD	dwID;
@@ -1061,9 +840,9 @@ typedef struct SEmpireSelectPacket
 typedef struct SPacketGDSetup
 {
 	char	szPublicIP[16];	// Public IP which listen to users
-	BYTE	bChannel;	// ä��
-	WORD	wListenPort;	// Ŭ���̾�Ʈ�� �����ϴ� ��Ʈ ��ȣ
-	WORD	wP2PPort;	// �������� ���� ��Ű�� P2P ��Ʈ ��ȣ
+	BYTE	bChannel;
+	WORD	wListenPort;
+	WORD	wP2PPort;
 	long	alMaps[MAP_ALLOW_LIMIT];
 	DWORD	dwLoginCount;
 	BYTE	bAuthServer;
@@ -1116,9 +895,6 @@ typedef struct SPacketGuildExpUpdate
 	int amount;
 } TPacketGuildExpUpdate;
 
-
-
-
 typedef struct SPacketGuildChangeMemberData
 {
 	DWORD guild_id;
@@ -1133,13 +909,6 @@ typedef struct SPacketDGLoginAlready
 {
 	char	szLogin[LOGIN_MAX_LEN + 1];
 } TPacketDGLoginAlready;
-
-// marriage
-typedef struct TPacketMarriageElement
-{
-	bool	bIsMarriage;
-	DWORD	dwPidMarriage;
-} TPacketMarriageElement;
 
 typedef struct TPacketAffectElement
 {
@@ -1239,7 +1008,6 @@ typedef struct SPacketDGGuildMember
 	BYTE	bLevel;
 	DWORD	dwOffer;
 	char	szName[CHARACTER_NAME_MAX_LEN + 1];
-
 } TPacketDGGuildMember;
 
 typedef struct SPacketGuildWar
@@ -1250,19 +1018,10 @@ typedef struct SPacketGuildWar
 	DWORD	dwGuildTo;
 	long	lWarPrice;
 	long	lInitialScore;
-#ifdef __IMPROVED_GUILD_WAR__
-	int		iMaxPlayer;
-	int		iMaxScore;
-	DWORD	flags;
-	int		custom_map_index;
-#endif
-#ifdef GUILD_WAR_COUNTER
-	DWORD		warID;
-#endif
 } TPacketGuildWar;
 
-// Game -> DB : ����� ��ȭ��
-// DB -> Game : ��Ż�� ������
+
+
 typedef struct SPacketGuildWarScore
 {
 	DWORD dwGuildGainPoint;
@@ -1282,9 +1041,9 @@ typedef struct SRefineTable
 	//DWORD src_vnum;
 	//DWORD result_vnum;
 	DWORD id;
-	short material_count;
-	int cost; // �ҿ� ���
-	int prob; // Ȯ��
+	BYTE material_count;
+	int cost;
+	int prob;
 	TRefineMaterial materials[REFINE_MATERIAL_MAX_NUM];
 } TRefineTable;
 
@@ -1292,16 +1051,6 @@ typedef struct SBanwordTable
 {
 	char szWord[BANWORD_MAX_LEN + 1];
 } TBanwordTable;
-
-#ifdef OFFLINE_SHOP
-typedef struct SSpawnOfflineShopTable
-{
-	BYTE	bChannel;
-	char	szSign[SHOP_SIGN_MAX_LEN + 1];
-	long	lMapIndex, x, y;
-	int		iTime;
-} TSpawnOfflineShopTable;
-#endif
 
 typedef struct SPacketGDChangeName
 {
@@ -1381,15 +1130,13 @@ typedef struct SPacketGDLoginByKey
 	char	szIP[MAX_HOST_LENGTH + 1];
 } TPacketGDLoginByKey;
 
-/**
- * @version 05/06/08	Bang2ni - ���ӽð� �߰�
- */
+
 typedef struct SPacketGiveGuildPriv
 {
 	BYTE type;
 	int value;
 	DWORD guild_id;
-	time_t duration_sec;	///< ���ӽð�
+	time_t duration_sec;
 } TPacketGiveGuildPriv;
 typedef struct SPacketGiveEmpirePriv
 {
@@ -1423,16 +1170,14 @@ typedef struct SPacketDGChangeCharacterPriv
 	BYTE bLog;
 } TPacketDGChangeCharacterPriv;
 
-/**
- * @version 05/06/08	Bang2ni - ���ӽð� �߰�
- */
+
 typedef struct SPacketDGChangeGuildPriv
 {
 	BYTE type;
 	int value;
 	DWORD guild_id;
 	BYTE bLog;
-	time_t end_time_sec;	///< ���ӽð�
+	time_t end_time_sec;
 } TPacketDGChangeGuildPriv;
 
 typedef struct SPacketDGChangeEmpirePriv
@@ -1448,7 +1193,11 @@ typedef struct SPacketMoneyLog
 {
 	BYTE type;
 	DWORD vnum;
+#ifdef ENABLE_LONG_LONG
+	long long gold;
+#else
 	INT gold;
+#endif
 } TPacketMoneyLog;
 
 typedef struct SPacketGDGuildMoney
@@ -1556,18 +1305,6 @@ typedef struct SGuildReserve
 	long	lPowerFrom;
 	long	lPowerTo;
 	long	lHandicap;
-#ifdef __IMPROVED_GUILD_WAR__
-	int		iMaxPlayer;
-	int		iMaxScore;
-	DWORD	flags;
-	int		custom_map_index;
-#endif
-#ifdef GUILD_WAR_COUNTER
-	char	guild1_name[GUILD_NAME_MAX_LEN + 1];
-	char	guild2_name[GUILD_NAME_MAX_LEN + 1];
-	char date[22];
-	DWORD winner;
-#endif
 } TGuildWarReserve;
 
 typedef struct
@@ -1628,45 +1365,27 @@ typedef struct
 	DWORD dwPID2;
 } TPacketWeddingEnd;
 
-/// ���λ��� ���������� ���. ���� ��Ŷ���� �� �ڿ� byCount ��ŭ�� TItemPriceInfo �� �´�.
+
 typedef struct SPacketMyshopPricelistHeader
 {
-	DWORD	dwOwnerID;	///< ���������� ���� �÷��̾� ID
-	BYTE	byCount;	///< �������� ����
+	DWORD	dwOwnerID;
+	BYTE	byCount;
 } TPacketMyshopPricelistHeader;
 
-#ifdef ENABLE_CHEQUE_SYSTEM
-typedef struct SItemPriceType
-{
-	SItemPriceType(){ dwPrice = byChequePrice = 0; }
-	SItemPriceType(DWORD gold, int cheque)
-	{
-		dwPrice = gold;
-		byChequePrice = cheque;
-	}
-	DWORD	dwPrice;
-	int	byChequePrice;
-} TItemPriceType;
-#endif
 
-/// ���λ����� ���� �����ۿ� ���� ��������
 typedef struct SItemPriceInfo
 {
-	DWORD	dwVnum;		///< ������ vnum
-#ifdef ENABLE_CHEQUE_SYSTEM
-	TItemPriceType	price;
-#else
-	DWORD	dwPrice;	///< ����
-#endif
+	DWORD	dwVnum;
+	DWORD	dwPrice;
 } TItemPriceInfo;
 
-/// ���λ��� ������ �������� ����Ʈ ���̺�
+
 typedef struct SItemPriceListTable
 {
-	DWORD	dwOwnerID;	///< ���������� ���� �÷��̾� ID
-	BYTE	byCount;	///< �������� ����Ʈ�� ����
+	DWORD	dwOwnerID;
+	BYTE	byCount;
 
-	TItemPriceInfo	aPriceInfo[SHOP_PRICELIST_MAX_NUM];	///< �������� ����Ʈ
+	TItemPriceInfo	aPriceInfo[SHOP_PRICELIST_MAX_NUM];
 } TItemPriceListTable;
 
 typedef struct
@@ -1687,12 +1406,12 @@ typedef struct SPacketPCBangIP
 //ADMIN_MANAGER
 typedef struct TAdminInfo
 {
-	int m_ID;				//����ID
-	char m_szAccount[32];	//����
-	char m_szName[32];		//ĳ�����̸�
-	char m_szContactIP[16];	//���پ�����
-	char m_szServerIP[16];  //����������
-	int m_Authority;		//����
+	int m_ID;
+	char m_szAccount[32];
+	char m_szName[32];
+	char m_szContactIP[16];
+	char m_szServerIP[16];
+	int m_Authority;
 } tAdminInfo;
 //END_ADMIN_MANAGER
 
@@ -1713,20 +1432,20 @@ typedef struct SPacketReloadAdmin
 
 typedef struct TMonarchInfo
 {
-	DWORD pid[4];  // ������ PID
-	int64_t money[4];  // ������ ���� ��
-	char name[4][32];  // ������ �̸�
-	char date[4][32];  // ���� ��� ��¥
+	DWORD pid[4];
+	int64_t money[4];
+	char name[4][32];
+	char date[4][32];
 } MonarchInfo;
 
 typedef struct TMonarchElectionInfo
 {
-	DWORD pid;  // ��ǥ �ѻ�� PID
-	DWORD selectedpid; // ��ǥ ���� PID ( ���� ������ )
-	char date[32]; // ��ǥ ��¥
+	DWORD pid;
+	DWORD selectedpid;
+	char date[32];
 } MonarchElectionInfo;
 
-// ���� �⸶��
+
 typedef struct tMonarchCandidacy
 {
 	DWORD pid;
@@ -1798,14 +1517,14 @@ typedef struct tNeedLoginLogInfo
 	DWORD dwPlayerID;
 } TPacketNeedLoginLogInfo;
 
-//���� ���� �˸� ��� �׽�Ʈ�� ��Ŷ ����
+
 typedef struct tItemAwardInformer
 {
 	char	login[LOGIN_MAX_LEN + 1];
-	char	command[20];		//���ɾ�
-	unsigned int vnum;			//������
+	char	command[20];
+	unsigned int vnum;
 } TPacketItemAwardInfromer;
-// ���� �˸� ��� ������ ��Ŷ ����
+
 typedef struct tDeleteAwardID
 {
 	DWORD dwID;
@@ -1816,49 +1535,6 @@ typedef struct SChannelStatus
 	short nPort;
 	BYTE bStatus;
 } TChannelStatus;
-
-#ifdef OFFLINE_SHOP
-typedef struct SOfflineShopAddItem
-{
-	DWORD		owner;
-	WORD		pos;
-	DWORD		count;
-	// BEGIN_MAX_YANG
-	DWORD		price;
-	// END_OF_MAX_YANG
-	DWORD		vnum;
-	long		alSockets[ITEM_SOCKET_MAX_NUM];
-	TPlayerItemAttribute	aAttr[ITEM_ATTRIBUTE_MAX_NUM];
-} TPlayerOfflineShopAddItem;
-
-typedef struct
-{
-	DWORD dwOnlinePlayers;
-	DWORD dwOnlineShops;
-} TPacketOnlineSize;
-
-typedef struct SOfflineShopCreate
-{
-	DWORD 	dwID;
-	DWORD 	dwOwnerID;
-	char 	szNamePlayer[CHARACTER_NAME_MAX_LEN + 1];
-	char 	szSign[65];
-	DWORD 	dwRemainTime;
-	int		iMapIndex, x, y, z;
-	BYTE	channel;
-} TPacketOfflineShopCreate;
-
-typedef struct SOfflineShopDestroy
-{
-	DWORD dwOwnerID;
-} TPacketOfflineShopDestroy;
-
-
-typedef struct
-{
-	bool bIncrease;
-} TPacketUpdateOfflineShopsCount;
-#endif
 
 #ifdef ENABLE_SWITCHBOT
 struct TSwitchbotAttributeAlternativeTable
@@ -1905,134 +1581,478 @@ struct TSwitchbottAttributeTable
 };
 #endif
 
-#ifdef ENABLE_DECORUM
-typedef struct SDecorumTable
-{
-	DWORD		dwPID;
-	char		szName[CHARACTER_NAME_MAX_LEN + 1];
-	DWORD		dwDecorum;
-	DWORD		dwPromotion;
-	DWORD		dwDemotion;
-	DWORD		dwBlock;
-	DWORD		adwLastKills[DECORUM_WEEKLY_KILLS];
-	DWORD		dwLastArena;
-	DWORD		dwKill;
-	DWORD		dwDeath;
-	DWORD		adwFFA[2];
-	DWORD		adwDecorumArena[3][2];
-	DWORD		adwDuel[2];
-	DWORD		dwELORating;
-	
-} TDecorumTable;
 
-typedef struct SPartecipantStat
-{
-	DWORD				dwDamageInflict;
-	DWORD				dwDamageRecive;
-	DWORD				dwKill;
-	DWORD				dwDeath;
-	char				szName[CHARACTER_NAME_MAX_LEN + 1];
-	
-} TPartecipantStat;
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+//common
+typedef struct {
+	BYTE bSubHeader;
+} TPacketGDNewOfflineShop;
 
-typedef struct SRankingEntry
+
+typedef struct {
+	BYTE bSubHeader;
+} TPacketDGNewOfflineShop;
+
+
+namespace offlineshop
 {
-	DWORD	dwID;
-	char	szName[CHARACTER_NAME_MAX_LEN + 1];
-} TRankingEntry;
+	//patch 08-03-2020
+	enum class ExpirationType {
+		EXPIRE_NONE,
+		EXPIRE_REAL_TIME,
+		EXPIRE_REAL_TIME_FIRST_USE,
+	};
+
+	typedef struct SPriceInfo
+	{
+		long long	illYang;
+#ifdef __ENABLE_CHEQUE_SYSTEM__
+		int iCheque;
 #endif
 
-#ifdef GUILD_WAR_COUNTER
-enum
-{
-	SUB_GUILDWAR_LOADWAR,
-	SUB_GUILDWAR_LOADDATA,
-};
-typedef struct war_static_
-{
-	BYTE	empire;
-	char	name[CHARACTER_NAME_MAX_LEN + 1];
-	BYTE	level;
-	BYTE	race;
-	BYTE	kill;
-	BYTE	dead;
-	long	skill_dmg;
-	bool	is_leader;
-	DWORD	guild_id;
-	DWORD	pid;
-	bool	spy;
-	bool	online;
-} war_static_ptr;
+		SPriceInfo() : illYang(0)
+#ifdef __ENABLE_CHEQUE_SYSTEM__
+			,iCheque(0)
+#endif
+		{}
+
+		bool operator < (const SPriceInfo& rItem) const
+		{
+			return GetTotalYangAmount() < rItem.GetTotalYangAmount();
+		}
+
+		long long GetTotalYangAmount() const{
+			long long total = illYang;
+#ifdef __ENABLE_CHEQUE_SYSTEM__
+			total += (long long) YANG_PER_CHEQUE * (long long) iCheque;
+#endif
+			return total;
+		}
+
+	} TPriceInfo;
+
+	typedef struct
+	{
+		DWORD	dwVnum;
+		DWORD	dwCount;
+		long	alSockets[ITEM_SOCKET_MAX_NUM];
+		TPlayerItemAttribute    aAttr[ITEM_ATTRIBUTE_MAX_NUM];
+
+#ifdef __ENABLE_CHANGELOOK_SYSTEM__
+		DWORD	dwTransmutation;
+#endif
+#ifdef ATTR_LOCK
+		int     iLockedAttr;
+#endif
+		//patch 08-03-2020
+		ExpirationType	expiration;
+
+	} TItemInfoEx;
+
+	typedef struct
+	{
+		DWORD		dwOwnerID, dwItemID;
+		TPriceInfo	price;
+		TItemInfoEx	item;
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+		char szOwnerName[CHARACTER_NAME_MAX_LEN+1];
+#endif
+		char dwOwnerName[CHARACTER_NAME_MAX_LEN + 1];
+	} TItemInfo;
+
+	typedef struct {
+		DWORD		dwOfferID, dwOwnerID, dwItemID, dwOffererID;
+		TPriceInfo	price;
+		bool		bNoticed, bAccepted;
+
+		//offlineshop-updated 03/08/19
+		char		szBuyerName[CHARACTER_NAME_MAX_LEN+1];
+
+	} TOfferInfo;
+
+	//AUCTION
+	typedef struct {
+		DWORD dwOwnerID;
+		char  szOwnerName[CHARACTER_NAME_MAX_LEN + 1];
+		DWORD dwDuration;
+
+		TPriceInfo	init_price;
+		TItemInfoEx item;
+	} TAuctionInfo;
+
+
+	typedef struct {
+		TPriceInfo	price;
+		DWORD		dwOwnerID;
+		DWORD		dwBuyerID;
+
+		char		szBuyerName[CHARACTER_NAME_MAX_LEN + 1];
+	} TAuctionOfferInfo;
+
+	typedef struct SValutesInfoa
+	{
+		long long	illYang;
+#ifdef __ENABLE_CHEQUE_SYSTEM__
+		int 		iCheque;
 #endif
 
-#ifdef ENABLE_EVENT_MANAGER
-typedef struct event_struct_
-{
-	BYTE	eventIndex;
-	char	startText[40];
-	tm		startTime;
-	time_t	startRealTime;
-	char	endText[40];
-	tm		endTime;
-	time_t	endRealTime;
-	BYTE	empireFlag;
-	BYTE	channelFlag;
-	DWORD	value[4];
-}TEventManagerData;
-enum
-{
-	EVENT_MANAGER_LOAD,
-	EVENT_MANAGER_EVENT_STATUS,
+		void operator +=(const SValutesInfoa& r)
+		{
+			illYang += r.illYang;
+#ifdef __ENABLE_CHEQUE_SYSTEM__
+			iCheque += r.iCheque;
+#endif
+		}
+
+		void operator -=(const SValutesInfoa& r)
+		{
+			illYang -= r.illYang;
+#ifdef __ENABLE_CHEQUE_SYSTEM__
+			iCheque -= r.iCheque;
+#endif
+		}
+
+		SValutesInfoa() : illYang(0)
+#ifdef __ENABLE_CHEQUE_SYSTEM__
+			, iCheque(0)
+#endif
+		{}
+
+	} TValutesInfo;
 
 
-	EVENT_NONE = 0,
-	BONUS_EVENT = 1,
-	DOUBLE_BOSS_LOOT_EVENT = 2,
-	DOUBLE_METIN_LOOT_EVENT = 3,
-	DOUBLE_MISSION_BOOK_EVENT = 4,
-	DUNGEON_COOLDOWN_EVENT = 5,
-	DUNGEON_TICKET_LOOT_EVENT = 6,
-	EMPIRE_WAR_EVENT = 7,
-	MOONLIGHT_EVENT = 8,
-	TOURNAMENT_EVENT = 9,
-	WHELL_OF_FORTUNE_EVENT = 10,
-	HALLOWEEN_EVENT = 11,
-	NPC_SEARCH_EVENT = 12,
+	typedef struct {
+		DWORD	dwOwnerID;
+		DWORD	dwDuration;
+		char	szName[OFFLINE_SHOP_NAME_MAX_LEN];
+#ifdef KASMIR_PAKET_SYSTEM
+		DWORD	dwKasmirNpc;
+#endif
+		DWORD	dwCount;
+	} TShopInfo;
 
-};
+
+
+	// ### GAME TO DB ###
+
+	enum eNewOfflineshopSubHeaderGD
+	{
+		SUBHEADER_GD_BUY_ITEM = 0,
+		SUBHEADER_GD_BUY_LOCK_ITEM,
+		SUBHEADER_GD_CANNOT_BUY_LOCK_ITEM, //topatch
+		SUBHEADER_GD_EDIT_ITEM,
+		SUBHEADER_GD_REMOVE_ITEM,
+		SUBHEADER_GD_ADD_ITEM,
+
+		SUBHEADER_GD_SHOP_FORCE_CLOSE,
+		SUBHEADER_GD_SHOP_CREATE_NEW,
+		SUBHEADER_GD_SHOP_CHANGE_NAME,
+
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+		SUBHEADER_GD_SHOP_EXTEND_TIME,
 #endif
 
-#ifdef ENABLE_RENEWAL_PVP
-enum
-{
-	PVP_CRITICAL_DAMAGE_SKILLS,
-	PVP_POISONING,
-	PVP_HALF_HUMAN,
-	PVP_BUFFI_SKILLS,
-	PVP_MISS_HITS,
-	PVP_DISPEL_EFFECTS,
-	PVP_HP_ELIXIR,
-	PVP_WHITE_DEW,
-	PVP_YELLOW_DEW,
-	PVP_ORANGE_DEW,
-	PVP_RED_DEW,
-	PVP_BLUE_DEW,
-	PVP_GREEN_DEW,
-	PVP_ZIN_WATER,
-	PVP_SAMBO_WATER,
-	PVP_ATTACKSPEED_FISH,
-	PVP_DRAGON_GOD_ATTACK,
-	PVP_DRAGON_GOD_DEFENCE,
-	PVP_DRAGON_GOD_LIFE,
-	PVP_PIERCING_STRIKE,
-	PVP_CRITICAL_STRIKE,
-	PVP_PET,
-	PVP_NEW_PET,
-	PVP_ENERGY,
-	PVP_BET,
-	PVP_MAX,
-};
+		SUBHEADER_GD_OFFER_CREATE,
+		SUBHEADER_GD_OFFER_NOTIFIED,
+		SUBHEADER_GD_OFFER_ACCEPT,
+		SUBHEADER_GD_OFFER_CANCEL,
+
+		SUBHEADER_GD_SAFEBOX_GET_ITEM,
+		SUBHEADER_GD_SAFEBOX_GET_VALUTES,
+		SUBHEADER_GD_SAFEBOX_ADD_ITEM,
+
+		//AUCTION
+		SUBHEADER_GD_AUCTION_CREATE,
+		SUBHEADER_GD_AUCTION_ADD_OFFER,
+		SUBHEADER_GD_AUCTION_CLOSE,
+	};
+
+
+
+	typedef struct {
+		DWORD dwOwnerID, dwItemID, dwGuestID;
+	} TSubPacketGDBuyItem;
+
+
+	typedef struct {
+		DWORD dwOwnerID, dwItemID, dwGuestID;
+		long long TotalPriceSeen;
+	} TSubPacketGDLockBuyItem;
+
+	typedef struct SSubPacketGDCannotBuyLockItem //topatch
+	{
+		DWORD dwOwnerID, dwItemID;
+	} TSubPacketGDCannotBuyLockItem;
+
+	typedef struct {
+		DWORD		dwOwnerID, dwItemID;
+		TPriceInfo	priceInfo;
+	} TSubPacketGDEditItem;
+
+
+	typedef struct {
+		DWORD dwOwnerID;
+		DWORD dwItemID;
+	} TSubPacketGDRemoveItem;
+
+
+	typedef struct {
+		DWORD		dwOwnerID;
+		TItemInfo	itemInfo;
+	} TSubPacketGDAddItem;
+
+
+	typedef struct {
+		DWORD dwOwnerID;
+	} TSubPacketGDShopForceClose;
+
+
+	typedef struct {
+		TShopInfo shop;
+	} TSubPacketGDShopCreateNew;
+
+
+	typedef struct {
+		DWORD	dwOwnerID;
+		char	szName[OFFLINE_SHOP_NAME_MAX_LEN];
+	} TSubPacketGDShopChangeName;
+
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+	typedef struct {
+		DWORD	dwOwnerID;
+		DWORD	dwTime;
+	} TSubPacketGDShopExtendTime;
+
+	typedef struct {
+		DWORD dwOwnerID;
+		DWORD dwTime;
+	} TSubPacketDGShopExtendTime;
+#endif
+
+	typedef struct {
+		DWORD dwOwnerID, dwItemID;
+		TOfferInfo offer;
+	} TSubPacketGDOfferCreate;
+
+
+	typedef struct {
+		DWORD dwOfferID;
+		DWORD dwOwnerID;
+	}TSubPacketGDOfferCancel;
+
+
+	typedef struct {
+		DWORD dwOwnerID, dwOfferID;
+	} TSubPacketGDOfferNotified;
+
+
+	typedef struct {
+		DWORD dwOwnerID, dwOfferID;
+	} TSubPacketGDOfferAccept;
+
+
+	typedef struct {
+		DWORD			dwOwnerID;
+		DWORD			dwItemID;
+	} TSubPacketGDSafeboxGetItem;
+
+
+	typedef struct {
+		DWORD			dwOwnerID;
+		TItemInfoEx		item;
+	} TSubPacketGDSafeboxAddItem;
+
+
+
+	typedef struct {
+		DWORD			dwOwnerID;
+		TValutesInfo	valute;
+	} TSubPacketGDSafeboxGetValutes;
+
+
+	//AUCTION
+	typedef struct 
+	{
+		TAuctionInfo auction;
+	}TSubPacketGDAuctionCreate;
+
+	typedef struct 
+	{
+		TAuctionOfferInfo offer;
+	}TSubPacketGDAuctionAddOffer;
+
+	typedef struct  {
+		DWORD dwOwnerID;
+	}TSubPacketGDAuctionClose;
+
+
+
+	// ### DB TO GAME
+
+	enum eSubHeaderDGNewOfflineshop
+	{
+		SUBHEADER_DG_BUY_ITEM,
+		SUBHEADER_DG_LOCKED_BUY_ITEM,
+		SUBHEADER_DG_EDIT_ITEM,
+		SUBHEADER_DG_REMOVE_ITEM,
+		SUBHEADER_DG_ADD_ITEM,
+
+		SUBHEADER_DG_SHOP_FORCE_CLOSE,
+		SUBHEADER_DG_SHOP_CREATE_NEW,
+		SUBHEADER_DG_SHOP_CHANGE_NAME,
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+		SUBHEADER_DG_SHOP_EXTEND_TIME,
+#endif
+		SUBHEADER_DG_SHOP_EXPIRED,
+
+
+		SUBHEADER_DG_OFFER_CREATE,
+		SUBHEADER_DG_OFFER_NOTIFIED,
+		SUBHEADER_DG_OFFER_ACCEPT,
+		SUBHEADER_DG_OFFER_CANCEL,
+
+		SUBHEADER_DG_LOAD_TABLES,
+
+		SUBHEADER_DG_SAFEBOX_ADD_ITEM,
+		SUBHEADER_DG_SAFEBOX_ADD_VALUTES,
+		SUBHEADER_DG_SAFEBOX_LOAD,
+		//patch 08-03-2020
+		SUBHEADER_DG_SAFEBOX_EXPIRED_ITEM,
+
+		//AUCTION
+		SUBHEADER_DG_AUCTION_CREATE,
+		SUBHEADER_DG_AUCTION_ADD_OFFER,
+		SUBHEADER_DG_AUCTION_EXPIRED,
+	};
+
+
+	typedef struct {
+		DWORD dwOwnerID, dwItemID, dwBuyerID;
+	} TSubPacketDGBuyItem;
+
+	typedef struct {
+		DWORD dwOwnerID, dwItemID, dwBuyerID;
+	} TSubPacketDGLockedBuyItem;
+
+
+	typedef struct {
+		DWORD		dwOwnerID, dwItemID;
+		TPriceInfo	price;
+	} TSubPacketDGEditItem;
+
+
+	typedef struct {
+		DWORD dwOwnerID, dwItemID;
+	} TSubPacketDGRemoveItem;
+
+
+	typedef struct {
+		DWORD		dwOwnerID, dwItemID;
+		TItemInfo	item;
+	} TSubPacketDGAddItem;
+
+
+	typedef struct {
+		DWORD dwOwnerID;
+	} TSubPacketDGShopForceClose;
+
+
+	typedef struct {
+		TShopInfo shop;
+	} TSubPacketDGShopCreateNew;
+
+
+
+	typedef struct {
+		DWORD dwOwnerID;
+		char  szName[OFFLINE_SHOP_NAME_MAX_LEN];
+	} TSubPacketDGShopChangeName;
+
+
+	typedef struct {
+		DWORD		dwOwnerID, dwItemID;
+		TOfferInfo	offer;
+	} TSubPacketDGOfferCreate;
+
+
+	typedef struct {
+		DWORD dwOfferID;
+		DWORD dwOwnerID;
+
+		//offlineshop-updated 05/08/19
+		bool  IsRemovingItem;
+
+	}TSubPacketDGOfferCancel;
+
+
+
+	typedef struct {
+		DWORD dwOwnerID, dwOfferID;
+	} TSubPacketDGOfferNotified;
+
+	typedef struct {
+		DWORD dwOwnerID, dwOfferID;
+	} TSubPacketDGOfferAccept;
+
+	typedef struct {
+		DWORD	dwShopCount;
+		DWORD	dwOfferCount;
+		DWORD	dwAuctionCount;
+		DWORD	dwAuctionOfferCount;
+
+	} TSubPacketDGLoadTables;
+
+
+	typedef struct {
+		DWORD dwOwnerID;
+	} TSubPacketDGShopExpired;
+
+
+	typedef struct {
+		DWORD dwOwnerID, dwItemID;
+		TItemInfoEx item;
+	} TSubPacketDGSafeboxAddItem;
+
+
+	typedef struct {
+		DWORD			dwOwnerID;
+		TValutesInfo	valute;
+	} TSubPacketDGSafeboxAddValutes;
+
+	typedef struct {
+		DWORD			dwOwnerID;
+		TValutesInfo	valute;
+
+		DWORD			dwItemCount;
+	} TSubPacketDGSafeboxLoad;
+
+	//patch 08-03-2020
+	typedef struct {
+		DWORD dwOwnerID;
+		DWORD dwItemID;
+	} TSubPacketDGSafeboxExpiredItem;
+
+
+	//AUCTION
+	typedef struct 
+	{
+		TAuctionInfo auction;
+	}TSubPacketDGAuctionCreate;
+
+	typedef struct 
+	{
+		TAuctionOfferInfo offer;
+	}TSubPacketDGAuctionAddOffer;
+
+	typedef struct
+	{
+		DWORD dwOwnerID;
+	}TSubPacketDGAuctionExpired;
+
+}
+
 #endif
 
 #pragma pack()
 #endif
+//martysama0134's 2022

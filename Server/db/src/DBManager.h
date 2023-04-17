@@ -2,12 +2,10 @@
 #ifndef __INC_METIN2_DB_DBMANAGER_H__
 #define __INC_METIN2_DB_DBMANAGER_H__
 
-// 디비 커넥션 클래스의 목적은...  디비에 접속해서 쿼리보내고 결과 받아오는
-// 모든 일들을 처리한다.
-//                             코드 by 꼬붕 후로그래머 아노아~ = _=)b
 #include <mysql/mysql.h>
 
 #include "../../libsql/AsyncSQL.h"
+#include <memory>
 
 #define SQL_SAFE_LENGTH(size)	(size * 2 + 1)
 #define QUERY_SAFE_LENGTH(size)	(1024 + SQL_SAFE_LENGTH(size))
@@ -46,7 +44,7 @@ class CDBManager : public singleton<CDBManager>
 
 	void			ReturnQuery(const char * c_pszQuery, int iType, DWORD dwIdent, void * pvData, int iSlot = SQL_PLAYER);
 	void			AsyncQuery(const char * c_pszQuery, int iSlot = SQL_PLAYER);
-	SQLMsg *		DirectQuery(const char * c_pszQuery, int iSlot = SQL_PLAYER);
+	std::unique_ptr<SQLMsg>		DirectQuery(const char * c_pszQuery, int iSlot = SQL_PLAYER);
 
 	SQLMsg *		PopResult();
 	SQLMsg * 		PopResult(eSQL_SLOT slot );
@@ -82,9 +80,9 @@ class CDBManager : public singleton<CDBManager>
 	}
 
     private:
-	CAsyncSQL2 *		m_mainSQL[SQL_MAX_NUM];
-	CAsyncSQL2 *	 	m_directSQL[SQL_MAX_NUM];
-	CAsyncSQL2 *		m_asyncSQL[SQL_MAX_NUM];
+	std::unique_ptr<CAsyncSQL2>		m_mainSQL[SQL_MAX_NUM];
+	std::unique_ptr<CAsyncSQL2>	 	m_directSQL[SQL_MAX_NUM];
+	std::unique_ptr<CAsyncSQL2>		m_asyncSQL[SQL_MAX_NUM];
 
 	int			m_quit;		// looping flag
 
@@ -98,3 +96,4 @@ class CDBManager : public singleton<CDBManager>
 };
 
 #endif
+//martysama0134's 2022

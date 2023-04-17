@@ -21,18 +21,10 @@
 #include "utils.h"
 #include "unique_item.h"
 #include "mob_manager.h"
-#include "../../common/length.h"
+#include "buffer_manager.h"
+#include "../../common/CommonDefines.h"
 #ifdef ENABLE_NEWSTUFF
 #include "pvp.h"
-#endif
-#if defined(__BL_RANKING__)
-#include "buffer_manager.h"
-#endif
-#include "../../common/CommonDefines.h"
-#ifdef ENABLE_DECORUM
-#include "decorum_manager.h"
-#include "decorum_arena.h"
-#include "decorum.h"
 #endif
 
 #ifdef ENABLE_DICE_SYSTEM
@@ -63,7 +55,7 @@ namespace quest
 	// "pc" Lua functions
 	//
 #ifdef ENABLE_GIVE_BASIC_WEAPON
-	int pc_addbonus(lua_State* L)
+	ALUA(pc_addbonus)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 		if(ch)
@@ -78,15 +70,6 @@ namespace quest
 		return 0;
 	}
 #endif		
-	int pc_get_ip(lua_State* L)
-	{
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		if(!ch) return 0;
- 
-		lua_pushstring(L, ch->GetDesc()->GetHostName());
-		return 1;
-	}
-
 	ALUA(pc_has_master_skill)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
@@ -101,27 +84,6 @@ namespace quest
 		lua_pushboolean(L, bHasMasterSkill);
 		return 1;
 	}
-	
-#ifdef __BATTLE_PASS__
-	int pc_do_battle_pass(lua_State* L)
-	{
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		if (!ch)
-			return 0;
-		
-		if (ch->v_counts.empty())
-			return 0;
-		
-		if (!ch->v_counts.empty())
-		{
-			for (int i=0; i<ch->missions_bp.size(); ++i)
-			{
-				if (ch->missions_bp[i].type == (int)lua_tonumber(L, 1)){	ch->DoMission(i, (DWORD)lua_tonumber(L, 2));}
-			}
-		}
-		return 1;
-	}
-#endif	
 
 	ALUA(pc_remove_skill_book_no_delay)
 	{
@@ -150,63 +112,6 @@ namespace quest
 
 		lua_pushboolean(L, ch->LearnGrandMasterSkill((long)lua_tonumber(L, 1)));
 		return 1;
-	}
-	
-#ifdef ENABLE_MESSENGER_BLOCK
-	int pc_is_blocked(lua_State* L)
-	{
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-
-		if (!lua_isnumber(L, 1))
-		{
-			sys_err("wrong::pc_is_blocked");
-			return 0;
-		}
-		const char * arg1 = lua_tostring(L, 1);
-		LPCHARACTER tch = CHARACTER_MANAGER::instance().FindPC(arg1);
-		if(!tch || !tch->IsPC())
-		{
-			sys_err("wrong::pc_is_blocked-2");
-			return 0;
-		}
-
-		lua_pushboolean(L, MessengerManager::instance().CheckMessengerList(ch->GetName(), tch->GetName(), SYST_BLOCK));
-		return 1;
-	}
-	int pc_is_friend(lua_State* L)
-	{
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-
-		if (!lua_isnumber(L, 1))
-		{
-			sys_err("wrong::pc_is_blocked");
-			return 0;
-		}
-		const char * arg1 = lua_tostring(L, 1);
-		LPCHARACTER tch = CHARACTER_MANAGER::instance().FindPC(arg1);
-		if(!tch || !tch->IsPC())
-		{
-			sys_err("wrong::pc_is_blocked-2");
-			return 0;
-		}
-
-		lua_pushboolean(L, MessengerManager::instance().CheckMessengerList(ch->GetName(), tch->GetName(), SYST_FRIEND));
-		return 1;
-	}
-#endif
-	
-	ALUA(pc_is_exchanging) 
-	{
-	  LPCHARACTER chr = CQuestManager::instance().GetCurrentCharacterPtr();
-
-	  if (!chr)
-	  {
-	   lua_pushboolean(L, 0);
-	   return 1;
-	  }
-	  lua_pushboolean(L, chr->GetExchange() != NULL);
-	  return 1;
-
 	}
 
 	ALUA(pc_set_warp_location)
@@ -354,33 +259,7 @@ namespace quest
 			return 0;
 		}
 
-		/*
-		int iPulse = thecore_pulse();
-		if ( pkChr->GetExchange() || pkChr->GetMyShop() || pkChr->GetShopOwner() || pkChr->IsOpenSafebox() )
-		{
-			pkChr->ChatPacket( CHAT_TYPE_INFO, LC_TEXT("거래창,창고 등을 연 상태에서는 다른곳으로 이동할수 없습니다" ));
 
-			return;
-		}
-		//PREVENT_PORTAL_AFTER_EXCHANGE
-		//교환 후 시간체크
-		if ( iPulse - pkChr->GetExchangeTime()  < PASSES_PER_SEC(60) )
-		{
-			pkChr->ChatPacket( CHAT_TYPE_INFO, LC_TEXT("거래 후 1분 이내에는 다른지역으로 이동 할 수 없습니다." ) );
-			return;
-		}
-		//END_PREVENT_PORTAL_AFTER_EXCHANGE
-		//PREVENT_ITEM_COPY
-		{
-			if ( iPulse - pkChr->GetMyShopTime() < PASSES_PER_SEC(60) )
-			{
-				pkChr->ChatPacket( CHAT_TYPE_INFO, LC_TEXT("거래 후 1분 이내에는 다른지역으로 이동 할 수 없습니다." ) );
-				return;
-			}
-
-		}
-		//END_PREVENT_ITEM_COPY
-		*/
 
 		CQuestManager::instance().GetCurrentCharacterPtr()->WarpSet(region->sx + x, region->sy + y);
 		return 0;
@@ -458,7 +337,11 @@ namespace quest
 			return 0;
 		}
 
+#ifdef ENABLE_LONG_LONG
+		long long iAmount = (long long)lua_tonumber(L, 1);
+#else
 		int iAmount = (int) lua_tonumber(L, 1);
+#endif
 
 		if (iAmount <= 0)
 		{
@@ -531,16 +414,12 @@ namespace quest
 			{
 				if (dwVnums[i] == 1)
 				{
-#if defined(__CHATTING_WINDOW_RENEWAL__)
-					ch->ChatPacket(CHAT_TYPE_MONEY_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"돈 %d 냥을 획득했습니다."), dwCounts[i]);
-#else
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"돈 %d 냥을 획득했습니다."), dwCounts[i]);
-#endif
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("돈 %d 냥을 획득했습니다."), dwCounts[i]);
 				}
 				else if (dwVnums[i] == 2)
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"나무에서 부터 신비한 빛이 나옵니다."));
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"%d의 경험치를 획득했습니다."), dwCounts[i]);
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("나무에서 부터 신비한 빛이 나옵니다."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d의 경험치를 획득했습니다."), dwCounts[i]);
 				}
 			}
 		}
@@ -582,7 +461,7 @@ namespace quest
 
 		DWORD dwVnum;
 
-		if (lua_isnumber(L,2)) // 번호인경우 번호로 준다.
+		if (lua_isnumber(L,2))
 			dwVnum = (int) lua_tonumber(L, 2);
 		else if (!ITEM_MANAGER::instance().GetVnum(lua_tostring(L, 2), dwVnum))
 		{
@@ -622,7 +501,7 @@ namespace quest
 
 		DWORD dwVnum;
 
-		if (lua_isnumber(L, 1)) // 번호인경우 번호로 준다.
+		if (lua_isnumber(L, 1))
 		{
 			dwVnum = (int) lua_tonumber(L, 1);
 		}
@@ -678,7 +557,7 @@ namespace quest
 
 		DWORD dwVnum;
 
-		if (lua_isnumber(L, 1)) // 번호인경우 번호로 준다.
+		if (lua_isnumber(L, 1))
 		{
 			dwVnum = (int) lua_tonumber(L, 1);
 		}
@@ -735,7 +614,7 @@ namespace quest
 
 		DWORD dwVnum;
 
-		if (lua_isnumber(L, 1)) // 번호인경우 번호로 준다.
+		if (lua_isnumber(L, 1))
 		{
 			dwVnum = (int) lua_tonumber(L, 1);
 		}
@@ -756,7 +635,7 @@ namespace quest
 			}
 		}
 
-		sys_log(0, "QUEST [REWARD] item %s (x%g) to %s", lua_tostring(L, 1), lua_tonumber(L, 2), ch->GetName());
+		sys_log(0, "QUEST [REWARD] item %s to %s", lua_tostring(L, 1), ch->GetName());
 
 		PC* pPC = CQuestManager::instance().GetCurrentPC();
 
@@ -996,7 +875,7 @@ namespace quest
 
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 
-		if (val > 0) // 증가시키는 것이므로 무조건 성공 리턴
+		if (val > 0)
 			ch->PointChange(POINT_SP, val);
 		else if (val < 0)
 		{
@@ -1049,18 +928,18 @@ namespace quest
 			PC* pPC = CQuestManager::instance().GetCurrentPC();
 			LogManager::instance().QuestRewardLog(pPC->GetCurrentQuestName().c_str(), ch->GetPlayerID(), ch->GetLevel(), newLevel, 0);
 
-			//포인트 : 스킬, 서브스킬, 스탯
+
 			ch->PointChange(POINT_SKILL, newLevel - ch->GetLevel());
 			ch->PointChange(POINT_SUB_SKILL, newLevel < 10 ? 0 : newLevel - MAX(ch->GetLevel(), 9));
 			ch->PointChange(POINT_STAT, ((MINMAX(1, newLevel, gPlayerMaxLevel) - ch->GetLevel()) * 3) + ch->GetPoint(POINT_LEVEL_STEP)); // @fixme004
-			//레벨
+
 			ch->PointChange(POINT_LEVEL, newLevel - ch->GetLevel());
 			//HP, SP
 			ch->SetRandomHP((newLevel - 1) * number(JobInitialPoints[ch->GetJob()].hp_per_lv_begin, JobInitialPoints[ch->GetJob()].hp_per_lv_end));
 			ch->SetRandomSP((newLevel - 1) * number(JobInitialPoints[ch->GetJob()].sp_per_lv_begin, JobInitialPoints[ch->GetJob()].sp_per_lv_end));
 
 
-			// 회복
+
 			ch->PointChange(POINT_HP, ch->GetMaxHP() - ch->GetHP());
 			ch->PointChange(POINT_SP, ch->GetMaxSP() - ch->GetSP());
 
@@ -1123,8 +1002,8 @@ namespace quest
 		return 1;
 	}
 
-	// 20050725.myevan.은둔의 망토 사용중 혼석 수련시 선악치가 두배 소모되는 버그가 발생해
-	// 실제 선악치를 이용해 계산을 하게 한다.
+
+
 	ALUA(pc_get_real_alignment)
 	{
 		lua_pushnumber(L, CQuestManager::instance().GetCurrentCharacterPtr()->GetRealAlignment()/10);
@@ -1148,12 +1027,20 @@ namespace quest
 
 	ALUA(pc_change_money)
 	{
+#ifdef ENABLE_LONG_LONG
+		long long  gold = (long long)lua_tonumber(L, -1);
+#else
 		int gold = (int)lua_tonumber(L, -1);
+#endif
 
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 
 		if (gold + ch->GetGold() < 0)
+#ifdef ENABLE_LONG_LONG
+			sys_err("QUEST wrong ChangeGold %lld (now %lld)", gold, ch->GetGold());
+#else
 			sys_err("QUEST wrong ChangeGold %d (now %d)", gold, ch->GetGold());
+#endif
 		else
 		{
 			DBManager::instance().SendMoneyLog(MONEY_LOG_QUEST, ch->GetPlayerID(), gold);
@@ -1457,7 +1344,7 @@ namespace quest
 		return 0;
 	}
 #endif
-		// 말이 소환되어 따라다니는 상태라면 말부터 없앰
+
 		if (ch->GetHorse())
 			ch->HorseSummon(false);
 
@@ -1728,7 +1615,7 @@ namespace quest
 
 		if (pct == 100 || number(1, 100) <= pct)
 		{
-			// 개량 성공
+
 			lua_pushboolean(L, 1);
 
 			LPITEM pkNewItem = ITEM_MANAGER::instance().CreateItem(item->GetRefinedVnum(), 1, 0, false);
@@ -1760,12 +1647,12 @@ namespace quest
 
 				ITEM_MANAGER::instance().FlushDelayedSave(pkNewItem);
 
-				LogManager::instance().ItemLog(ch, pkNewItem, "REFINE SUCCESS (QUEST)", pkNewItem->GetName(ch->GetLanguage()));
+				LogManager::instance().ItemLog(ch, pkNewItem, "REFINE SUCCESS (QUEST)", pkNewItem->GetName());
 			}
 		}
 		else
 		{
-			// 개량 실패
+
 			lua_pushboolean(L, 0);
 		}
 
@@ -1802,7 +1689,7 @@ namespace quest
 		pdw[1] = 1;
 		pdw[2] = q.GetEventFlag("lotto_round");
 
-		// 추첨서는 소켓을 설정한다
+
 		DBManager::instance().ReturnQuery(QID_LOTTO, ch->GetPlayerID(), pdw,
 				"INSERT INTO lotto_list VALUES(0, 'server%s', %u, NOW())",
 				get_table_postfix(), ch->GetPlayerID());
@@ -2051,14 +1938,14 @@ namespace quest
 		return 0;
 	}
 
-	//텔레포트
+
 	ALUA(pc_teleport)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 		int x=0,y=0;
 		if ( lua_isnumber(L, 1) )
 		{
-			// 지역명 워프
+
 			const int TOWN_NUM = 10;
 			struct warp_by_town_name
 			{
@@ -2259,13 +2146,13 @@ teleport_area:
 
 	ALUA(pc_change_name)
 	{
-		// 리턴값
-		//		0: 새이름을 설정한 뒤 로그아웃을 안했음
-		//		1: 스크립트에서 문자열이 넘어오지 않았음
-		//		2: check_name 을 통과하지 못했음
-		//		3: 이미 같은 이름이 사용중
-		//		4: 성공
-		//		5: 해당 기능 지원하지 않음
+
+
+
+
+
+
+
 #ifdef ENABLE_LOCALECHECK_CHANGENAME
 		lua_pushnumber(L, 5);
 		return 1;
@@ -2295,8 +2182,8 @@ teleport_area:
 
 		char szQuery[1024];
 		snprintf(szQuery, sizeof(szQuery), "SELECT COUNT(*) FROM player%s WHERE name='%s'", get_table_postfix(), szName);
-		std::auto_ptr<SQLMsg> pmsg(DBManager::instance().DirectQuery(szQuery));
 
+		auto pmsg(DBManager::instance().DirectQuery(szQuery));
 		if ( pmsg->Get()->uiNumRows > 0 )
 		{
 			MYSQL_ROW row = mysql_fetch_row(pmsg->Get()->pSQLResult);
@@ -2304,7 +2191,7 @@ teleport_area:
 			int	count = 0;
 			str_to_number(count, row[0]);
 
-			// 이미 해당 이름을 가진 캐릭터가 있음
+
 			if ( count != 0 )
 			{
 				lua_pushnumber(L, 3);
@@ -2318,15 +2205,12 @@ teleport_area:
 
 		/* delete messenger list */
 		MessengerManager::instance().RemoveAllList(ch->GetName());
-#ifdef ENABLE_MESSENGER_BLOCK
-		MessengerManager::instance().RemoveAllBlockList(ch->GetName());
-#endif
+
 		/* change_name_log */
 		LogManager::instance().ChangeNameLog(pid, ch->GetName(), szName, ch->GetDesc()->GetHostName());
 
 		snprintf(szQuery, sizeof(szQuery), "UPDATE player%s SET name='%s' WHERE id=%u", get_table_postfix(), szName, pid);
-		SQLMsg * msg = DBManager::instance().DirectQuery(szQuery);
-		M2_DELETE(msg);
+		auto msg = DBManager::instance().DirectQuery(szQuery);
 
 		ch->SetNewName(szName);
 		lua_pushnumber(L, 4);
@@ -2505,82 +2389,6 @@ teleport_area:
 		lua_pushnumber(L, ch->GetRealPoint(POINT_DX));
 		return 1;
 	}
-	
-#if defined(GUILD_RANK_SYSTEM)
-	ALUA(pc_open_guild_ranking)
-	{
-		LPCHARACTER pkChar = CQuestManager::instance().GetCurrentCharacterPtr();
-		if (!pkChar || !pkChar->GetDesc())
-			return 0;
-
-		std::unique_ptr<SQLMsg> pMsg(DBManager::instance().DirectQuery("SELECT guild.id, guild.name AS guild_name, player.name AS guild_owner, guild.level, guild.win, guild.draw, guild.loss, guild.ladder_point FROM player.guild INNER JOIN player.player ON player.id = guild.master ORDER BY guild.level DESC, guild.win DESC, guild.draw DESC, guild.ladder_point DESC, guild.loss DESC LIMIT %d", GUILD_RANK::GUILD_RANKING_MAX_NUM));
-		if (pMsg->uiSQLErrno)
-			return 0;
-
-		MYSQL_ROW row;
-		while ((row = mysql_fetch_row(pMsg->Get()->pSQLResult)))
-		{
-			const int32_t ID = std::stoi(row[0]);
-			const char* GuildName = row[1];
-			const char* OwnerName = row[2];
-			const int32_t Level = std::stoi(row[3]);
-			const int32_t Win = std::stoi(row[4]);
-			const int32_t Draw = std::stoi(row[5]);
-			const int32_t Loss = std::stoi(row[6]);
-			const int32_t Point = std::stoi(row[7]);
-
-			const TPacketGCGuildRankingSend t = TPacketGCGuildRankingSend(ID, GuildName, OwnerName, Level, Point, Win, Draw, Loss);
-			pkChar->GetDesc()->Packet(&t, sizeof(t));
-		}
-
-		const TPacketGCGuildRankingSend t = TPacketGCGuildRankingSend();
-		pkChar->GetDesc()->Packet(&t, sizeof(t));
-
-		return 0;
-	}
-#endif	
-	
-#if defined(__BL_RANKING__)
-	ALUA(pc_open_player_ranking)
-	{
-		const LPCHARACTER pkChar = CQuestManager::instance().GetCurrentCharacterPtr();
-		if (!pkChar || !pkChar->GetDesc())
-			return 0;
-
-		std::unique_ptr<SQLMsg> pMsg(DBManager::instance().DirectQuery("SELECT player.name, player.level, player.job, player_index.empire, guild.name AS guild_name FROM player.player LEFT JOIN player.player_index ON player_index.id=player.account_id LEFT JOIN player.guild_member ON guild_member.pid=player.id LEFT JOIN player.guild ON guild.id=guild_member.guild_id INNER JOIN account.account ON account.id=player.account_id WHERE account.status != 'BLOCK' ORDER BY player.level DESC, player.name ASC LIMIT %d", ERANKINFO::RANKING_MAX_NUM));
-		if (pMsg->uiSQLErrno)
-			return 0;
-
-		TEMP_BUFFER buf;
-
-		MYSQL_ROW row;
-		while ((row = mysql_fetch_row(pMsg->Get()->pSQLResult))) {
-			if (row[0][0] == '[') // GameMaster
-				continue;
-
-			TPacketGCRankingInfo info;
-			strlcpy(info.szName, row[0], sizeof(info.szName));
-			info.iLevel = std::stoi(row[1]);
-			info.bJob = std::stoi(row[2]);
-			info.bEmpire = std::stoi(row[3]);
-			strlcpy(info.szGuildName, row[4] ? row[4] : "-", sizeof(info.szGuildName));
-			buf.write(&info, sizeof(info));
-		}
-
-		TPacketGCRankingSend packet;
-		packet.bHeader = HEADER_GC_RANKING;
-		packet.wSize = sizeof(packet) + buf.size();
-		
-		if (buf.size()) {
-			pkChar->GetDesc()->BufferedPacket(&packet, sizeof(packet));
-			pkChar->GetDesc()->Packet(buf.read_peek(), buf.size());
-		}
-		else
-			pkChar->GetDesc()->Packet(&packet, sizeof(packet));
-
-		return 0;
-	}
-#endif
 
 	ALUA(pc_set_dx)
 	{
@@ -2633,8 +2441,8 @@ teleport_area:
 
 		int idx = 1;
 
-		// 용혼석 슬롯은 할 필요 없을 듯.
-		// 이 함수는 탈석서용 함수인 듯 하다.
+
+
 		for ( int i=0; i < INVENTORY_MAX_NUM + WEAR_MAX_NUM; i++ )
 		{
 			LPITEM pItem = pChar->GetInventoryItem(i);
@@ -2663,7 +2471,7 @@ teleport_area:
 					lua_newtable( L );
 
 					{
-						lua_pushstring( L, pItem->GetName(pChar->GetLanguage()) );
+						lua_pushstring( L, pItem->GetName() );
 						lua_rawseti( L, -2, 1 );
 
 						lua_pushnumber( L, i );
@@ -2781,48 +2589,52 @@ teleport_area:
 	{
 		LPCHARACTER pChar = CQuestManager::instance().GetCurrentCharacterPtr();
 
-		if (NULL != pChar)
+		if (pChar)
 		{
 			LPITEM Unique1 = pChar->GetWear(WEAR_UNIQUE1);
 			LPITEM Unique2 = pChar->GetWear(WEAR_UNIQUE2);
-#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
+			#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 			LPITEM MountCostume = pChar->GetWear(WEAR_COSTUME_MOUNT);
-#endif
+			#endif
 
-			if (NULL != Unique1)
+			if (Unique1 && UNIQUE_GROUP_SPECIAL_RIDE == Unique1->GetSpecialGroup())
 			{
-				if (UNIQUE_GROUP_SPECIAL_RIDE == Unique1->GetSpecialGroup())
-				{
-					lua_pushnumber(L, Unique1->GetVnum());
-					lua_pushnumber(L, Unique1->GetSocket(2));
-					return 2;
-				}
+				lua_pushnumber(L, Unique1->GetVnum());
+				lua_pushnumber(L, Unique1->GetSocket(0)); // @fixme152 (2->0)
+				#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
+				lua_pushnumber(L, Unique1->GetValue(4)); 
+				#endif
+				return 3;
 			}
 
-			if (NULL != Unique2)
+			if (Unique2 && UNIQUE_GROUP_SPECIAL_RIDE == Unique2->GetSpecialGroup())
 			{
-				if (UNIQUE_GROUP_SPECIAL_RIDE == Unique2->GetSpecialGroup())
-				{
-					lua_pushnumber(L, Unique2->GetVnum());
-					lua_pushnumber(L, Unique2->GetSocket(2));
-					return 2;
-				}
+				lua_pushnumber(L, Unique2->GetVnum());
+				lua_pushnumber(L, Unique2->GetSocket(0)); // @fixme152 (2->0)
+				#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
+				lua_pushnumber(L, Unique2->GetValue(4)); 
+				#endif
+				return 3;
 			}
 
-#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
+			#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 			if (MountCostume)
 			{
 				lua_pushnumber(L, MountCostume->GetVnum());
-				lua_pushnumber(L, MountCostume->GetSocket(2));
-				return 2;
+				lua_pushnumber(L, MountCostume->GetSocket(0)); // @fixme152 (2->0)
+				lua_pushnumber(L, MountCostume->GetValue(4)); 
+				return 3;
 			}
-#endif
+			#endif
 		}
 
 		lua_pushnumber(L, 0);
 		lua_pushnumber(L, 0);
+		#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
+		lua_pushnumber(L, 0);
+		#endif
 
-		return 2;
+		return 3;
 	}
 
 	ALUA(pc_can_warp)
@@ -2875,17 +2687,6 @@ teleport_area:
 
 		return 1;
 	}
-
-#if defined(__BL_SOUL_ROULETTE__)
-	int pc_open_soul_roulette(lua_State* L)
-	{
-		LPCHARACTER pkChar = CQuestManager::instance().GetCurrentCharacterPtr();
-		if (pkChar && !pkChar->GetSoulRoulette())
-			pkChar->SetSoulRoulette(new CSoulRoulette(pkChar));
-		return 0;
-	}
-#endif
-
 
 	ALUA(pc_give_poly_marble)
 	{
@@ -3014,44 +2815,6 @@ teleport_area:
 		lua_pushnumber (L, 0);
 		return 1;
 	}
-
-#ifdef CHANGELOOK_SYSTEM
-	int pc_open_changelook(lua_State * L)
-	{
-		CQuestManager & qMgr = CQuestManager::instance();
-		LPCHARACTER pkChar = qMgr.GetCurrentCharacterPtr();
-		if (pkChar)
-			pkChar->ChangeLookWindow(true);
-
-		return 0;
-	}
-#endif
-
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int pc_change_cheque(lua_State* L)
-	{
-		int cheque = (int)lua_tonumber(L, -1);
-
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-
-		if (cheque + ch->GetCheque() < 0)
-			sys_err("QUEST wrong ChangeCheque %d (now %d)", cheque, ch->GetCheque());
-		else
-		{
-			//DBManager::instance().SendMoneyLog(MONEY_LOG_QUEST, ch->GetPlayerID(), cheque);
-			ch->PointChange(POINT_CHEQUE, cheque, true);
-		}
-
-		return 0;
-	}
-
-	int pc_get_cheque(lua_State* L)
-	{
-		lua_pushnumber(L, CQuestManager::instance().GetCurrentCharacterPtr()->GetCheque());
-		return 1;
-	}
-#endif
-
 	ALUA(pc_give_award_socket)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
@@ -3084,7 +2847,7 @@ teleport_area:
 		return 1;
 	}
 
-	ALUA(pc_get_informer_type)	//독일 선물 기능
+	ALUA(pc_get_informer_type)
 	{
 		LPCHARACTER pChar = CQuestManager::instance().GetCurrentCharacterPtr();
 
@@ -3565,7 +3328,11 @@ teleport_area:
 	ALUA(pc_is_busy0)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		lua_pushboolean(L, (ch->GetExchange() || ch->GetMyShop() || ch->GetShopOwner() || ch->IsOpenSafebox() || ch->IsCubeOpen()));
+		lua_pushboolean(L, (ch->GetExchange() || ch->GetMyShop() || ch->GetShopOwner() || ch->IsOpenSafebox() || ch->IsCubeOpen()
+#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+			|| ch->IsAcceOpened()
+#endif
+		));
 		return 1;
 	}
 
@@ -3632,6 +3399,49 @@ teleport_area:
 		return 1;
 	}
 
+	bool SendWhisper(LPCHARACTER ch, const char * msg, const char * who, bool isgm)
+	{
+		if (!ch)
+			return false;
+		// skip if no desc
+		if (!ch->GetDesc())
+			return false;
+		// packet info
+		const size_t buflen = strlen(msg);
+		uint8_t bType = WHISPER_TYPE_NORMAL;
+		if (isgm) // gm text
+			bType = (bType & 0xF0) | WHISPER_TYPE_GM;
+		// filter empty buffer
+		if (buflen <= 0)
+			return false;
+		TPacketGCWhisper pack{};
+		pack.bHeader = HEADER_GC_WHISPER;
+		pack.wSize = sizeof(TPacketGCWhisper) + buflen;
+		pack.bType = bType;
+		strlcpy(pack.szNameFrom, who, sizeof(pack.szNameFrom));
+
+		TEMP_BUFFER tmpbuf{};
+		tmpbuf.write(&pack, sizeof(pack));
+		tmpbuf.write(msg, buflen);
+		ch->GetDesc()->Packet(tmpbuf.read_peek(), tmpbuf.size());
+		return true;
+	}
+
+	ALUA(pc_send_whisper)
+	{
+		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
+		if (!ch)
+			return 0;
+		auto msg = lua_tostring(L, 1);
+		auto who = "[System]";
+		auto isgm = true;
+		if (lua_isstring(L, 2))
+			who = lua_tostring(L, 2);
+		if (lua_isboolean(L, 3))
+			isgm = lua_toboolean(L, 3);
+		SendWhisper(ch, msg, who, isgm);
+		return 0;
+	}
 #endif
 
 #ifdef ENABLE_PC_OPENSHOP
@@ -3642,7 +3452,7 @@ teleport_area:
 		//PREVENT_TRADE_WINDOW
 		if (ch->IsOpenSafebox() || ch->GetExchange() || ch->GetMyShop() || ch->IsCubeOpen())
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"다른 거래창이 열린상태에서는 상점거래를 할수 가 없습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("다른 거래창이 열린상태에서는 상점거래를 할수 가 없습니다."));
 			return 0;
 		}
 		//END_PREVENT_TRADE_WINDOW
@@ -3698,33 +3508,8 @@ teleport_area:
 	}
 #endif
 
-/* 	int pc_get_skill_list(lua_State* L)
-	{
-		lua_newtable(L);
-
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		if (!ch)
-			return 1;
-
-		const DWORD* pSkillVnums = ch->GetUsableSkillList();
-		if (!pSkillVnums)
-			return 1;
-
-		int iCount = 0;
-		for (int i = 0; i < CHARACTER_SKILL_COUNT; ++i)
-		{
-			if (!pSkillVnums[i])
-				continue;
-
-			lua_pushnumber(L, pSkillVnums[i]);
-			lua_rawseti(L, -2, ++iCount);
-		}
-
-		return 1;
-	} */
-
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
-	ALUA(pc_open_acce)
+	int pc_open_acce(lua_State * L)
 	{
 		if (lua_isboolean(L, 1))
 		{
@@ -3749,68 +3534,9 @@ teleport_area:
 		return 0;
 	}
 #endif
-#ifdef ENABLE_DECORUM
-	ALUA(pc_get_decorum)
-	{
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		if (!ch)
-			return 0;
-			
-		DECORUM * pkDec = CDecorumManager::instance().GetDecorum(ch->GetPlayerID());
-		
-		lua_pushnumber(L, pkDec->GetDecorumPoint());
-		return 1;
-	}
-	
-	ALUA(pc_set_decorum)
-	{
-		if (!lua_isnumber(L, 1))
-		{
-			sys_err("QUEST pc_set_decorum call error : wrong argument");
-			return 0;
-		}
-		
-		DWORD dwPoints = (DWORD)lua_tonumber(L, 1);
-		
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		if (!ch)
-			return 0;
-			
-		DECORUM * pkDec = CDecorumManager::instance().GetDecorum(ch->GetPlayerID());
-		
-		pkDec->SetDecorumPoint(dwPoints);
-		pkDec->SendDecorumData(ch);
-		return 1;
-	}
-	
-	ALUA(pc_decored)
-	{
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		if (!ch)
-			return 0;
-			
-		DECORUM * pkDec = CDecorumManager::instance().GetDecorum(ch->GetPlayerID());
-		
-		pkDec->ResetTable();
-		pkDec->SetDecorumPoint(DECORUM::c_aRankTable[1] / 100 * 80);
-		pkDec->Save(ch);
-		pkDec->SendDecorumData(ch);
-		return 0;
-	}
-	
-	ALUA(pc_is_decored)
-	{
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		if (!ch)
-			return 0;
-			
-		DECORUM * pkDec = CDecorumManager::instance().GetDecorum(ch->GetPlayerID());
-		lua_pushboolean(L, pkDec->IsDecored());
-		return 1;
-	}
-#endif
+
 #if defined(__DUNGEON_INFO_SYSTEM__)
-	int pc_update_dungeon_rank(lua_State* L)
+	ALUA(pc_update_dungeon_rank)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 		if (!ch || !ch->GetDesc())
@@ -3824,20 +3550,6 @@ teleport_area:
 		return 0;
 	}
 #endif
-
-	int pc_jump(lua_State* L)
-	{
-		if (lua_gettop(L)<2 || !lua_isnumber(L, 1) || !lua_isnumber(L,2))
-			return 0;
-
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		if(!ch || ch == NULL)
-			return 0;
-
-		ch->Show(ch->GetMapIndex(), (int)lua_tonumber(L, 1), (int)lua_tonumber(L, 2), 0);
-		ch->Stop();
-		return 0;
-	}
 
 	void RegisterPCFunctionTable()
 	{
@@ -3886,6 +3598,12 @@ teleport_area:
 			{ "get_playtime",		pc_get_playtime		},
 			{ "getleadership",		pc_get_leadership	},
 			{ "get_leadership",		pc_get_leadership	},
+#ifdef ENABLE_NEWSTUFF
+			{ "getf2",			pc_get_flag	},
+			{ "getf_ex",		pc_get_flag	}, // alias
+			{ "setf2",			pc_set_flag	},
+			{ "setf_ex",		pc_set_flag	}, // alias
+#endif
 			{ "getqf",			pc_get_quest_flag	},
 			{ "setqf",			pc_set_quest_flag	},
 			{ "delqf",			pc_del_quest_flag	},
@@ -3934,9 +3652,6 @@ teleport_area:
 			{ "set_warp_location_local",pc_set_warp_location_local },
 			{ "get_start_location",	pc_get_start_location	},
 			{ "has_master_skill",	pc_has_master_skill	},
-#ifdef __BATTLE_PASS__
-			{ "do_mission",	pc_do_battle_pass	},
-#endif
 			{ "set_part",		pc_set_part		},
 			{ "get_part",		pc_get_part		},
 			{ "is_polymorphed",		pc_is_polymorphed	},
@@ -3966,7 +3681,6 @@ teleport_area:
 			{ "aggregate_monster",	pc_aggregate_monster	},
 			{ "forget_my_attacker",	pc_forget_my_attacker	},
 			{ "pc_attract_ranger",	pc_attract_ranger	},
-			{ "is_exchanging",  pc_is_exchanging	},
 			{ "select",			pc_select_vid		},
 			{ "get_sex",		pc_get_sex		},
 			{ "is_married",		pc_is_married		},
@@ -4004,10 +3718,6 @@ teleport_area:
 			{ "set_change_empire_count",	pc_set_change_empire_count	},
 
 			{ "change_name",			pc_change_name },
-			#ifdef ENABLE_MESSENGER_BLOCK
-			{ "is_blocked",			pc_is_blocked },
-			{ "is_friend",			pc_is_friend },
-			#endif
 
 			{ "is_dead",				pc_is_dead	},
 
@@ -4032,59 +3742,47 @@ teleport_area:
 			{ "get_special_ride_vnum",	pc_get_special_ride_vnum	},
 
 			{ "can_warp",			pc_can_warp		},
+
 			{ "dec_skill_point",	pc_dec_skill_point	},
 			{ "get_skill_point",	pc_get_skill_point	},
-#if defined(GUILD_RANK_SYSTEM)
-			{ "open_guild_ranking", pc_open_guild_ranking },
-#endif
-#if defined(__BL_RANKING__)
-			{ "open_player_ranking", pc_open_player_ranking },
-#endif
+
 			{ "get_channel_id",		pc_get_channel_id	},
-#if defined(__BL_SOUL_ROULETTE__)
-			{ "open_soul_roulette",	pc_open_soul_roulette	},
-#endif
+
 			{ "give_poly_marble",	pc_give_poly_marble	},
 			{ "get_sig_items",		pc_get_sig_items	},
 
 			{ "charge_cash",		pc_charge_cash		},
 
-			{ "get_informer_type",	pc_get_informer_type	},	//독일 선물 기능
+			{ "get_informer_type",	pc_get_informer_type	},
 			{ "get_informer_item",  pc_get_informer_item	},
 
-			{ "give_award",			pc_give_award			},	//일본 계정당 한번씩 금괴 지급
-			{ "give_award_socket",	pc_give_award_socket	},	//몰 인벤토리에 아이템 지급. 소켓 설정을 위한 함수.
-#ifdef ENABLE_CHEQUE_SYSTEM
-			{ "get_cheque", pc_get_cheque },
-			{ "change_cheque", pc_change_cheque },
-#endif
-#ifdef CHANGELOOK_SYSTEM
-			{ "open_changelook", pc_open_changelook },
-#endif
-			{ "get_killee_drop_pct",	pc_get_killee_drop_pct	}, /* mob_vnum.kill 이벤트에서 killee와 pc와의 level 차이, pc의 프리미엄 드랍률 등등을 고려한 아이템 드랍 확률.
-																    * return 값은 (분자, 분모).
-																    * (말이 복잡한데, CreateDropItem의 GetDropPct의 iDeltaPercent, iRandRange를 return한다고 보면 됨.)
-																	* (이 말이 더 어려울라나 ㅠㅠ)
-																	* 주의사항 : kill event에서만 사용할 것!
-																	*/
+			{ "give_award",			pc_give_award			},
+			{ "give_award_socket",	pc_give_award_socket	},
+
+			{ "get_killee_drop_pct",	pc_get_killee_drop_pct	},
 
 #ifdef ENABLE_NEWSTUFF
 			//pc.set_race0(race=[0. Warrior, 1. Ninja, 2. Sura, 3. Shaman, 4. Lycan])
 			{ "set_race0",			pc_set_race0			},
+			{ "set_race",			pc_set_race0			},	// alias
 			//if pc.delf("game_option", "block_cocks") then syschat("now you are unsafe") end
 			{ "delf",				pc_del_another_quest_flag},	// delete quest flag [return lua boolean: successfulness]
 			//pc.make_item0({vnum|locale_name, count}, {socket1,2,3}, {type1, value1, ... , type7, value7}, gstate(=0: giveitem, 1: dropitem, 2: drop_item_with_leadership)[, countdown_in_secs_before_ownership_vanish(=if <=10 would be 30; default=10->30)])
 			{ "make_item0",			pc_make_item0		},	// [return lua boolean: successfulness]
+			{ "make_item",			pc_make_item0		},	// alias
 			//pc.pointchange(uint type, int amount, bool bAmount, bool bBroadcast)
 			{ "pointchange",		pc_pointchange		},	// [return nothing]
+			{ "point_change",		pc_pointchange		},	// alias
 			//pc.pullmob()
 			{ "pullmob",			pc_pullmob			},	// [return nothing]
+			{ "pull_mob",			pc_pullmob			},	// alias
 			//pc.select_pid(pc.get_player_id())
 			{ "select_pid",			pc_select_pid		},	// [return lua number: old pid]
 			//pc.select renamed in pc.select_vid
 			{ "select_vid",			pc_select_vid		},	// [return lua number: old vid]
 			//pc.set_level0(level)
 			{ "set_level0",			pc_set_level0		},	// [return nothing]
+			{ "set_level_ex",		pc_set_level0		},	// alias
 			//pc.set_gm_level(); instead of `/reload a` (note: this only refresh gm privileges if you already are gm on common.gm[host|list])
 			{ "set_gm_level",		pc_set_gm_level		},	// [return nothing]
 			//is_flags (void) [return lua boolean]
@@ -4113,58 +3811,67 @@ teleport_area:
 			{ "get_exp_level",		pc_get_exp_level	},	// get needed exp for <level> level [return: lua number]
 			//pc.get_exp_level(level, perc)
 			{ "get_exp_level0",		pc_get_exp_level0	},	// get needed exp for <level> level / 100 * perc [return: lua number]
+			{ "get_exp_level_pct",		pc_get_exp_level0	},	// alias
 			//pc.set_max_health()
 			{ "set_max_health",		pc_set_max_health	},	// [return nothing]
 			{ "get_ip0",			pc_get_ip0			},	// [return lua string]
-			{ "get_ip",				pc_get_ip			},
-			{ "get_client_version0",	pc_get_client_version0	},	// get player client version [return lua string]
+			{ "get_ip",				pc_get_ip0			},	// alias
+			{ "get_client_version0",pc_get_client_version0	},	// get player client version [return lua string]
+			{ "get_client_version",	pc_get_client_version0	},	// alias
 			{ "dc_delayed0",		pc_dc_delayed0	},	// crash a player after x secs [return lua boolean: successfulness]
+			{ "dc_delayed",			pc_dc_delayed0	},	// alias
 			{ "dc_direct0",			pc_dc_direct0	},	// crash the <nick> player [return nothing]
+			{ "dc_direct",			pc_dc_direct0	},	// alias
 			{ "is_trade0",			pc_is_trade0	},	// get if player is trading [return lua boolean]
+			{ "is_trade",			pc_is_trade0	},	// alias
 			{ "is_busy0",			pc_is_busy0		},	// get if player is "busy" (if trade, safebox, npc/myshop, cube are open) [return lua boolean]
+			{ "is_busy",			pc_is_busy0		},	// alias
 			{ "is_arena0",			pc_is_arena0		},	// get if player is in arena [return lua boolean]
+			{ "is_arena",			pc_is_arena0		},	// alias
 			{ "is_arena_observer0",	pc_is_arena_observer0		},	// get if player is in arena as observer [return lua boolean]
+			{ "is_arena_observer",	pc_is_arena_observer0		},	// alias
 			// pc.equip_slot0(cell)
 			{ "equip_slot0",		pc_equip_slot0		},	// [return lua boolean: successfulness]
+			{ "equip_slot",			pc_equip_slot0		},	// alias
 			// pc.unequip_slot0(cell)
 			{ "unequip_slot0",		pc_unequip_slot0	},	// [return lua boolean: successfulness]
+			{ "unequip_slot",		pc_unequip_slot0	},	// alias
 			{ "is_available0",		pc_is_available0	},	// [return lua boolean]
+			{ "is_available",		pc_is_available0	},	// alias
 			{ "give_random_book0",	pc_give_random_book0},	// [return lua boolean]
+			{ "give_random_book",	pc_give_random_book0},	// alias
 			{ "is_pvp0",			pc_is_pvp0			},	// [return lua boolean]
+			{ "is_pvp",				pc_is_pvp0			},	// alias
+			{ "send_whisper",		pc_send_whisper		},	// [return nothing]
 #endif
 #ifdef ENABLE_PC_OPENSHOP
 			//pc.open_shop0(id_shop)
 			{ "open_shop0",			pc_open_shop0		},	// buy/sell won't work on it [return nothing]
+			{ "open_shop",			pc_open_shop0		},	// alias
 #endif
 #ifdef ENABLE_NEWGUILDMAKE
 			//pc.make_guild0(guild_name)
 			{ "make_guild0",			pc_make_guild0	},	// it returns few state values which you can manage via lua [return lua number]
-#endif
-
-#ifdef ENABLE_ACCE_COSTUME_SYSTEM
-			{ "open_acce", pc_open_acce },
+			{ "make_guild",				pc_make_guild0	},	// alias
 #endif
 #ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
 			{ "set_language",       pc_set_language     },
 #endif
-#ifdef ENABLE_DECORUM
-			{ "get_decorum",				pc_get_decorum},
-			{ "set_decorum",				pc_set_decorum},
-			{ "decored",					pc_decored},
-			{ "is_decored",					pc_is_decored},
-#endif
-			//{ "get_skill_list",		pc_get_skill_list		},
-#if defined(__DUNGEON_INFO_SYSTEM__)
-			{ "update_dungeon_rank", pc_update_dungeon_rank },
+#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+			{"open_acce", pc_open_acce},
+			{"open_sash", pc_open_acce},
 #endif
 #ifdef ENABLE_GIVE_BASIC_WEAPON
 			{"addbonus",			pc_addbonus		},
 			{"additems",			pc_additems		},
 #endif
-			{"jump",	pc_jump},
+#if defined(__DUNGEON_INFO_SYSTEM__)
+			{ "update_dungeon_rank", pc_update_dungeon_rank },
+#endif
 			{ NULL,			NULL			}
 		};
 
 		CQuestManager::instance().AddLuaFunctionTable("pc", pc_functions);
 	}
 };
+//martysama0134's 2022

@@ -39,7 +39,7 @@ struct ServerStateChecker_ResponsePacket
 
 CPacketInfoUDP::CPacketInfoUDP()
 {
-	Set(1, sizeof(ServerStateChecker_RequestPacket), "ServerStateRequest");
+	Set(1, sizeof(ServerStateChecker_RequestPacket), "ServerStateRequest", false);
 }
 
 CPacketInfoUDP::~CPacketInfoUDP()
@@ -71,7 +71,7 @@ void CInputUDP::Handshake(LPDESC pDesc, const char * c_pData)
 
 void CInputUDP::StateChecker(const char * c_pData)
 {
-	// NOTE : TCP 연결로 바꾸면서 사용 X
+
 	/*
 	struct ServerStateChecker_RequestPacket * p = (struct ServerStateChecker_RequestPacket *) c_pData;
 	ServerStateChecker_ResponsePacket rp;
@@ -191,4 +191,4 @@ bool CInputUDP::Process(LPDESC pDesc, const void * c_pvOrig, int iBytes, int & r
 	*/
 	return true;
 }
-
+//martysama0134's 2022

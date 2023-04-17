@@ -8,9 +8,9 @@ void WriteVersion()
 	if (fp)
 	{
 		fprintf(fp, "__GAME_VERSION__: %s\n", __GAME_VERSION__);
-		fprintf(fp, "%s@%s:%s\n", __USER__, __HOSTNAME__, __PWD__);
+		fprintf(fp, "%s@%s:%s\n", "bW9ycGhldXM=", __HOSTNAME__, __PWD__);
 		fclose(fp);
 	}
 #endif
 }
-
+//martysama0134's 2022

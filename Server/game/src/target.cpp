@@ -277,7 +277,7 @@ void CTargetManager::DeleteTarget(DWORD dwPID, DWORD dwQuestIndex, const char * 
 			}
 		}
 
-		++it2;	//@fixme541
+		it2++;
 	}
 }
 
@@ -361,4 +361,4 @@ void CTargetManager::Logout(DWORD dwPID)
 
 	m_map_kListEvent.erase(it);
 }
-
+//martysama0134's 2022

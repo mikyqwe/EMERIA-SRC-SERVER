@@ -7,9 +7,7 @@
 #include "buffer_manager.h"
 #include "unique_item.h"
 #include "wedding.h"
-#ifdef ENABLE_MESSENGER_BLOCK
-#include "messenger_manager.h"
-#endif
+
 #define NEED_TARGET	(1 << 0)
 #define NEED_PC		(1 << 1)
 #define WOMAN_ONLY	(1 << 2)
@@ -49,49 +47,8 @@ struct emotion_type_s
 	{ "응원",	"cheerup",			0,				1.0f	},
 	{ "질투",	"banter",			0,				1.0f	},
 	{ "기쁨",	"joy",				0,				1.0f	},
-#ifdef ENABLE_EXPRESSING_EMOTION
-	{ "pushup",	"pushup",				0,				1.0f	},
-	{ "dance_7",	"dance_7",				0,				1.0f	},
-	{ "exercise",	"exercise",				0,				1.0f	},
-	{ "doze",	"doze",				0,				1.0f	},
-	{ "selfie",	"selfie",				0,				1.0f	},
-#endif
 	{ "\n",	"\n",		0,						0.0f },
-	/*
-	//{ "키스",		NEED_PC | OTHER_SEX_ONLY | BOTH_DISARM,		MOTION_ACTION_FRENCH_KISS,	 1.0f },
-	{ "뽀뽀",		NEED_PC | OTHER_SEX_ONLY | BOTH_DISARM,		MOTION_ACTION_KISS,		 1.0f },
-	{ "껴안기",		NEED_PC | OTHER_SEX_ONLY | BOTH_DISARM,		MOTION_ACTION_SHORT_HUG,	 1.0f },
-	{ "포옹",		NEED_PC | OTHER_SEX_ONLY | BOTH_DISARM,		MOTION_ACTION_LONG_HUG,		 1.0f },
-	{ "어깨동무",	NEED_PC | SELF_DISARM,				MOTION_ACTION_PUT_ARMS_SHOULDER, 0.0f },
-	{ "팔짱",		NEED_PC	| WOMAN_ONLY | SELF_DISARM,		MOTION_ACTION_FOLD_ARM,		 0.0f },
-	{ "따귀",		NEED_PC | SELF_DISARM,				MOTION_ACTION_SLAP,		 1.5f },
 
-	{ "휘파람",		0,						MOTION_ACTION_CHEER_01,		 0.0f },
-	{ "만세",		0,						MOTION_ACTION_CHEER_02,		 0.0f },
-	{ "박수",		0,						MOTION_ACTION_CHEER_03,		 0.0f },
-
-	{ "호호",		0,						MOTION_ACTION_LAUGH_01,		 0.0f },
-	{ "킥킥",		0,						MOTION_ACTION_LAUGH_02,		 0.0f },
-	{ "우하하",		0,						MOTION_ACTION_LAUGH_03,		 0.0f },
-
-	{ "엉엉",		0,						MOTION_ACTION_CRY_01,		 0.0f },
-	{ "흑흑",		0,						MOTION_ACTION_CRY_02,		 0.0f },
-
-	{ "인사",		0,						MOTION_ACTION_GREETING_01,	0.0f },
-	{ "바이",		0,						MOTION_ACTION_GREETING_02,	0.0f },
-	{ "정중인사",	0,						MOTION_ACTION_GREETING_03,	0.0f },
-
-	{ "비난",		0,						MOTION_ACTION_INSULT_01,	0.0f },
-	{ "모욕",		SELF_DISARM,					MOTION_ACTION_INSULT_02,	0.0f },
-	{ "우웩",		0,						MOTION_ACTION_INSULT_03,	0.0f },
-
-	{ "갸우뚱",		0,						MOTION_ACTION_ETC_01,		0.0f },
-	{ "끄덕끄덕",	0,						MOTION_ACTION_ETC_02,		0.0f },
-	{ "도리도리",	0,						MOTION_ACTION_ETC_03,		0.0f },
-	{ "긁적긁적",	0,						MOTION_ACTION_ETC_04,		0.0f },
-	{ "퉤",		0,						MOTION_ACTION_ETC_05,		0.0f },
-	{ "뿡",		0,						MOTION_ACTION_ETC_06,		0.0f },
-	 */
 };
 
 
@@ -101,17 +58,10 @@ ACMD(do_emotion_allow)
 {
 	if ( ch->GetArena() )
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"대련장에서 사용하실 수 없습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("대련장에서 사용하실 수 없습니다."));
 		return;
 	}
 
-#ifdef DISABLE_EMOTIONS_DECORUM
-	if ( ch->GetDecorumArena() )
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(), "You cannot use this in the Arena."));
-		return;
-	}
-#endif
 	char arg1[256];
 	one_argument(argument, arg1, sizeof(arg1));
 
@@ -119,17 +69,6 @@ ACMD(do_emotion_allow)
 		return;
 
 	DWORD	val = 0; str_to_number(val, arg1);
-	#ifdef ENABLE_MESSENGER_BLOCK
-	LPCHARACTER tch = CHARACTER_MANAGER::instance().Find(val);
-	if (!tch)
-		return;
-	
-	if (MessengerManager::instance().CheckMessengerList(ch->GetName(), tch->GetName(), SYST_BLOCK))
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"%s blokkk"), tch->GetName());
-		return;
-	}
-	#endif
 	s_emotion_set.insert(std::make_pair(ch->GetVID(), val));
 }
 
@@ -143,11 +82,11 @@ bool CHARACTER_CanEmotion(CHARACTER& rch)
 	if (g_bDisableEmotionMask)
 		return true;
 #endif
-	// 결혼식 맵에서는 사용할 수 있다.
+
 	if (marriage::WeddingManager::instance().IsWeddingMap(rch.GetMapIndex()))
 		return true;
 
-	// 열정의 가면 착용시 사용할 수 있다.
+
 	if (rch.IsEquipUniqueItem(UNIQUE_ITEM_EMOTION_MASK))
 		return true;
 
@@ -163,7 +102,7 @@ ACMD(do_emotion)
 	{
 		if (ch->IsRiding())
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"말을 탄 상태에서 감정표현을 할 수 없습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("말을 탄 상태에서 감정표현을 할 수 없습니다."));
 			return;
 		}
 	}
@@ -185,13 +124,13 @@ ACMD(do_emotion)
 
 	if (!CHARACTER_CanEmotion(*ch))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"열정의 가면을 착용시에만 할 수 있습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("열정의 가면을 착용시에만 할 수 있습니다."));
 		return;
 	}
 
 	if (IS_SET(emotion_types[i].flag, WOMAN_ONLY) && SEX_MALE==GET_SEX(ch))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"여자만 할 수 있습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("여자만 할 수 있습니다."));
 		return;
 	}
 
@@ -207,7 +146,7 @@ ACMD(do_emotion)
 	{
 		if (!victim)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"그런 사람이 없습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("그런 사람이 없습니다."));
 			return;
 		}
 	}
@@ -219,7 +158,7 @@ ACMD(do_emotion)
 
 		if (victim->IsRiding())
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"말을 탄 상대와 감정표현을 할 수 없습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("말을 탄 상대와 감정표현을 할 수 없습니다."));
 			return;
 		}
 
@@ -227,13 +166,13 @@ ACMD(do_emotion)
 
 		if (distance < 10)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"너무 가까이 있습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("너무 가까이 있습니다."));
 			return;
 		}
 
 		if (distance > 500)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"너무 멀리 있습니다"));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("너무 멀리 있습니다"));
 			return;
 		}
 
@@ -241,7 +180,7 @@ ACMD(do_emotion)
 		{
 			if (GET_SEX(ch)==GET_SEX(victim))
 			{
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"이성간에만 할 수 있습니다."));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("이성간에만 할 수 있습니다."));
 				return;
 			}
 		}
@@ -258,13 +197,13 @@ ACMD(do_emotion)
 
 					if (0 == other || other != victim->GetPlayerID())
 					{
-						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"이 행동은 상호동의 하에 가능 합니다."));
+						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("이 행동은 상호동의 하에 가능 합니다."));
 						return;
 					}
 				}
 				else
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"이 행동은 상호동의 하에 가능 합니다."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("이 행동은 상호동의 하에 가능 합니다."));
 					return;
 				}
 			}
@@ -281,7 +220,7 @@ ACMD(do_emotion)
 	if (len < 0 || len >= (int) sizeof(chatbuf))
 		len = sizeof(chatbuf) - 1;
 
-	++len;  // \0 문자 포함
+	++len;
 
 	TPacketGCChat pack_chat;
 	pack_chat.header = HEADER_GC_CHAT;
@@ -299,4 +238,4 @@ ACMD(do_emotion)
 	else
 		sys_log(1, "ACTION: %s", emotion_types[i].command);
 }
-
+//martysama0134's 2022

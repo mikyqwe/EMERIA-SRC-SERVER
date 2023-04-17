@@ -6,7 +6,6 @@
 #include "affect.h"
 #include "locale_service.h"
 
-// 독
 const int poison_damage_rate[MOB_RANK_MAX_NUM] =
 {
 	80, 50, 40, 30, 25, 1
@@ -202,29 +201,7 @@ EVENTFUNC(fire_event)
 	}
 }
 
-/*
 
-   LEVEL에 의한..
-
-   +8   0%
-   +7   5%
-   +6  10%
-   +5  30%
-   +4  50%
-   +3  70%
-   +2  80%
-   +1  90%
-   +0 100%
-   -1 100%
-   -2 100%
-   -3 100%
-   -4 100%
-   -5 100%
-   -6 100%
-   -7 100%
-   -8 100%
-
- */
 
 static int poison_level_adjust[9] =
 {
@@ -260,18 +237,14 @@ void CHARACTER::AttackedByPoison(LPCHARACTER pkAttacker)
 	if (m_pkPoisonEvent)
 		return;
 
-	if (m_bHasPoisoned && !IsPC()) // 몬스터는 독이 한번만 걸린다.
+	if (m_bHasPoisoned && !IsPC())
 		return;
-#ifdef ENABLE_RENEWAL_PVP
-	if (pkAttacker && pkAttacker->IsPC())
-		if(pkAttacker->IsInFight() && pvpSettings[PVP_POISONING] == false)
-			return;
-#endif
+
 #ifdef ENABLE_WOLFMAN_CHARACTER
 	if (m_pkBleedingEvent)
 		return;
 
-	if (m_bHasBled && !IsPC()) // 몬스터는 독이 한번만 걸린다.
+	if (m_bHasBled && !IsPC())
 		return;
 #endif
 
@@ -289,7 +262,7 @@ void CHARACTER::AttackedByPoison(LPCHARACTER pkAttacker)
 	/*if (IsImmune(IMMUNE_POISON))
 	  return;*/
 
-	// 독 내성 굴림 실패, 독에 걸렸다!
+
 	m_bHasPoisoned = true;
 
 	AddAffect(AFFECT_POISON, POINT_NONE, 0, AFF_POISON, POISON_LENGTH + 1, 0, true);
@@ -316,13 +289,13 @@ void CHARACTER::AttackedByBleeding(LPCHARACTER pkAttacker)
 	if (m_pkBleedingEvent)
 		return;
 
-	if (m_bHasBled && !IsPC()) // 몬스터는 독이 한번만 걸린다.
+	if (m_bHasBled && !IsPC())
 		return;
 
 	if (m_pkPoisonEvent)
 		return;
 
-	if (m_bHasPoisoned && !IsPC()) // 몬스터는 독이 한번만 걸린다.
+	if (m_bHasPoisoned && !IsPC())
 		return;
 
 	if (pkAttacker && pkAttacker->GetLevel() < GetLevel())
@@ -339,7 +312,7 @@ void CHARACTER::AttackedByBleeding(LPCHARACTER pkAttacker)
 	/*if (IsImmune(IMMUNE_BLEEDING))
 	  return;*/
 
-	// 독 내성 굴림 실패, 독에 걸렸다!
+
 	m_bHasBled = true;
 
 	AddAffect(AFFECT_BLEEDING, POINT_NONE, 0, AFF_BLEEDING, BLEEDING_LENGTH + 1, 0, true);
@@ -443,4 +416,4 @@ bool CHARACTER::IsImmune(DWORD dwImmuneFlag)
 
 	return false;
 }
-
+//martysama0134's 2022

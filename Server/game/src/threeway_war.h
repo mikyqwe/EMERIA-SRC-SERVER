@@ -1,4 +1,3 @@
-
 #ifndef THREE_WAY_WAR_EVENT_
 #define THREE_WAY_WAR_EVENT_
 
@@ -78,4 +77,4 @@ int GetPassStartX( BYTE bEmpire );
 int GetPassStartY( BYTE bEmpire );
 
 #endif /* THREE_WAY_WAR_EVENT_ */
-
+//martysama0134's 2022

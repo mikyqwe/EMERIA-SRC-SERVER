@@ -9,8 +9,7 @@
 #define isdigit iswdigit
 #define isspace iswspace
 #endif
-#include <vector>
-#include <map>
+
 #include "../../common/length.h"
 #include "../../common/tables.h"
 #include "../../common/singleton.h"
@@ -19,3 +18,4 @@
 #include "../../common/service.h"
 
 #endif
+//martysama0134's 2022

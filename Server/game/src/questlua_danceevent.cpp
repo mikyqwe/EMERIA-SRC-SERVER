@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "questmanager.h"
 #include "sectree_manager.h"
@@ -50,4 +49,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("dance_event", dance_event_functions);
 	}
 }
-
+//martysama0134's 2022

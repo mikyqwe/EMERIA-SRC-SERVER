@@ -29,6 +29,7 @@
 #include <cryptopp/shacal2.h>
 #include <cryptopp/skipjack.h>
 #include <cryptopp/tea.h>
+#include <cryptopp/cryptoppLibLink.h>
 
 using namespace CryptoPP;
 
@@ -399,3 +400,4 @@ bool DH2KeyAgreement::Agree(size_t agreed_length, const void* buffer, size_t len
 #endif // _IMPROVED_PACKET_ENCRYPTION_
 
 // EOF cipher.cpp
+//martysama0134's 2022

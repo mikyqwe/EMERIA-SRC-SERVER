@@ -1,4 +1,3 @@
-//#define __MATRIX_MAIN_ENABLE__ // define 되어 있으면 main 함수가 포함된다. Unit test 시에 사용
 #ifndef __MATRIX_MAIN_ENABLE__
 #include "stdafx.h"
 #else
@@ -76,7 +75,7 @@ bool DecodeMatrix(const char* szsrc, const char* szpwd, char* lpdes, const unsig
 
 void MatrixCardRndCoordinate(unsigned long & rows, unsigned long & cols)
 {
-	for (register unsigned long i = 0; i < (ASLENGTH >> 1); i++)
+	for (unsigned long i = 0; i < (ASLENGTH >> 1); i++)
 	{
 		rows |= ((thecore_random() % MAX_ROWS) & 0x000000FF) << ((4 - i - 1) * 8);
 		cols |= ((thecore_random() % MAX_COLS) & 0x000000FF) << ((4 - i - 1) * 8);
@@ -99,7 +98,7 @@ bool ChkCoordinate(const unsigned long rows, const unsigned long cols, const cha
 	unsigned short * pmatrix = (unsigned short *)matrix;
 	unsigned short * panswer = (unsigned short *)answer;
 
-	for (register unsigned long i = 0; i < (ASLENGTH >> 1); i++)
+	for (unsigned long i = 0; i < (ASLENGTH >> 1); i++)
 	{
 		if (*(pmatrix + (ROW(rows, i) * MAX_COLS + COL(cols, i))) != *(panswer + i))
 		{
@@ -144,7 +143,7 @@ void GetRightAnswer(const unsigned long rows, const unsigned long cols, const ch
 
 	memset(answer, 0, nsize);
 
-	for (register unsigned long i = 0; i < (ASLENGTH >> 1); i++)
+	for (unsigned long i = 0; i < (ASLENGTH >> 1); i++)
 	{
 		char sztemp[3] = { 0, 0, 0 };
 		memcpy(sztemp, (char*)(pmatrix + (ROW(rows, i) * MAX_COLS + COL(cols, i))), 2);
@@ -188,3 +187,4 @@ int main(int argc, char* argv[])
 }
 
 #endif
+//martysama0134's 2022

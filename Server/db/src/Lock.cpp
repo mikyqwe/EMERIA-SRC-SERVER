@@ -58,3 +58,4 @@ void CLock::Unlock()
 	::LeaveCriticalSection(&m_lock);
 #endif
 }
+//martysama0134's 2022

@@ -88,13 +88,11 @@ bool CItemIDRangeManager::BuildRange(DWORD dwMin, DWORD dwMax, TItemIDRangeTable
 {
 	char szQuery[1024];
 	DWORD dwItemMaxID = 0;
-	SQLMsg* pMsg = NULL;
 	MYSQL_ROW row;
 
 	snprintf(szQuery, sizeof(szQuery), "SELECT MAX(id) FROM item%s WHERE id >= %u and id <= %u", GetTablePostfix(), dwMin, dwMax);
 
-	pMsg = CDBManager::instance().DirectQuery(szQuery);
-
+	auto pMsg = CDBManager::instance().DirectQuery(szQuery);
 	if (pMsg != NULL)
 	{
 		if (pMsg->Get()->uiNumRows > 0)
@@ -102,7 +100,6 @@ bool CItemIDRangeManager::BuildRange(DWORD dwMin, DWORD dwMax, TItemIDRangeTable
 			row = mysql_fetch_row(pMsg->Get()->pSQLResult);
 			str_to_number(dwItemMaxID, row[0]);
 		}
-		delete pMsg;
 	}
 
 	if (dwItemMaxID == 0)
@@ -145,8 +142,6 @@ bool CItemIDRangeManager::BuildRange(DWORD dwMin, DWORD dwMax, TItemIDRangeTable
 					return true;
 				}
 			}
-
-			delete pMsg;
 		}
 	}
 
@@ -162,4 +157,4 @@ void CItemIDRangeManager::UpdateRange(DWORD dwMin, DWORD dwMax)
 		m_listData.push_back(range);
 	}
 }
-
+//martysama0134's 2022

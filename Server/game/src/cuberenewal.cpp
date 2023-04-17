@@ -317,13 +317,13 @@ void Cube_open (LPCHARACTER ch)
 
 
 #ifdef ENABLE_OFFLINE_SHOP_SYSTEM
-	if ( ch->GetExchange() || ch->GetMyShop() || ch->GetShopOwner() || ch->IsOpenSafebox() || ch->IsCubeOpen() || ch->GetOfflineShopOwner() || ch->GetMailBox())
+	if ( ch->GetExchange() || ch->GetMyShop() || ch->GetShopOwner() || ch->IsOpenSafebox() || ch->IsCubeOpen())
 	{
 		ch->ChatPacket(CHAT_TYPE_INFO, "Cannot open refinement window");
 		return;
 	}
 #else
-	if (ch->GetExchange() || ch->GetMyShop() || ch->GetShopOwner() || ch->IsOpenSafebox() || ch->IsCubeOpen() || ch->GetOfflineShopOwner() || ch->GetMailBox())
+	if (ch->GetExchange() || ch->GetMyShop() || ch->GetShopOwner() || ch->IsOpenSafebox() || ch->IsCubeOpen())
 	{
 		ch->ChatPacket(CHAT_TYPE_INFO, "Cannot open refinement window");
 		return;
@@ -507,6 +507,9 @@ void Cube_Make(LPCHARACTER ch, int index, int count_item, int index_item_improve
 				{
 					iEmptyPos = ch->GetEmptyDragonSoulInventory(pItem);
 					pItem->AddToCharacter(ch, TItemPos(DRAGON_SOUL_INVENTORY, iEmptyPos));
+#ifdef ENABLE_EXTENDED_BATTLE_PASS
+					ch->UpdateExtBattlePassMissionProgress(BP_ITEM_CRAFT, pItem->GetCount(), pItem->GetVnum());
+#endif
 				}
 
 #ifdef ENABLE_SPECIAL_STORAGE

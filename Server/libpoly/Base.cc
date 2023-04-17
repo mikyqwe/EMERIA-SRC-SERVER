@@ -23,4 +23,4 @@ bool CBase::isSymbol()
 {
     return (id & MID_SYMBOL);
 }
-
+//martysama0134's 2022

@@ -13,32 +13,6 @@
 
 #define HANDSHAKE_RETRY_LIMIT		32
 
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-#	define INTRUSIVE_HANDSHAKE_LOG FALSE /* (choice)
-	* Enable or disable intrusive handshake logging.
-	*/
-#	define INTRUSIVE_HANDSHAKE_PULSE 1 /* (seconds)
-	* This is the handshake pulse limit in seconds.
-	* Do not change this value if you don't know
-	* what you're doing.
-	*/
-#	define INTRUSIVE_HANDSHAKE_NEXT_PULSE 60 * 10 /* (seconds)
-	* This pulse is set after blocking a socket.
-	* In other words, the value is a cooldown after
-	* a socket (host) can connect again to the server.
-	*/
-#	define INTRUSIVE_HANDSHAKE_LIMIT 10 /* (handshakes)
-	* This handshake limit is compared with INTRUSIVE_HANDSHAKE_PULSE
-	* It will verify if INTRUSIVE_HANDSHAKE_LIMIT has been sent
-	* below INTRUSIVE_HANDSHAKE_PULSE (seconds).
-	*/
-#	define INTRUSIVE_HANDSHAKE_BAN FALSE /* (choice)
-	* When this is enabled (TRUE) the host doesn't get
-	* temporarily blocked, instead, the host is permanently
-	* blocked and dumped into the BANIP file in the core directory.
-	*/
-#endif
-
 class CInputProcessor;
 
 enum EDescType
@@ -71,15 +45,16 @@ class CLoginKey
 		LPDESC  m_pkDesc;
 };
 
+#ifdef ENABLE_SEQUENCE_SYSTEM
 
-/* // sequence 버그 찾기용 데이타
 struct seq_t
 {
 	BYTE	hdr;
 	BYTE	seq;
 };
 typedef std::vector<seq_t>	seq_vector_t;
-// sequence 버그 찾기용 데이타 */
+
+#endif
 
 class DESC
 {
@@ -142,7 +117,7 @@ class DESC
 
 		void			Log(const char * format, ...);
 
-		// 핸드쉐이크 (시간 동기화)
+
 		void			StartHandshake(DWORD _dw);
 		void			SendHandshake(DWORD dwCurTime, long lNewDelta);
 		bool			HandshakeProcess(DWORD dwTime, long lDelta, bool bInfiniteRetry=false);
@@ -163,7 +138,7 @@ class DESC
 		const DWORD *	GetDecryptionKey() const { return &m_adwDecryptionKey[0]; }
 #endif
 
-		// 제국
+
 		BYTE			GetEmpire();
 
 		// for p2p
@@ -172,13 +147,15 @@ class DESC
 		void			DisconnectOfSameLogin();
 
 		void			SetAdminMode();
-		bool			IsAdminMode();		// Handshake 에서 어드민 명령을 쓸수있나?
+		bool			IsAdminMode();
 
 		void			SetPong(bool b);
 		bool			IsPong();
 
-		//BYTE			GetSequence();
-		//void			SetNextSequence();
+#ifdef ENABLE_SEQUENCE_SYSTEM
+		BYTE			GetSequence();
+		void			SetNextSequence();
+#endif
 
 		void			SendLoginSuccessPacket();
 		//void			SendServerStatePacket(int nIndex);
@@ -208,6 +185,7 @@ class DESC
 
 		bool			isChannelStatusRequested() const { return m_bChannelStatusRequested; }
 		void			SetChannelStatusRequested(bool bChannelStatusRequested) { m_bChannelStatusRequested = bChannelStatusRequested; }
+
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 		auto			SetLoginMacAdress(const char* recv_sMAIf) -> void { sMAIf = recv_sMAIf; }
 		auto			GetLoginMacAdress() -> const char* { return sMAIf.c_str(); }
@@ -261,10 +239,12 @@ class DESC
 		WORD			m_wP2PPort;
 		BYTE			m_bP2PChannel;
 
-		bool			m_bAdminMode; // Handshake 에서 어드민 명령을 쓸수있나?
+		bool			m_bAdminMode;
 		bool			m_bPong;
 
-		//int			m_iCurrentSequence;
+#ifdef ENABLE_SEQUENCE_SYSTEM
+		int			m_iCurrentSequence;
+#endif
 
 		DWORD			m_dwMatrixRows;
 		DWORD			m_dwMatrixCols;
@@ -299,6 +279,7 @@ class DESC
 		DWORD			m_adwDecryptionKey[4];
 		DWORD			m_adwEncryptionKey[4];
 #endif
+
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 		std::string sMAIf;
 #endif
@@ -327,16 +308,14 @@ class DESC
 		void RawPacket(const void * c_pvData, int iSize);
 		void ChatPacket(BYTE type, const char * format, ...);
 
-		/* 시퀀스 버그 찾기용 코드 */
-/* 	public:
-		seq_vector_t	m_seq_vector;
-		void			push_seq (BYTE hdr, BYTE seq); */
+#ifdef ENABLE_SEQUENCE_SYSTEM
 
 	public:
-			const time_t &			GetCreationTime() const { return tt_creation_time; }
+		seq_vector_t	m_seq_vector;
+		void			push_seq (BYTE hdr, BYTE seq);
+#endif
 
-	private:
-		time_t	tt_creation_time;
 };
 
 #endif
+//martysama0134's 2022

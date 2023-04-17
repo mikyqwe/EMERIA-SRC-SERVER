@@ -25,14 +25,10 @@ class CEntity
 		int				GetType() const;
 		bool			IsType(int type) const;
 
-	void ViewCleanup(
-#ifdef ENABLE_GOTO_LAG_FIX
-			bool recursive = false
-#endif
-		);
+		void			ViewCleanup();
 		void			ViewInsert(LPENTITY entity, bool recursive = true);
 		void			ViewRemove(LPENTITY entity, bool recursive = true);
-		void			ViewReencode();	// 주위 Entity에 패킷을 다시 보낸다.
+		void			ViewReencode();
 
 		int				GetViewAge() const	{ return m_iViewAge;	}
 
@@ -80,3 +76,4 @@ class CEntity
 };
 
 #endif
+//martysama0134's 2022

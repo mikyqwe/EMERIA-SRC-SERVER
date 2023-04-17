@@ -18,7 +18,7 @@
  * - License along with this library; if not, write to the Free Software       -
  * - Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA -
  */
- 
+
 /*
  * md5.h and md5.c are based off of md5hl.c, md5c.c, and md5.h from libmd, which in turn are
  * based off the FreeBSD libmd library.  Their respective copyright notices follow:
@@ -80,3 +80,4 @@ char* lutil_md5_data(const unsigned char *data, unsigned int len, char *buf);
 #endif /* MD5_H */
 
 #endif // #ifndef __FreeBSD__
+//martysama0134's 2022

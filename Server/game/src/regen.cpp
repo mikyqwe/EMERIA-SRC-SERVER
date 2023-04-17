@@ -24,7 +24,7 @@ enum ERegenModes
 	MODE_VNUM
 };
 
-static bool get_word(FILE *fp, char *buf) // 워드단위로 받는다.
+static bool get_word(FILE *fp, char *buf)
 {
 	int i = 0;
 	int c;
@@ -172,7 +172,7 @@ static bool read_line(FILE *fp, LPREGEN regen)
 			case MODE_Z_SECTION:
 				str_to_number(regen->z_section, szTmp);
 
-				// 익셉션 이면 나가주자.
+
 				if (regen->type == REGEN_TYPE_EXCEPTION)
 					return true;
 
@@ -426,9 +426,7 @@ bool regen_do(const char* filename, long lMapIndex, int base_x, int base_y, LPDU
 
 	while (true)
 	{
-		REGEN tmp;
-
-		memset(&tmp, 0, sizeof(tmp));
+		REGEN tmp{};
 
 		if (!read_line(fp, &tmp))
 			break;
@@ -441,7 +439,7 @@ bool regen_do(const char* filename, long lMapIndex, int base_x, int base_y, LPDU
 			if (!bOnce)
 			{
 				regen = M2_NEW REGEN;
-				memcpy(regen, &tmp, sizeof(REGEN));
+				*regen = tmp;
 			}
 			else
 				regen = &tmp;
@@ -500,7 +498,7 @@ bool regen_do(const char* filename, long lMapIndex, int base_x, int base_y, LPDU
 				// before the call to CHARACTER::SetRegen()
 			}
 
-			// 처음엔 무조건 리젠 해준다.
+
 			regen_spawn_dungeon(regen, pDungeon, bOnce);
 
 		}
@@ -526,9 +524,7 @@ bool regen_load_in_file(const char* filename, long lMapIndex, int base_x, int ba
 
 	while (true)
 	{
-		REGEN tmp;
-
-		memset(&tmp, 0, sizeof(tmp));
+		REGEN tmp{};
 
 		if (!read_line(fp, &tmp))
 			break;
@@ -576,7 +572,7 @@ bool regen_load_in_file(const char* filename, long lMapIndex, int base_x, int ba
 				}
 			}
 
-			// 처음엔 무조건 리젠 해준다.
+
 			regen_spawn(regen, true);
 		}
 	}
@@ -624,9 +620,7 @@ bool regen_load(const char* filename, long lMapIndex, int base_x, int base_y)
 
 	while (true)
 	{
-		REGEN tmp;
-
-		memset(&tmp, 0, sizeof(tmp));
+		REGEN tmp{};
 
 		if (!read_line(fp, &tmp))
 			break;
@@ -642,7 +636,7 @@ bool regen_load(const char* filename, long lMapIndex, int base_x, int base_y)
 			}
 
 			regen = M2_NEW REGEN;
-			memcpy(regen, &tmp, sizeof(REGEN));
+			*regen = tmp;
 			INSERT_TO_TW_LIST(regen, regen_list, prev, next);
 
 			regen->lMapIndex = lMapIndex;
@@ -676,7 +670,7 @@ bool regen_load(const char* filename, long lMapIndex, int base_x, int base_y)
 				{
 					sys_err("In %s, No mob data by vnum %u", filename, regen->vnum);
 				}
-				else if (p->m_table.bType == CHAR_TYPE_NPC || p->m_table.bType == CHAR_TYPE_PET || p->m_table.bType == CHAR_TYPE_WARP || p->m_table.bType == CHAR_TYPE_GOTO)
+				else if (p->m_table.bType == CHAR_TYPE_NPC || p->m_table.bType == CHAR_TYPE_WARP || p->m_table.bType == CHAR_TYPE_GOTO)
 				{
 					SECTREE_MANAGER::instance().InsertNPCPosition(lMapIndex,
 							p->m_table.bType,
@@ -697,18 +691,20 @@ bool regen_load(const char* filename, long lMapIndex, int base_x, int base_y)
 					sys_err("In %s, No mob data by vnum %u", filename, regen->vnum);
 				else {
 					SECTREE_MANAGER::instance().InsertBossPosition(lMapIndex, p->m_table.bType, 
+
 					p->m_table.szLocaleName[0]
+
 					, (regen->sx+regen->ex) / 2 - base_x, (regen->sy+regen->ey) / 2 - base_y, tmp.time);
 				}
 			}
 #endif
 
 			//NO_REGEN
-			// Desc: 	regen.txt (외 리젠관련 텍스트 ) 에서 리젠 시간을 0으로 세팅할시
-			// 			리젠을 하지 안한다.
+
+
 			if (regen->time != 0)
 			{
-				// 처음엔 무조건 리젠 해준다.
+
 				regen_spawn(regen, false);
 
 				regen_event_info* info = AllocEventInfo<regen_event_info>();
@@ -773,16 +769,16 @@ void regen_reset(int x, int y)
 		if (!regen->event)
 			continue;
 
-		// 좌표가 있으면 좌표 내에 있는 리젠 리스트만 리젠 시킨다.
+
 		if (x != 0 || y != 0)
 		{
 			if (x >= regen->sx && x <= regen->ex)
 				if (y >= regen->sy && y <= regen->ey)
 					event_reset_time(regen->event, 1);
 		}
-		// 없으면 전부 리젠
+
 		else
 			event_reset_time(regen->event, 1);
 	}
 }
-
+//martysama0134's 2022

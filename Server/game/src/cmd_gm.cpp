@@ -36,18 +36,13 @@
 #include "threeway_war.h"
 #include "unique_item.h"
 #include "DragonSoul.h"
-#include "war_map.h"
 #include "../../common/CommonDefines.h"
-#ifdef __WORLD_BOSS_YUMA__
-#include "worldboss.h"
+
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+#include "new_offlineshop.h"
+#include "new_offlineshop_manager.h"
 #endif
 
-
-#ifdef ENABLE_DECORUM
-#include "decorum_arena.h"
-#include "decorum_manager.h"
-extern bool g_bDecorumMaster;
-#endif
 extern bool DropEvent_RefineBox_SetValue(const std::string& name, int value);
 
 // ADD_COMMAND_SLOW_STUN
@@ -314,50 +309,7 @@ bool CHARACTER_GoToName(LPCHARACTER ch, BYTE empire, int mapIndex, const char* g
 
 // END_OF_LUA_ADD_GOTO_INFO
 
-/*
-   = {
-   { "A1|ÏòÅÏïàÏùçÏÑ±",		0, 1,  4693, 9642 },
-   { "A3|ÏûêÏñëÌòÑ",		0, 3,  3608, 8776 },
 
-   { "B1|Ï°∞ÏïàÏùçÏÑ±",		0, 21,  557, 1579 },
-   { "B3|Î≥µÏ†ïÌòÑ",		0, 23, 1385, 2349 },
-
-   { "C1|ÌèâÎ¨¥ÏùçÏÑ±",		0, 41, 9696, 2784 },
-   { "C3|Î∞ïÎùºÌòÑ",		0, 43, 8731, 2426 },
-
-// Snow
-{ "Snow|ÏÑúÌïúÏÇ∞",		1, 61, 4342, 2906 },
-{ "Snow|ÏÑúÌïúÏÇ∞",		2, 61, 3752, 1749 },
-{ "Snow|ÏÑúÌïúÏÇ∞",		3, 61, 4918, 1736 },
-
-// Flame
-{ "Flame|ÎèÑÏóºÌôîÏßÄ|ÌôîÏóº",	1, 62, 5994, 7563 },
-{ "Flame|ÎèÑÏóºÌôîÏßÄ|ÌôîÏóº",	2, 62, 5978, 6222 },
-{ "Flame|ÎèÑÏóºÌôîÏßÄ|ÌôîÏóº",	3, 62, 7307, 6898 },
-
-// Desert
-{ "Desert|ÏòÅÎπÑÏÇ¨Îßâ|ÏÇ¨Îßâ",	1, 63, 2178, 6272 },
-{ "Desert|ÏòÅÎπÑÏÇ¨Îßâ|ÏÇ¨Îßâ",	2, 63, 2219, 5027 },
-{ "Desert|ÏòÅÎπÑÏÇ¨Îßâ|ÏÇ¨Îßâ",	3, 63, 3440, 5025 },
-
-// Threeway
-{ "Three|ÏäπÎ£°Í≥°",		1, 64, 4021, 6739 },
-{ "Three|ÏäπÎ£°Í≥°",		2, 64, 2704, 7399 },
-{ "Three|ÏäπÎ£°Í≥°",		3, 64, 3213, 8080 },
-
-// Î∞ÄÍµêÏÇ¨Ïõê
-{ "Milgyo|Î∞ÄÍµêÏÇ¨Ïõê",	1, 65, 5536, 1436 },
-{ "Milgyo|Î∞ÄÍµêÏÇ¨Ïõê",	2, 65, 5536, 1436 },
-{ "Milgyo|Î∞ÄÍµêÏÇ¨Ïõê",	3, 65, 5536, 1436 },
-
-// ÏÇ¨Í∑ÄÌÉÄÏõåÏûÖÍµ¨
-{ "ÏÇ¨Í∑ÄÌÉÄÏõåÏûÖÍµ¨",		1, 65, 5905, 1108 },
-{ "ÏÇ¨Í∑ÄÌÉÄÏõåÏûÖÍµ¨",		2, 65, 5905, 1108 },
-{ "ÏÇ¨Í∑ÄÌÉÄÏõåÏûÖÍµ¨",		3, 65, 5905, 1108 },
-
-{ NULL,			0,  0,    0,    0 },
-};
- */
 
 
 ACMD(do_goto)
@@ -459,6 +411,9 @@ ACMD(do_warp)
 	}
 
 	int x = 0, y = 0;
+#ifdef ENABLE_CMD_WARP_IN_DUNGEON
+	int mapIndex = 0;
+#endif
 
 	if (isnhdigit(*arg1) && isnhdigit(*arg2))
 	{
@@ -494,14 +449,22 @@ ACMD(do_warp)
 		{
 			x = tch->GetX() / 100;
 			y = tch->GetY() / 100;
+#ifdef ENABLE_CMD_WARP_IN_DUNGEON
+			mapIndex = tch->GetMapIndex();
+#endif
 		}
 	}
 
 	x *= 100;
 	y *= 100;
 
+#ifdef ENABLE_CMD_WARP_IN_DUNGEON
+	ch->ChatPacket(CHAT_TYPE_INFO, "You warp to ( %d, %d, %d )", x, y, mapIndex);
+	ch->WarpSet(x, y, mapIndex);
+#else
 	ch->ChatPacket(CHAT_TYPE_INFO, "You warp to ( %d, %d )", x, y);
 	ch->WarpSet(x, y);
+#endif
 	ch->Stop();
 }
 
@@ -516,10 +479,6 @@ ACMD(do_rewarp)
 
 ACMD(do_item)
 {
-	//to get warning
-	// char szName[20];
-	// strncpy(szName, (char*)0xFFFaddd, 30);
-	
 	char arg1[256], arg2[256];
 	two_arguments(argument, arg1, sizeof(arg1), arg2, sizeof(arg2));
 
@@ -561,14 +520,14 @@ ACMD(do_item)
 			if (iEmptyPos != -1)
 			{
 				item->AddToCharacter(ch, TItemPos(DRAGON_SOUL_INVENTORY, iEmptyPos));
-				LogManager::instance().ItemLog(ch, item, "GM", item->GetName(ch->GetLanguage()));
+				LogManager::instance().ItemLog(ch, item, "GM", item->GetName());
 			}
 			else
 			{
 				M2_DESTROY_ITEM(item);
 				if (!ch->DragonSoul_IsQualified())
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, "Ïù∏Î≤§Ïù¥ ÌôúÏÑ±Ìôî ÎêòÏßÄ ÏïäÏùå.");
+					ch->ChatPacket(CHAT_TYPE_INFO, "¿Œ∫•¿Ã »∞º∫»≠ µ«¡ˆ æ ¿Ω.");
 				}
 				else
 					ch->ChatPacket(CHAT_TYPE_INFO, "Not enough inventory space.");
@@ -583,13 +542,13 @@ ACMD(do_item)
 			{
 				item->AddToCharacter(ch, TItemPos(item->GetSpecialWindowType(), iEmptyPos));
 
-				LogManager::instance().ItemLog(ch, item, "GM", item->GetName(ch->GetLanguage()));
+				LogManager::instance().ItemLog(ch, item, "GM", item->GetName());
 			}
 			else
 			{
 				M2_DESTROY_ITEM(item);
 
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÏÜåÏßÄÌïòÍ≥† ÏûàÎäî ÏïÑÏù¥ÌÖúÏù¥ ÎÑàÎ¨¥ ÎßéÏäµÎãàÎã§."));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("º“¡ˆ«œ∞Ì ¿÷¥¬ æ∆¿Ã≈€¿Ã ≥ π´ ∏πΩ¿¥œ¥Ÿ."));
 			}
 		}
 #endif
@@ -600,7 +559,7 @@ ACMD(do_item)
 			if (iEmptyPos != -1)
 			{
 				item->AddToCharacter(ch, TItemPos(INVENTORY, iEmptyPos));
-				LogManager::instance().ItemLog(ch, item, "GM", item->GetName(ch->GetLanguage()));
+				LogManager::instance().ItemLog(ch, item, "GM", item->GetName());
 			}
 			else
 			{
@@ -794,124 +753,6 @@ ACMD(do_mob_aggresive)
 	}
 }
 
-#ifdef ENABLE_POLY_SHOP
-ACMD(do_buy_marble)
-{
-	if (ch->IsObserverMode() || ch->GetExchange())
-		return;
-	
-	char arg1[256], arg2[256];
-	two_arguments(argument, arg1, sizeof(arg1), arg2, sizeof(arg2));
-	if (!*arg1 || !*arg2)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "Syntax: buy_marble_item <mobVnum> <itemCount>");
-		return;
-	}
-	
-	DWORD mobVnum, itemCount;	
-	int price;
-	
-	str_to_number(mobVnum, arg1);
-	str_to_number(itemCount, arg2);
-	if (!mobVnum || (mobVnum <= 0))
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "mobVnum not exist or is wrong.");
-		return;
-	}
-	
-	if (!itemCount)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "itemCount not exist.");
-		return;
-	}
-
-	if (itemCount <= 0)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "itemCount bellow 0.");
-		return;
-	}
-	
-	if (itemCount > 10)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "itemCount higher than 10.");
-		return;
-	}
-	
-	/*
-	Configurable:
-	add new case same like in client, to add new marble to buy
-	example:
-		case 501: - item vnum
-			price = 250000; - item price
-			break;
-	*/
-	switch(mobVnum)
-	{
-		case 501:
-			price = 250000;
-			break;
-		case 502:
-			price = 300000;
-			break;
-		case 551:
-			price = 350000;
-			break;
-		case 552:
-			price = 400000;
-			break;
-		case 554:
-			price = 450000;
-			break;
-			
-		default:
-		{
-			ch->ChatPacket(CHAT_TYPE_INFO, "Sorry but poly marble which you want tu buy not exist.");
-			price = 0;
-			break;
-		}
-	}
-	
-	if (price == 0)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "Price is wrong.");
-		return;
-	}
-	
-	if (ch->GetGold() < price*itemCount)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "Not enough gold to buy these marbles.");
-		return;
-	}
-	
-	for (int createMarble = 0; createMarble < itemCount; createMarble++)
-	{
-		LPITEM item = ITEM_MANAGER::instance().CreateItem(70104, 1, 0, true);
-		if (item)
-		{
-			item->SetSocket(0, mobVnum);
-			int iEmptyPos = ch->GetEmptyInventory(item->GetSize());
-
-			if (iEmptyPos != -1)
-			{
-				ch->PointChange(POINT_GOLD, -price);
-				item->AddToCharacter(ch, TItemPos(INVENTORY, iEmptyPos));
-			}
-			else
-			{
-				M2_DESTROY_ITEM(item);
-				ch->ChatPacket(CHAT_TYPE_INFO, "Not enough inventory space for buy more marbles.");
-				break;
-			}
-		}
-		else
-		{
-			ch->ChatPacket(CHAT_TYPE_INFO, "#%d item not exist by that vnum.", 70104);
-			break;
-		}
-	}
-}
-#endif
-
 ACMD(do_mob)
 {
 	char	arg1[256], arg2[256];
@@ -1043,19 +884,16 @@ struct FuncPurge
 		if (!ent->IsType(ENTITY_CHARACTER))
 			return;
 
-		LPCHARACTER pkChr = (LPCHARACTER)ent;
+		LPCHARACTER pkChr = (LPCHARACTER) ent;
 
 		int iDist = DISTANCE_APPROX(pkChr->GetX() - m_pkGM->GetX(), pkChr->GetY() - m_pkGM->GetY());
 
-		if (!m_bAll && iDist >= 1000)	// 10???I ??‚â´o?Àá ?O¬¥A ¬∞IŒºe?? purge C?Ao ??¬¥A¬¥?.
+		if (!m_bAll && iDist >= 1000)
 			return;
 
 		sys_log(0, "PURGE: %s %d", pkChr->GetName(), iDist);
-#ifdef OFFLINE_SHOP
-		if (!pkChr->IsOfflineShopNPC() && pkChr->GetRaceNum() != 30000 && pkChr->IsNPC() && !pkChr->IsPet() && !pkChr->IsMount() && !pkChr->IsNewPet() && pkChr->GetRider() == NULL)
-#else
+
 		if (pkChr->IsNPC() && !pkChr->IsPet() && pkChr->GetRider() == NULL)
-#endif
 		{
 			M2_DESTROY_CHARACTER(pkChr);
 		}
@@ -1081,7 +919,7 @@ ACMD(do_purge)
 
 #define ENABLE_CMD_IPURGE_EX
 ACMD(do_item_purge)
-{
+{	
 #ifdef ENABLE_CMD_IPURGE_EX
 	char arg1[256];
 	one_argument(argument, arg1, sizeof(arg1));
@@ -1193,18 +1031,6 @@ ACMD(do_item_purge)
 			ITEM_MANAGER::instance().RemoveItem(item, "PURGE");
 		}
 	}
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-	int InSpecialStorageWindows[4] = {SKILLBOOK_INVENTORY, UPPITEM_INVENTORY, GHOSTSTONE_INVENTORY, GENERAL_INVENTORY};
-
-	for (int xy = 0; xy < 4; ++xy)
-	{
-		for (i = 0; i < SPECIAL_STORAGE_INVENTORY_MAX_NUM; ++i)
-		{
-			if ((item = ch->GetItem(TItemPos(InSpecialStorageWindows[xy], i))))
-				ITEM_MANAGER::instance().RemoveItem(item, "PURGE");
-		}
-	}
-#endif
 #endif
 }
 
@@ -1250,11 +1076,6 @@ ACMD(do_state)
 
 	if (ch->GetShop())
 		strlcat(buf, ", Shop", sizeof(buf));
-
-#ifdef OFFLINE_SHOP
-	if (ch->GetOfflineShop())
-		strlcat(buf, ", Offline Shop", sizeof(buf));
-#endif
 
 	if (ch->GetExchange())
 		strlcat(buf, ", Exchange", sizeof(buf));
@@ -1339,9 +1160,6 @@ ACMD(do_state)
 #ifdef ENABLE_MAGIC_REDUCTION_SYSTEM
 	ch->ChatPacket(CHAT_TYPE_INFO, "   MAGICREDUCT:%3d%%", tch->GetPoint(POINT_RESIST_MAGIC_REDUCTION));
 #endif
-#ifdef ENABLE_NEW_TALISMAN_GF
-	ch->ChatPacket(CHAT_TYPE_INFO, "   Anti Half human:%3d%%", tch->GetPoint(POINT_RESIST_HUMAN));
-#endif
 
 	ch->ChatPacket(CHAT_TYPE_INFO, "MALL:");
 	ch->ChatPacket(CHAT_TYPE_INFO, "   ATT:%3d%% DEF:%3d%% EXP:%3d%% ITEMx%d GOLDx%d",
@@ -1416,66 +1234,6 @@ ACMD(do_state)
 				ch->ChatPacket(CHAT_TYPE_INFO, "%s for player : %d", LC_TEXT(c_apszPrivNames[i]), iByPlayer);
 		}
 }
-
-#ifdef __WORLD_BOSS_YUMA__
-struct new_notice_packet_func
-{
-	const char* m_str;
-	const char* m_szName;
-	int m_iSecondsToSpawn;
-
-	new_notice_packet_func(const char* str, const char* mobName, int secondsToSpawn) : m_str(str), m_szName(mobName), m_iSecondsToSpawn(secondsToSpawn)
-	{
-	}
-
-	void operator () (LPDESC d)
-	{
-		if (!d->GetCharacter())
-			return;
-
-		char buf[256];
-
-		if (m_iSecondsToSpawn == 0)
-		{
-			snprintf(buf, sizeof(buf), LC_TEXT_LANGUAGE(d->GetCharacter()->GetLanguage(), m_str), m_szName);
-		}
-		else
-		{
-			snprintf(buf, sizeof(buf), LC_TEXT_LANGUAGE(d->GetCharacter()->GetLanguage(), m_str), m_szName,
-				floor(m_iSecondsToSpawn / 3600.0), floor(fmod(m_iSecondsToSpawn, 3600.0) / 60.0),
-				((m_iSecondsToSpawn / 3600) != 0) ? "hours" : "minutes");
-		}
-
-		d->GetCharacter()->ChatPacket(CHAT_TYPE_NOTICE, "%s", buf);
-
-		std::string notification_with_underscore = buf;
-		std::replace(notification_with_underscore.begin(), notification_with_underscore.end(), ' ', '_');
-
-		d->GetCharacter()->ChatPacket(CHAT_TYPE_COMMAND, "SendWorldbossNotification %s", notification_with_underscore.c_str());
-	}
-};
-void SendNewNotice(const char* c_pszBuf, const char* c_pszName, int iSecondsToSpawn)
-{
-	const DESC_MANAGER::DESC_SET& c_ref_set = DESC_MANAGER::instance().GetClientSet();
-	std::for_each(c_ref_set.begin(), c_ref_set.end(), new_notice_packet_func(c_pszBuf, c_pszName, iSecondsToSpawn));
-}
-
-void BroadcastNewNotice(const char* c_pszBuf, const char* c_pszName, int iSecondsToSpawn)
-{
-	TPacketGGNewNotice p;
-	p.bHeader = HEADER_GG_NEW_NOTICE;
-	p.lSize = strlen(c_pszBuf) + 1;
-	p.iSecondsToSpawn = iSecondsToSpawn;
-	strlcpy(p.szName, c_pszName, sizeof(p.szName));
-
-	TEMP_BUFFER buf;
-	buf.write(&p, sizeof(p));
-	buf.write(c_pszBuf, p.lSize);
-
-	P2P_MANAGER::instance().Send(buf.read_peek(), buf.size());
-	SendNewNotice(c_pszBuf, c_pszName, iSecondsToSpawn);
-}
-#endif
 
 struct notice_packet_func
 {
@@ -1663,13 +1421,6 @@ ACMD(do_map_big_notice)
 
 ACMD(do_notice_test)
 {
-	// only for testing
-	const CMob* pkMob = CMobManager::instance().Get(1069);
-	ch->ChatPacket(CHAT_TYPE_NOTICE, "This is a test: %d, %s", pkMob->m_table.dwVnum, pkMob->m_table.szLocaleName);
-	
-	pkMob = CMobManager::instance().Get(102);
-	ch->ChatPacket(CHAT_TYPE_NOTICE, "This is a test2: %d, %s", pkMob->m_table.dwVnum, pkMob->m_table.szLocaleName);
-	
 	ch->ChatPacket(CHAT_TYPE_NOTICE, "%s", argument);
 }
 
@@ -1687,7 +1438,7 @@ ACMD(do_monarch_notice)
 	}
 	else
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Íµ∞Ï£ºÎßåÏù¥ ÏÇ¨Ïö© Í∞ÄÎä•Ìïú Í∏∞Îä•ÏûÖÎãàÎã§"));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("±∫¡÷∏∏¿Ã ªÁøÎ ∞°¥…«— ±‚¥…¿‘¥œ¥Ÿ"));
 	}
 }
 
@@ -1893,9 +1644,6 @@ const struct set_struct
 	{ "skill",		NUMBER,	NULL	},
 	{ "alignment",	NUMBER,	NULL	},
 	{ "align",		NUMBER,	NULL	},
-#ifdef ENABLE_CHEQUE_SYSTEM
-	{ "cheque", NUMBER },
-#endif
 	{ "\n",			MISC,	NULL	}
 };
 
@@ -1942,6 +1690,26 @@ ACMD(do_set)
 
 	switch (i)
 	{
+#ifdef ENABLE_LONG_LONG
+		case DoSetTypes::GOLD:	// gold
+			{
+				long long gold = 0;
+				str_to_number(gold, arg3);
+				DBManager::instance().SendMoneyLog(MONEY_LOG_MISC, 3, gold);
+				long long before_gold = tch->GetGold();
+				tch->PointChange(POINT_GOLD, gold, true);
+				long long after_gold = tch->GetGold();
+				if (after_gold < 0)
+				{
+					tch->SetGold(0);
+				}
+				if (0 == after_gold && 0 != before_gold)
+				{
+					LogManager::instance().CharLog(tch, gold, "ZERO_GOLD", "GM");
+				}
+			}
+			break;
+#else
 		case DoSetTypes::GOLD:	// gold
 			{
 				int gold = 0;
@@ -1950,6 +1718,7 @@ ACMD(do_set)
 				tch->PointChange(POINT_GOLD, gold, true);
 			}
 			break;
+#endif
 
 		case DoSetTypes::RACE: // race
 #ifdef ENABLE_NEWSTUFF
@@ -2066,24 +1835,19 @@ ACMD(do_set)
 				tch->UpdateAlignment(amount - ch->GetRealAlignment());
 			}
 			break;
-#ifdef ENABLE_CHEQUE_SYSTEM
-		case 10:
-		{
-			int amount = 0;
-			str_to_number(amount, arg3);
-			if (amount + tch->GetCheque() > CHEQUE_MAX)
-				return;
-			tch->PointChange(POINT_CHEQUE, amount, true);
-		}
-		break;
-#endif
 	}
 
 	if (set_fields[i].type == NUMBER)
 	{
+#ifdef ENABLE_LONG_LONG
+		long long	amount = 0;
+		str_to_number(amount, arg3);
+		ch->ChatPacket(CHAT_TYPE_INFO, "%s's %s set to [%lld]", tch->GetName(), set_fields[i].cmd, amount);
+#else
 		int	amount = 0;
 		str_to_number(amount, arg3);
 		ch->ChatPacket(CHAT_TYPE_INFO, "%s's %s set to [%d]", tch->GetName(), set_fields[i].cmd, amount);
+#endif
 	}
 }
 
@@ -2172,12 +1936,12 @@ ACMD(do_makeguild)
 
 	if (!check_name(cp.name))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Ï†ÅÌï©ÌïòÏßÄ ÏïäÏùÄ Í∏∏Îìú Ïù¥Î¶Ñ ÏûÖÎãàÎã§."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¿˚«’«œ¡ˆ æ ¿∫ ±ÊµÂ ¿Ã∏ß ¿‘¥œ¥Ÿ."));
 		return;
 	}
 
 	gm.CreateGuild(cp);
-	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"(%s) Í∏∏ÎìúÍ∞Ä ÏÉùÏÑ±ÎêòÏóàÏäµÎãàÎã§. [ÏûÑÏãú]"), cp.name);
+	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("(%s) ±ÊµÂ∞° ª˝º∫µ«æ˙Ω¿¥œ¥Ÿ. [¿”Ω√]"), cp.name);
 }
 
 ACMD(do_deleteguild)
@@ -2382,7 +2146,7 @@ LPCHARACTER chHori, chForge, chLib, chTemple, chTraining, chTree, chPortal, chBa
 
 ACMD(do_b1)
 {
-	//Ìò∏Î¶¨Î≥ë 478 579
+
 	chHori = CHARACTER_MANAGER::instance().SpawnMobRange(14017, ch->GetMapIndex(), 304222, 742858, 304222, 742858, true, false);
 	chHori->AddAffect(AFFECT_DUNGEON_UNIQUE, POINT_NONE, 0, AFF_BUILDING_CONSTRUCTION_SMALL, 65535, 0, true);
 	chHori->AddAffect(AFFECT_DUNGEON_UNIQUE, POINT_NONE, 0, AFF_DUNGEON_UNIQUE, 65535, 0, true);
@@ -2429,25 +2193,21 @@ ACMD(do_b2)
 
 ACMD(do_b3)
 {
-	// Ìè¨ÏßÄ 492 547
 	chForge = CHARACTER_MANAGER::instance().SpawnMobRange(14003, ch->GetMapIndex(), 307500, 746300, 307500, 746300, true, false);
 	chForge->AddAffect(AFFECT_DUNGEON_UNIQUE, POINT_NONE, 0, AFF_DUNGEON_UNIQUE, 65535, 0, true);
-	//ÎÜíÏùÄÌÉë 509 589 -> ÎèÑÏÑúÍ¥Ä
+
 	chLib = CHARACTER_MANAGER::instance().SpawnMobRange(14007, ch->GetMapIndex(), 307900, 744500, 307900, 744500, true, false);
 	chLib->AddAffect(AFFECT_DUNGEON_UNIQUE, POINT_NONE, 0, AFF_DUNGEON_UNIQUE, 65535, 0, true);
-	//ÏöïÏ°∞ 513 606 -> ÌûòÏùòÏã†Ï†Ñ
+
 	chTemple = CHARACTER_MANAGER::instance().SpawnMobRange(14004, ch->GetMapIndex(), 307700, 741600, 307700, 741600, true, false);
 	chTemple->AddAffect(AFFECT_DUNGEON_UNIQUE, POINT_NONE, 0, AFF_DUNGEON_UNIQUE, 65535, 0, true);
-	//Í∂åÌà¨Ïû• 490 625
+
 	chTraining= CHARACTER_MANAGER::instance().SpawnMobRange(14010, ch->GetMapIndex(), 307100, 739500, 307100, 739500, true, false);
 	chTraining->AddAffect(AFFECT_DUNGEON_UNIQUE, POINT_NONE, 0, AFF_DUNGEON_UNIQUE, 65535, 0, true);
-	//ÎÇòÎ¨¥ 466 614
 	chTree= CHARACTER_MANAGER::instance().SpawnMobRange(14013, ch->GetMapIndex(), 300800, 741600, 300800, 741600, true, false);
 	chTree->AddAffect(AFFECT_DUNGEON_UNIQUE, POINT_NONE, 0, AFF_DUNGEON_UNIQUE, 65535, 0, true);
-	//Ìè¨ÌÉà 439 615
 	chPortal= CHARACTER_MANAGER::instance().SpawnMobRange(14001, ch->GetMapIndex(), 300900, 744500, 300900, 744500, true, false);
 	chPortal->AddAffect(AFFECT_DUNGEON_UNIQUE, POINT_NONE, 0, AFF_DUNGEON_UNIQUE, 65535, 0, true);
-	// Íµ¨Ïä¨ 436 600
 	chBall = CHARACTER_MANAGER::instance().SpawnMobRange(14012, ch->GetMapIndex(), 302500, 746600, 302500, 746600, true, false);
 	chBall->AddAffect(AFFECT_DUNGEON_UNIQUE, POINT_NONE, 0, AFF_DUNGEON_UNIQUE, 65535, 0, true);
 }
@@ -2649,6 +2409,7 @@ ACMD(do_set_skill_group)
 	ch->ClearSkill();
 	ch->ChatPacket(CHAT_TYPE_INFO, "skill group to %d.", skill_group);
 }
+
 ACMD(do_reload)
 {
 	char arg1[256];
@@ -2693,19 +2454,9 @@ ACMD(do_reload)
 				db_clientdesc->DBPacket(HEADER_GD_RELOAD_ADMIN, 0, NULL, 0);
 				sys_log(0, "Reloading admin infomation.");
 				break;
-#if defined(__BL_SOUL_ROULETTE__)
-			case 'r':
-				if (!CSoulRoulette::ReadRouletteData()) {
-					ch->ChatPacket(CHAT_TYPE_INFO, "Error Reloading <CSoulRoulette>!");
-					CSoulRoulette::ReadRouletteData(true); // reset
-				}
-				else
-					ch->ChatPacket(CHAT_TYPE_INFO, "<CSoulRoulette> Reloaded!");
-				break;
-#endif				
 				//END_RELOAD_ADMIN
 			case 'c':	// cube
-				// Î°úÏª¨ ÌîÑÎ°úÏÑ∏Ïä§Îßå Í∞±ÏÇ∞ÌïúÎã§.
+
 				Cube_init ();
 				break;
 		}
@@ -2750,7 +2501,7 @@ ACMD(do_level)
 
 ACMD(do_gwlist)
 {
-	ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("ÌòÑÏû¨ Ï†ÑÏüÅÏ§ëÏù∏ Í∏∏Îìú ÏûÖÎãàÎã§"));
+	ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("«ˆ¿Á ¿¸¿Ô¡ﬂ¿Œ ±ÊµÂ ¿‘¥œ¥Ÿ"));
 	CGuildManager::instance().ShowGuildWarList(ch);
 }
 
@@ -2808,7 +2559,7 @@ ACMD(do_guild_state)
 	}
 	else
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"%s: Ï°¥Ïû¨ÌïòÏßÄ ÏïäÎäî Í∏∏Îìú ÏûÖÎãàÎã§."), arg1);
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%s: ¡∏¿Á«œ¡ˆ æ ¥¬ ±ÊµÂ ¿‘¥œ¥Ÿ."), arg1);
 	}
 }
 
@@ -2830,21 +2581,11 @@ struct FuncWeaken
 
 		int iDist = DISTANCE_APPROX(pkChr->GetX() - m_pkGM->GetX(), pkChr->GetY() - m_pkGM->GetY());
 
-		if (!m_bAll && iDist >= 1000)	// 10ÎØ∏ÌÑ∞ Ïù¥ÏÉÅÏóê ÏûàÎäî Í≤ÉÎì§ÏùÄ purge ÌïòÏßÄ ÏïäÎäîÎã§.
+		if (!m_bAll && iDist >= 1000)
 			return;
 
 		if (pkChr->IsNPC())
-		{
-			int weakenDamage = pkChr->GetHP() - 10;
-
-#ifdef ENABLE_DUNGEON_FUNC
-			if (pkChr->IsMonsterBlocked())
-			{
-				weakenDamage = pkChr->CanDamageMonster(weakenDamage);
-			}
-#endif
-			pkChr->PointChange(POINT_HP, -weakenDamage);
-		}
+			pkChr->PointChange(POINT_HP, (10 - pkChr->GetHP()));
 	}
 };
 
@@ -3088,7 +2829,7 @@ ACMD(do_polymorph_item)
 			if (iEmptyPos != -1)
 			{
 				item->AddToCharacter(ch, TItemPos(INVENTORY, iEmptyPos));
-				LogManager::instance().ItemLog(ch, item, "GM", item->GetName(ch->GetLanguage()));
+				LogManager::instance().ItemLog(ch, item, "GM", item->GetName());
 			}
 			else
 			{
@@ -3137,11 +2878,7 @@ ACMD(do_priv_empire)
 	if (empire < 0 || 3 < empire)
 		goto USAGE;
 
-#ifdef ENABLE_DECORUM
-	if (type < 1 || type > 5)
-#else
 	if (type < 1 || 4 < type)
-#endif
 		goto USAGE;
 
 	if (value < 0)
@@ -3150,7 +2887,7 @@ ACMD(do_priv_empire)
 	if (duration < 0)
 		goto USAGE;
 
-	// ÏãúÍ∞Ñ Îã®ÏúÑÎ°ú Î≥ÄÍ≤Ω
+
 	duration = duration * (60*60);
 
 	sys_log(0, "_give_empire_privileage(empire=%d, type=%d, value=%d, duration=%d) by command",
@@ -3161,23 +2898,14 @@ ACMD(do_priv_empire)
 USAGE:
 	ch->ChatPacket(CHAT_TYPE_INFO, "usage : priv_empire <empire> <type> <value> <duration>");
 	ch->ChatPacket(CHAT_TYPE_INFO, "  <empire>    0 - 3 (0==all)");
-#ifdef ENABLE_DECORUM
-	ch->ChatPacket(CHAT_TYPE_INFO, "  <type>      1:item_drop, 2:gold_drop, 3:gold10_drop, 4:exp, 5:decorum");
-#else
 	ch->ChatPacket(CHAT_TYPE_INFO, "  <type>      1:item_drop, 2:gold_drop, 3:gold10_drop, 4:exp");
-#endif
 	ch->ChatPacket(CHAT_TYPE_INFO, "  <value>     percent");
 	ch->ChatPacket(CHAT_TYPE_INFO, "  <duration>  hour");
 }
 
-/**
- * @version 05/06/08	Bang2ni - Í∏∏Îìú Î≥¥ÎÑàÏä§ ÌÄòÏä§Ìä∏ ÏßÑÌñâ ÏïàÎêòÎäî Î¨∏Ï†ú ÏàòÏ†ï.(Ïä§ÌÅ¨Î¶ΩÌä∏Í∞Ä ÏûëÏÑ±ÏïàÎê®.)
- * 			          quest/priv_guild.quest Î°ú Î∂ÄÌÑ∞ Ïä§ÌÅ¨Î¶ΩÌä∏ ÏùΩÏñ¥Ïò§Í≤å ÏàòÏ†ïÎê®
- */
+
 ACMD(do_priv_guild)
 {
-	static const char msg[] = { '\0' };
-
 	char arg1[256];
 	one_argument(argument, arg1, sizeof(arg1));
 
@@ -3193,11 +2921,11 @@ ACMD(do_priv_guild)
 		}
 
 		if (!g)
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í∑∏Îü∞ Ïù¥Î¶Ñ ÎòêÎäî Î≤àÌò∏Ïùò Í∏∏ÎìúÍ∞Ä ÏóÜÏäµÎãàÎã§."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("±◊∑± ¿Ã∏ß ∂«¥¬ π¯»£¿« ±ÊµÂ∞° æ¯Ω¿¥œ¥Ÿ."));
 		else
 		{
 			char buf[1024+1];
-			snprintf(buf, sizeof(buf), msg, g->GetID());
+			snprintf(buf, sizeof(buf), "%d", g->GetID()); // @fixme177
 
 			using namespace quest;
 			PC * pc = CQuestManager::instance().GetPC(ch->GetPlayerID());
@@ -3305,10 +3033,10 @@ ACMD(do_xmas)
 // BLOCK_CHAT
 ACMD(do_block_chat_list)
 {
-	// GMÏù¥ ÏïÑÎãàÍ±∞ÎÇò block_chat_privilegeÍ∞Ä ÏóÜÎäî ÏÇ¨ÎûåÏùÄ Î™ÖÎ†πÏñ¥ ÏÇ¨Ïö© Î∂àÍ∞Ä
+
 	if (!ch || (ch->GetGMLevel() < GM_HIGH_WIZARD && ch->GetQuestFlag("chat_privilege.block") <= 0))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í∑∏Îü∞ Î™ÖÎ†πÏñ¥Îäî ÏóÜÏäµÎãàÎã§"));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("±◊∑± ∏Ì∑…æÓ¥¬ æ¯Ω¿¥œ¥Ÿ"));
 		return;
 	}
 
@@ -3371,10 +3099,10 @@ ACMD(do_vote_block_chat)
 
 ACMD(do_block_chat)
 {
-	// GMÏù¥ ÏïÑÎãàÍ±∞ÎÇò block_chat_privilegeÍ∞Ä ÏóÜÎäî ÏÇ¨ÎûåÏùÄ Î™ÖÎ†πÏñ¥ ÏÇ¨Ïö© Î∂àÍ∞Ä
-	if (ch && (ch->GetGMLevel() < GM_LOW_WIZARD && ch->GetQuestFlag("chat_privilege.block") <= 0))
+
+	if (ch && (ch->GetGMLevel() < GM_HIGH_WIZARD && ch->GetQuestFlag("chat_privilege.block") <= 0))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í∑∏Îü∞ Î™ÖÎ†πÏñ¥Îäî ÏóÜÏäµÎãàÎã§"));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("±◊∑± ∏Ì∑…æÓ¥¬ æ¯Ω¿¥œ¥Ÿ"));
 		return;
 	}
 
@@ -3396,8 +3124,8 @@ ACMD(do_block_chat)
 	{
 		if (ch)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, "ÏûòÎ™ªÎêú ÌòïÏãùÏùò ÏãúÍ∞ÑÏûÖÎãàÎã§. h, m, sÎ•º Î∂ôÏó¨ÏÑú ÏßÄÏ†ïÌï¥ Ï£ºÏã≠ÏãúÏò§.");
-			ch->ChatPacket(CHAT_TYPE_INFO, "Ïòà) 10s, 10m, 1m 30s");
+			ch->ChatPacket(CHAT_TYPE_INFO, "¿ﬂ∏¯µ» «¸Ωƒ¿« Ω√∞£¿‘¥œ¥Ÿ. h, m, s∏¶ ∫Ÿø©º≠ ¡ˆ¡§«ÿ ¡÷Ω Ω√ø¿.");
+			ch->ChatPacket(CHAT_TYPE_INFO, "øπ) 10s, 10m, 1m 30s");
 		}
 		return;
 	}
@@ -3450,8 +3178,8 @@ ACMD(do_build)
 
 	CLand * pkLand = CManager::instance().FindLand(ch->GetMapIndex(), ch->GetX(), ch->GetY());
 
-	// NOTE: Ï°∞Í±¥ Ï≤¥ÌÅ¨Îì§ÏùÄ ÌÅ¥ÎùºÏù¥Ïñ∏Ìä∏ÏôÄ ÏÑúÎ≤ÑÍ∞Ä Ìï®Íªò ÌïòÍ∏∞ ÎïåÎ¨∏Ïóê Î¨∏Ï†úÍ∞Ä ÏûàÏùÑ ÎïåÎäî
-	//       Î©îÏÑ∏ÏßÄÎ•º Ï†ÑÏÜ°ÌïòÏßÄ ÏïäÍ≥† ÏóêÎü¨Î•º Ï∂úÎ†•ÌïúÎã§.
+
+
 	if (!pkLand)
 	{
 		sys_err("%s trying to build on not buildable area.", ch->GetName());
@@ -3464,17 +3192,17 @@ ACMD(do_build)
 		return;
 	}
 
-	// Í±¥ÏÑ§ Í∂åÌïú Ï≤¥ÌÅ¨
+
 	if (GMLevel == GM_PLAYER)
 	{
-		// ÌîåÎ†àÏù¥Ïñ¥Í∞Ä ÏßëÏùÑ ÏßÄÏùÑ ÎïåÎäî ÎïÖÏù¥ ÎÇ¥ÍªÄÏßÄ ÌôïÏù∏Ìï¥Ïïº ÌïúÎã§.
+
 		if ((!ch->GetGuild() || ch->GetGuild()->GetID() != pkLand->GetOwner()))
 		{
 			sys_err("%s trying to build on not owned land.", ch->GetName());
 			return;
 		}
 
-		// ÎÇ¥Í∞Ä Í∏∏ÎßàÏù∏Í∞Ä?
+
 		if (ch->GetGuild()->GetMasterPID() != ch->GetPlayerID())
 		{
 			sys_err("%s trying to build while not the guild master.", ch->GetName());
@@ -3505,7 +3233,7 @@ ACMD(do_build)
 				const TObjectProto * t = CManager::instance().GetObjectProto(dwVnum);
 				if (!t)
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Ï°¥Ïû¨ÌïòÏßÄ ÏïäÎäî Í±¥Î¨ºÏûÖÎãàÎã§."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¡∏¿Á«œ¡ˆ æ ¥¬ ∞«π∞¿‘¥œ¥Ÿ."));
 					return;
 				}
 
@@ -3515,21 +3243,21 @@ ACMD(do_build)
 				{
 					if (pkLand->FindObjectByGroup(t->dwGroupVnum))
 					{
-						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í∞ôÏù¥ ÏßÄÏùÑ Ïàò ÏóÜÎäî Ï¢ÖÎ•òÏùò Í±¥Î¨ºÏù¥ ÏßÄÏñ¥Ï†∏ ÏûàÏäµÎãàÎã§."));
+						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("∞∞¿Ã ¡ˆ¿ª ºˆ æ¯¥¬ ¡æ∑˘¿« ∞«π∞¿Ã ¡ˆæÓ¡Æ ¿÷Ω¿¥œ¥Ÿ."));
 						return;
 					}
 				}
 
-				// Í±¥Î¨º Ï¢ÖÏÜçÏÑ± Ï≤¥ÌÅ¨ (Ïù¥ Í±¥Î¨ºÏù¥ ÏßÄÏñ¥Ï†∏ ÏûàÏñ¥ÏïºÌï®)
+
 				if (t->dwDependOnGroupVnum)
 				{
 					//		const TObjectProto * dependent = CManager::instance().GetObjectProto(dwVnum);
 					//		if (dependent)
 					{
-						// ÏßÄÏñ¥Ï†∏ÏûàÎäîÍ∞Ä?
+
 						if (!pkLand->FindObjectByGroup(t->dwDependOnGroupVnum))
 						{
-							ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í±¥ÏÑ§Ïóê ÌïÑÏöîÌïú Í±¥Î¨ºÏù¥ ÏßÄÏñ¥Ï†∏ ÏûàÏßÄ ÏïäÏäµÎãàÎã§."));
+							ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("∞«º≥ø° « ø‰«— ∞«π∞¿Ã ¡ˆæÓ¡Æ ¿÷¡ˆ æ Ω¿¥œ¥Ÿ."));
 							return;
 						}
 					}
@@ -3537,21 +3265,25 @@ ACMD(do_build)
 
 				if (test_server || GMLevel == GM_PLAYER)
 				{
-					// GMÏù¥ ÏïÑÎãêÍ≤ΩÏö∞Îßå (ÌÖåÏÑ≠ÏóêÏÑúÎäî GMÎèÑ ÏÜåÎ™®)
-					// Í±¥ÏÑ§ ÎπÑÏö© Ï≤¥ÌÅ¨
+
+
 					if (t->dwPrice > BUILDING_MAX_PRICE)
 					{
-						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í±¥Î¨º ÎπÑÏö© Ï†ïÎ≥¥ Ïù¥ÏÉÅÏúºÎ°ú Í±¥ÏÑ§ ÏûëÏóÖÏóê Ïã§Ìå®ÌñàÏäµÎãàÎã§."));
+						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("∞«π∞ ∫ÒøÎ ¡§∫∏ ¿ÃªÛ¿∏∑Œ ∞«º≥ ¿€æ˜ø° Ω«∆–«ﬂΩ¿¥œ¥Ÿ."));
 						return;
 					}
 
-					if (ch->GetGold() < (int)t->dwPrice)
+#ifdef ENABLE_LONG_LONG
+					if (ch->GetGold() < (int64_t)t->dwPrice)
+#else
+					if (ch->GetGold() < (int32_t)t->dwPrice)
+#endif
 					{
-						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í±¥ÏÑ§ ÎπÑÏö©Ïù¥ Î∂ÄÏ°±Ìï©ÎãàÎã§."));
+						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("∞«º≥ ∫ÒøÎ¿Ã ∫Œ¡∑«’¥œ¥Ÿ."));
 						return;
 					}
 
-					// ÏïÑÏù¥ÌÖú ÏûêÏû¨ Í∞úÏàò Ï≤¥ÌÅ¨
+
 
 					int i;
 					for (i = 0; i < OBJECT_MATERIAL_MAX_NUM; ++i)
@@ -3564,7 +3296,7 @@ ACMD(do_build)
 
 						if ((int) dwItemCount > ch->CountSpecifyItem(dwItemVnum))
 						{
-							ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÏûêÏû¨Í∞Ä Î∂ÄÏ°±ÌïòÏó¨ Í±¥ÏÑ§Ìï† Ïàò ÏóÜÏäµÎãàÎã§."));
+							ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¿⁄¿Á∞° ∫Œ¡∑«œø© ∞«º≥«“ ºˆ æ¯Ω¿¥œ¥Ÿ."));
 							return;
 						}
 					}
@@ -3573,14 +3305,8 @@ ACMD(do_build)
 				float x_rot = atof(arg4);
 				float y_rot = atof(arg5);
 				float z_rot = atof(arg6);
-				// 20050811.myevan.Í±¥Î¨º ÌöåÏ†Ñ Í∏∞Îä• Î¥âÏù∏ Ìï¥Ï†ú
-				/*
-				   if (x_rot != 0.0f || y_rot != 0.0f || z_rot != 0.0f)
-				   {
-				   ch->ChatPacket(CHAT_TYPE_INFO, "Í±¥Î¨º ÌöåÏ†Ñ Í∏∞Îä•ÏùÄ ÏïÑÏßÅ Ï†úÍ≥µÎêòÏßÄ ÏïäÏäµÎãàÎã§");
-				   return;
-				   }
-				 */
+
+
 
 				long map_x = 0;
 				str_to_number(map_x, arg2);
@@ -3598,17 +3324,21 @@ ACMD(do_build)
 				if (!isSuccess)
 				{
 					if (test_server)
-						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í±¥Î¨ºÏùÑ ÏßÄÏùÑ Ïàò ÏóÜÎäî ÏúÑÏπòÏûÖÎãàÎã§."));
+						ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("∞«π∞¿ª ¡ˆ¿ª ºˆ æ¯¥¬ ¿ßƒ°¿‘¥œ¥Ÿ."));
 					return;
 				}
 
 				if (test_server || GMLevel == GM_PLAYER)
-					// Í±¥ÏÑ§ Ïû¨Î£å ÏÜåÎ™®ÌïòÍ∏∞ (ÌÖåÏÑ≠ÏóêÏÑúÎäî GMÎèÑ ÏÜåÎ™®)
-				{
-					// Í±¥ÏÑ§ ÎπÑÏö© ÏÜåÎ™®
-					ch->PointChange(POINT_GOLD, -t->dwPrice);
 
-					// ÏïÑÏù¥ÌÖú ÏûêÏû¨ ÏÇ¨Ïö©ÌïòÍ∏∞
+				{
+
+#ifdef ENABLE_LONG_LONG
+					ch->PointChange(POINT_GOLD, -static_cast<int64_t>(t->dwPrice));
+#else
+					ch->PointChange(POINT_GOLD, -t->dwPrice);
+#endif
+
+
 					{
 						int i;
 						for (i = 0; i < OBJECT_MATERIAL_MAX_NUM; ++i)
@@ -3687,8 +3417,8 @@ ACMD(do_build)
 			break;
 
 		case 'W' :
-			// Îã¥Ïû• ÏÑ∏Ïö∞Í∏∞
-			// build (w)all Îã¥Ïû•Î≤àÌò∏ Îã¥Ïû•ÌÅ¨Í∏∞ ÎåÄÎ¨∏Îèô ÎåÄÎ¨∏ÏÑú ÎåÄÎ¨∏ÎÇ® ÎåÄÎ¨∏Î∂Å
+
+
 
 			if (GMLevel >  GM_PLAYER)
 			{
@@ -3722,8 +3452,7 @@ ACMD(do_build)
 			break;
 
 		case 'E' :
-			// Îã¥Ïû• ÏßÄÏö∞Í∏∞
-			// build (e)rase Îã¥Ïû•ÏÖãID
+
 			if (GMLevel > GM_PLAYER)
 			{
 				one_argument(line, arg1, sizeof(arg1));
@@ -3780,7 +3509,7 @@ ACMD(do_horse_level)
 
 	if (NULL == victim)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Ï°¥Ïû¨ÌïòÏßÄ ÏïäÎäî Ï∫êÎ¶≠ÌÑ∞ ÏûÖÎãàÎã§."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¡∏¿Á«œ¡ˆ æ ¥¬ ƒ≥∏Ø≈Õ ¿‘¥œ¥Ÿ."));
 		return;
 	}
 
@@ -3793,19 +3522,6 @@ ACMD(do_horse_level)
 	victim->ComputePoints();
 	victim->SkillLevelPacket();
 	return;
-
-/*-----
-	char arg1[256];
-	one_argument(argument, arg1, sizeof(arg1));
-
-	int level = MINMAX(0, atoi(arg1), HORSE_MAX_LEVEL);
-
-	ch->ChatPacket(CHAT_TYPE_INFO, "horse level set to %d.", level);
-	ch->SetHorseLevel(level);
-	ch->ComputePoints();
-	ch->SkillLevelPacket();
-	return;
------*/
 }
 
 ACMD(do_horse_ride)
@@ -3984,17 +3700,17 @@ ACMD(do_end_duel)
 	LPCHARACTER pChar = CHARACTER_MANAGER::instance().FindPC(szName);
 	if (pChar == NULL)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Ï°¥Ïû¨ÌïòÏßÄ ÏïäÎäî Ï∫êÎ¶≠ÌÑ∞ ÏûÖÎãàÎã§."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¡∏¿Á«œ¡ˆ æ ¥¬ ƒ≥∏Ø≈Õ ¿‘¥œ¥Ÿ."));
 		return;
 	}
 
 	if (CArenaManager::instance().EndDuel(pChar->GetPlayerID()) == false)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎåÄÎ†® Í∞ïÏ†ú Ï¢ÖÎ£å Ïã§Ìå®"));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¥Î∑√ ∞≠¡¶ ¡æ∑· Ω«∆–"));
 	}
 	else
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎåÄÎ†® Í∞ïÏ†ú Ï¢ÖÎ£å ÏÑ±Í≥µ"));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¥Î∑√ ∞≠¡¶ ¡æ∑· º∫∞¯"));
 	}
 }
 
@@ -4041,7 +3757,7 @@ ACMD(do_duel)
 			}
 			else
 			{
-				pChar1->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(pChar1->GetLanguage(),"<ÌååÌã∞> ÌååÌã∞ÏóêÏÑú ÎÇòÍ∞ÄÏÖ®ÏäµÎãàÎã§."));
+				pChar1->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<∆ƒ∆º> ∆ƒ∆ºø°º≠ ≥™∞°ºÃΩ¿¥œ¥Ÿ."));
 				pParty->Quit(pChar1->GetPlayerID());
 			}
 		}
@@ -4055,23 +3771,23 @@ ACMD(do_duel)
 			}
 			else
 			{
-				pChar2->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(pChar2->GetLanguage(),"<ÌååÌã∞> ÌååÌã∞ÏóêÏÑú ÎÇòÍ∞ÄÏÖ®ÏäµÎãàÎã§."));
+				pChar2->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<∆ƒ∆º> ∆ƒ∆ºø°º≠ ≥™∞°ºÃΩ¿¥œ¥Ÿ."));
 				pParty->Quit(pChar2->GetPlayerID());
 			}
 		}
 
 		if (CArenaManager::instance().StartDuel(pChar1, pChar2, set, minute) == true)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎåÄÎ†®Ïù¥ ÏÑ±Í≥µÏ†ÅÏúºÎ°ú ÏãúÏûë ÎêòÏóàÏäµÎãàÎã§."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¥Î∑√¿Ã º∫∞¯¿˚¿∏∑Œ Ω√¿€ µ«æ˙Ω¿¥œ¥Ÿ."));
 		}
 		else
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎåÄÎ†® ÏãúÏûëÏóê Î¨∏Ï†úÍ∞Ä ÏûàÏäµÎãàÎã§."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¥Î∑√ Ω√¿€ø° πÆ¡¶∞° ¿÷Ω¿¥œ¥Ÿ."));
 		}
 	}
 	else
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎåÄÎ†®ÏûêÍ∞Ä ÏóÜÏäµÎãàÎã§."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("¥Î∑√¿⁄∞° æ¯Ω¿¥œ¥Ÿ."));
 	}
 }
 
@@ -4087,7 +3803,7 @@ ACMD(do_stat_plus_amount)
 
 	if (ch->IsPolymorphed())
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎëîÍ∞ë Ï§ëÏóêÎäî Îä•Î†•ÏùÑ Ïò¨Î¶¥ Ïàò ÏóÜÏäµÎãàÎã§."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("µ–∞© ¡ﬂø°¥¬ ¥…∑¬¿ª ø√∏± ºˆ æ¯Ω¿¥œ¥Ÿ."));
 		return;
 	}
 
@@ -4095,7 +3811,7 @@ ACMD(do_stat_plus_amount)
 
 	if (nRemainPoint <= 0)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎÇ®ÏùÄ Ïä§ÌÉØ Ìè¨Ïù∏Ìä∏Í∞Ä ÏóÜÏäµÎãàÎã§."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("≥≤¿∫ Ω∫≈» ∆˜¿Œ∆Æ∞° æ¯Ω¿¥œ¥Ÿ."));
 		return;
 	}
 
@@ -4104,41 +3820,41 @@ ACMD(do_stat_plus_amount)
 
 	if (nRemainPoint < nPoint)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎÇ®ÏùÄ Ïä§ÌÉØ Ìè¨Ïù∏Ìä∏Í∞Ä Ï†ÅÏäµÎãàÎã§."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("≥≤¿∫ Ω∫≈» ∆˜¿Œ∆Æ∞° ¿˚Ω¿¥œ¥Ÿ."));
 		return;
 	}
 
 	if (nPoint < 0)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í∞íÏùÑ ÏûòÎ™ª ÏûÖÎ†•ÌïòÏòÄÏäµÎãàÎã§."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("∞™¿ª ¿ﬂ∏¯ ¿‘∑¬«œø¥Ω¿¥œ¥Ÿ."));
 		return;
 	}
 
 #ifndef ENABLE_STATPLUS_NOLIMIT
 	switch (subcmd)
 	{
-		case POINT_HT : // Ï≤¥Î†•
+		case POINT_HT :
 			if (nPoint + ch->GetPoint(POINT_HT) > 90)
 			{
 				nPoint = 90 - ch->GetPoint(POINT_HT);
 			}
 			break;
 
-		case POINT_IQ : // ÏßÄÎä•
+		case POINT_IQ :
 			if (nPoint + ch->GetPoint(POINT_IQ) > 90)
 			{
 				nPoint = 90 - ch->GetPoint(POINT_IQ);
 			}
 			break;
 
-		case POINT_ST : // Í∑ºÎ†•
+		case POINT_ST :
 			if (nPoint + ch->GetPoint(POINT_ST) > 90)
 			{
 				nPoint = 90 - ch->GetPoint(POINT_ST);
 			}
 			break;
 
-		case POINT_DX : // ÎØºÏ≤©
+		case POINT_DX :
 			if (nPoint + ch->GetPoint(POINT_DX) > 90)
 			{
 				nPoint = 90 - ch->GetPoint(POINT_DX);
@@ -4146,7 +3862,7 @@ ACMD(do_stat_plus_amount)
 			break;
 
 		default :
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Î™ÖÎ†πÏñ¥Ïùò ÏÑúÎ∏å Ïª§Îß®ÎìúÍ∞Ä ÏûòÎ™ª ÎêòÏóàÏäµÎãàÎã§."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("∏Ì∑…æÓ¿« º≠∫Í ƒø∏«µÂ∞° ¿ﬂ∏¯ µ«æ˙Ω¿¥œ¥Ÿ."));
 			return;
 			break;
 	}
@@ -4180,7 +3896,7 @@ ACMD(do_break_marriage)
 	str_to_number(pids.pid1, arg1);
 	str_to_number(pids.pid2, arg2);
 
-	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÌîåÎ†àÏù¥Ïñ¥ %d ÏôÄ ÌîåÎ†àÏù¥Ïñ¥  %dÎ•º ÌååÌòºÏãúÌÇµÎãàÎã§.."), pids.pid1, pids.pid2);
+	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("«√∑π¿ÃæÓ %d øÕ «√∑π¿ÃæÓ  %d∏¶ ∆ƒ»•Ω√≈µ¥œ¥Ÿ.."), pids.pid1, pids.pid2);
 	db_clientdesc->DBPacket(HEADER_GD_BREAK_MARRIAGE, 0, &pids, sizeof(pids));
 }
 
@@ -4214,8 +3930,8 @@ struct FCountInMap
 
 ACMD(do_threeway_war_info)
 {
-	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Í∞ÅÏ†úÍµ≠ ÏßÑÌñâ Ï†ïÎ≥¥"));
-	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÏÑ†ÌÉù Îßµ Ï†ïÎ≥¥ ÏÑ±ÏßÄ %d ÌÜµÎ°ú %d %d %d"), GetSungziMapIndex(), GetPassMapIndex(1), GetPassMapIndex(2), GetPassMapIndex(3));
+	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("∞¢¡¶±π ¡¯«‡ ¡§∫∏"));
+	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("º±≈√ ∏  ¡§∫∏ º∫¡ˆ %d ≈Î∑Œ %d %d %d"), GetSungziMapIndex(), GetPassMapIndex(1), GetPassMapIndex(2), GetPassMapIndex(3));
 	ch->ChatPacket(CHAT_TYPE_INFO, "ThreewayPhase %d", CThreeWayWar::instance().GetRegenFlag());
 
 	for (int n = 1; n < 4; ++n)
@@ -4238,7 +3954,7 @@ ACMD(do_threeway_war_info)
 
 ACMD(do_threeway_war_myinfo)
 {
-	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎÇòÏùò ÏÇºÍ±∞Î¶¨ ÏßÑÌñâÏ†ïÎ≥¥"));
+	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("≥™¿« ªÔ∞≈∏Æ ¡¯«‡¡§∫∏"));
 	ch->ChatPacket(CHAT_TYPE_INFO, "Deadcount %d",
 			CThreeWayWar::instance().GetReviveTokenForPlayer(ch->GetPlayerID()));
 }
@@ -4320,7 +4036,7 @@ ACMD(do_check_monarch_money)
 	str_to_number(empire, arg1);
 	int NationMoney = CMonarch::instance().GetMoney(empire);
 
-	ch->ChatPacket(CHAT_TYPE_INFO, "Íµ≠Í≥†: %d Ïõê", NationMoney);
+	ch->ChatPacket(CHAT_TYPE_INFO, "±π∞Ì: %d ø¯", NationMoney);
 }
 
 ACMD(do_reset_subskill)
@@ -4599,13 +4315,13 @@ ACMD(do_set_stat)
 	{
 		if (tch->IsPolymorphed())
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎëîÍ∞ë Ï§ëÏóêÎäî Îä•Î†•ÏùÑ Ïò¨Î¶¥ Ïàò ÏóÜÏäµÎãàÎã§."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("µ–∞© ¡ﬂø°¥¬ ¥…∑¬¿ª ø√∏± ºˆ æ¯Ω¿¥œ¥Ÿ."));
 			return;
 		}
 
 		if (subcmd != POINT_HT && subcmd != POINT_IQ && subcmd != POINT_ST && subcmd != POINT_DX)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Î™ÖÎ†πÏñ¥Ïùò ÏÑúÎ∏å Ïª§Îß®ÎìúÍ∞Ä ÏûòÎ™ª ÎêòÏóàÏäµÎãàÎã§."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("∏Ì∑…æÓ¿« º≠∫Í ƒø∏«µÂ∞° ¿ﬂ∏¯ µ«æ˙Ω¿¥œ¥Ÿ."));
 			return;
 		}
 		int nRemainPoint = tch->GetPoint(POINT_STAT);
@@ -4620,7 +4336,7 @@ ACMD(do_set_stat)
 		case POINT_HT:
 			if (nPoint < JobInitialPoints[tch->GetJob()].ht)
 			{
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Cannot set stat under initial stat."));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Cannot set stat under initial stat."));
 				return;
 			}
 			n = 0;
@@ -4628,7 +4344,7 @@ ACMD(do_set_stat)
 		case POINT_IQ:
 			if (nPoint < JobInitialPoints[tch->GetJob()].iq)
 			{
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Cannot set stat under initial stat."));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Cannot set stat under initial stat."));
 				return;
 			}
 			n = 1;
@@ -4636,7 +4352,7 @@ ACMD(do_set_stat)
 		case POINT_ST:
 			if (nPoint < JobInitialPoints[tch->GetJob()].st)
 			{
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Cannot set stat under initial stat."));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Cannot set stat under initial stat."));
 				return;
 			}
 			n = 2;
@@ -4644,7 +4360,7 @@ ACMD(do_set_stat)
 		case POINT_DX:
 			if (nPoint < JobInitialPoints[tch->GetJob()].dx)
 			{
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"Cannot set stat under initial stat."));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Cannot set stat under initial stat."));
 				return;
 			}
 			n = 3;
@@ -4659,7 +4375,7 @@ ACMD(do_set_stat)
 
 		if (nRemainPoint < nChangeAmount)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"ÎÇ®ÏùÄ Ïä§ÌÉØ Ìè¨Ïù∏Ìä∏Í∞Ä Ï†ÅÏäµÎãàÎã§."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("≥≤¿∫ Ω∫≈» ∆˜¿Œ∆Æ∞° ¿˚Ω¿¥œ¥Ÿ."));
 			return;
 		}
 
@@ -4684,7 +4400,7 @@ ACMD(do_get_item_id_list)
 	{
 		LPITEM item = ch->GetInventoryItem(i);
 		if (item != NULL)
-			ch->ChatPacket(CHAT_TYPE_INFO, "cell : %d, name : %s, id : %d", item->GetCell(), item->GetName(ch->GetLanguage()), item->GetID());
+			ch->ChatPacket(CHAT_TYPE_INFO, "cell : %d, name : %s, id : %d", item->GetCell(), item->GetName(), item->GetID());
 	}
 }
 
@@ -4713,17 +4429,6 @@ ACMD (do_can_dead)
 		ch->ResetArmada();
 }
 
-ACMD (do_full_set)
-{
-	extern void do_all_skill_master(LPCHARACTER ch, const char *argument, int cmd, int subcmd);
-	do_all_skill_master(ch, NULL, 0, 0);
-	extern void do_item_full_set(LPCHARACTER ch, const char *argument, int cmd, int subcmd);
-	do_item_full_set(ch, NULL, 0, 0);
-	extern void do_attr_full_set(LPCHARACTER ch, const char *argument, int cmd, int subcmd);
-	do_attr_full_set(ch, NULL, 0, 0);
-
-}
-
 ACMD (do_all_skill_master)
 {
 	ch->SetHorseLevel(SKILL_MAX_LEVEL);
@@ -4731,7 +4436,36 @@ ACMD (do_all_skill_master)
 	{
 		if (true == ch->CanUseSkill(i))
 		{
-			ch->SetSkillLevel(i, SKILL_MAX_LEVEL);
+			switch(i)
+			{
+				// @fixme154 BEGIN
+				// taking out the it->second->bMaxLevel from map_pkSkillProto (&& 1==40|SKILL_MAX_LEVEL) will be very resource-wasting, so we go full ugly so far
+				case SKILL_COMBO:
+					ch->SetSkillLevel(i, 2);
+					break;
+				case SKILL_LANGUAGE1:
+				case SKILL_LANGUAGE2:
+				case SKILL_LANGUAGE3:
+					ch->SetSkillLevel(i, 20);
+					break;
+				case SKILL_HORSE_SUMMON:
+					ch->SetSkillLevel(i, 10);
+					break;
+				case SKILL_HORSE:
+					ch->SetSkillLevel(i, HORSE_MAX_LEVEL);
+					break;
+				// CanUseSkill will be true for skill_horse_skills if riding
+				case SKILL_HORSE_WILDATTACK:
+				case SKILL_HORSE_CHARGE:
+				case SKILL_HORSE_ESCAPE:
+				case SKILL_HORSE_WILDATTACK_RANGE:
+					ch->SetSkillLevel(i, 20);
+					break;
+				// @fixme154 END
+				default:
+					ch->SetSkillLevel(i, SKILL_MAX_LEVEL);
+					break;
+			}
 		}
 		else
 		{
@@ -4741,7 +4475,7 @@ ACMD (do_all_skill_master)
 			case SKILL_HORSE_CHARGE:
 			case SKILL_HORSE_ESCAPE:
 			case SKILL_HORSE_WILDATTACK_RANGE:
-				ch->SetSkillLevel(i, SKILL_MAX_LEVEL);
+				ch->SetSkillLevel(i, 20); // @fixme154 40 -> 20
 				break;
 			}
 		}
@@ -4931,8 +4665,8 @@ ACMD (do_attr_full_set)
 	case JOB_WOLFMAN:
 #endif
 		{
-			// Î¨¥ÏÇ¨ Î™∏Îπµ ÏÖãÌåÖ.
-			// Ïù¥Í≤ÉÎßå ÎÇòÏôÄ ÏûàÏñ¥ÏÑú ÏûÑÏãúÎ°ú Î™®Îì† ÏßÅÍµ∞ Îã§ Ïù¥Îü∞ ÏÜçÏÑ± Îî∞Î¶Ñ.
+
+
 			item = ch->GetWear(WEAR_HEAD);
 			if (item != NULL)
 			{
@@ -5023,6 +4757,13 @@ ACMD (do_attr_full_set)
 	}
 }
 
+ACMD (do_full_set)
+{
+	do_all_skill_master(ch, NULL, 0, 0);
+	do_item_full_set(ch, NULL, 0, 0);
+	do_attr_full_set(ch, NULL, 0, 0);
+}
+
 ACMD (do_use_item)
 {
 	char arg1 [256];
@@ -5039,7 +4780,7 @@ ACMD (do_use_item)
 	}
 	else
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "ÏïÑÏù¥ÌÖúÏù¥ ÏóÜÏñ¥ÏÑú Ï∞©Ïö©Ìï† Ïàò ÏóÜÏñ¥.");
+		ch->ChatPacket(CHAT_TYPE_INFO, "æ∆¿Ã≈€¿Ã æ¯æÓº≠ ¬¯øÎ«“ ºˆ æ¯æÓ.");
 	}
 }
 
@@ -5073,44 +4814,78 @@ ACMD (do_dragon_soul)
 	}
 }
 
-#ifdef ENABLE_AURA_SYSTEM
-ACMD(do_aura_gm)
-{
-	std::vector<std::string> vecArgs;
-	split_argument(argument,vecArgs);
-	if (vecArgs.size() < 2){return;}
-	char get_command[50];
-	strlcpy(get_command,vecArgs[1].c_str(),sizeof(get_command));
-	LPITEM aura = ch->GetWear(WEAR_COSTUME_AURA);
-	if(!aura)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "You don't have equip aura! ");
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+std::string GetNewShopName(const std::string& oldname, const std::string& newname) {
+	auto nameindex = oldname.find('@');
+	if (nameindex == std::string::npos)
+		return newname;
+
+	else {
+		auto playername = oldname.substr(0, nameindex);
+		return playername + '@' + newname;
+	}
+}
+
+
+ACMD(do_offshop_change_shop_name) {
+	char arg1[50]; char arg2[256];
+	argument = one_argument(argument, arg1, sizeof(arg1));
+	argument = one_argument(argument, arg2, sizeof(arg2));
+
+	if (arg1[0] != 0 && isdigit(arg1[0]) && arg2[0] != 0) {
+		DWORD id = 0;
+		str_to_number(id, arg1);
+
+		if (id == 0) {
+			ch->ChatPacket(CHAT_TYPE_INFO, "syntax : offshop_change_shop_name  <player-id>  <new-name> ");
+			return;
+		} else {
+			offlineshop::CShop* pkShop = offlineshop::GetManager().GetShopByOwnerID(id);
+			if (!pkShop) {
+				ch->ChatPacket(CHAT_TYPE_INFO, "Cannot find shop by id %u ", id);
+				return;
+			} else {
+				std::string oldname = pkShop->GetName();
+				offlineshop::GetManager().SendShopChangeNameDBPacket(id, GetNewShopName(oldname, arg2).c_str());
+				ch->ChatPacket(CHAT_TYPE_INFO, "shop's name changed.");
+			}
+		}
+
+	} else {
+		ch->ChatPacket(CHAT_TYPE_INFO , "syntax : offshop_change_shop_name  <player-id>  <new-name> ");
 		return;
 	}
-	if(strstr(get_command, "exp"))
-	{
-		if (vecArgs.size() < 3){return;}
-		int level = 0;
-		str_to_number(level, vecArgs[2].c_str());
-		aura->SetSocket(2,level);
-	}
-	else if(strstr(get_command, "level"))
-	{
-		if (vecArgs.size() < 3){return;}
-		int level = 0;
-		str_to_number(level, vecArgs[2].c_str());
-		aura->SetSocket(0,level);
-	}
-	else if(strstr(get_command, "sub"))
-	{
-		if (vecArgs.size() < 3){return;}
-		int level = 0;
-		str_to_number(level, vecArgs[2].c_str());
-		aura->SetSocket(1,level);
-	}
-	else
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "AURA_CMD_ARG: exp | level | sub");
+}
+
+
+
+ACMD(do_offshop_force_close_shop) {
+	char arg1[50];
+	argument = one_argument(argument, arg1, sizeof(arg1));
+	if (arg1[0] != 0 && isdigit(arg1[0])) {
+
+		DWORD id = 0;
+		str_to_number(id, arg1);
+
+		if (id == 0) {
+			ch->ChatPacket(CHAT_TYPE_INFO, "syntax : offshop_force_close_shop  <player-id>  ");
+			return;
+		}
+		else {
+			offlineshop::CShop* pkShop = offlineshop::GetManager().GetShopByOwnerID(id);
+			if (!pkShop) {
+				ch->ChatPacket(CHAT_TYPE_INFO, "Cannot find shop by id %u ", id);
+				return;
+			}
+			else {
+				offlineshop::GetManager().SendShopForceCloseDBPacket(id);
+				ch->ChatPacket(CHAT_TYPE_INFO, "shop closed successfully.");
+			}
+		}
+
+	} else {
+		ch->ChatPacket(CHAT_TYPE_INFO, "syntax : offshop_force_close_shop  <player-id>  ");
+		return;
 	}
 }
 #endif
@@ -5123,415 +4898,7 @@ ACMD (do_ds_list)
 
 		LPITEM item = ch->GetItem(cell);
 		if (item != NULL)
-			ch->ChatPacket(CHAT_TYPE_INFO, "cell : %d, name : %s, id : %d", item->GetCell(), item->GetName(ch->GetLanguage()), item->GetID());
+			ch->ChatPacket(CHAT_TYPE_INFO, "cell : %d, name : %s, id : %d", item->GetCell(), item->GetName(), item->GetID());
 	}
 }
-
-#ifdef __ENABLE_ITEM_GARBAGE__
-ACMD(do_disable_item_garbage) 
-{
-	Garbage<CItem, LPEVENT>::Ref().DisableGarbage();
-}
-
-ACMD(do_item_garbage_log) {
-	std::string Message = Garbage<CItem, LPEVENT>::Ref().GetLogMessage();
-	ch->ChatPacket(CHAT_TYPE_INFO, Message.c_str());
-}
-#endif
-#ifdef ENABLE_DECORUM
-ACMD(do_decorum_season_end)
-{
-	if (!g_bDecorumMaster)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "This core is not Decorum master");
-		return;
-	}
-	
-	char arg1[256], arg2[256];
-	two_arguments(argument, arg1, sizeof(arg1), arg2, sizeof(arg2));
-	
-	int nStart = 0;
-	int nEnd = get_global_time();
-	
-	if (*arg1)
-		str_to_number(nEnd, arg1);
-	
-	if (*arg2)
-		str_to_number(nStart, arg2);
-	
-	CDecorumManager::instance().EndOfSeason(nStart, nEnd);
-}
-
-ACMD(do_end_decorum_arena)
-{
-	char arg1[256];
-	one_argument(argument, arg1, sizeof(arg1));
-
-	if (!*arg1)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "Usage: end_decorum_arena <arenaMapIndex> | <playerName>");
-		return;
-	}
-	
-	DWORD dwArenaMapIndex = 0;
-	
-	if (isdigit(*arg1))
-		str_to_number(dwArenaMapIndex, arg1);
-	else
-	{
-		LPCHARACTER tch = CHARACTER_MANAGER::instance().FindPC(arg1); 
-		if (NULL == tch)
-		{
-			ch->ChatPacket(CHAT_TYPE_INFO, "There is no one by name %s", arg1);
-			return;
-		}
-		
-		dwArenaMapIndex = tch->GetMapIndex();
-	}
-	
-	if (!CDecoredArenaManager::instance().EndDecoredArena(dwArenaMapIndex))
-		ch->ChatPacket(CHAT_TYPE_INFO, "No Decorum Arena by mapIndex %d", dwArenaMapIndex);
-}
-
-ACMD(do_end_all_decorum_arena)
-{
-	CDecoredArenaManager::instance().EndAllDecoredArena();
-}
-
-ACMD(do_set_decorum)
-{
-	char arg1[256], arg2[256];
-
-	two_arguments(argument, arg1, sizeof(arg1), arg2, sizeof(arg2));
-
-	if (!*arg1 || !*arg2)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "Usage: set_decorum <character name> <decorum>");
-		return;
-	}
-
-	DWORD dwDecorum = 0;
-	LPCHARACTER tch = CHARACTER_MANAGER::instance().FindPC(arg1);
-	str_to_number(dwDecorum, arg2);
-
-	if (NULL == tch)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "There is no one by that name");
-		return;
-	}
-	
-	DECORUM * pkDecorum = CDecorumManager::instance().GetDecorum(tch->GetPlayerID());
-	
-	pkDecorum->SetDecorumPoint(dwDecorum);
-	pkDecorum->SendDecorumData(tch);
-	pkDecorum->Save(tch);
-}
-ACMD(do_decorum_has_lobby)
-{
-	char arg1[256];
-
-	one_argument(argument, arg1, sizeof(arg1));
-
-	if (!*arg1)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "Usage: decorum_has_lobby <character name>");
-		return;
-	}
-
-	LPCHARACTER tch = CHARACTER_MANAGER::instance().FindPC(arg1);
-
-	if (NULL == tch)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "There is no one by that name");
-		return;
-	}
-	
-	
-	bool bRet = CDecoredArenaManager::instance().HasLobby(tch->GetPlayerID());
-	tch->ChatPacket(CHAT_TYPE_INFO, "LOBBY YES OR NO: %d", bRet);
-
-}
-#endif
-
-#ifdef ENABLE_MAINTENANCE_SYSTEM
-LPEVENT g_pkShutdownEvent = NULL;
-bool g_bIsMaintenance = false;
-int g_iMaintenanceDurSec;
-bool g_bIsMaintenanceStarter = false;
-
-struct SendDisconnectFunc
-{
-	void operator () (LPDESC d)
-	{
-		if (d->GetCharacter())
-		{
-			if (d->GetCharacter()->GetGMLevel() == GM_PLAYER)
-				d->GetCharacter()->ChatPacket(CHAT_TYPE_COMMAND, "quit Shutdown(SendDisconnectFunc)");
-		}
-	}
-};
-
-struct DisconnectFunc
-{
-	void operator () (LPDESC d)
-	{
-		if (d->GetType() == DESC_TYPE_CONNECTOR)
-			return;
-
-		if (d->IsPhase(PHASE_P2P))
-			return;
-
-		if (d->GetCharacter())
-			d->GetCharacter()->Disconnect("Shutdown(DisconnectFunc)");
-
-		d->SetPhase(PHASE_CLOSE);
-	}
-};
-
-EVENTINFO(shutdown_event_data)
-{
-	int seconds;
-
-	shutdown_event_data()
-		: seconds(0)
-	{
-	}
-};
-EVENTFUNC(shutdown_event)
-{
-	shutdown_event_data* info = dynamic_cast<shutdown_event_data*>(event->info);
-
-	if (info == NULL)
-	{
-		sys_err("shutdown_event> <Factor> Null pointer");
-		return 0;
-	}
-
-	int * pSec = &(info->seconds);
-
-	if (*pSec < 0)
-	{
-		sys_log(0, "shutdown_event sec %d", *pSec);
-
-		if (--*pSec == -10)
-		{
-			const DESC_MANAGER::DESC_SET & c_set_desc = DESC_MANAGER::instance().GetClientSet();
-			std::for_each(c_set_desc.begin(), c_set_desc.end(), DisconnectFunc());
-			return passes_per_sec;
-		}
-		else if (*pSec < -310)
-		{
-			if (!test_server && g_bIsMaintenance && g_bIsMaintenanceStarter)
-				system("sleep 1 && cd /usr/game/ && sh close.sh &");
-
-			g_pkShutdownEvent = NULL;
-			return 0;
-		}
-
-		return passes_per_sec;
-	}
-	else if (*pSec == 0)
-	{
-		const DESC_MANAGER::DESC_SET & c_set_desc = DESC_MANAGER::instance().GetClientSet();
-		std::for_each(c_set_desc.begin(), c_set_desc.end(), SendDisconnectFunc());
-		g_bNoMoreClient = true;
-
-		--*pSec;
-		return passes_per_sec;
-	}
-	else
-	{
-		char buf[64];
-		snprintf(buf, sizeof(buf), "Il server andra' offline tra [%d] secondi.", *pSec);
-		SendNotice(buf);
-
-		--*pSec;
-		return passes_per_sec;
-	}
-}
-void Shutdown(int iSec)
-{
-	if (g_bNoMoreClient)
-	{
-		thecore_shutdown();
-		return;
-	}
-
-	if (g_pkShutdownEvent)
-		event_cancel(&g_pkShutdownEvent);
-
-	CWarMapManager::instance().OnShutdown();
-#ifdef ENABLE_DECORUM
-	CDecoredArenaManager::instance().EndAllDecoredArena();
-#endif
-	if (iSec <= 60 && g_bIsMaintenance)
-	{
-		char buf[64];
-		snprintf(buf, sizeof(buf), "Zayos will go into a maintenance in [%d] seconds.", iSec);
-
-		SendNotice(buf);
-	}
-
-	shutdown_event_data* info = AllocEventInfo<shutdown_event_data>();
-	info->seconds = MIN(10, iSec);
-
-	g_pkShutdownEvent = event_create(shutdown_event, info, iSec > 10 ? PASSES_PER_SEC(iSec - 10) : passes_per_sec);
-}
-ACMD(do_shutdown)
-{
-	if (NULL != ch)
-	{
-		sys_err("Accept shutdown command from %s.", ch->GetName());
-	}
-
-	__StartNewShutdown(10, false, 0, true);
-}
-void __SendMaintenancePacket(DWORD dwTimeLeft, DWORD dwDuration, LPCHARACTER pkChr = NULL)
-{
-	TPacketGCMaintenance packet;
-	packet.header = HEADER_GC_MAINTENANCE;
-	packet.dwTimeLeft = dwTimeLeft;
-	packet.dwDuration = dwDuration;
-
-	if (pkChr)
-	{
-		pkChr->GetDesc()->Packet(&packet, sizeof(packet));
-		return;
-	}
-
-	TPacketGGPlayerPacket p2p_packet;
-	p2p_packet.header = HEADER_GG_PLAYER_PACKET;
-	p2p_packet.size = sizeof(TPacketGCMaintenance);
-	// p2p_packet.language = -1;
-
-	P2P_MANAGER::instance().SendBuffered(&p2p_packet, sizeof(p2p_packet));
-	P2P_MANAGER::instance().Send(&packet, sizeof(packet));
-
-	const CHARACTER_MANAGER::NAME_MAP& rkPCMap = CHARACTER_MANAGER::Instance().GetPCMap();
-	for (itertype(rkPCMap) it = rkPCMap.begin(); it != rkPCMap.end(); ++it)
-		it->second->GetDesc()->Packet(&packet, sizeof(packet));
-}
-
-void __StopCurrentShutdown(bool bSendP2P)
-{
-	event_cancel(&g_pkShutdownEvent);
-	__SendMaintenancePacket(0, 0);
-	g_bIsMaintenance = false;
-	g_bIsMaintenanceStarter = false;
-
-	if (bSendP2P)
-	{
-		TPacketGGShutdown p;
-		p.bHeader = HEADER_GG_SHUTDOWN;
-		p.iShutdownTimer = -1;
-		P2P_MANAGER::instance().Send(&p, sizeof(TPacketGGShutdown));
-	}
-}
-
-void __StartNewShutdown(int iStartSec, bool bIsMaintenance, int iMaintenanceDuration, bool bSendP2P)
-{
-	g_bIsMaintenance = bIsMaintenance;
-	g_bIsMaintenanceStarter = bSendP2P;
-	g_iMaintenanceDurSec = iMaintenanceDuration;
-
-	if (bIsMaintenance)
-		__SendMaintenancePacket(iStartSec, iMaintenanceDuration);
-	Shutdown(iStartSec);
-
-	if (bSendP2P)
-	{
-		TPacketGGShutdown p;
-		p.bHeader = HEADER_GG_SHUTDOWN;
-		p.iShutdownTimer = iStartSec;
-		p.bMaintenance = bIsMaintenance;
-		p.iMaintenanceDuration = iMaintenanceDuration;
-		P2P_MANAGER::instance().Send(&p, sizeof(TPacketGGShutdown));
-	}
-}
-
-bool __IsCurrentMaintenance(int& iStartSecLeft, int& iDuration)
-{
-	if (!g_bIsMaintenance)
-		return false;
-
-	if (!g_pkShutdownEvent)
-	{
-		sys_err("no shutdown event while g_bIsMaintenance = TRUE");
-		return false;
-	}
-
-	iStartSecLeft = event_time(g_pkShutdownEvent) / passes_per_sec;
-	iDuration = g_iMaintenanceDurSec;
-
-	return true;
-}
-
-void __SendMaintenancePacketToPlayer(LPCHARACTER pkChr)
-{
-	int iStartSecLeft, iDuration;
-	if (!__IsCurrentMaintenance(iStartSecLeft, iDuration))
-		return;
-
-	__SendMaintenancePacket(iStartSecLeft, iDuration, pkChr);
-}
-
-ACMD(do_maintenance)
-{
-	if (ch && ch->GetGMLevel() < GM_IMPLEMENTOR)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Trebuie sa fii administrator."));
-		return;
-	}
-
-	char arg1[256];
-	char arg2[256];
-	two_arguments(argument, arg1, sizeof(arg1), arg2, sizeof(arg2));
-
-	if (!strcasecmp(arg1, "stop"))
-	{
-		if (!g_pkShutdownEvent)
-		{
-			if (ch)
-				ch->ChatPacket(CHAT_TYPE_INFO, "No shutdown event running.");
-			return;
-		}
-
-		__StopCurrentShutdown(true);
-		return;
-	}
-
-	if (!*arg1 || !*arg2)
-	{
-		if (ch)
-			ch->ChatPacket(CHAT_TYPE_INFO, "Usage: maintenance <time> <duration min>(0 to off) (1m 30s)");
-		return;
-	}
-
-	int StartSec = parse_time_str(arg1);
-	int DurSec = parse_time_str(arg2);
-
-	if (StartSec <= 0 && DurSec > 0)
-	{
-		if (ch)
-		{
-			ch->ChatPacket(CHAT_TYPE_INFO, "=> 10s, 10m, 1m 30s");
-		}
-		return;
-	}
-
-	if (DurSec <= 0)
-	{
-		if (g_pkShutdownEvent)
-			__StopCurrentShutdown(true);
-
-		return;
-	}
-
-	if (NULL != ch)
-	{
-		sys_err("Accept maintenance command from %s.", ch->GetName());
-	}
-
-	__StartNewShutdown(StartSec, true, DurSec, true);
-}
-#endif
+//martysama0134's 2022

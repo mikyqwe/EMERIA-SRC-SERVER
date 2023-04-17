@@ -91,4 +91,4 @@ void ConvertEmpireText(DWORD dwEmpireID, char* szText, size_t len, int iPct)
 		}
 	}
 }
-
+//martysama0134's 2022

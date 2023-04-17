@@ -24,7 +24,7 @@
 CShop::CShop()
 	: m_dwVnum(0), m_dwNPCVnum(0), m_pkPC(NULL)
 {
-	m_pGrid = M2_NEW CGrid(5, 8);
+	m_pGrid = M2_NEW CGrid(5, 9);
 }
 
 CShop::~CShop()
@@ -70,7 +70,7 @@ bool CShop::Create(DWORD dwVnum, DWORD dwNPCVnum, TShopItemTable * pTable)
 	m_dwVnum = dwVnum;
 	m_dwNPCVnum = dwNPCVnum;
 
-	short bItemCount;
+	BYTE bItemCount;
 
 	for (bItemCount = 0; bItemCount < SHOP_HOST_ITEM_MAX_NUM; ++bItemCount)
 		if (0 == (pTable + bItemCount)->vnum)
@@ -80,7 +80,7 @@ bool CShop::Create(DWORD dwVnum, DWORD dwNPCVnum, TShopItemTable * pTable)
 	return true;
 }
 
-void CShop::SetShopItems(TShopItemTable * pTable, short bItemCount)
+void CShop::SetShopItems(TShopItemTable * pTable, BYTE bItemCount)
 {
 	if (bItemCount > SHOP_HOST_ITEM_MAX_NUM)
 		return;
@@ -88,7 +88,7 @@ void CShop::SetShopItems(TShopItemTable * pTable, short bItemCount)
 	m_pGrid->Clear();
 
 	m_itemVector.resize(SHOP_HOST_ITEM_MAX_NUM);
-	memset(&m_itemVector[0], 0, sizeof(SHOP_ITEM) * m_itemVector.size());
+	msl::refill(m_itemVector);
 
 	for (int i = 0; i < bItemCount; ++i)
 	{
@@ -128,18 +128,8 @@ void CShop::SetShopItems(TShopItemTable * pTable, short bItemCount)
 			sys_log(0, "MyShop: use position %d", pTable->display_pos);
 			iPos = pTable->display_pos;
 		}
-		// else
-			// iPos = m_pGrid->FindBlank(1, item_table->bSize);
-		//fix yang = 0
 		else
-		{
-			if(pTable->price == 0 && pkItem && pkItem->GetGold() > 0)
-			{
-				pTable->price = pkItem->GetGold()*pTable->count;
-			}
 			iPos = m_pGrid->FindBlank(1, item_table->bSize);
-		}
-		///end fix
 
 		if (iPos < 0)
 		{
@@ -170,21 +160,15 @@ void CShop::SetShopItems(TShopItemTable * pTable, short bItemCount)
 		if (item.pkItem)
 		{
 			item.vnum = pkItem->GetVnum();
-			item.count = pkItem->GetCount(); // PC 샵의 경우 아이템 개수는 진짜 아이템의 개수여야 한다.
-			item.price = pTable->price; // 가격도 사용자가 정한대로..
-#ifdef ENABLE_CHEQUE_SYSTEM
-			item.cheque_price = pTable->cheque_price;
-#endif
+			item.count = pkItem->GetCount();
+			item.price = pTable->price;
 			item.itemid	= pkItem->GetID();
 		}
 		else
 		{
 			item.vnum = pTable->vnum;
 			item.count = pTable->count;
-	#ifdef ENABLE_MULTISHOP
-			item.wPriceVnum = pTable->wPriceVnum;
-			item.wPrice = pTable->wPrice;
-#endif		
+
 			if (IS_SET(item_table->dwFlags, ITEM_FLAG_COUNT_PER_1GOLD))
 			{
 				if (item_table->dwGold == 0)
@@ -204,10 +188,19 @@ void CShop::SetShopItems(TShopItemTable * pTable, short bItemCount)
 	}
 }
 
-
-
-extern bool FN_check_item_socket(LPITEM item);
-int CShop::Buy(LPCHARACTER ch, BYTE pos)
+#ifdef ENABLE_LONG_LONG
+long long CShop::Buy(LPCHARACTER ch, BYTE pos
+#ifdef ENABLE_BUY_STACK_FROM_SHOP
+, bool multiple
+#endif
+)
+#else
+int CShop::Buy(LPCHARACTER ch, BYTE pos
+#ifdef ENABLE_BUY_STACK_FROM_SHOP
+, bool multiple
+#endif
+)
+#endif
 {
 	if (pos >= m_itemVector.size())
 	{
@@ -221,81 +214,53 @@ int CShop::Buy(LPCHARACTER ch, BYTE pos)
 
 	if (it == m_map_guest.end())
 		return SHOP_SUBHEADER_GC_END;
-	if (ch == m_pkPC)
-		return SHOP_SUBHEADER_GC_END;
+
 	SHOP_ITEM& r_item = m_itemVector[pos];
 
-#ifdef ENABLE_CHEQUE_SYSTEM
-	if (r_item.price < 0 && r_item.cheque_price <= 0)
-#else
-	if (r_item.price < 0)
-#endif
+	if (r_item.price <= 0)
 	{
 		LogManager::instance().HackLog("SHOP_BUY_GOLD_OVERFLOW", ch);
 		return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
 	}
 
 	LPITEM pkSelectedItem = ITEM_MANAGER::instance().Find(r_item.itemid);
-#ifdef ENABLE_MULTISHOP
-	DWORD dwWItemVnum = r_item.wPriceVnum;
-	DWORD dwWItemPrice = r_item.wPrice;
-#endif
-
-
 
 	if (IsPCShop())
-	 {
-		
-			 if (!pkSelectedItem)
-			 {
-				 sys_log(0, "Shop::Buy : Critical: This user seems to be a hacker : invalid pcshop item id %d : BuyerPID:%d SellerPID:%d",
-						 r_item.itemid,
-						 ch->GetPlayerID(),
-						 m_pkPC->GetPlayerID());
-
-				 return false;
-			 }
-
-			 if ((pkSelectedItem->GetOwner() != m_pkPC))
-			{
-				 sys_log(0, "Shop::Buy : Critical: This user seems to be a hacker : invalid pcshop item owner: BuyerPID:%d SellerPID:%d",
-						 ch->GetPlayerID(),
-						 m_pkPC->GetPlayerID());
-
-				 return false;
-			 }
-		
-	 }
-
-	long long  dwPrice = r_item.price;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int byChequePrice = r_item.cheque_price;
-#endif
-
-#ifdef ENABLE_MULTISHOP
-	if (dwWItemVnum > 0)
 	{
-		if (ch->CountSpecifyItem(dwWItemVnum) < (int)dwWItemPrice)
-			return SHOP_SUBHEADER_GC_NOT_ENOUGH_ITEM;
+		if (!pkSelectedItem)
+		{
+			sys_log(0, "Shop::Buy : Critical: This user seems to be a hacker : invalid pcshop item : BuyerPID:%d SellerPID:%d",
+					ch->GetPlayerID(),
+					m_pkPC->GetPlayerID());
+
+			return SHOP_SUBHEADER_GC_SOLD_OUT; // @fixme132 false to SHOP_SUBHEADER_GC_SOLD_OUT
+		}
+
+		if ((pkSelectedItem->GetOwner() != m_pkPC))
+		{
+			sys_log(0, "Shop::Buy : Critical: This user seems to be a hacker : invalid pcshop item : BuyerPID:%d SellerPID:%d",
+					ch->GetPlayerID(),
+					m_pkPC->GetPlayerID());
+
+			return SHOP_SUBHEADER_GC_SOLD_OUT; // @fixme132 false to SHOP_SUBHEADER_GC_SOLD_OUT
+		}
 	}
-	else if (ch->GetGold() < dwPrice)
+
+#ifdef ENABLE_LONG_LONG
+	long long dwPrice = r_item.price;
+	if (ch->GetGold() < (long long)dwPrice)
 #else
-	if (ch->GetGold() < dwPrice)
+	DWORD dwPrice = r_item.price;
+	if (ch->GetGold() < (int)dwPrice)
 #endif
 	{
 		sys_log(1, "Shop::Buy : Not enough money : %s has %d, price %d", ch->GetName(), ch->GetGold(), dwPrice);
 		return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
 	}
-#ifdef ENABLE_CHEQUE_SYSTEM
-	if (ch->GetCheque() < byChequePrice)
-	{
-		sys_log(1, "Shop::Buy : Not enough cheque : %s has %d, price %d", ch->GetName(), ch->GetCheque(), byChequePrice);
-		return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
-	}
-#endif
+
 	LPITEM item;
 
-	if (m_pkPC) // 피씨가 운영하는 샵은 피씨가 실제 아이템을 가지고있어야 한다.
+	if (m_pkPC)
 		item = r_item.pkItem;
 	else
 		item = ITEM_MANAGER::instance().CreateItem(r_item.vnum, r_item.count);
@@ -303,7 +268,19 @@ int CShop::Buy(LPCHARACTER ch, BYTE pos)
 	if (!item)
 		return SHOP_SUBHEADER_GC_SOLD_OUT;
 
+#ifdef ENABLE_SHOP_BLACKLIST
+	if (!m_pkPC)
+	{
+		if (quest::CQuestManager::instance().GetEventFlag("hivalue_item_sell") == 0)
+		{
 
+			if (item->GetVnum() == 70024 || item->GetVnum() == 70035)
+			{
+				return SHOP_SUBHEADER_GC_END;
+			}
+		}
+	}
+#endif
 
 	int iEmptyPos;
 	if (item->IsDragonSoul())
@@ -333,61 +310,100 @@ int CShop::Buy(LPCHARACTER ch, BYTE pos)
 			return SHOP_SUBHEADER_GC_INVENTORY_FULL;
 		}
 	}
-#ifdef ENABLE_CHEQUE_SYSTEM
-	if (dwPrice)
-		ch->PointChange(POINT_GOLD, -dwPrice, false);
-	if (byChequePrice)
-		ch->PointChange(POINT_CHEQUE, -byChequePrice, false);
-#ifdef ENABLE_MULTISHOP
-	if (dwWItemVnum > 0)
-		ch->RemoveSpecifyItem(dwWItemVnum, dwWItemPrice);
-#endif
-#else
-	ch->PointChange(POINT_GOLD, -dwPrice, false);
-#endif
 
-#ifdef __BATTLE_PASS__
-	if (!m_pkPC)
+	ch->PointChange(POINT_GOLD, -dwPrice, false);
+
+
+	DWORD dwTax = 0;
+	int iVal = 0;
+
 	{
-		if (!ch->v_counts.empty())
+		iVal = quest::CQuestManager::instance().GetEventFlag("personal_shop");
+
+		if (0 < iVal)
 		{
-			for (int i=0; i<ch->missions_bp.size(); ++i)
-			{
-				if (ch->missions_bp[i].type == 3){	ch->DoMission(i, dwPrice);}
-			}
+			if (iVal > 100)
+				iVal = 100;
+
+			dwTax = dwPrice * iVal / 100;
+			dwPrice = dwPrice - dwTax;
+		}
+		else
+		{
+			iVal = 0;
+			dwTax = 0;
 		}
 	}
-#endif	
-	//ch->PointChange(POINT_GOLD, -dwPrice, false);
-	/*TShopTable test;
-	std::map<int, TShopTable *> map_shop;
-	TShopTable * shop_table;
-	
-	shop_table->dwNPCVnum;
 
-	
-	ch->SetQuestNPCID('2');
-	quest::CQuestManager::instance().OnBuy(ch->GetPlayerID(), item);
-	*/
 
-	
+	if (!m_pkPC)
+	{
+		CMonarch::instance().SendtoDBAddMoney(dwTax, ch->GetEmpire(), ch);
+	}
 
-	// 군주 시스템 : 세금 징수
+
 	if (m_pkPC)
 	{
-
 		m_pkPC->SyncQuickslot(QUICKSLOT_TYPE_ITEM, item->GetCell(), 255);
 
-		char buf[512];
-
-		if (item->GetVnum() >= 80003 && item->GetVnum() <= 80007)
+		if (item->GetVnum() == 90008 || item->GetVnum() == 90009) // VCARD
 		{
-			snprintf(buf, sizeof(buf), "%s FROM: %u TO: %u PRICE: %u", item->GetName(ch->GetLanguage()), ch->GetPlayerID(), m_pkPC->GetPlayerID(), dwPrice);
-			LogManager::instance().GoldBarLog(ch->GetPlayerID(), item->GetID(), SHOP_BUY, buf);
-			LogManager::instance().GoldBarLog(m_pkPC->GetPlayerID(), item->GetID(), SHOP_SELL, buf);
+			VCardUse(m_pkPC, ch, item);
+			item = NULL;
 		}
+		else
+		{
+			char buf[512];
+
+			if (item->GetVnum() >= 80003 && item->GetVnum() <= 80007)
+			{
+				snprintf(buf, sizeof(buf), "%s FROM: %u TO: %u PRICE: %u", item->GetName(), ch->GetPlayerID(), m_pkPC->GetPlayerID(), dwPrice);
+				LogManager::instance().GoldBarLog(ch->GetPlayerID(), item->GetID(), SHOP_BUY, buf);
+				LogManager::instance().GoldBarLog(m_pkPC->GetPlayerID(), item->GetID(), SHOP_SELL, buf);
+			}
+
+			item->RemoveFromCharacter();
+			if (item->IsDragonSoul())
+				item->AddToCharacter(ch, TItemPos(DRAGON_SOUL_INVENTORY, iEmptyPos));
+#ifdef __SPECIAL_STORAGE_SYSTEM__
+		else if (item->IsSkillBookItem())
+			item->AddToCharacter(ch, TItemPos(SKILLBOOK_INVENTORY, iEmptyPos));
+		else if (item->IsUpgradeItem())
+			item->AddToCharacter(ch, TItemPos(UPPITEM_INVENTORY, iEmptyPos));
+		else if (item->IsGhostStoneItem())
+			item->AddToCharacter(ch, TItemPos(GHOSTSTONE_INVENTORY, iEmptyPos));
+		else if (item->IsGeneralItem())
+			item->AddToCharacter(ch, TItemPos(GENERAL_INVENTORY, iEmptyPos));
+#endif
+			else
+				item->AddToCharacter(ch, TItemPos(INVENTORY, iEmptyPos));
+			ITEM_MANAGER::instance().FlushDelayedSave(item);
+
+
+			snprintf(buf, sizeof(buf), "%s %u(%s) %u %u", item->GetName(), m_pkPC->GetPlayerID(), m_pkPC->GetName(), dwPrice, item->GetCount());
+			LogManager::instance().ItemLog(ch, item, "SHOP_BUY", buf);
+
+			snprintf(buf, sizeof(buf), "%s %u(%s) %u %u", item->GetName(), ch->GetPlayerID(), ch->GetName(), dwPrice, item->GetCount());
+			LogManager::instance().ItemLog(m_pkPC, item, "SHOP_SELL", buf);
+		}
+
+		r_item.pkItem = NULL;
+		BroadcastUpdateItem(pos);
+
+		m_pkPC->PointChange(POINT_GOLD, dwPrice, false);
+
+		if (iVal > 0)
+			m_pkPC->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("판매금액의 %d %% 가 세금으로 나가게됩니다"), iVal);
+
+		CMonarch::instance().SendtoDBAddMoney(dwTax, m_pkPC->GetEmpire(), m_pkPC);
+	}
+	else
+	{
+		if (item->IsSpecialStorageItem())
+		{
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("The item was moved to your Special Storage. [Press U]"));
+		}		
 		
-		item->RemoveFromCharacter();
 		if (item->IsDragonSoul())
 			item->AddToCharacter(ch, TItemPos(DRAGON_SOUL_INVENTORY, iEmptyPos));
 #ifdef __SPECIAL_STORAGE_SYSTEM__
@@ -403,116 +419,23 @@ int CShop::Buy(LPCHARACTER ch, BYTE pos)
 		else
 			item->AddToCharacter(ch, TItemPos(INVENTORY, iEmptyPos));
 		ITEM_MANAGER::instance().FlushDelayedSave(item);
-
-		if (item->IsSpecialStorageItem())
-		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("TEST PORCODIO."));
-		}
-		
-
-		snprintf(buf, sizeof(buf), "%s %u(%s) %u %u %u", item->GetName(ch->GetLanguage()), m_pkPC->GetPlayerID(), m_pkPC->GetName(), dwPrice, byChequePrice, item->GetCount());
-		LogManager::instance().ItemLog(ch, item, "SHOP_BUY", buf);
-		// BUY EVENT
-		
-
-		snprintf(buf, sizeof(buf), "%s %u(%s) %u %u %u", item->GetName(ch->GetLanguage()), ch->GetPlayerID(), ch->GetName(), dwPrice, byChequePrice, item->GetCount());
-		LogManager::instance().ItemLog(m_pkPC, item, "SHOP_SELL", buf);
-	
-
-		r_item.pkItem = NULL;
-		BroadcastUpdateItem(pos);
-
-#ifdef ENABLE_CHEQUE_SYSTEM
-		if (dwPrice)
-			m_pkPC->PointChange(POINT_GOLD, dwPrice, false);
-		if (byChequePrice)
-			m_pkPC->PointChange(POINT_CHEQUE, byChequePrice, false);
-#else
-		m_pkPC->PointChange(POINT_GOLD, dwPrice, false);
-#endif
-		
-	}
-	else
-	{
-		if (item->IsSpecialStorageItem())
-		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("The item was moved to your Special Storage. [Press U]"));
-		}
-
-		if (item->IsDragonSoul())
-			item->AddToCharacter(ch, TItemPos(DRAGON_SOUL_INVENTORY, iEmptyPos));
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-		else if (item->IsSkillBookItem())
-			item->AddToCharacter(ch, TItemPos(SKILLBOOK_INVENTORY, iEmptyPos));
-		else if (item->IsUpgradeItem())
-			item->AddToCharacter(ch, TItemPos(UPPITEM_INVENTORY, iEmptyPos));
-		else if (item->IsGhostStoneItem())
-			item->AddToCharacter(ch, TItemPos(GHOSTSTONE_INVENTORY, iEmptyPos));
-		else if (item->IsGeneralItem())
-			item->AddToCharacter(ch, TItemPos(GENERAL_INVENTORY, iEmptyPos));
-#endif
-		else{
-			WORD bCount = item->GetCount();
-			if ((item->GetFlag() == 4 || item->GetFlag() == 20))
-			{
-
-				for (WORD i = 0; i < INVENTORY_MAX_NUM; ++i)
-				{
-					LPITEM item2 = ch->GetInventoryItem(i);
-
-					if (!item2)
-						continue;
-
-					if (item2->GetVnum() == item->GetVnum())
-					{
-						int j;
-
-						for (j = 0; j < ITEM_SOCKET_MAX_NUM; ++j)
-							if (item2->GetSocket(j) != item->GetSocket(j))
-								break;
-
-						if (j != ITEM_SOCKET_MAX_NUM)
-							continue;
-
-						WORD bCount2 = MIN(g_bItemCountLimit - item2->GetCount(), bCount);
-						bCount -= bCount2;
-
-						item2->SetCount(item2->GetCount() + bCount2);
-
-						if (bCount == 0)
-						{
-							break;
-						}
-					}
-				}
-
-				item->SetCount(bCount);
-			}
-			if (bCount > 0)
-			{
-				item->AddToCharacter(ch, TItemPos(INVENTORY, iEmptyPos));
-			}
-			else
-				M2_DESTROY_ITEM(item);
-		}
-		ITEM_MANAGER::instance().FlushDelayedSave(item);
-		LogManager::instance().ItemLog(ch, item, "BUY", item->GetName(ch->GetLanguage()));
+		LogManager::instance().ItemLog(ch, item, "BUY", item->GetName());
 
 		if (item->GetVnum() >= 80003 && item->GetVnum() <= 80007)
 		{
 			LogManager::instance().GoldBarLog(ch->GetPlayerID(), item->GetID(), PERSONAL_SHOP_BUY, "");
 		}
 
-		//DBManager::instance().SendMoneyLog(MONEY_LOG_SHOP, item->GetVnum(), -dwPrice);
+		DBManager::instance().SendMoneyLog(MONEY_LOG_SHOP, item->GetVnum(), -dwPrice);
 	}
 
 	if (item)
-		sys_log(0, "SHOP: BUY: name %s %s(x %d):%u price %u", ch->GetName(), item->GetName(ch->GetLanguage()), item->GetCount(), item->GetID(), dwPrice);
+		sys_log(0, "SHOP: BUY: name %s %s(x %d):%u price %u", ch->GetName(), item->GetName(), item->GetCount(), item->GetID(), dwPrice);
 
     ch->Save();
+
     return (SHOP_SUBHEADER_GC_OK);
 }
-
 
 bool CShop::AddGuest(LPCHARACTER ch, DWORD owner_vid, bool bOtherEmpire)
 {
@@ -547,7 +470,7 @@ bool CShop::AddGuest(LPCHARACTER ch, DWORD owner_vid, bool bOtherEmpire)
 		//HIVALUE_ITEM_EVENT
 		if (quest::CQuestManager::instance().GetEventFlag("hivalue_item_sell") == 0)
 		{
-			//축복의 구슬 && 만년한철 이벤트
+
 			if (item.vnum == 70024 || item.vnum == 70035)
 			{
 				continue;
@@ -567,41 +490,23 @@ bool CShop::AddGuest(LPCHARACTER ch, DWORD owner_vid, bool bOtherEmpire)
 		if (bOtherEmpire) // no empire price penalty for pc shop
 #endif
 		{
-#ifdef ENABLE_CHEQUE_SYSTEM
-			pack2.items[i].price.dwPrice = item.price * 1;
-#else
-			pack2.items[i].price = item.price * 1;
-#endif
+			pack2.items[i].price = item.price * 3;
 		}
 		else
-#ifdef ENABLE_CHEQUE_SYSTEM
-			pack2.items[i].price.dwPrice = item.price;
-
-		pack2.items[i].price.byChequePrice = item.cheque_price;
-#else
 			pack2.items[i].price = item.price;
-#endif
 		// END_REMOVED_EMPIRE_PRICE_LIFT
 
 		pack2.items[i].count = item.count;
-#ifdef ENABLE_MULTISHOP
-		pack2.items[i].wPriceVnum = item.wPriceVnum;
-		pack2.items[i].wPrice = item.wPrice;
-#endif
-		
+
 		if (item.pkItem)
 		{
 			thecore_memcpy(pack2.items[i].alSockets, item.pkItem->GetSockets(), sizeof(pack2.items[i].alSockets));
 			thecore_memcpy(pack2.items[i].aAttr, item.pkItem->GetAttributes(), sizeof(pack2.items[i].aAttr));
-#ifdef CHANGELOOK_SYSTEM
-			pack2.items[i].transmutation = item.pkItem->GetTransmutation();
-#endif
 		}
 	}
 
 	pack.size = sizeof(pack) + sizeof(pack2);
-	
-	
+
 	ch->GetDesc()->BufferedPacket(&pack, sizeof(TPacketGCShop));
 	ch->GetDesc()->Packet(&pack2, sizeof(TPacketGCShopStart));
 	return true;
@@ -673,18 +578,8 @@ void CShop::BroadcastUpdateItem(BYTE pos)
 		}
 	}
 
-#ifdef ENABLE_CHEQUE_SYSTEM
-	pack2.item.price.dwPrice = m_itemVector[pos].price;
-	pack2.item.price.byChequePrice = m_itemVector[pos].cheque_price;
-#else
-	pack2.item.price = m_itemVector[pos].price;
-#endif
-	pack2.item.count = m_itemVector[pos].count;
-
-#ifdef ENABLE_MULTISHOP
-	pack2.item.wPriceVnum = m_itemVector[pos].wPriceVnum;
-	pack2.item.wPrice = m_itemVector[pos].wPrice;
-#endif
+	pack2.item.price	= m_itemVector[pos].price;
+	pack2.item.count	= m_itemVector[pos].count;
 
 	buf.write(&pack, sizeof(pack));
 	buf.write(&pack2, sizeof(pack2));
@@ -725,3 +620,4 @@ bool CShop::IsSellingItem(DWORD itemID)
 	return isSelling;
 
 }
+//martysama0134's 2022

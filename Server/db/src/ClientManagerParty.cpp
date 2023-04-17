@@ -133,3 +133,4 @@ void CClientManager::QUERY_PARTY_SET_MEMBER_LEVEL(CPeer* peer, TPacketPartySetMe
 	ForwardPacket(HEADER_DG_PARTY_SET_MEMBER_LEVEL, p, sizeof(TPacketPartySetMemberLevel), peer->GetChannel());
 	sys_log(0, "PARTY SetMemberLevel pid [%lu] level %d",p->dwPID, p->bLevel);
 }
+//martysama0134's 2022

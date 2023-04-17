@@ -7,10 +7,7 @@
 #include "item.h"
 #include "cmd.h"
 #include "packet.h"
-#include "config.h"
-#ifdef ENABLE_EVENT_MANAGER
-#include "char_manager.h"
-#endif
+
 #ifdef ENABLE_DICE_SYSTEM
 #include "party.h"
 #endif
@@ -23,7 +20,6 @@
 #endif
 
 extern ACMD(do_in_game_mall);
-extern BYTE g_bChannel;
 
 namespace quest
 {
@@ -244,119 +240,6 @@ namespace quest
 		return 0;
 	}
 
-#if defined(__BL_MAILBOX__)
-	int game_open_mailbox(lua_State* L)
-	{
-		CMailBox::Open(CQuestManager::instance().GetCurrentCharacterPtr());
-		return 0;
-	}
-
-	int game_send_gm_mail(lua_State* L)
-	{
-		if (false == (lua_isstring(L, 1) && lua_isstring(L, 2) && lua_isstring(L, 3) 
-			&& lua_isnumber(L, 4) && lua_isnumber(L, 5) && lua_isnumber(L, 6) && lua_isnumber(L, 7)))
-		{
-			sys_err("Wrong argument.");
-			return 0;
-		}
-
-		const char* const cPlayerName = lua_tostring(L, 1);
-		const char* const cTitle = lua_tostring(L, 2);
-		const char* const cMessage = lua_tostring(L, 3);
-		const DWORD dwItemVnum = static_cast<DWORD>(lua_tonumber(L, 4));
-		const DWORD dwItemCount = static_cast<DWORD>(lua_tonumber(L, 5));
-		const int iYang = static_cast<int>(lua_tonumber(L, 6));
-		const int iWon = static_cast<int>(lua_tonumber(L, 7));
-
-		CMailBox::SendGMMail(cPlayerName, cTitle, cMessage, dwItemVnum, dwItemCount, iYang, iWon);
-		return 0;
-	}
-#endif
-
-#ifdef ENABLE_AURA_SYSTEM
-	int game_open_aura_abs(lua_State* /*L*/)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		LPCHARACTER ch = q.GetCurrentCharacterPtr();
-		if(ch && !ch->GetAuraAbs())
-		{
-			ch->ChatPacket(CHAT_TYPE_COMMAND, "AuraMessage 4");
-			ch->SetAuraAbs(true);
-		}
-		return 0;
-	}
-	int game_open_aura_refine(lua_State* /*L*/)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		LPCHARACTER ch = q.GetCurrentCharacterPtr();
-		if(ch && !ch->GetAuraRefine())
-		{
-			ch->ChatPacket(CHAT_TYPE_COMMAND, "AuraMessage 5");
-			ch->SetAuraRefine(true);
-		}
-		return 0;
-	}
-	int game_open_aura_refine_exp(lua_State* /*L*/)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		LPCHARACTER ch = q.GetCurrentCharacterPtr();
-		if(ch && !ch->GetAuraRefine() && !ch->GetAuraAbs())
-		{
-			ch->ChatPacket(CHAT_TYPE_COMMAND, "AuraMessage 69");
-			// ch->SetAuraRefine(true);
-		}
-		return 0;
-	}
-#endif
-
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	ALUA(game_open_comb_skil_book)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		LPCHARACTER ch = q.GetCurrentCharacterPtr();
-
-		if (ch->IsOpenCombSkillBook()){
-			return 0;
-		}
-
-		ch->ChatPacket(CHAT_TYPE_COMMAND, "OpenSkillbookCombinationDialog");
-		return 0;
-	}
-
-
-	ALUA(game_open_attr67add)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		LPCHARACTER ch = q.GetCurrentCharacterPtr();
-
-		if (ch->IsOpenCombSkillBook()){
-			return 0;
-		}
-
-		ch->ChatPacket(CHAT_TYPE_COMMAND, "OpenAttr67BonusNew");
-		return 0;
-	}
-#endif
-
-#ifdef ENABLE_EVENT_MANAGER
-	int game_check_event(lua_State* L)
-	{
-		if (!lua_isnumber(L, 1))
-		{
-			lua_pushboolean(L, false);
-			return 1;
-		}
-		lua_pushboolean(L, CHARACTER_MANAGER::Instance().CheckEventIsActive(lua_tonumber(L,1))?true:false);
-		return 1;
-	}
-#endif
-    int game_get_channel(lua_State* L)
-    {
-        lua_pushnumber(L, g_bChannel);
-        return 1;
-        
-    }
-
 	void RegisterGameFunctionTable()
 	{
 		luaL_reg game_functions[] =
@@ -374,27 +257,11 @@ namespace quest
 			{ "drop_item_with_ownership_and_dice",	game_drop_item_with_ownership_and_dice	},
 #endif
 			{ "open_web_mall",				game_web_mall					},
-#if defined(__BL_MAILBOX__)
-			{ "open_mailbox",				game_open_mailbox				},
-			{ "send_gm_mail",				game_send_gm_mail				},
-#endif
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-			{ "open_comb_skil_book", game_open_comb_skil_book },
-			{ "open_attr67add", game_open_attr67add },
-#endif
-#ifdef ENABLE_AURA_SYSTEM
-			{ "open_aura_abs",		game_open_aura_abs		},
-			{ "open_aura_refine",		game_open_aura_refine		},
-			{ "open_aura_refine_exp",		game_open_aura_refine_exp		},
-#endif
-#ifdef ENABLE_EVENT_MANAGER
-			{ "check_event",		game_check_event			},
-#endif
-			{ "get_channel",		game_get_channel			},
+
 			{ NULL,					NULL				}
 		};
 
 		CQuestManager::instance().AddLuaFunctionTable("game", game_functions);
 	}
 }
-
+//martysama0134's 2022

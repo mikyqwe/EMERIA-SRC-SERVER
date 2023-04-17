@@ -10,8 +10,8 @@ void CClientManager::LoadEventFlag()
 {
 	char szQuery[1024];
 	snprintf(szQuery, sizeof(szQuery), "SELECT szName, lValue FROM quest%s WHERE dwPID = 0", GetTablePostfix());
-	std::auto_ptr<SQLMsg> pmsg(CDBManager::instance().DirectQuery(szQuery));
 
+	auto pmsg(CDBManager::instance().DirectQuery(szQuery));
 	SQLResult* pRes = pmsg->Get();
 	if (pRes->uiNumRows)
 	{
@@ -74,4 +74,4 @@ void CClientManager::SendEventFlagsOnSetup(CPeer* peer)
 		peer->Encode(&p, sizeof(TPacketSetEventFlag));
 	}
 }
-
+//martysama0134's 2022

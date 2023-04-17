@@ -235,10 +235,9 @@ namespace quest
 	{
 		CQuestManager& q = CQuestManager::instance();
 		LPITEM item = q.GetCurrentItem();
-		LPCHARACTER pChar = q.GetCurrentCharacterPtr();
-		
+
 		if (item)
-			lua_pushstring(L, item->GetName(pChar->GetLanguage()));
+			lua_pushstring(L, item->GetName());
 		else
 			lua_pushstring(L, "");
 
@@ -377,124 +376,6 @@ namespace quest
 		return 1;
 	}
 
-#ifdef CHANGELOOK_SYSTEM
-	int item_is_transmulated(lua_State* L)
-	{
-		CQuestManager & qMgr = CQuestManager::instance();
-		LPITEM pkItem = qMgr.GetCurrentItem();
-		if (pkItem)
-		{
-			if (pkItem->GetTransmutation() > 0)
-				lua_pushboolean(L, true);
-			else
-				lua_pushboolean(L, false);
-		}
-		else
-			lua_pushboolean(L, false);
-
-		return 1;
-	}
-
-	int item_set_transmutation(lua_State* L)
-	{
-		CQuestManager & qMgr = CQuestManager::instance();
-		LPITEM pkItem = qMgr.GetCurrentItem();
-		if ((pkItem) && (lua_isnumber(L, 1)))
-		{
-			DWORD dwTransmutation = (DWORD)lua_tonumber(L, 1);
-			pkItem->SetTransmutation(dwTransmutation);
-		}
-
-		return 0;
-	}
-
-	int item_get_transmutation(lua_State* L)
-	{
-		CQuestManager & qMgr = CQuestManager::instance();
-		LPITEM pkItem = qMgr.GetCurrentItem();
-		if (pkItem)
-			lua_pushnumber(L, pkItem->GetTransmutation());
-		else
-			lua_pushnumber(L, 0);
-
-		return 1;
-	}
-#endif
-
-	//MAGAZZINO GILDA START
-
-	int item_get_attribute_type(lua_State* L)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		LPITEM item = q.GetCurrentItem();
-
-		if (item == NULL)
-		{
-			sys_err("item_get_attribute_type::can not find given item index");
-			lua_pushnumber(L, 0);
-			return 1;
-		}
-
-		if (!lua_isnumber(L, 1))
-		{
-			sys_err("item_get_attribute_type::number is not given!!!");
-			lua_pushnumber(L, 0);
-			return 1;
-		}
-
-		int iAttrIndex = (int)lua_tonumber(L, 1);
-
-		if (iAttrIndex < 0 || iAttrIndex >= ITEM_ATTRIBUTE_MAX_NUM)
-		{
-			sys_err("item_get_attribute_type::given attribute index is out of range: %d", iAttrIndex);
-			lua_pushnumber(L, 0);
-			return 1;
-		}
-
-		const TPlayerItemAttribute& attrItem = item->GetAttribute(iAttrIndex);
-
-		lua_pushnumber(L, attrItem.bType);
-
-		return 1; // <Factor>
-	}
-	
-	int item_get_attribute_value(lua_State* L)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		LPITEM item = q.GetCurrentItem();
-
-		if (item == NULL)
-		{
-			sys_err("item_get_attribute_value::can not find given item index");
-			lua_pushnumber(L, 0);
-			return 1;
-		}
-
-		if (!lua_isnumber(L, 1))
-		{
-			sys_err("item_get_attribute_value::number is not given!!!");
-			lua_pushnumber(L, 0);
-			return 1;
-		}
-
-		int iAttrIndex = (int)lua_tonumber(L, 1);
-
-		if (iAttrIndex < 0 || iAttrIndex >= ITEM_ATTRIBUTE_MAX_NUM)
-		{
-			sys_err("item_get_attribute_value::given attribute index is out of range: %d", iAttrIndex);
-			lua_pushnumber(L, 0);
-			return 1;
-		}
-
-		const TPlayerItemAttribute& attrItem = item->GetAttribute(iAttrIndex);
-
-		lua_pushnumber(L, attrItem.sValue);
-
-		return 1; // <Factor>
-	}
-	
-	//MAGAZZINO GILDA END
-
 	ALUA(item_get_over9_material_vnum)
 	{
 		if ( lua_isnumber(L, 1) == true )
@@ -553,7 +434,7 @@ namespace quest
 		if (pkNewItem)
 		{
 			ITEM_MANAGER::CopyAllAttrTo(pItem, pkNewItem);
-			LogManager::instance().ItemLog(pChar, pkNewItem, "COPY SUCCESS", pkNewItem->GetName(pChar->GetLanguage()));
+			LogManager::instance().ItemLog(pChar, pkNewItem, "COPY SUCCESS", pkNewItem->GetName());
 
 			BYTE bCell = pItem->GetCell();
 
@@ -563,9 +444,8 @@ namespace quest
 			ITEM_MANAGER::instance().FlushDelayedSave(pkNewItem);
 			pkNewItem->AttrLog();
 
-			// ¼º°ø!
+
 			lua_pushboolean(L, 1);
-			return 2;
 		}
 
 		return 1;
@@ -870,27 +750,12 @@ namespace quest
 		// return 1;
 	// }
 
-/* 	ALUA(item_is_available0)
+	ALUA(item_is_available0)
 	{
 		CQuestManager& q = CQuestManager::instance();
 		LPITEM item = q.GetCurrentItem();
 
 		lua_pushboolean(L, item!=NULL);
-		return 1;
-	} */
-	
-	ALUA(item_is_available)
-	{
-		auto item = CQuestManager::instance().GetCurrentItem();
-		lua_pushboolean(L, item != nullptr);
-		return 1;
-	}
-
-	ALUA(item_is_available_and_has_owner)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		LPITEM item = q.GetCurrentItem();
-		lua_pushboolean(L, item != NULL ? item->GetOwner() != NULL : false);
 		return 1;
 	}
 
@@ -926,18 +791,19 @@ namespace quest
 			{ "get_level_limit", 				item_get_level_limit },
 			{ "start_realtime_expire", 			item_start_realtime_expire },
 			{ "copy_and_give_before_remove",	item_copy_and_give_before_remove},
-#ifdef CHANGELOOK_SYSTEM
-			{ "is_transmulated", item_is_transmulated },
-			{ "set_transmutation", item_set_transmutation },
-			{ "get_transmutation", item_get_transmutation },
-#endif
 #ifdef ENABLE_NEWSTUFF
 			{ "get_wearflag0",			item_get_wearflag0},	// [return lua number]
+			{ "get_wearflag",			item_get_wearflag0},	// alias
 			{ "has_wearflag0",			item_has_wearflag0},	// [return lua boolean]
+			{ "has_wearflag",			item_has_wearflag0},	// alias
 			{ "get_antiflag0",			item_get_antiflag0},	// [return lua number]
+			{ "get_antiflag",			item_get_antiflag0},	// alias
 			{ "has_antiflag0",			item_has_antiflag0},	// [return lua boolean]
+			{ "has_antiflag",			item_has_antiflag0},	// alias
 			{ "get_immuneflag0",		item_get_immuneflag0},	// [return lua number]
+			{ "get_immuneflag",			item_get_immuneflag0},	// alias
 			{ "has_immuneflag0",		item_has_immuneflag0},	// [return lua boolean]
+			{ "has_immuneflag",			item_has_immuneflag0},	// alias
 			// item.add_attr0(0|1|2[, cnt]) -- (0: baseeraro, 1: base, 2: raro)
 			// item.add_attr0(0) -- add one 1-5 and one 6-7 bonus
 			// item.add_attr0(0, 0) -- add all 1-7 bonuses
@@ -945,28 +811,33 @@ namespace quest
 			// item.add_attr0(1|2, 0) -- add all 1-5|6-7 bonuses
 			// item.add_attr0(1|2, 4) -- add four 1-5|6-7 bonuses
 			{ "add_attr0",			item_add_attr0},
+			{ "add_attr",			item_add_attr0}, // alias
 			// item.change_attr0(0|1|2) -- (0: baseerari, 1: base, 2: rari)
 			{ "change_attr0",		item_change_attr0},
+			{ "change_attr",		item_change_attr0}, // alias
 			// item.clear_attr0(0|1|2) -- (0: baseerari, 1: base, 2: rari)
 			{ "clear_attr0",		item_clear_attr0},
+			{ "clear_attr",			item_clear_attr0}, // alias
 			// item.count_attr0(0|1|2) -- (0: [cnt(base), cnt(rari)], 1: cnt(base), 2: cnt(rari))
 			{ "count_attr0",		item_count_attr0},
+			{ "count_attr",			item_count_attr0}, // alias
 			// item.get_attr0() -- return a table containing all the item attrs {1,11,2,22,...,7,77}
 			{ "get_attr0",			item_get_attr0},	// [return lua table]
+			{ "get_attr",			item_get_attr0},	// alias
 			// item.set_attr0({1,11,2,22,...,7,77}) use a table to set the item attrs
 			{ "set_attr0",			item_set_attr0},	// [return nothing]
+			{ "set_attr",			item_set_attr0},	// alias
 			// item.set_count(count)
 			{ "set_count0",			item_set_count0},	// [return nothing]
+			{ "set_count",			item_set_count0},	// alias
 			// { "equip_to0",			item_equip_to0},	// [return lua boolean=successfulness]
 			// { "unequip0",			item_unequip0},		// [return lua boolean=successfulness]
-			//{ "is_available0",		item_is_available0	},	// [return lua boolean]
-			{ "is_available",		item_is_available	},	// [return lua boolean]
-			{ "is_available_and_has_owner", item_is_available_and_has_owner},
+			{ "is_available0",		item_is_available0	},	// [return lua boolean]
+			{ "is_available",		item_is_available0	},	// alias
 #endif
-			{ "get_attribute_type",		item_get_attribute_type		},
-			{ "get_attribute_value",		item_get_attribute_value		},
 			{ NULL,			NULL			}
 		};
 		CQuestManager::instance().AddLuaFunctionTable("item", item_functions);
 	}
 }
+//martysama0134's 2022

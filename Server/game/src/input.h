@@ -2,7 +2,7 @@
 #define __INC_METIN_II_GAME_INPUT_PROCESSOR__
 
 #include "packet_info.h"
-#include "../../common/CommonDefines.h"
+
 enum
 {
 	INPROC_CLOSE,
@@ -106,38 +106,21 @@ class CInputMain : public CInputProcessor
 
 	protected:
 		void		Attack(LPCHARACTER ch, const BYTE header, const char* data);
-
 		int			Whisper(LPCHARACTER ch, const char * data, size_t uiBytes);
-#ifdef NEW_ADD_INVENTORY
-		void		Envanter_pakettiii(LPCHARACTER ch, const char * data);
-#endif
 #ifdef NEW_PET_SYSTEM
 		void		BraveRequestPetName(LPCHARACTER ch, const char* c_pData);
 #endif
-#ifdef WON_EXCHANGE
-		void		WonExchange(LPCHARACTER ch, const char* pcData);
-#endif
 		int			Chat(LPCHARACTER ch, const char * data, size_t uiBytes);
-#ifdef ENABLE_GUILD_REQUEST
-		int			GuildRequest(LPCHARACTER ch, const char* data, size_t uiBytes);
-#endif
 		void		ItemUse(LPCHARACTER ch, const char * data);
 		void		ItemDrop(LPCHARACTER ch, const char * data);
 		void		ItemDrop2(LPCHARACTER ch, const char * data);
 		void		ItemMove(LPCHARACTER ch, const char * data);
-#ifdef ENABLE_SORT_INVEN
-		void		SortInven(LPCHARACTER ch, const char * data);
-#endif
 		void		ItemPickup(LPCHARACTER ch, const char * data);
-#if defined(__BL_SOUL_ROULETTE__)
-		void		SoulRoulette(LPCHARACTER ch, const char* data);
-#endif		
 		void		ItemToItem(LPCHARACTER ch, const char * pcData);
 		void		QuickslotAdd(LPCHARACTER ch, const char * data);
 		void		QuickslotDelete(LPCHARACTER ch, const char * data);
 		void		QuickslotSwap(LPCHARACTER ch, const char * data);
 		int			Shop(LPCHARACTER ch, const char * data, size_t uiBytes);
-
 		void		OnClick(LPCHARACTER ch, const char * data);
 		void		Exchange(LPCHARACTER ch, const char * data);
 		void		Position(LPCHARACTER ch, const char * data);
@@ -155,62 +138,39 @@ class CInputMain : public CInputProcessor
 		void		Target(LPCHARACTER ch, const char * pcData);
 		void		Warp(LPCHARACTER ch, const char * pcData);
 		void		SafeboxCheckin(LPCHARACTER ch, const char * c_pData);
-		#ifdef ENABLE_BUY_BONUS_CHANGER_IN_SWITCH_BOT
-		void		BuyBonusChangerInSwitchBot( LPCHARACTER ch );
-		#endif
-		
 		void		SafeboxCheckout(LPCHARACTER ch, const char * c_pData, bool bMall);
 		void		SafeboxItemMove(LPCHARACTER ch, const char * data);
 #ifdef ENABLE_HUNTING_SYSTEM
 		int			ReciveHuntingAction(LPCHARACTER ch, const char* c_pData);
 #endif
 		int			Messenger(LPCHARACTER ch, const char* c_pData, size_t uiBytes);
-#if defined(__BL_MAILBOX__)
-		void		MailboxWrite(LPCHARACTER ch, const char* data);
-		void		MailboxConfirm(LPCHARACTER ch, const char* data);
-		void		MailboxProcess(LPCHARACTER ch, const char* c_pData);
-#endif	
-#if defined(BL_REMOTE_SHOP)
-		void		RemoteShop(LPCHARACTER ch, const char* data);
-#endif
+
 		void 		PartyInvite(LPCHARACTER ch, const char * c_pData);
 		void 		PartyInviteAnswer(LPCHARACTER ch, const char * c_pData);
 		void		PartyRemove(LPCHARACTER ch, const char * c_pData);
 		void		PartySetState(LPCHARACTER ch, const char * c_pData);
 		void		PartyUseSkill(LPCHARACTER ch, const char * c_pData);
 		void		PartyParameter(LPCHARACTER ch, const char * c_pData);
-#ifdef __INGAME_WIKI__
-		void		RecvWikiPacket(LPCHARACTER ch, const char * c_pData);
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+		void		LootFilter(LPCHARACTER ch, const char* c_pData);
 #endif
-
 		int			Guild(LPCHARACTER ch, const char * data, size_t uiBytes);
 		void		AnswerMakeGuild(LPCHARACTER ch, const char* c_pData);
 
 		void		Fishing(LPCHARACTER ch, const char* c_pData);
 		void		ItemGive(LPCHARACTER ch, const char* c_pData);
 		void		Hack(LPCHARACTER ch, const char * c_pData);
-#ifdef __ULTIMATE_TOOLTIP__
-		void		ChestDropInfo(LPCHARACTER ch, const char * c_pData);
-#endif
-		int			MyShop(LPCHARACTER ch, const char * c_pData, size_t uiBytes);
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 		auto		RecvAntiFarmUpdateStatus(LPCHARACTER ch, const char* c_pData, size_t uiBytes) -> int;
 #endif
+		int			MyShop(LPCHARACTER ch, const char * c_pData, size_t uiBytes);
 #ifdef ENABLE_CUBE_RENEWAL_WORLDARD
 		void 		CubeRenewalSend(LPCHARACTER ch, const char* data);
 #endif
 		void		Refine(LPCHARACTER ch, const char* c_pData);
+
 #ifdef ENABLE_SELL_ITEM
 		void		ItemSell(LPCHARACTER ch, const char * data);
-#endif
-#ifdef ENABLE_CSHIELD
-		void		CShieldReceive(LPCHARACTER ch, const char* c_pData);
-#endif
-#ifdef SYSTEM_PDA
-		void		SoulStoneUse(LPCHARACTER ch, const char* c_pData);
-#endif
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-		void 		Bonus67NewSend(LPCHARACTER ch, const char * data);
 #endif
 #ifdef TARGET_INFORMATION_SYSTEM
 		void		TargetInfoLoad(LPCHARACTER ch, const char* c_pData);
@@ -218,33 +178,19 @@ class CInputMain : public CInputProcessor
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 		void		Acce(LPCHARACTER pkChar, const char* c_pData);
 #endif
-#ifdef CHANGELOOK_SYSTEM
-		void	ChangeLook(LPCHARACTER pkChar, const char* c_pData);
-#endif
-		void		Roulette(LPCHARACTER ch, const char* c_pData);
-#if defined(__DUNGEON_INFO_SYSTEM__)
-		void DungeonInfo(LPCHARACTER ch, const char* c_pData);
-#endif
-#ifdef OFFLINE_SHOP
-		int			OfflineShop(LPCHARACTER ch, const char * data, size_t uiBytes);
-		int			MyOfflineShop(LPCHARACTER ch, const char * c_pData, size_t uiBytes);
-#endif
-#ifdef PRIVATESHOP_SEARCH_SYSTEM
-		void 		ShopSearchInfo(LPCHARACTER ch, const char* data, bool bNameOnly);
-		void		ShopSearchBuyItem(LPCHARACTER ch, const char* data);
-#endif
 #ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
 		std::string GetLanguageFlag(const char* c_pszName);
 		std::string GetEmpireFlag(const char* c_pszName);
 		std::string ConvertEmpireIndexToStr(int empireIndex);
 		void		RequestFlag(LPCHARACTER ch, const char* c_pData);
 #endif
-#ifdef ENABLE_NEW_FISHING_SYSTEM
-		void FishingNew(LPCHARACTER ch, const char* c_pData);
-#endif
+		void		Roulette(LPCHARACTER ch, const char* c_pData);
 #ifdef ENABLE_SWITCHBOT
 		int			Switchbot(LPCHARACTER ch, const char* data, size_t uiBytes);
-#endif		
+#endif	
+#if defined(__DUNGEON_INFO_SYSTEM__)
+		void DungeonInfo(LPCHARACTER ch, const char* c_pData);
+#endif
 };
 
 class CInputDead : public CInputMain
@@ -268,22 +214,13 @@ protected:
 protected:
 	void		MapLocations(const char * c_pData);
 	void		LoginSuccess(DWORD dwHandle, const char *data);
-	void		PlayerCreateFailure(LPDESC d, BYTE bType);	// 0 = 일반 실패 1 = 이미 있음
+	void		PlayerCreateFailure(LPDESC d, BYTE bType);
 	void		PlayerDeleteSuccess(LPDESC d, const char * data);
 	void		PlayerDeleteFail(LPDESC d);
 	void		PlayerLoad(LPDESC d, const char* data);
 	void		PlayerCreateSuccess(LPDESC d, const char * data);
 	void		Boot(const char* data);
 	void		QuestLoad(LPDESC d, const char * c_pData);
-#if defined(__BL_MAILBOX__)
-	void		MailBoxRespondLoad(LPDESC d, const char * c_pData);
-	void		MailBoxRespondName(LPDESC d, const char * c_pData);
-	void		MailBoxRespondUnreadData(LPDESC d, const char * c_pData);
-#endif
-#ifdef ENABLE_DECORUM
-	void		DecorumLoad(LPDESC d, const char * c_pData);
-	void		BroadcastedDecurumSeasonResult(const char * c_pData);
-#endif	
 	void		SafeboxLoad(LPDESC d, const char * c_pData);
 	void		SafeboxChangeSize(LPDESC d, const char * c_pData);
 	void		SafeboxWrongPassword(LPDESC d);
@@ -293,11 +230,8 @@ protected:
 	void		P2P(const char * c_pData);
 	void		ItemLoad(LPDESC d, const char * c_pData);
 	void		AffectLoad(LPDESC d, const char * c_pData);
-	void		MarriageLoad(LPDESC d, const char * c_pData);
+
 	void		GuildLoad(const char * c_pData);
-#ifdef GUILD_WAR_COUNTER
-	void		GuildCounter(LPDESC d, const char* c_pData);
-#endif
 	void		GuildSkillUpdate(const char* c_pData);
 	void		GuildSkillRecharge();
 	void		GuildExpUpdate(const char* c_pData);
@@ -354,18 +288,12 @@ protected:
 	void		DeleteObject(const char * c_pData);
 	void		UpdateLand(const char * c_pData);
 
-#ifdef ENABLE_SPECIAL_AFFECT
-	void		SpecialAffect(TSpecialAffects* p);
-#endif
-
 	void		Notice(const char * c_pData);
 
 	void		MarriageAdd(TPacketMarriageAdd * p);
 	void		MarriageUpdate(TPacketMarriageUpdate * p);
 	void		MarriageRemove(TPacketMarriageRemove * p);
-#ifdef OFFLINE_SHOP
-	void		HandleCurrentOnline(TPacketOnlineSize * p);
-#endif
+
 	void		WeddingRequest(TPacketWeddingRequest* p);
 	void		WeddingReady(TPacketWeddingReady* p);
 	void		WeddingStart(TPacketWeddingStart* p);
@@ -382,11 +310,8 @@ protected:
 	void		BlockException(TPacketBlockException * data);
 
 	// MYSHOP_PRICE_LIST
-	/// 아이템 가격정보 리스트 요청에 대한 응답 패킷(HEADER_DG_MYSHOP_PRICELIST_RES) 처리함수
-	/**
-	* @param	d 아이템 가격정보 리스트를 요청한 플레이어의 descriptor
-	* @param	p 패킷데이터의 포인터
-	*/
+
+
 	void		MyshopPricelistRes( LPDESC d, const TPacketMyshopPricelistHeader* p );
 	// END_OF_MYSHOP_PRICE_LIST
 	//
@@ -394,19 +319,11 @@ protected:
 	void ReloadAdmin( const char * c_pData );
 	//END_RELOAD_ADMIN
 
-#ifdef ENABLE_EVENT_MANAGER
-	void		EventManager(const char* c_pData);
-#endif
-
 	void		DetailLog(const TPacketNeedLoginLogInfo* info);
-	// 독일 선물 기능 테스트
+
 	void		ItemAwardInformer(TPacketItemAwardInfromer* data);
 
 	void		RespondChannelStatus(LPDESC desc, const char* pcData);
-
-#ifdef __SPECIALSTAT_SYSTEM__
-	void		LoadSpecialStats(LPDESC desc, const char * data);
-#endif
 
 	protected:
 		DWORD		m_dwHandle;
@@ -447,9 +364,6 @@ class CInputP2P : public CInputProcessor
 		void		Login(LPDESC d, const char * c_pData);
 		void		Logout(LPDESC d, const char * c_pData);
 		int			Relay(LPDESC d, const char * c_pData, size_t uiBytes);
-#ifdef __WORLD_BOSS_YUMA__
-		int			NewNotice(LPDESC d, const char* c_pData, size_t uiBytes);
-#endif
 #ifdef ENABLE_FULL_NOTICE
 		int			Notice(LPDESC d, const char * c_pData, size_t uiBytes, bool bBigFont=false);
 #else
@@ -458,17 +372,10 @@ class CInputP2P : public CInputProcessor
 		int			MonarchNotice(LPDESC d, const char * c_pData, size_t uiBytes);
 		int			MonarchTransfer(LPDESC d, const char * c_pData);
 		int			Guild(LPDESC d, const char* c_pData, size_t uiBytes);
-#ifdef ENABLE_MAINTENANCE_SYSTEM
-		void		RecvShutdown(LPDESC d, const char * c_pData);
-#endif
 		void		Shout(const char * c_pData);
 		void		Disconnect(const char * c_pData);
 		void		MessengerAdd(const char * c_pData);
 		void		MessengerRemove(const char * c_pData);
-#ifdef ENABLE_MESSENGER_BLOCK
-		void		MessengerBlockAdd(const char * c_pData);
-		void		MessengerBlockRemove(const char * c_pData);
-#endif
 		void		MessengerMobile(const char * c_pData);
 		void		FindPosition(LPDESC d, const char* c_pData);
 		void		WarpCharacter(const char* c_pData);
@@ -477,28 +384,14 @@ class CInputP2P : public CInputProcessor
 		void		XmasWarpSanta(const char * c_pData);
 		void		XmasWarpSantaReply(const char * c_pData);
 		void		LoginPing(LPDESC d, const char * c_pData);
-#ifdef CROSS_CHANNEL_FRIEND_REQUEST
-		void		MessengerRequestAdd(const char* c_pData);
-#endif
 		void		BlockChat(const char * c_pData);
 		void		PCBangUpdate(const char* c_pData);
 		void		IamAwake(LPDESC d, const char * c_pData);
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 		auto		RecvAntiFarmUpdateStatus(LPDESC d, const char* c_pData) -> void;
 #endif
-#ifdef ENABLE_MAINTENANCE_SYSTEM
-		int			PlayerPacket(const char * c_pData, size_t uiBytes);
-#endif
-#ifdef ENABLE_DECORUM
-		int			DecorumArenaStart(LPDESC d, const char * c_pData, size_t uiBytes);
-		int			DecorumRandomRequest(LPDESC d, const char * c_pData, size_t uiBytes);
-		void		DecorumRandomDelete(LPDESC d, const char * c_pData);
-		void		DecorumRandomBroadcast(LPDESC d, const char * c_pData);
-		void		DecorumArenaWarpIn(const char * c_pData);
-		
-#endif		
-#ifdef OFFLINE_SHOP
-		void		SendOfflineShopMessage(LPDESC d, const char * c_pData);
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+		void		OfflineShopNotification(LPDESC d, const char* c_pData);
 #endif
 #ifdef ENABLE_SWITCHBOT
 		void		Switchbot(LPDESC d, const char* c_pData);
@@ -519,7 +412,7 @@ class CInputAuth : public CInputProcessor
 
 	public:
 		void		Login(LPDESC d, const char * c_pData);
-		void		LoginOpenID(LPDESC d, const char * c_pData);		//2012.07.19 OpenID : 김용욱
+		void		LoginOpenID(LPDESC d, const char * c_pData);
 		void		PasspodAnswer(LPDESC d, const char * c_pData );
 
 };
@@ -543,5 +436,4 @@ class CInputTeen : public CInputProcessor
 };
 
 #endif /* __INC_METIN_II_GAME_INPUT_PROCESSOR__ */
-
-
+//martysama0134's 2022

@@ -50,7 +50,7 @@ struct FSkillBreath
 							case JOB_SURA:		ptr = "sura";	break;
 							case JOB_SHAMAN:	ptr = "muda";	break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
-							case JOB_WOLFMAN:	ptr = "wolf";	break;	// TODO: 블루드래곤 수인족 전투 처리
+							case JOB_WOLFMAN:	ptr = "wolf";	break;
 #endif
 
 							default:
@@ -76,7 +76,7 @@ struct FSkillBreath
 							case JOB_SURA:		ptr = "sura";	break;
 							case JOB_SHAMAN:	ptr = "muda";	break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
-							case JOB_WOLFMAN:	ptr = "wolf";	break;	// TODO: 블루드래곤 수인족 전투 처리
+							case JOB_WOLFMAN:	ptr = "wolf";	break;
 #endif
 
 							default:
@@ -234,7 +234,7 @@ struct FSkillEarthQuake
 							case JOB_SURA:		ptr = "sura";	break;
 							case JOB_SHAMAN:	ptr = "muda";	break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
-							case JOB_WOLFMAN:	ptr = "wolf";	break;	// TODO: 블루드래곤 수인족 전투 처리
+							case JOB_WOLFMAN:	ptr = "wolf";	break;
 #endif
 
 							default:
@@ -255,7 +255,7 @@ struct FSkillEarthQuake
 							case JOB_SURA:		ptr = "sura";	break;
 							case JOB_SHAMAN:	ptr = "muda";	break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
-							case JOB_WOLFMAN:	ptr = "wolf";	break;	// TODO: 블루드래곤 수인족 전투 처리
+							case JOB_WOLFMAN:	ptr = "wolf";	break;
 #endif
 
 							default:
@@ -354,4 +354,4 @@ struct FSkillEarthQuake
 	}
 };
 #endif
-
+//martysama0134's 2022

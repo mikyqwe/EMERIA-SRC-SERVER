@@ -1,4 +1,3 @@
-
 #include "../../common/stl.h"
 
 class CMapLocation : public singleton<CMapLocation>
@@ -17,4 +16,4 @@ class CMapLocation : public singleton<CMapLocation>
 	protected:
 		std::map<long, TLocation> m_map_address;
 };
-
+//martysama0134's 2022

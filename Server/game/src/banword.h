@@ -1,4 +1,3 @@
-
 #ifndef BANWORD_MANAGER_H_
 #define BANWORD_MANAGER_H_
 
@@ -21,4 +20,4 @@ class CBanwordManager : public singleton<CBanwordManager>
 };
 
 #endif /* BANWORD_MANAGER_H_ */
-
+//martysama0134's 2022

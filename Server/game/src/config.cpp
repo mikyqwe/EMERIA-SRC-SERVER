@@ -19,8 +19,7 @@
 #include "dev_log.h"
 #include "db.h"
 #include "skill_power.h"
-#include "check_server.h"
-#include "../../common/CommonDefines.h"
+#include "../../common/service.h"
 
 using std::string;
 
@@ -30,7 +29,7 @@ int		passes_per_sec = 25;
 WORD	db_port = 0;
 WORD	p2p_port = 50900;
 char	db_addr[ADDRESS_MAX_LEN + 1];
-int		save_event_second_cycle = passes_per_sec * 120;	// 3분
+int		save_event_second_cycle = passes_per_sec * 120;
 int		ping_event_second_cycle = passes_per_sec * 60;
 bool	g_bNoMoreClient = false;
 bool	g_bNoRegen = false;
@@ -41,7 +40,7 @@ bool	g_bShoutAddonEnable = false;
 bool	g_bGlobalShoutEnable = false;
 bool	g_bDisablePrismNeed = false;
 bool	g_bDisableEmotionMask = false;
-BYTE	g_bItemCountLimit = 2000;
+WORD	g_bItemCountLimit = 2000;
 DWORD	g_dwItemBonusChangeTime = 60;
 bool	g_bAllMountAttack = false;
 bool	g_bEnableBootaryCheck = false;
@@ -50,9 +49,9 @@ bool	g_bGuildInviteLimit = false;
 bool	g_bGuildInfiniteMembers = false;
 bool	g_bChinaIntoxicationCheck = false;
 bool	g_bEnableSpeedHackCrash = false;
-int		g_iStatusPointGetLevelLimit = 120;
-int		g_iStatusPointSetMaxValue = 101;
-int		g_iShoutLimitLevel = 20;
+int		g_iStatusPointGetLevelLimit = 90;
+int		g_iStatusPointSetMaxValue = 90;
+int		g_iShoutLimitLevel = 15;
 // int		g_iShoutLimitTime = 15;
 int		g_iDbLogLevel = LOG_LEVEL_MAX;
 int		g_iSysLogLevel = LOG_LEVEL_MAX;
@@ -60,6 +59,7 @@ int		g_aiItemDestroyTime[ITEM_DESTROY_TIME_MAX] = {300, 150, 300}; // autoitem, 
 bool	g_bDisableEmpireLanguageCheck = false;
 DWORD	g_dwSkillBookNextReadMin = 28800;
 DWORD	g_dwSkillBookNextReadMax = 43200;
+std::string	g_stProxyIP = "";
 // #endif
 
 // TRAFFIC_PROFILER
@@ -69,9 +69,6 @@ DWORD		g_dwTrafficProfileFlushCycle = 3600;
 
 int			test_server = 0;
 int			speed_server = 0;
-#ifdef __AUCTION__
-int			auction_server = 0;
-#endif
 bool		distribution_test_server = false;
 bool		china_event_server = false;
 bool		guild_mark_server = true;
@@ -94,7 +91,7 @@ bool		g_bEmpireWhisper = true;
 BYTE		g_bAuthServer = false;
 
 bool		g_bCheckClientVersion = true;
-string	g_stClientVersion = "1215955206";
+string	g_stClientVersion = "1215955205";
 
 BYTE		g_bBilling = false;
 
@@ -103,11 +100,6 @@ WORD		g_wAuthMasterPort = 0;
 
 static std::set<DWORD> s_set_dwFileCRC;
 static std::set<DWORD> s_set_dwProcessCRC;
-
-#ifdef __ENABLE_TRASH_BIN__
-boost::unordered_map<DWORD,int> g_map_trash_bin_reward;
-std::vector<DWORD> g_vec_trash_bin_black_list;
-#endif
 
 string g_stHostname = "";
 string g_table_postfix = "";
@@ -131,17 +123,16 @@ int SPEEDHACK_LIMIT_COUNT   = 50;
 int SPEEDHACK_LIMIT_BONUS   = 80;
 int g_iSyncHackLimitCount = 10;
 
-//시야 = VIEW_RANGE + VIEW_BONUS_RANGE
-//VIEW_BONUSE_RANGE : 클라이언트와 시야 처리에서너무 딱 떨어질경우 문제가 발생할수있어 500CM의 여분을 항상준다.
+
 int VIEW_RANGE = 5000;
 int VIEW_BONUS_RANGE = 500;
 
 int g_server_id = 0;
-string g_strWebMallURL = "https://zayos.eu/shop";
+string g_strWebMallURL = "www.metin2.de";
 
-unsigned int g_uiSpamBlockDuration = 60 * 15; // 기본 15분
-unsigned int g_uiSpamBlockScore = 100; // 기본 100점
-unsigned int g_uiSpamReloadCycle = 60 * 10; // 기본 10분
+unsigned int g_uiSpamBlockDuration = 60 * 15;
+unsigned int g_uiSpamBlockScore = 100;
+unsigned int g_uiSpamReloadCycle = 60 * 10;
 
 bool		g_bCheckMultiHack = true;
 
@@ -150,8 +141,8 @@ int			g_iSpamBlockMaxLevel = 10;
 void		LoadStateUserCount();
 void		LoadValidCRCList();
 bool		LoadClientVersion();
-bool            g_protectNormalPlayer   = false;        // 범법자가 "평화모드" 인 일반유저를 공격하지 못함
-bool            g_noticeBattleZone      = false;        // 중립지대에 입장하면 안내메세지를 알려줌
+bool            g_protectNormalPlayer   = false;
+bool            g_noticeBattleZone      = false;
 
 bool		isHackShieldEnable = false;
 int			HackShield_FirstCheckWaitTime = passes_per_sec * 30;
@@ -159,33 +150,16 @@ int			HackShield_CheckCycleTime = passes_per_sec * 180;
 
 bool		bXTrapEnabled = false;
 
-int gPlayerMaxLevel = 120;
+int gPlayerMaxLevel = 99;
 int gShutdownAge = 0;
 int gShutdownEnable = 0;
 
-#ifdef __ENABLE_TRASH_BIN__
-bool __LoadTrashBinConfig();
-#endif
 
-/*
- * NOTE : 핵 체크 On/Off. CheckIn할때 false로 수정했으면 반드시 확인하고 고쳐놓을것!
- * 이걸로 생길수있는 똥은 책임안짐 ~ ity ~
- */
 bool gHackCheckEnable = false;
 
 bool g_BlockCharCreation = false;
-#ifdef OFFLINE_SHOP
-bool g_bIsOfflineShopServer = false;
-bool g_bOfflineShopNeedMoney = true;
-bool g_bOfflineShopNeedLevel = true;
-int g_iOfflineShopOwnerShipTime = 900;
-int g_iOfflineShopSaveTime = 5;
-int g_iOfflineShopMoney = 100000;
-int g_iOfflineShopLevel = 15;
-#endif
-#ifdef ENABLE_DECORUM
-bool g_bDecorumMaster = false;
-#endif
+
+
 //OPENID
 int		openid_server = 0;
 char	openid_host[256];
@@ -362,8 +336,11 @@ bool GetIPInfo()
 		if (g_szInternalIP[0] == '0')
 			return false;
 		else
+		{
 			strlcpy(g_szPublicIP, g_szInternalIP, sizeof(g_szPublicIP));
+			fprintf(stderr, "INTERNAL_IP -> PUBLIC_IP: %s\n", g_szPublicIP);
 			return true;
+		}
 #else
 		return false;
 #endif
@@ -377,7 +354,7 @@ static bool __LoadConnectConfigFile(const char* configName)
 	char	value_string[256];
 
 	char db_host[2][64], db_user[2][64], db_pwd[2][64], db_db[2][64];
-	// ... 아... db_port는 이미 있는데... 네이밍 어찌해야함...
+
 	int mysql_db_port[2];
 
 	for (int n = 0; n < 2; ++n)
@@ -398,9 +375,9 @@ static bool __LoadConnectConfigFile(const char* configName)
 	*log_db = '\0';
 
 
-	// DB에서 로케일정보를 세팅하기위해서는 다른 세팅값보다 선행되어서
-	// DB정보만 읽어와 로케일 세팅을 한후 다른 세팅을 적용시켜야한다.
-	// 이유는 로케일관련된 초기화 루틴이 곳곳에 존재하기 때문.
+
+
+
 
 	bool isCommonSQL = false;
 	bool isPlayerSQL = false;
@@ -502,7 +479,7 @@ static bool __LoadConnectConfigFile(const char* configName)
 		}
 	}
 
-	//처리가 끝났으니 파일을 닫자.
+
 	fclose(fpOnlyForDB);
 
 	// CONFIG_SQL_INFO_ERROR
@@ -528,7 +505,7 @@ static bool __LoadConnectConfigFile(const char* configName)
 		exit(1);
 	}
 
-	// Common DB 가 Locale 정보를 가지고 있기 때문에 가장 먼저 접속해야 한다.
+
 	AccountDB::instance().Connect(db_host[1], mysql_db_port[1], db_user[1], db_pwd[1], db_db[1]);
 
 	if (false == AccountDB::instance().IsConnected())
@@ -539,14 +516,13 @@ static bool __LoadConnectConfigFile(const char* configName)
 
 	fprintf(stdout, "CommonSQL connected\n");
 
-	// 로케일 정보를 가져오자
-	// <경고> 쿼리문에 절대 조건문(WHERE) 달지 마세요. (다른 지역에서 문제가 생길수 있습니다)
+
+
 	{
 		char szQuery[512];
 		snprintf(szQuery, sizeof(szQuery), "SELECT mKey, mValue FROM locale");
 
-		std::auto_ptr<SQLMsg> pMsg(AccountDB::instance().DirectQuery(szQuery));
-
+		auto pMsg(AccountDB::instance().DirectQuery(szQuery));
 		if (pMsg->Get()->uiNumRows == 0)
 		{
 			fprintf(stderr, "COMMON_SQL: DirectQuery failed : %s\n", szQuery);
@@ -557,7 +533,7 @@ static bool __LoadConnectConfigFile(const char* configName)
 
 		while (NULL != (row = mysql_fetch_row(pMsg->Get()->pSQLResult)))
 		{
-			// 로케일 세팅
+
 			if (strcasecmp(row[0], "LOCALE") == 0)
 			{
 				if (LocaleService_Init(row[1]) == false)
@@ -569,15 +545,14 @@ static bool __LoadConnectConfigFile(const char* configName)
 		}
 	}
 
-	// 로케일 정보를 COMMON SQL에 세팅해준다.
-	// 참고로 g_stLocale 정보는 LocaleService_Init() 내부에서 세팅된다.
+
+
 	fprintf(stdout, "Setting DB to locale %s\n", g_stLocale.c_str());
 
 	AccountDB::instance().SetLocale(g_stLocale);
 
 	AccountDB::instance().ConnectAsync(db_host[1], mysql_db_port[1], db_user[1], db_pwd[1], db_db[1], g_stLocale.c_str());
 
-	// Player DB 접속
 	DBManager::instance().Connect(db_host[0], mysql_db_port[0], db_user[0], db_pwd[0], db_db[0]);
 
 	if (!DBManager::instance().IsConnected())
@@ -588,9 +563,8 @@ static bool __LoadConnectConfigFile(const char* configName)
 
 	fprintf(stdout, "PlayerSQL connected\n");
 
-	if (false == g_bAuthServer) // 인증 서버가 아닐 경우
+	if (false == g_bAuthServer)
 	{
-		// Log DB 접속
 		LogManager::instance().Connect(log_host, log_port, log_user, log_pwd, log_db);
 
 		if (!LogManager::instance().IsConnected())
@@ -605,13 +579,13 @@ static bool __LoadConnectConfigFile(const char* configName)
 	}
 
 	// SKILL_POWER_BY_LEVEL
-	// 스트링 비교의 문제로 인해서 AccountDB::instance().SetLocale(g_stLocale) 후부터 한다.
-	// 물론 국내는 별로 문제가 안된다(해외가 문제)
+
+
 	{
 		char szQuery[256];
 		snprintf(szQuery, sizeof(szQuery), "SELECT mValue FROM locale WHERE mKey='SKILL_POWER_BY_LEVEL'");
-		std::auto_ptr<SQLMsg> pMsg(AccountDB::instance().DirectQuery(szQuery));
 
+		auto pMsg(AccountDB::instance().DirectQuery(szQuery));
 		if (pMsg->Get()->uiNumRows == 0)
 		{
 			fprintf(stderr, "[SKILL_PERCENT] Query failed: %s", szQuery);
@@ -647,13 +621,12 @@ static bool __LoadConnectConfigFile(const char* configName)
 			}
 		}
 
-		// 종족별 스킬 세팅
+
 		for (int job = 0; job < JOB_MAX_NUM * 2; ++job)
 		{
 			snprintf(szQuery, sizeof(szQuery), "SELECT mValue from locale where mKey='SKILL_POWER_BY_LEVEL_TYPE%d' ORDER BY CAST(mValue AS unsigned)", job);
-			std::auto_ptr<SQLMsg> pMsg(AccountDB::instance().DirectQuery(szQuery));
+			auto pMsg(AccountDB::instance().DirectQuery(szQuery));
 
-			// 세팅이 안되어있으면 기본테이블을 사용한다.
 			if (pMsg->Get()->uiNumRows == 0)
 			{
 				CTableBySkill::instance().SetSkillPowerByLevelFromType(job, aiBaseSkillPowerByLevelTable);
@@ -967,16 +940,6 @@ static bool __LoadGeneralConfigFile(const char* configName)
 			continue;
 		}
 
-#ifdef __AUCTION__
-		TOKEN("auction_server")
-		{
-			printf("-----------------------------------------------\n");
-			printf("AUCTION_SERVER\n");
-			printf("-----------------------------------------------\n");
-			str_to_number(auction_server, value_string);
-			continue;
-		}
-#endif
 		TOKEN("distribution_test_server")
 		{
 			str_to_number(distribution_test_server, value_string);
@@ -1295,6 +1258,11 @@ static bool __LoadGeneralConfigFile(const char* configName)
 			fprintf(stdout, "SKILLBOOK_NEXTREAD_MAX: %u\n", g_dwSkillBookNextReadMax);
 			continue;
 		}
+
+		TOKEN("proxy_ip")
+		{
+			g_stProxyIP = value_string;
+		}
 #endif
 
 		TOKEN("traffic_profile")
@@ -1397,7 +1365,7 @@ static bool __LoadGeneralConfigFile(const char* configName)
 		TOKEN("spam_block_reload_cycle")
 		{
 			str_to_number(g_uiSpamReloadCycle, value_string);
-			g_uiSpamReloadCycle = MAX(60, g_uiSpamReloadCycle); // 최소 1분
+			g_uiSpamReloadCycle = MAX(60, g_uiSpamReloadCycle);
 		}
 
 		TOKEN("check_multihack")
@@ -1498,110 +1466,6 @@ static bool __LoadGeneralConfigFile(const char* configName)
 
 			continue;
 		}
-#ifdef ENABLE_DECORUM
-		TOKEN("is_decorum_master")
-		{
-			int tmp = 0;
-			str_to_number(tmp, value_string);
-			if (0 == tmp)
-			{
-				g_bDecorumMaster = false;
-				fprintf(stdout, "IS_DECORUM_MASTER: FALSE\n");
-			}
-			else
-			{
-				g_bDecorumMaster = true;
-				fprintf(stdout, "IS_DECORUM_MASTER: TRUE\n");
-			}
-		}
-#endif		
-#ifdef OFFLINE_SHOP
-		TOKEN("offline_shop_server")
-		{
-			str_to_number(g_bIsOfflineShopServer, value_string);
-			continue;
-		}
-
-		TOKEN("offline_shop_owner_ship_time")
-		{
-			str_to_number(g_iOfflineShopOwnerShipTime, value_string);
-			fprintf(stdout, "OFFLINE_SHOP_OWNER_SHIP_TIME: %d\n", g_iOfflineShopOwnerShipTime);
-			continue;
-		}
-
-		TOKEN("offline_shop_save_time")
-		{
-			str_to_number(g_iOfflineShopSaveTime, value_string);
-			fprintf(stdout, "OFFLINE_SHOP_SAVE_TIME: %d\n", g_iOfflineShopSaveTime);
-			continue;
-		}
-
-		TOKEN("OFFLINE_SHOP_NEED_MONEY")
-		{
-			char arg1[256];
-			char arg2[256];
-			two_arguments(value_string, arg1, sizeof(arg1), arg2, sizeof(arg2));
-
-			if (!*arg1 || !*arg2)
-			{
-				fprintf(stderr, "OFFLINE_SHOP_NEED_MONEY syntax: offline_shop_need_money <disable or enable> <money>");
-				exit(1);
-			}
-			else if (!isnhdigit(*arg2))
-			{
-				fprintf(stderr, "Second argument must be integer!");
-				exit(1);
-			}
-
-			if (!strcmp(arg1, "enable"))
-				g_bOfflineShopNeedMoney = true;
-			else if (!strcmp(arg1, "disable"))
-				g_bOfflineShopNeedMoney = false;
-			else if (isnhdigit(*arg1))
-				str_to_number(g_bOfflineShopNeedMoney, arg1);
-
-			g_iOfflineShopMoney = MINMAX(1, g_iOfflineShopMoney, GOLD_MAX);
-
-			str_to_number(g_iOfflineShopMoney, arg2);
-			sys_log(0, "OFFLINE_SHOP_NEED_MONEY: %s - Money %u", g_bOfflineShopNeedMoney ? "Enabled" : "Disabled", g_iOfflineShopMoney);
-		}
-
-		TOKEN("OFFLINE_SHOP_NEED_LEVEL")
-		{
-			char arg1[256];
-			char arg2[256];
-			two_arguments(value_string, arg1, sizeof(arg1), arg2, sizeof(arg2));
-
-			if (!*arg1 || !*arg2)
-			{
-				fprintf(stderr, "OFFLINE_SHOP_NEED_LEVEL syntax: offline_shop_need_level <disable or enable> <money>");
-				exit(1);
-			}
-			else if (!isnhdigit(*arg2))
-			{
-				fprintf(stderr, "Second argument must be integer!");
-				exit(1);
-			}
-
-			if (!strcmp(arg1, "enable"))
-				g_bOfflineShopNeedLevel = true;
-			else if (!strcmp(arg1, "disable"))
-				g_bOfflineShopNeedLevel = false;
-			else if (isnhdigit(*arg1))
-				str_to_number(g_bOfflineShopNeedLevel, arg1);
-
-			g_iOfflineShopLevel = MINMAX(1, g_iOfflineShopLevel, gPlayerMaxLevel);
-
-			str_to_number(g_iOfflineShopLevel, arg2);
-			sys_log(0, "OFFLINE_SHOP_NEED_LEVEL: %s - Level %d", g_bOfflineShopNeedLevel ? "Enabled" : "Disabled", g_iOfflineShopLevel);
-		}
-#endif
-		TOKEN("server_key")
-		{
-			CCheckServer::Instance().AddServerKey(value_string);
-			continue;
-		}
-
 	}
 	fclose(fp);
 	return true;
@@ -1673,7 +1537,7 @@ static bool __LoadDefaultCMDFile(const char* cmdName)
 #ifdef ENABLE_EXPTABLE_FROMDB
 static bool __LoadExpTableFromDB(void)
 {
-	std::auto_ptr<SQLMsg> pMsg(AccountDB::instance().DirectQuery("SELECT level, exp FROM exp_table"));
+	auto pMsg(AccountDB::instance().DirectQuery("SELECT level, exp FROM exp_table"));
 	if (pMsg->Get()->uiNumRows == 0)
 		return false;
 
@@ -1700,7 +1564,6 @@ static bool __LoadExpTableFromDB(void)
 
 // #define ENABLE_GENERAL_CMD
 // #define ENABLE_GENERAL_CONFIG
-
 void config_init(const string& st_localeServiceName)
 {
 	// LOCALE_SERVICE
@@ -1716,8 +1579,8 @@ void config_init(const string& st_localeServiceName)
 	}
 	// END_OF_LOCALE_SERVICE
 
-	// public ip가 없어도 BIND_IP하면 게임 돌아가는데에는 아무런 지장이 없기 때문에
-	// 주석처리 함.
+
+
 	if (!GetIPInfo())
 	{
 	//	fprintf(stderr, "Can not get public ip address\n");
@@ -1785,12 +1648,6 @@ void config_init(const string& st_localeServiceName)
 	#endif
 	LocaleService_TransferDefaultSetting();
 	LocaleService_LoadEmpireTextConvertTables();
-#ifdef __ENABLE_TRASH_BIN__
-	if(!__LoadTrashBinConfig())
-	{
-		exit(1);
-	}
-#endif
 	// END_OF_LOCALE_SERVICE
 
 #ifdef ENABLE_EXPTABLE_FROMDB
@@ -1828,17 +1685,13 @@ void config_init(const string& st_localeServiceName)
 	}
 #endif
 
-	//if(!gHackCheckEnable)	// Hack 체크가 비활성화인 경우
-	//{
-		//assert(test_server);	// 테스트 서버가 아니라면 assert
-	//}
+	if(!gHackCheckEnable)
+	{
+		assert(test_server);
+	}
 
 	LoadValidCRCList();
 	LoadStateUserCount();
-#ifdef ANTY_WAIT_HACK
-	extern void LoadAntyWHSums();
-	LoadAntyWHSums();
-#endif
 
 	CWarMapManager::instance().LoadWarMapInfo(NULL);
 
@@ -1946,109 +1799,4 @@ bool IsValidFileCRC(DWORD dwCRC)
 {
 	return s_set_dwFileCRC.find(dwCRC) != s_set_dwFileCRC.end();
 }
-
-#ifdef __ENABLE_TRASH_BIN__
-bool __LoadTrashBinConfig()
-{
-	const char* blacklist_filename = "locale/../conf/trash_bin/black_list.txt";
-	const char* reward_list_filename = "locale/../conf/trash_bin/reward_list.txt";
-	
-	
-	//BLACK_LIST PART
-	FILE* pFile = fopen(blacklist_filename , "r");
-	
-	if(!pFile)
-	{
-		fprintf(stderr,"CANNOT OPEN FILE [%s] ERROR.\n",blacklist_filename);
-		return false;
-	}
-	
-	
-	char buffer[256];
-	for(int i = 0; fgets(buffer , sizeof(buffer) , pFile) ; i++)
-	{
-		buffer[sizeof(buffer)-1] = '\0';
-		string stLine(buffer);
-		
-		size_t key_pos = 0 , key_end = 0;
-		
-		
-		string clearLine = stLine.substr(0, stLine.find_first_of('#'));
-		
-		if(clearLine.empty() || (key_pos = clearLine.find_first_not_of("\t ")) == string::npos)
-		{
-			continue;
-		}
-		
-		key_end = clearLine.find_first_not_of("0123456789",key_pos);
-		
-		g_vec_trash_bin_black_list.push_back(atoi(clearLine.substr(key_pos,key_end-key_pos).c_str()));
-	}
-	
-	
-	fclose(pFile);
-	
-	
-	//REWARD_LIST PART
-	pFile = fopen(reward_list_filename , "r");
-	
-	if(!pFile)
-	{
-		fprintf(stderr,"CANNOT OPEN FILE [%s] ERROR.\n",reward_list_filename);
-		return false;
-	}
-	
-	
-	for(int i = 0; fgets(buffer , sizeof(buffer) , pFile) ; i++)
-	{
-		buffer[sizeof(buffer)-1] = '\0';
-		string stLine(buffer);
-		
-		size_t key_pos = 0 , key_end = 0 , value_pos = 0 , value_end = 0;
-		
-		
-		string clearLine = stLine.substr(0, stLine.find_first_of('#'));
-		
-		if(clearLine.empty() || (key_pos = clearLine.find_first_not_of("\t ")) == string::npos)
-		{
-			continue;
-		}
-		
-		key_end = clearLine.find_first_not_of("0123456789",key_pos);
-		
-		if(key_end == string::npos)
-			continue;
-		
-		
-		if((value_pos = clearLine.find_first_not_of("\t ",key_end)) == string::npos)
-		{
-			fprintf(stderr,"ERROR DURING LOAD TRASH BIN REWARD LIST FILE [%s] AT LINE [%d]\n",reward_list_filename,i);
-			fclose(pFile);
-			return false;
-		}
-		
-		value_end = clearLine.find_first_not_of("1234567890",value_pos);
-		
-		DWORD key = 0;
-		int value = 0;
-		
-		str_to_number(key,clearLine.substr(key_pos , key_end-key_pos).c_str());
-		str_to_number(value , clearLine.substr(value_pos , value_end-value_pos).c_str());
-		
-		if(key == 0 || value == 0)
-		{
-			fprintf(stderr,"ERROR DURING LOAD TRASH BIN REWARD LIST FILE [%s] AT LINE [%d]\n",reward_list_filename,i);
-			fclose(pFile);
-			return false;
-		}
-		
-		g_map_trash_bin_reward.insert(std::make_pair(key,value));
-	}
-	
-	
-	fclose(pFile);
-	return true;
-}
-#endif
-
-
+//martysama0134's 2022

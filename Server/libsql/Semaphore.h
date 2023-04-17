@@ -27,3 +27,4 @@ class CSemaphore
 		int	Release(int count = 1);
 };
 #endif
+//martysama0134's 2022

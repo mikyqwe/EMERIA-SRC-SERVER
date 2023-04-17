@@ -20,7 +20,7 @@ void CItemAddonManager::ApplyAddonTo(int iAddonType, LPITEM pItem)
 		return;
 	}
 
-	// TODO 일단 하드코딩으로 평타 스킬 수치 변경만 경우만 적용받게한다.
+
 
 	int iSkillBonus = MINMAX(-30, (int) (gauss_random(0, 5) + 0.5f), 30);
 	int iNormalHitBonus = 0;
@@ -29,15 +29,9 @@ void CItemAddonManager::ApplyAddonTo(int iAddonType, LPITEM pItem)
 	else
 		iNormalHitBonus = -2 * iSkillBonus + number(1, 5);
 
-
-	if (iNormalHitBonus == 0)
-		iNormalHitBonus = 1;
-
-	if (iSkillBonus == 0)
-		iSkillBonus = 1;
-
 	pItem->RemoveAttributeType(APPLY_SKILL_DAMAGE_BONUS);
 	pItem->RemoveAttributeType(APPLY_NORMAL_HIT_DAMAGE_BONUS);
 	pItem->AddAttribute(APPLY_NORMAL_HIT_DAMAGE_BONUS, iNormalHitBonus);
 	pItem->AddAttribute(APPLY_SKILL_DAMAGE_BONUS, iSkillBonus);
 }
+//martysama0134's 2022

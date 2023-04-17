@@ -23,7 +23,6 @@
 #include "guild.h"
 #include "guild_manager.h"
 #include "sectree_manager.h"
-#include "../../common/CommonDefines.h"
 
 #undef sys_err
 #ifndef __WIN32__
@@ -93,6 +92,44 @@ namespace quest
 		CQuestManager::Instance().GetCurrentCharacterPtr()->ChatPacket(CHAT_TYPE_INFO, "%s", s.str().c_str());
 		return 0;
 	}
+
+#ifdef ENABLE_NEWSTUFF
+	ALUA(_chat_in_map0)
+	{
+		DWORD dwMapIndex = lua_tonumber(L, 1);
+		std::string sText = lua_tostring(L, 2);
+
+		FSendChatPacket f(CHAT_TYPE_TALKING, sText);
+		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(dwMapIndex);
+		if (pSecMap)
+			pSecMap->for_each(f);
+		return 0;
+	}
+
+	ALUA(_cmdchat_in_map0)
+	{
+		DWORD dwMapIndex = lua_tonumber(L, 1);
+		std::string sText = lua_tostring(L, 2);
+
+		FSendChatPacket f(CHAT_TYPE_COMMAND, sText);
+		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(dwMapIndex);
+		if (pSecMap)
+			pSecMap->for_each(f);
+		return 0;
+	}
+
+	ALUA(_syschat_in_map0)
+	{
+		DWORD dwMapIndex = lua_tonumber(L, 1);
+		std::string sText = lua_tostring(L, 2);
+
+		FSendChatPacket f(CHAT_TYPE_INFO, sText);
+		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(dwMapIndex);
+		if (pSecMap)
+			pSecMap->for_each(f);
+		return 0;
+	}
+#endif
 
 	ALUA(_notice)
 	{
@@ -191,10 +228,7 @@ namespace quest
 		CQuestManager & q = CQuestManager::instance();
 		const char * name = lua_tostring(L, 1);
 		DWORD arg = (DWORD) lua_tonumber(L, 2);
-		if (name && arg)	//@fixme451
-			q.ClearServerTimer(name, arg);
-		else
-			sys_err("LUA PREVENT: Wrong argument on ClearServerTimer!");
+		q.ClearServerTimer(name, arg);
 		return 0;
 	}
 
@@ -402,6 +436,41 @@ namespace quest
 		ch->ChatPacket(CHAT_TYPE_INFO, "QUEST_SYSERR %s", lua_tostring(L, 1));
 		return 0;
 	}
+
+#ifdef ENABLE_NEWSTUFF
+	ALUA(_syslog2)
+	{
+		if (!lua_isnumber(L, 1) || !lua_isstring(L, 2))
+			return 0;
+
+		if (lua_tonumber(L, 1) >= 1)
+		{
+			if (!test_server)
+				return 0;
+		}
+
+		PC* pc = CQuestManager::instance().GetCurrentPC();
+		if (!pc)
+			return 0;
+
+		sys_log(0, "QUEST: quest: %s : %s", pc->GetCurrentQuestName().c_str(), lua_tostring(L, 2));
+
+		return 0;
+	}
+
+	ALUA(_syserr2)
+	{
+		if (!lua_isstring(L, 1))
+			return 0;
+
+		PC* pc = CQuestManager::instance().GetCurrentPC();
+		if (!pc)
+			return 0;
+
+		sys_err("QUEST: quest: %s : %s", pc->GetCurrentQuestName().c_str(), lua_tostring(L, 1));
+		return 0;
+	}
+#endif
 
 	// LUA_ADD_BGM_INFO
 	ALUA(_set_bgm_volume_enable)
@@ -821,7 +890,7 @@ namespace quest
 		return 1;
 	}
 
-	// 새로운 state를 만든다.
+
 	ALUA(_set_quest_state)
 	{
 		if (!lua_isstring(L, 1) || !lua_isstring(L, 2))
@@ -934,7 +1003,7 @@ namespace quest
 		P2P_MANAGER::instance().Send(buf.read_peek(), buf.size()); // HEADER_GG_NOTICE
 
 		SendNotice(s.str().c_str(), true);
-		return 0;
+		return 1;
 	}
 #endif
 
@@ -954,7 +1023,7 @@ namespace quest
 		P2P_MANAGER::instance().Send(buf.read_peek(), buf.size()); // HEADER_GG_NOTICE
 
 		SendNotice(s.str().c_str());
-		return 0;
+		return 1;
 	}
 
 	EVENTINFO(warp_all_to_village_event_info)
@@ -1039,45 +1108,6 @@ namespace quest
 
 		return 0;
 	}
-	
-#ifdef ENABLE_DEFENSAWE_SHIP
-	struct FClearSectree
-	{
-		void operator () (LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				if (!ch->IsPC() && !ch->IsPet()
-#ifdef ENABLE_NEW_PET_SYSTEM
-					&& !ch->IsNewPet()
-#endif
-#ifdef ENABLE_MOUNT_SYSTEM
-					&& !ch->IsNewMount()
-#endif
-#ifdef ENABLE_DEFENSAWE_SHIP
-					&& !ch->IsHydraNPC()
-#endif
-#ifdef ENABLE_SUPPORT_SYSTEM
-					&& !ch->IsSupport()
-#endif
-					)
-					M2_DESTROY_CHARACTER(ch);
-			}
-		}
-	};
-	
-	int _clear_all_in_map ( lua_State * L )
-	{
-		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(lua_tonumber(L,1));
-		if (NULL != pSecMap)
-		{
-			FClearSectree f;
-			pSecMap->for_each( f );
-		}
-		return 0;
-	}
-#endif
 
 	ALUA(_say_in_map)
 	{
@@ -1115,16 +1145,13 @@ namespace quest
 			if (ent->IsType(ENTITY_CHARACTER))
 			{
 				LPCHARACTER ch = (LPCHARACTER) ent;
-#ifdef NEW_PET_SYSTEM
+
 				if (!ch->IsPC() && !ch->IsPet() && !ch->IsNewPet())
-#else
-				if (!ch->IsPC() && !ch->IsPet())
-#endif
-					ch->Dead();
+					ch->DeadNoReward(); // @fixme188 from Dead()
 			}
 		}
 	};
-	
+
 	ALUA(_kill_all_in_map)
 	{
 		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap( lua_tonumber(L,1) );
@@ -1138,7 +1165,7 @@ namespace quest
 		return 0;
 	}
 
-	//주의: 몹 리젠이 안되는 맵에서만 사용
+
 	ALUA(_regen_in_map)
 	{
 		int iMapIndex = static_cast<int>(lua_tonumber(L, 1));
@@ -1178,7 +1205,7 @@ namespace quest
 			sys_log(0, "OXEVENT : Cannot add quiz. %d %s %d", level, quiz, answer);
 		}
 
-		return 0;
+		return 1;
 	}
 
 	EVENTFUNC(warp_all_to_map_my_empire_event)
@@ -1398,7 +1425,6 @@ namespace quest
 			ExceptChar(p)
 		{}
 
-
 		void operator () (LPENTITY ent)
 		{
 			if (true == ent->IsType(ENTITY_CHARACTER))
@@ -1407,11 +1433,8 @@ namespace quest
 
 				if (pChar == ExceptChar)
 					return;
-#ifdef NEW_PET_SYSTEM
+			
 				if (!pChar->IsPet() && !pChar->IsNewPet() && (true == pChar->IsMonster() || true == pChar->IsStone()))
-#else				
-				if (!pChar->IsPet() && (true == pChar->IsMonster() || true == pChar->IsStone()))
-#endif
 				{
 					if (x1 <= pChar->GetX() && pChar->GetX() <= x2 && y1 <= pChar->GetY() && pChar->GetY() <= y2)
 					{
@@ -1569,7 +1592,7 @@ namespace quest
 		MYSQL_FIELD * field;
 		MYSQL_RES * result;
 
-		std::auto_ptr<SQLMsg> pMsg(DBManager::instance().DirectQuery("%s", lua_tostring(L, 1)));
+		auto pMsg(DBManager::instance().DirectQuery("%s", lua_tostring(L, 1)));
 		if (pMsg.get())
 		{
 			// ret1 (number of affected rows)
@@ -1639,11 +1662,20 @@ namespace quest
 		return 1;
 	}
 
+#ifndef __WIN32__
 	ALUA(_mysql_password)
 	{
 		lua_pushstring(L, mysql_hash_password(lua_tostring(L, 1)).c_str());
 		return 1;
 	}
+#endif
+
+	ALUA(_map_allow_find)
+	{
+		lua_pushboolean(L, map_allow_find(lua_tonumber(L, 1)));
+		return 1;
+	}
+	
 #endif
 
 #ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
@@ -1663,6 +1695,14 @@ namespace quest
 		{
 			{	"sys_err",					_syserr					},
 			{	"sys_log",					_syslog					},
+#ifdef ENABLE_NEWSTUFF
+			{	"sys_err2",					_syserr2				}, // like sys_err but without requiring any character (server_time safe)
+			{	"sys_err0",					_syserr2				}, // alias
+			{	"sys_err_ex",				_syserr2				}, // alias
+			{	"sys_log2",					_syslog2				}, // like sys_log but without requiring any character (server_time safe)
+			{	"sys_log0",					_syslog2				}, // alias
+			{	"sys_log_ex",				_syslog2				}, // alias
+#endif
 			{	"char_log",					_char_log				},
 			{	"item_log",					_item_log				},
 			{	"set_state",				quest_setstate			},
@@ -1673,6 +1713,14 @@ namespace quest
 			{	"chat",						_chat					},
 			{	"cmdchat",					_cmdchat				},
 			{	"syschat",					_syschat				},
+#ifdef ENABLE_NEWSTUFF
+			{	"chat_in_map0",				_chat_in_map0			},
+			{	"chat_in_map",				_chat_in_map0			}, // alias
+			{	"cmdchat_in_map0",			_cmdchat_in_map0		},
+			{	"cmdchat_in_map",			_cmdchat_in_map0		}, // alias
+			{	"syschat_in_map0",			_syschat_in_map0		},
+			{	"syschat_in_map",			_syschat_in_map0		}, // alias
+#endif
 			{	"get_locale",				_get_locale				},
 			{	"setleftimage",				_left_image				},
 			{	"settopimage",				_top_image				},
@@ -1736,10 +1784,6 @@ namespace quest
 			{	"warp_all_to_village",			_warp_all_to_village			},
 			{	"warp_to_village",				_warp_to_village				},
 			{	"say_in_map",					_say_in_map						},
-#ifdef ENABLE_DEFENSAWE_SHIP
-			{	"clear_all_in_map",				_clear_all_in_map				},
-#endif
-
 			{	"kill_all_in_map",				_kill_all_in_map				},
 			{	"regen_in_map",					_regen_in_map					},
 			{	"enable_over9refine",			_enable_over9refine				},
@@ -1749,17 +1793,22 @@ namespace quest
 			{	"purge_area",					_purge_area						},
 			{	"warp_all_in_area_to_area",		_warp_all_in_area_to_area		},
 			{	"get_special_item_group",		_get_special_item_group			},
+#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
+			{	"get_language",						_get_language			},
+#endif
 #ifdef ENABLE_NEWSTUFF
 			{	"spawn_mob0",					_spawn_mob0						},
+			{	"spawn_mob_ex",					_spawn_mob0						}, // alias
 			{	"spawn_mob_in_map",				_spawn_mob_in_map				},
 			{	"get_table_postfix",			_get_table_postfix				},	// get table postfix [return lua string]
 			{	"mysql_direct_query",			_mysql_direct_query				},	// get the number of the affected rows and a table containing 'em [return lua number, lua table]
 			{	"mysql_escape_string",			_mysql_escape_string			},	// escape <str> [return lua string]
+#ifndef __WIN32__
 			{	"mysql_password",				_mysql_password					},	// same as the sql function PASSWORD(<str>) [return lua string]
 #endif
-			#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
-			{	"get_language",						_get_language			},
-			#endif
+			{	"map_allow_find", 				_map_allow_find					},
+#endif
+
 			{	NULL,	NULL	}
 		};
 
@@ -1772,4 +1821,4 @@ namespace quest
 		}
 	}
 }
-
+//martysama0134's 2022

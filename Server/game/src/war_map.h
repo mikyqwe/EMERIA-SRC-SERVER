@@ -4,10 +4,6 @@
 #include "constants.h"
 #include "guild.h"
 
-#ifdef GUILD_WAR_COUNTER
-#include <array>
-#endif
-
 enum EWarMapTypes
 {
 	WAR_MAP_TYPE_NORMAL,
@@ -19,12 +15,6 @@ typedef struct SWarMapInfo
 	BYTE		bType;
 	long		lMapIndex;
 	PIXEL_POSITION	posStart[3];
-#ifdef __IMPROVED_GUILD_WAR__
-	int				iMaxPlayer;
-	int				iMaxScore;
-	DWORD			flags;
-	int				custom_map_index;
-#endif
 } TWarMapInfo;
 
 namespace warmap
@@ -60,14 +50,7 @@ class CWarMap
 	public:
 		friend class CGuild;
 
-		CWarMap(long lMapIndex, const TGuildWarInfo & r_info, TWarMapInfo * pkWarMapInfo, DWORD dwGuildID1, DWORD dwGuildID2
-#ifdef __IMPROVED_GUILD_WAR__
-			, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-#ifdef GUILD_WAR_COUNTER
-	, DWORD warDBID
-#endif
-		);
+		CWarMap(long lMapIndex, const TGuildWarInfo & r_info, TWarMapInfo * pkWarMapInfo, DWORD dwGuildID1, DWORD dwGuildID2);
 		~CWarMap();
 
 		bool	GetTeamIndex(DWORD dwGuild, BYTE & bIdx);
@@ -77,14 +60,7 @@ class CWarMap
 
 		CGuild * GetGuild(BYTE bIdx);
 		DWORD	GetGuildID(BYTE bIdx);
-#ifdef __IMPROVED_GUILD_WAR__
-		int		GetCurrentPlayer(BYTE bIdx);
-		int		GetMaxPlayer(BYTE bIdx);
-		int		GetCurrentScore(BYTE bIdx);
-		int		GetMaxScore(BYTE bIdx);
-		DWORD	GetWarFlags(BYTE bIdx);
-		int		GetCustomMapIndex(BYTE bIdx);
-#endif
+
 		BYTE	GetType();
 		long	GetMapIndex();
 		DWORD	GetGuildOpponent(LPCHARACTER ch);
@@ -92,7 +68,7 @@ class CWarMap
 		DWORD	GetWinnerGuild();
 		void	UsePotion(LPCHARACTER ch, LPITEM item);
 
-		void	Draw();	// 강제 무승부 처리
+		void	Draw();
 		void	Timeout();
 		void	CheckWarEnd();
 		bool	SetEnded();
@@ -110,16 +86,7 @@ class CWarMap
 
 		bool	GetGuildIndex(DWORD dwGuild, int& iIndex);
 
-#ifdef GUILD_WAR_COUNTER
-		void	SendKillNotice(LPCHARACTER killer, LPCHARACTER victim, long damage = 0);
-		void	UpdateStatic(LPCHARACTER ch, BYTE sub_index, std::vector<war_static_ptr> m_list);
-		void	RegisterStatics(LPCHARACTER ch);
-		void	UpdateSpy(DWORD pid);
-		void	Packet(const void* pv, int size, bool broadcast = false);
-		void	SaveCounterData();
-#else
-		void	Packet(const void* pv, int size);
-#endif
+		void	Packet(const void * pv, int size);
 		void	Notice(const char * psz);
 		void	SendWarPacket(LPDESC d);
 		void	SendScorePacket(BYTE bIdx, LPDESC d = NULL);
@@ -153,39 +120,26 @@ class CWarMap
 			int		iScore;
 			LPCHARACTER pkChrFlag;
 			LPCHARACTER pkChrFlagBase;
-#ifdef __IMPROVED_GUILD_WAR__
-			int iMaxPlayer;
-			int iMaxScore;
-			DWORD flags;
-			int	custom_map_index;
-#endif
+
 			std::set<DWORD> set_pidJoiner;
 
 			void Initialize();
 
-			int GetAccumulatedJoinerCount(); // 누적된 참가자 수
-			int GetCurJointerCount(); // 현재 참가자 수
+			int GetAccumulatedJoinerCount();
+			int GetCurJointerCount();
 
 			void AppendMember(LPCHARACTER ch);
 			void RemoveMember(LPCHARACTER ch);
 		} TeamData;
 
 		TeamData	m_TeamData[2];
-#ifdef GUILD_WAR_COUNTER
-		DWORD warID;
-		std::map<DWORD, war_static_ptr> war_static;
-#endif
-
 		int		m_iObserverCount;
 		DWORD		m_dwStartTime;
 		BYTE		m_bTimeout;
 
 		TGuildWarInfo	m_WarInfo;
-#ifdef GUILD_WAR_COUNTER
-		std::map<DWORD, bool>	m_set_pkChr;
-#else
+
 		CHARACTER_SET m_set_pkChr;
-#endif
 };
 
 class CWarMapManager : public singleton<CWarMapManager>
@@ -200,14 +154,7 @@ class CWarMapManager : public singleton<CWarMapManager>
 		bool		GetStartPosition(long lMapIndex, BYTE bIdx, PIXEL_POSITION & pos);
 
 		template <typename Func> Func for_each(Func f);
-		long		CreateWarMap(const TGuildWarInfo & r_WarInfo, DWORD dwGuildID1, DWORD dwGuildID2
-#ifdef __IMPROVED_GUILD_WAR__
-			, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-#ifdef GUILD_WAR_COUNTER
-			, DWORD warID
-#endif
-		);
+		long		CreateWarMap(const TGuildWarInfo & r_WarInfo, DWORD dwGuildID1, DWORD dwGuildID2);
 		void		DestroyWarMap(CWarMap* pMap);
 		CWarMap *	Find(long lMapIndex);
 		int		CountWarMap() { return m_mapWarMap.size(); }
@@ -228,3 +175,4 @@ template <typename Func> Func CWarMapManager::for_each(Func f)
 }
 
 #endif
+//martysama0134's 2022

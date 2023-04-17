@@ -19,8 +19,7 @@ bool PlayerHB::Initialize()
 	char szQuery[128];
 	snprintf(szQuery, sizeof(szQuery), "SHOW CREATE TABLE player%s", GetTablePostfix());
 
-	std::auto_ptr<SQLMsg> pMsg(CDBManager::instance().DirectQuery(szQuery));
-
+	auto pMsg(CDBManager::instance().DirectQuery(szQuery));
 	if (pMsg->Get()->uiNumRows == 0)
 		return false;
 
@@ -30,7 +29,7 @@ bool PlayerHB::Initialize()
 }
 
 //
-// @version	05/07/05 Bang2ni - id 에 해당하는 data 가 없을 때 쿼리하고 data 를 insert  하는코드 추가.
+
 //
 void PlayerHB::Put(DWORD id)
 {
@@ -48,7 +47,6 @@ void PlayerHB::Put(DWORD id)
 }
 
 //
-// @version	05/07/05 Bang2ni - Query string 버퍼가 작아서 늘려줌.
 //
 bool PlayerHB::Query(DWORD id)
 {
@@ -69,13 +67,11 @@ bool PlayerHB::Query(DWORD id)
 		if (pos < 0)
 		{
 			sys_err("cannot find %s ", szFind);
-		//	sys_err("cannot find %s in %s", szFind, m_stCreateTableQuery.c_str());
 			return false;
 		}
 
 		snprintf(szQuery, sizeof(szQuery), "CREATE TABLE IF NOT EXISTS %s%s", szTableName, m_stCreateTableQuery.c_str() + strlen(szFind));
-	//	sys_log(0, "%s", szQuery);
-		std::auto_ptr<SQLMsg> pMsg(CDBManager::instance().DirectQuery(szQuery, SQL_HOTBACKUP));
+		auto pMsg(CDBManager::instance().DirectQuery(szQuery, SQL_HOTBACKUP));
 		m_stTableName = szTableName;
 	}
 
@@ -83,4 +79,4 @@ bool PlayerHB::Query(DWORD id)
 	CDBManager::instance().AsyncQuery(szQuery, SQL_HOTBACKUP);
 	return true;
 }
-
+//martysama0134's 2022

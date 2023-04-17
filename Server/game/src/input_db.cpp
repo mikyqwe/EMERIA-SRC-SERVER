@@ -28,7 +28,9 @@
 #include "wedding.h"
 #include "login_data.h"
 #include "unique_item.h"
-
+#ifdef ENABLE_ANTI_MULTIPLE_FARM
+#include "HAntiMultipleFarm.h"
+#endif
 #include "monarch.h"
 #include "affect.h"
 #include "castle.h"
@@ -46,128 +48,18 @@
 #include "map_location.h"
 #include "HackShield.h"
 #include "XTrapManager.h"
+
 #include "DragonSoul.h"
-#ifdef OFFLINE_SHOP
-#include "offlineshop.h"
-#include "offlineshop_manager.h"
-#endif
+
 #include "shutdown_manager.h"
 #include "../../common/CommonDefines.h"
-#ifdef ENABLE_DECORUM
-#include "decorum_manager.h"
+
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+#include "new_offlineshop.h"
+#include "new_offlineshop_manager.h"
 #endif
-#ifdef __AUCTION__
-#include "auction_manager.h"
-#endif
-#ifdef ENABLE_ANTI_MULTIPLE_FARM
-#include "HAntiMultipleFarm.h"
-#endif
+
 #define MAPNAME_DEFAULT	"none"
-
-#ifdef ANTY_WAIT_HACK
-std::map<BYTE, std::string> AntyWHSums;
-std::map<BYTE, std::string> AntyWHRegex;
-void LoadAntyWHSums()
-{
-	SQLMsg * pMsg(DBManager::instance().DirectQuery("SELECT `race`,`regex`,`hash` FROM common.wh_regex"));
-	if (pMsg->Get()->uiNumRows > 0)
-	{
-		MYSQL_ROW row;
-		while (NULL != (row = mysql_fetch_row(pMsg->Get()->pSQLResult)))
-		{
-			BYTE job;
-			str_to_number(job, row[0]);
-			AntyWHRegex[job] = row[1];
-			AntyWHSums[job] = row[2];
-		}
-	}
-
-}
-#endif
-
-void LoadOfflineShop()
-{
-	SQLMsg * pMsg(DBManager::instance().DirectQuery("SELECT id,remain_time, owner_id, owner_name, sign,map_index,x,y,z FROM player.offline_shop WHERE channel = %d", g_bChannel));
-
-	if (pMsg->Get()->uiNumRows == 0)
-		return;
-
-	DWORD dwOwnerID = 0;
-
-	MYSQL_ROW row;
-	while (NULL != (row = mysql_fetch_row(pMsg->Get()->pSQLResult)))
-	{
-		char szSign[70];
-		char szNameOwner[50];
-		DWORD dwID, dwRemainTime = 0;
-		int MapIndex, x, y, z = 0;
-		
-		dwID = atoi(row[0]);
-		dwRemainTime = atoi(row[1]);
-		dwOwnerID = atoi(row[2]);
-		strlcpy(szNameOwner, row[3], sizeof(szNameOwner));
-		strlcpy(szSign, row[4], sizeof(szSign));
-		MapIndex = atoi(row[5]);
-		x = atoi(row[6]);
-		y = atoi(row[7]);
-		z = atoi(row[8]);
-		
-		// Check Time expire
-
-		if (dwRemainTime < get_global_time() + 60)
-		{
-			// Close Shop Offlne
-			TPacketOfflineShopDestroy pCloseShop;
-			pCloseShop.dwOwnerID = dwOwnerID;
-			db_clientdesc->DBPacket(HEADER_GD_OFFLINESHOP_DESTROY, 0, &pCloseShop, sizeof(pCloseShop));
-			// Close Shop Offlne
-			continue;
-		}
-		
-		// Check Time expire
-
-		// Check If is Already boot	
-		LPOFFLINESHOP pkOfflineShopfind = COfflineShopManager::instance().FindOfflineShop(COfflineShopManager::instance().FindMyOfflineShop(dwOwnerID));
-
-		if (pkOfflineShopfind)
-			continue;
-		// Check If is Already boot	
-
-		LPCHARACTER npc = CHARACTER_MANAGER::instance().SpawnMob(30000, MapIndex, x, y, z, false, -1, false, true, dwOwnerID, dwID);
-	
-		if (!npc)
-			continue;
-
-		npc->SetOfflineShopTimer(dwRemainTime - get_global_time());
-		npc->StartOfflineShopUpdateEvent(dwOwnerID);
-		npc->SetName(szNameOwner);
-		
-		LPOFFLINESHOP pkOfflineShop = COfflineShopManager::instance().CreateOfflineShop(npc, dwOwnerID);
-		
-		if (!pkOfflineShop)
-			continue;
-		
-		pkOfflineShop->SetShopSign(szSign);
-		
-		COfflineShopManager::instance().InsertOfflineShopToAccount(dwID);
-		
-		
-		npc->SetOfflineShop(pkOfflineShop);
-		// npc->SetName();
-		// SetOfflineShopVID(npc->GetVID());
-		npc->Show(MapIndex, x, y, z, true);
-	
-		// BEGIN_COUNTER_UPDATE
-		TPacketUpdateOfflineShopsCount pCount;
-		pCount.bIncrease = true;
-		db_clientdesc->DBPacket(HEADER_GD_UPDATE_OFFLINESHOP_COUNT, 0, &pCount, sizeof(pCount));
-		// END_OF_COUNTER_UPDATE
-	
-		// Load Items
-		COfflineShopManager::instance().BootShop(dwID, dwOwnerID);
-	}
-	
-}
 
 bool GetServerLocation(TAccountTable & rTab, BYTE bEmpire)
 {
@@ -202,11 +94,17 @@ bool GetServerLocation(TAccountTable & rTab, BYTE bEmpire)
 						rTab.players[i].x,
 						rTab.players[i].y,
 						rTab.players[i].szName);
-
+#ifdef ENABLE_NEWSTUFF
+				if (!g_stProxyIP.empty())
+					rTab.players[i].lAddr=inet_addr(g_stProxyIP.c_str());
+#endif
 				continue;
 			}
 		}
-
+#ifdef ENABLE_NEWSTUFF
+		if (!g_stProxyIP.empty())
+			rTab.players[i].lAddr=inet_addr(g_stProxyIP.c_str());
+#endif
 		struct in_addr in;
 		in.s_addr = rTab.players[i].lAddr;
 		sys_log(0, "success to %s:%d", inet_ntoa(in), rTab.players[i].wPort);
@@ -245,7 +143,7 @@ void CInputDB::LoginSuccess(DWORD dwHandle, const char *data)
 		return;
 	}
 
-	if (strcmp(pTab->status, "OK")) // OK가 아니면
+	if (strcmp(pTab->status, "OK"))
 	{
 		sys_log(0, "CInputDB::LoginSuccess - status[%s] is not OK [%s]", pTab->status, pTab->login);
 
@@ -269,7 +167,7 @@ void CInputDB::LoginSuccess(DWORD dwHandle, const char *data)
 	d->BindAccountTable(pTab);
 
 
-	if (!bFound) // 캐릭터가 없으면 랜덤한 제국으로 보낸다.. -_-
+	if (!bFound)
 	{
 		TPacketGCEmpire pe;
 		pe.bHeader = HEADER_GC_EMPIRE;
@@ -342,10 +240,13 @@ void CInputDB::PlayerCreateSuccess(LPDESC d, const char * data)
 	pack.header = HEADER_GC_CHARACTER_CREATE_SUCCESS;
 	pack.bAccountCharacterIndex = pPacketDB->bAccountCharacterIndex;
 	pack.player = pPacketDB->player;
-
+#ifdef ENABLE_NEWSTUFF
+	if (!g_stProxyIP.empty())
+		pack.player.lAddr=inet_addr(g_stProxyIP.c_str());
+#endif
 	d->Packet(&pack, sizeof(TPacketGCPlayerCreateSuccess));
 
-	// 기본 무기와 귀환부를 지급
+
 	TPlayerItem t;
 	memset(&t, 0, sizeof(t));
 
@@ -355,10 +256,10 @@ void CInputDB::PlayerCreateSuccess(LPDESC d, const char * data)
 		t.count	= 1;
 		t.owner	= r_Tab.players[pPacketDB->bAccountCharacterIndex].dwID;
 
-		//무사: 자인갑+3,철편투구+3,금편신발+3,남만도+3,백금목걸이+3, 흑단귀걸이+3, 소산부+3, 오각패+3, 흑단팔찌+3
-		//자객：영린+3,연환두건+3,금편신발+3,마안도+3,화안궁+3,옥목걸이+3, 옥귀걸이+3, 오각패+3, 흑단팔찌+3
-		//수라：음양갑+3,애희투구+3,금편신발+3,남만도+3,진주목걸이+3, 백금귀걸이+3, 오각패+3, 흑단팔찌+3
-		//무당：서천의+3,태을모+3,금편신발+3,자린선+3,매화령+3,진주목걸이+3, 백금귀걸이+3, 오각패+3, 흑단팔찌+3
+
+
+
+
 
 		struct SInitialItem
 		{
@@ -375,7 +276,7 @@ void CInputDB::PlayerCreateSuccess(LPDESC d, const char * data)
 			{ {11643,	0}, {12503,	2}, {15103,	3}, {   93,	1}, {16123,	4}, {17143,	7}, {13193,	8}, {14103,	9}, {    0,	0}, },
 			{ {11843,	0}, {12643,	1}, {15103,	2}, { 7083,	3}, { 5053,	4}, {16123,	6}, {17143,	7}, {13193,	8}, {14103,	9}, },
 #ifdef ENABLE_WOLFMAN_CHARACTER
-			{ {21023,	2}, {12223,	3}, {21513,	4}, { 6023,	1}, {16143,	8}, {17103,	9}, { 0,	0}, {13193,	11}, {14103, 12}, }, // NOTE: 수인족 초기아이템.. 안쓰이는 코드니 패스
+			{ {21023,	2}, {12223,	3}, {21513,	4}, { 6023,	1}, {16143,	8}, {17103,	9}, { 0,	0}, {13193,	11}, {14103, 12}, },
 #endif
 		};
 
@@ -465,7 +366,7 @@ void CInputDB::PlayerLoad(LPDESC d, const char * data)
 	{
 		lMapIndex = SECTREE_MANAGER::instance().GetMapIndex(pTab->x, pTab->y);
 
-		if (lMapIndex == 0) // 좌표를 찾을 수 없다.
+		if (lMapIndex == 0)
 		{
 			lMapIndex = EMPIRE_START_MAP(d->GetAccountTable().bEmpire);
 			pos.x = EMPIRE_START_X(d->GetAccountTable().bEmpire);
@@ -479,11 +380,11 @@ void CInputDB::PlayerLoad(LPDESC d, const char * data)
 	}
 	pTab->lMapIndex = lMapIndex;
 
-	// Private 맵에 있었는데, Private 맵이 사라진 상태라면 출구로 돌아가야 한다.
+
 	// ----
-	// 근데 출구로 돌아가야 한다면서... 왜 출구가 아니라 private map 상에 대응되는 pulic map의 위치를 찾냐고...
-	// 역사를 모르니... 또 하드코딩 한다.
-	// 아귀동굴이면, 출구로...
+
+
+
 	// by rtsummit
 	if (!SECTREE_MANAGER::instance().GetValidLocation(pTab->lMapIndex, pTab->x, pTab->y, lMapIndex, pos, d->GetEmpire()))
 	{
@@ -541,15 +442,13 @@ void CInputDB::PlayerLoad(LPDESC d, const char * data)
 #endif
 		P2P_MANAGER::instance().Send(&p, sizeof(TPacketGGLogin));
 
-#ifdef ENABLE_CHEQUE_SYSTEM
-		char buf[55];
-		snprintf(buf, sizeof(buf), "%s %d %d %d %ld %d",
-			inet_ntoa(ch->GetDesc()->GetAddr().sin_addr), ch->GetGold(), ch->GetCheque(), g_bChannel, ch->GetMapIndex(), ch->GetAlignment());
-#else
 		char buf[51];
+#ifdef ENABLE_LONG_LONG
+		snprintf(buf, sizeof(buf), "%s %lld %d %ld %d",
+#else
 		snprintf(buf, sizeof(buf), "%s %d %d %ld %d",
-			inet_ntoa(ch->GetDesc()->GetAddr().sin_addr), ch->GetGold(), g_bChannel, ch->GetMapIndex(), ch->GetAlignment());
 #endif
+				inet_ntoa(ch->GetDesc()->GetAddr().sin_addr), ch->GetGold(), g_bChannel, ch->GetMapIndex(), ch->GetAlignment());
 		LogManager::instance().CharLog(ch, 0, "LOGIN", buf);
 
 #ifdef ENABLE_PCBANG_FEATURE // @warme006
@@ -627,11 +526,11 @@ void CInputDB::Boot(const char* data)
 {
 	signal_timer_disable();
 
-	// 패킷 사이즈 체크
+
 	DWORD dwPacketSize = decode_4bytes(data);
 	data += 4;
 
-	// 패킷 버전 체크
+
 	BYTE bVersion = decode_byte(data);
 	data += 1;
 
@@ -646,13 +545,9 @@ void CInputDB::Boot(const char* data)
 	sys_log(0, "sizeof(TMobTable) = %d", sizeof(TMobTable));
 	sys_log(0, "sizeof(TItemTable) = %d", sizeof(TItemTable));
 	sys_log(0, "sizeof(TShopTable) = %d", sizeof(TShopTable));
-
 	sys_log(0, "sizeof(TSkillTable) = %d", sizeof(TSkillTable));
 	sys_log(0, "sizeof(TRefineTable) = %d", sizeof(TRefineTable));
 	sys_log(0, "sizeof(TItemAttrTable) = %d", sizeof(TItemAttrTable));
-	#ifdef ENABLE_USE_DIFFERENT_TABLE_FOR_COSTUME_ATTRIBUTE
-	sys_log(0, "sizeof(TItemAttrTable) = %d",sizeof(TItemAttrTable));
-	#endif
 	sys_log(0, "sizeof(TItemRareTable) = %d", sizeof(TItemAttrTable));
 	sys_log(0, "sizeof(TBanwordTable) = %d", sizeof(TBanwordTable));
 	sys_log(0, "sizeof(TLand) = %d", sizeof(building::TLand));
@@ -661,9 +556,7 @@ void CInputDB::Boot(const char* data)
 	//ADMIN_MANAGER
 	sys_log(0, "sizeof(TAdminManager) = %d", sizeof (TAdminInfo) );
 	//END_ADMIN_MANAGER
-#ifdef GUILD_WAR_COUNTER
-	sys_log(0, "sizeof(TGuildWarReserve) = %d", sizeof(TGuildWarReserve));
-#endif
+
 	WORD size;
 
 	/*
@@ -766,8 +659,6 @@ void CInputDB::Boot(const char* data)
 
 		data += size * sizeof(TSkillTable);
 	}
-	
-	
 	/*
 	 * REFINE RECIPE
 	 */
@@ -820,41 +711,6 @@ void CInputDB::Boot(const char* data)
 
 	data += size * sizeof(TItemAttrTable);
 
-	#ifdef ENABLE_USE_DIFFERENT_TABLE_FOR_COSTUME_ATTRIBUTE
-	/* 
-		COSTUME 
-		ATTR TABLE 
-	*/
-	
-	if (decode_2bytes(data) != sizeof(TItemAttrTable))
-	{
-		sys_err("item costume attr table size error");
-		thecore_shutdown();
-		return;
-	}
-	data += 2;
-
-	size = decode_2bytes(data);
-	data += 2;
-	sys_log(0, "BOOT: ITEM_ATTR_COSTUME: %d", size);
-
-	if (size)
-	{
-		TItemAttrTable * p = (TItemAttrTable *) data;
-
-		for (int i = 0; i < size; ++i, ++p)
-		{
-			if (p->dwApplyIndex >= MAX_APPLY_NUM)
-				continue;
-
-			g_map_itemCostumeAttr[p->dwApplyIndex] = *p;
-			sys_log(0, "ITEM_ATTR_COSTUME[%d]: %s %u", p->dwApplyIndex, p->szApply, p->dwProb);
-		}
-	}
-
-	data += size * sizeof(TItemAttrTable);
-
-	#endif
 
 	/*
      * ITEM RARE
@@ -968,10 +824,6 @@ void CInputDB::Boot(const char* data)
 		for (WORD i = 0; i < size; ++i, ++kObj)
 			CManager::instance().LoadObject(kObj, true);
 	}
-#ifdef __AUCTION__
-	// Auction
-	AuctionManager::instance().Boot(data);
-#endif
 	set_global_time(*(time_t *) data);
 	data += sizeof(time_t);
 
@@ -993,7 +845,7 @@ void CInputDB::Boot(const char* data)
 	data += size * sizeof(TItemIDRangeTable);
 
 	//ADMIN_MANAGER
-	//관리자 등록
+
 	int ChunkSize = decode_2bytes(data );
 	data += 2;
 	int HostSize = decode_2bytes(data );
@@ -1047,28 +899,9 @@ void CInputDB::Boot(const char* data)
 		sys_log (0, "[MONARCH] Size %d Count %d", CandidacySize, CandidacyCount);
 
 	data += CandidacySize * CandidacyCount;
-	//END_MONARCH
 
-#ifdef GUILD_WAR_COUNTER
-	if (decode_2bytes(data) != sizeof(TGuildWarReserve))
-	{
-		sys_err("TGuildWarReserve table size error");
-		thecore_shutdown();
-		return;
-	}
-	data += 2;
-	size = decode_2bytes(data);
-	data += 2;
-	if (size)
-	{
-		std::vector<TGuildWarReserve> vec_data;
-		vec_data.clear();
-		vec_data.resize(size);
-		thecore_memcpy(&vec_data[0], (TGuildWarReserve*)data, sizeof(TGuildWarReserve) * size);
-		CGuildManager::Instance().SetWarStatisticsInfo(vec_data);
-		data += size * sizeof(TGuildWarReserve);
-	}
-#endif
+
+	//END_MONARCH
 
 	WORD endCheck=decode_2bytes(data);
 	if (endCheck != 0xffff)
@@ -1192,15 +1025,13 @@ void CInputDB::Boot(const char* data)
 
 	// END_OF_LOCALE_SERVICE
 
+
 	building::CManager::instance().FinalizeBoot();
 
 	CMotionManager::instance().Build();
-#ifdef ANTY_WAIT_HACK
-	extern void LoadAntyWHSums();
-	LoadAntyWHSums();
-	LoadAntyWHSums();
-#endif
+
 	signal_timer_enable(30);
+
 	if (test_server)
 	{
 		CMobManager::instance().DumpRegenCount("mob_count");
@@ -1210,15 +1041,16 @@ void CInputDB::Boot(const char* data)
 
 	// castle_boot
 	castle_boot();
-	
-	// Offline bot
-	LoadOfflineShop();
 
 	// request blocked_country_ip
 	{
 		db_clientdesc->DBPacket(HEADER_GD_BLOCK_COUNTRY_IP, 0, NULL, 0);
 		dev_log(LOG_DEB0, "<sent HEADER_GD_BLOCK_COUNTRY_IP>");
 	}
+
+#ifdef ENABLE_QUEST_BOOT_EVENT
+	quest::CQuestManager::instance().Boot();
+#endif
 }
 
 EVENTINFO(quest_login_event_info)
@@ -1277,7 +1109,6 @@ EVENTFUNC(quest_login_event)
 		return 0;
 	}
 }
-
 
 void CInputDB::QuestLoad(LPDESC d, const char * c_pData)
 {
@@ -1367,13 +1198,9 @@ void CInputDB::SafeboxLoad(LPDESC d, const char * c_pData)
 	LPCHARACTER ch = d->GetCharacter();
 
 	//PREVENT_TRADE_WINDOW
-#ifdef OFFLINE_SHOP
-	if (ch->GetShopOwner() || ch->GetExchange() || ch->GetMyShop() || ch->IsCubeOpen() || ch->GetOfflineShopOwner() || ch->GetMailBox())
-#else
-	if (ch->GetShopOwner() || ch->GetExchange() || ch->GetMyShop() || ch->IsCubeOpen())
-#endif
+	if (ch->GetShopOwner() || ch->GetExchange() || ch->GetMyShop() || ch->IsCubeOpen() )
 	{
-		d->GetCharacter()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(d->GetCharacter()->GetLanguage(),"다른거래창이 열린상태에서는 창고를 열수가 없습니다." ) );
+		d->GetCharacter()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("다른거래창이 열린상태에서는 창고를 열수가 없습니다." ) );
 		d->GetCharacter()->CancelSafeboxLoad();
 		return;
 	}
@@ -1386,7 +1213,7 @@ void CInputDB::SafeboxLoad(LPDESC d, const char * c_pData)
 	// END_OF_ADD_PREMIUM
 
 	//if (d->GetCharacter()->IsEquipUniqueItem(UNIQUE_ITEM_SAFEBOX_EXPAND))
-	//bSize = 3; // 창고확장권
+
 
 	//d->GetCharacter()->LoadSafebox(p->bSize * SAFEBOX_PAGE_SIZE, p->dwGold, p->wItemCount, (TPlayerItem *) (c_pData + sizeof(TSafeboxTable)));
 	d->GetCharacter()->LoadSafebox(bSize * SAFEBOX_PAGE_SIZE, p->dwGold, p->wItemCount, (TPlayerItem *) (c_pData + sizeof(TSafeboxTable)));
@@ -1406,7 +1233,6 @@ void CInputDB::SafeboxChangeSize(LPDESC d, const char * c_pData)
 }
 
 //
-// @version	05/06/20 Bang2ni - ReqSafeboxLoad 의 취소
 //
 void CInputDB::SafeboxWrongPassword(LPDESC d)
 {
@@ -1434,11 +1260,11 @@ void CInputDB::SafeboxChangePasswordAnswer(LPDESC d, const char* c_pData)
 	TSafeboxChangePasswordPacketAnswer* p = (TSafeboxChangePasswordPacketAnswer*) c_pData;
 	if (p->flag)
 	{
-		d->GetCharacter()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(d->GetCharacter()->GetLanguage(),"<창고> 창고 비밀번호가 변경되었습니다."));
+		d->GetCharacter()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<창고> 창고 비밀번호가 변경되었습니다."));
 	}
 	else
 	{
-		d->GetCharacter()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(d->GetCharacter()->GetLanguage(),"<창고> 기존 비밀번호가 틀렸습니다."));
+		d->GetCharacter()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<창고> 기존 비밀번호가 틀렸습니다."));
 	}
 }
 
@@ -1466,7 +1292,7 @@ void CInputDB::LoginAlready(LPDESC d, const char * c_pData)
 	if (!d)
 		return;
 
-	// INTERNATIONAL_VERSION 이미 접속중이면 접속 끊음
+
 	{
 		TPacketDGLoginAlready * p = (TPacketDGLoginAlready *) c_pData;
 
@@ -1578,59 +1404,29 @@ void CInputDB::GuildWar(const char* c_pData)
 {
 	TPacketGuildWar * p = (TPacketGuildWar*) c_pData;
 
-	sys_log(0, "InputDB::GuildWar %u %u state %d"
-#ifdef __IMPROVED_GUILD_WAR__
-		" maxplayer %d maxscore %d flags %ld custommapidx %d"
-#endif
-		, p->dwGuildFrom, p->dwGuildTo, p->bWar
-#ifdef __IMPROVED_GUILD_WAR__
-		, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index
-#endif
-	);
+	sys_log(0, "InputDB::GuildWar %u %u state %d", p->dwGuildFrom, p->dwGuildTo, p->bWar);
+
 	switch (p->bWar)
 	{
 		case GUILD_WAR_SEND_DECLARE:
 		case GUILD_WAR_RECV_DECLARE:
-			CGuildManager::instance().DeclareWar(p->dwGuildFrom, p->dwGuildTo, p->bType
-#ifdef __IMPROVED_GUILD_WAR__
-				, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index
-#endif
-			);
+			CGuildManager::instance().DeclareWar(p->dwGuildFrom, p->dwGuildTo, p->bType);
 			break;
 
 		case GUILD_WAR_REFUSE:
-			CGuildManager::instance().RefuseWar(p->dwGuildFrom, p->dwGuildTo
-#ifdef __IMPROVED_GUILD_WAR__
-				, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index
-#endif
-			);
+			CGuildManager::instance().RefuseWar(p->dwGuildFrom, p->dwGuildTo);
 			break;
 
 		case GUILD_WAR_WAIT_START:
-			CGuildManager::instance().WaitStartWar(p->dwGuildFrom, p->dwGuildTo
-#ifdef __IMPROVED_GUILD_WAR__
-				, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index
-#endif
-#ifdef GUILD_WAR_COUNTER
-				,p->warID
-#endif
-			);
+			CGuildManager::instance().WaitStartWar(p->dwGuildFrom, p->dwGuildTo);
 			break;
 
 		case GUILD_WAR_CANCEL:
-			CGuildManager::instance().CancelWar(p->dwGuildFrom, p->dwGuildTo
-#ifdef __IMPROVED_GUILD_WAR__
-				, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index
-#endif
-			);
+			CGuildManager::instance().CancelWar(p->dwGuildFrom, p->dwGuildTo);
 			break;
 
 		case GUILD_WAR_ON_WAR:
-			CGuildManager::instance().StartWar(p->dwGuildFrom, p->dwGuildTo
-#ifdef __IMPROVED_GUILD_WAR__
-				, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index
-#endif
-			);
+			CGuildManager::instance().StartWar(p->dwGuildFrom, p->dwGuildTo);
 			break;
 
 		case GUILD_WAR_END:
@@ -1642,11 +1438,7 @@ void CInputDB::GuildWar(const char* c_pData)
 			break;
 
 		case GUILD_WAR_RESERVE:
-			CGuildManager::instance().ReserveWar(p->dwGuildFrom, p->dwGuildTo, p->bType
-#ifdef __IMPROVED_GUILD_WAR__
-				, p->iMaxPlayer, p->iMaxScore, p->flags, p->custom_map_index
-#endif
-			);
+			CGuildManager::instance().ReserveWar(p->dwGuildFrom, p->dwGuildTo, p->bType);
 			break;
 
 		default:
@@ -1666,57 +1458,6 @@ void CInputDB::GuildSkillRecharge()
 {
 	CGuildManager::instance().SkillRecharge();
 }
-
-#if defined(__BL_MAILBOX__)
-#include "MailBox.h"
-void CInputDB::MailBoxRespondLoad(LPDESC d, const char* c_pData)
-{
-	if (!d)
-		return;
-
-	const LPCHARACTER ch = d->GetCharacter();
-	if (ch == nullptr)
-		return;
-
-	WORD size;
-
-	if (decode_2bytes(c_pData) != sizeof(TMailBoxTable))
-	{
-		sys_err("mailbox table size error");
-		return;
-	}
-
-	c_pData += 2;
-	size = decode_2bytes(c_pData);
-	c_pData += 2;
-
-	CMailBox::Create(ch, (TMailBoxTable*)c_pData, size);
-}
-
-void CInputDB::MailBoxRespondName(LPDESC d, const char* c_pData)
-{
-	if (d == nullptr)
-		return;
-
-	const LPCHARACTER ch = d->GetCharacter();
-	if (ch == nullptr)
-		return;
-
-	CMailBox* mail = ch->GetMailBox();
-	if (mail == nullptr)
-		return;
-
-	mail->CheckPlayerResult((TMailBox*)c_pData);
-}
-
-void CInputDB::MailBoxRespondUnreadData(LPDESC d, const char* c_pData)
-{
-	if (d == nullptr)
-		return;
-
-	CMailBox::ResultUnreadData(d->GetCharacter(), (TMailBoxRespondUnreadData*)c_pData);
-}
-#endif
 
 void CInputDB::GuildExpUpdate(const char* c_pData)
 {
@@ -1780,10 +1521,6 @@ void CInputDB::GuildLadder(const char* c_pData)
 
 	g->SetLadderPoint(p->lLadderPoint);
 	g->SetWarData(p->lWin, p->lDraw, p->lLoss);
-#ifdef GUILD_RANK_EFFECT
-	CGuildManager::Instance().SortGuildCache();
-#endif
-
 }
 
 void CInputDB::ItemLoad(LPDESC d, const char * c_pData)
@@ -1818,9 +1555,11 @@ void CInputDB::ItemLoad(LPDESC d, const char * c_pData)
 		item->SetSkipSave(true);
 		item->SetSockets(p->alSockets);
 		item->SetAttributes(p->aAttr);
-#ifdef CHANGELOOK_SYSTEM
-		item->SetTransmutation(p->transmutation);
+
+#ifdef ENABLE_HIGHLIGHT_NEW_ITEM
+		item->SetLastOwnerPID(p->owner);
 #endif
+
 #ifdef ENABLE_BELT_INVENTORY_EX
 		if (p->window == BELT_INVENTORY)
 		{
@@ -1832,7 +1571,7 @@ void CInputDB::ItemLoad(LPDESC d, const char * c_pData)
 		if ((p->window == INVENTORY && ch->GetInventoryItem(p->pos)) ||
 				(p->window == EQUIPMENT && ch->GetWear(p->pos)))
 		{
-			sys_log(0, "ITEM_RESTORE: %s %s", ch->GetName(), item->GetName(ch->GetLanguage()));
+			sys_log(0, "ITEM_RESTORE: %s %s", ch->GetName(), item->GetName());
 			v.push_back(item);
 		}
 		else
@@ -1844,9 +1583,6 @@ void CInputDB::ItemLoad(LPDESC d, const char * c_pData)
 #ifdef FAST_EQUIP_WORLDARD
 				case CHANGE_EQUIP:
 #endif
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-				case BONUS_NEW_67:
-#endif
 #ifdef ENABLE_SWITCHBOT
 				case SWITCHBOT:
 #endif
@@ -1856,11 +1592,7 @@ void CInputDB::ItemLoad(LPDESC d, const char * c_pData)
 				case GHOSTSTONE_INVENTORY:
 				case GENERAL_INVENTORY:
 #endif
-#ifdef __HIGHLIGHT_SYSTEM__
-					item->AddToCharacter(ch, TItemPos(p->window, p->pos), false);
-#else
 					item->AddToCharacter(ch, TItemPos(p->window, p->pos));
-#endif
 					break;
 
 				case EQUIPMENT:
@@ -1904,11 +1636,7 @@ void CInputDB::ItemLoad(LPDESC d, const char * c_pData)
 			item->StartDestroyEvent();
 		}
 		else
-#ifdef __HIGHLIGHT_SYSTEM__
-			item->AddToCharacter(ch, TItemPos(INVENTORY, pos), false);
-#else
 			item->AddToCharacter(ch, TItemPos(INVENTORY, pos));
-#endif
 	}
 
 	ch->CheckMaximumPoints();
@@ -1940,35 +1668,7 @@ void CInputDB::AffectLoad(LPDESC d, const char * c_pData)
 
 }
 
-// marriage load
-void CInputDB::MarriageLoad(LPDESC d, const char * c_pData)
-{
-	if (!d)
-		return;
 
-	if (!d->GetCharacter())
-		return;
-
-	// LPCHARACTER ch = d->GetCharacter();
-
-	TPacketMarriageElement* p = (TPacketMarriageElement*) c_pData;
-
-	// if (ch->GetPlayerID() != dwPID)
-		// return;
-
-	LPCHARACTER ch = d->GetCharacter();
-
-	DWORD dwPID = decode_4bytes(c_pData);
-	c_pData += sizeof(DWORD);
-
-	DWORD dwCount = decode_4bytes(c_pData);
-	c_pData += sizeof(DWORD);
-
-	if (ch->GetPlayerID() != dwPID)
-		return;
-
-	ch->LoadMarriageInfo(dwCount, (TPacketMarriageElement *) c_pData);
-}
 
 void CInputDB::PartyCreate(const char* c_pData)
 {
@@ -2095,11 +1795,11 @@ void CInputDB::AuthLogin(LPDESC d, const char * c_pData)
 
 	if (bResult)
 	{
-		// Panama 암호화 팩에 필요한 키 보내기
+
 		SendPanamaList(d);
 		ptoc.dwLoginKey = d->GetLoginKey();
 
-		//NOTE: AuthSucess보다 먼저 보내야지 안그러면 PHASE Close가 되서 보내지지 않는다.-_-
+
 		//Send Client Package CryptKey
 		{
 			DESC_MANAGER::instance().SendClientPackageCryptKey(d);
@@ -2115,15 +1815,6 @@ void CInputDB::AuthLogin(LPDESC d, const char * c_pData)
 
 	d->Packet(&ptoc, sizeof(TPacketGCAuthSuccess));
 	sys_log(0, "AuthLogin result %u key %u", bResult, d->GetLoginKey());
-
-#ifdef HANDSHAKE_FIX
-	// Validating handshake
-	TPacketGGHandshakeValidate pack;
-	pack.header = HEADER_GG_HANDSHAKE_VALIDATION;
-	strlcpy(pack.sUserIP, d->GetHostName(), sizeof(pack.sUserIP));
-	P2P_MANAGER::instance().Send(&pack, sizeof(pack));
-#endif
-
 }
 void CInputDB::AuthLoginOpenID(LPDESC d, const char * c_pData)
 {
@@ -2138,11 +1829,11 @@ void CInputDB::AuthLoginOpenID(LPDESC d, const char * c_pData)
 
 	if (bResult)
 	{
-		// Panama 암호화 팩에 필요한 키 보내기
+
 		SendPanamaList(d);
 		ptoc.dwLoginKey = d->GetLoginKey();
 
-		//NOTE: AuthSucess보다 먼저 보내야지 안그러면 PHASE Close가 되서 보내지지 않는다.-_-
+
 		//Send Client Package CryptKey
 		{
 			DESC_MANAGER::instance().SendClientPackageCryptKey(d);
@@ -2160,14 +1851,6 @@ void CInputDB::AuthLoginOpenID(LPDESC d, const char * c_pData)
 
 	d->Packet(&ptoc, sizeof(TPacketGCAuthSuccessOpenID));
 	sys_log(0, "AuthLogin result %u key %u", bResult, d->GetLoginKey());
-
-#ifdef HANDSHAKE_FIX
-	// Validating handshake
-	TPacketGGHandshakeValidate pack;
-	pack.header = HEADER_GG_HANDSHAKE_VALIDATION;
-	strlcpy(pack.sUserIP, d->GetHostName(), sizeof(pack.sUserIP));
-	P2P_MANAGER::instance().Send(&pack, sizeof(pack));
-#endif		
 }
 
 void CInputDB::ChangeEmpirePriv(const char* c_pData)
@@ -2179,9 +1862,7 @@ void CInputDB::ChangeEmpirePriv(const char* c_pData)
 	// END_OF_ADD_EMPIRE_PRIV_TIME
 }
 
-/**
- * @version 05/06/08	Bang2ni - 지속시간 추가
- */
+
 void CInputDB::ChangeGuildPriv(const char* c_pData)
 {
 	TPacketDGChangeGuildPriv* p = (TPacketDGChangeGuildPriv*) c_pData;
@@ -2302,7 +1983,7 @@ void CInputDB::BillingExpire(const char * c_pData)
 			d->SetBillingExpireSecond(p->dwRemainSeconds);
 
 			if (ch)
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"결재기간이 %d분 후 만료 됩니다."), (p->dwRemainSeconds / 60));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("결재기간이 %d분 후 만료 됩니다."), (p->dwRemainSeconds / 60));
 		}
 	}
 }
@@ -2357,7 +2038,7 @@ void CInputDB::VCard(const char * c_pData)
 
 	sys_log(0, "VCARD: %u %s %s %s %s", p->dwID, p->szSellCharacter, p->szSellAccount, p->szBuyCharacter, p->szBuyAccount);
 
-	std::auto_ptr<SQLMsg> pmsg(DBManager::instance().DirectQuery("SELECT sell_account, buy_account, time FROM vcard WHERE id=%u", p->dwID));
+	auto pmsg(DBManager::instance().DirectQuery("SELECT sell_account, buy_account, time FROM vcard WHERE id=%u", p->dwID));
 	if (pmsg->Get()->uiNumRows != 1)
 	{
 		sys_log(0, "VCARD_FAIL: no data");
@@ -2387,16 +2068,14 @@ void CInputDB::VCard(const char * c_pData)
 		return;
 	}
 
-	std::auto_ptr<SQLMsg> pmsg1(DBManager::instance().DirectQuery("UPDATE GameTime SET LimitTime=LimitTime+%d WHERE UserID='%s'", time, p->szBuyAccount));
-
+	auto pmsg1(DBManager::instance().DirectQuery("UPDATE GameTime SET LimitTime=LimitTime+%d WHERE UserID='%s'", time, p->szBuyAccount));
 	if (pmsg1->Get()->uiAffectedRows == 0 || pmsg1->Get()->uiAffectedRows == (uint32_t)-1)
 	{
 		sys_log(0, "VCARD_FAIL: cannot modify GameTime table");
 		return;
 	}
 
-	std::auto_ptr<SQLMsg> pmsg2(DBManager::instance().DirectQuery("UPDATE vcard,GameTime SET sell_pid='%s', buy_pid='%s', buy_account='%s', sell_time=NOW(), new_time=GameTime.LimitTime WHERE vcard.id=%u AND GameTime.UserID='%s'", p->szSellCharacter, p->szBuyCharacter, p->szBuyAccount, p->dwID, p->szBuyAccount));
-
+	auto pmsg2(DBManager::instance().DirectQuery("UPDATE vcard,GameTime SET sell_pid='%s', buy_pid='%s', buy_account='%s', sell_time=NOW(), new_time=GameTime.LimitTime WHERE vcard.id=%u AND GameTime.UserID='%s'", p->szSellCharacter, p->szBuyCharacter, p->szBuyAccount, p->dwID, p->szBuyAccount));
 	if (pmsg2->Get()->uiAffectedRows == 0 || pmsg2->Get()->uiAffectedRows == (uint32_t)-1)
 	{
 		sys_log(0, "VCARD_FAIL: cannot modify vcard table");
@@ -2405,15 +2084,6 @@ void CInputDB::VCard(const char * c_pData)
 
 	sys_log(0, "VCARD_SUCCESS: %s %s", p->szBuyAccount, p->szBuyCharacter);
 }
-
-
-#ifdef ENABLE_SPECIAL_AFFECT
-void CInputDB::SpecialAffect(TSpecialAffects* p)
-{
-	CHARACTER_MANAGER::instance().HandleSpecialAffects(p->aPids);
-	CGuildManager::instance().HandleSpecialAffects(p->aGids);
-}
-#endif
 
 void CInputDB::GuildWarReserveAdd(TGuildWarReserve * p)
 {
@@ -2471,13 +2141,6 @@ void CInputDB::WeddingEnd(TPacketWeddingEnd* p)
 	marriage::CManager::instance().WeddingEnd(p->dwPID1, p->dwPID2);
 }
 
-#ifdef OFFLINE_SHOP
-void CInputDB::HandleCurrentOnline(TPacketOnlineSize * p)
-{
-	DESC_MANAGER::instance().BroadcastOnlineCount(p->dwOnlinePlayers, p->dwOnlineShops);
-}
-#endif
-
 // MYSHOP_PRICE_LIST
 void CInputDB::MyshopPricelistRes(LPDESC d, const TPacketMyshopPricelistHeader* p )
 {
@@ -2531,9 +2194,488 @@ void CInputDB::ReloadAdmin(const char * c_pData )
 }
 //END_RELOAD_ADMIN
 
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+template <class T>
+const char* Decode(T*& pObj, const char* data){
+	pObj = (T*) data;
+	return data + sizeof(T);
+}
+
+void OfflineShopLoadTables(const char* data)
+{
+	offlineshop::TSubPacketDGLoadTables* pSubPack = nullptr;
+	data = Decode(pSubPack, data);
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	
+	OFFSHOP_DEBUG("shop count %u , offer count %u , auction count %u, auction offers %u ",pSubPack->dwShopCount , pSubPack->dwOfferCount, pSubPack->dwAuctionCount , pSubPack->dwAuctionOfferCount);
+
+	for (DWORD i = 0; i < pSubPack->dwShopCount; i++)
+	{
+		offlineshop::TShopInfo* pShop = nullptr;
+		offlineshop::TItemInfo* pItem = nullptr;
+
+		DWORD* pdwSoldCount= nullptr;
+
+		data = Decode(pShop, data);
+		data = Decode(pdwSoldCount, data);
+
+		OFFSHOP_DEBUG("shop %u %s (solds %u) ",pShop->dwOwnerID , pShop->szName , *pdwSoldCount);
+
+		offlineshop::CShop* pkShop = rManager.PutsNewShop(pShop);
+
+		
+		for (DWORD j = 0; j < pShop->dwCount; j++)
+		{
+			data = Decode(pItem, data);
+			offlineshop::CShopItem kItem(pItem->dwItemID);
+			
+			kItem.SetOwnerID(pItem->dwOwnerID);
+			kItem.SetInfo(pItem->item);
+			kItem.SetPrice(pItem->price);
+			kItem.SetWindow(NEW_OFFSHOP);
+
+			OFFSHOP_DEBUG("for sale item %u ",pItem->dwItemID);
+			pkShop->AddItem(kItem);
+		}
+
+
+		for (DWORD j = 0; j < *pdwSoldCount; j++)
+		{
+			data = Decode(pItem, data);
+			offlineshop::CShopItem kItem(pItem->dwItemID);
+
+			kItem.SetOwnerID(pItem->dwOwnerID);
+			kItem.SetInfo(pItem->item);
+			kItem.SetPrice(pItem->price);
+			kItem.SetWindow(NEW_OFFSHOP);
+
+			OFFSHOP_DEBUG("sold item %u ",pItem->dwItemID);
+			pkShop->AddItemSold(kItem);
+		}
+	}
+
+	offlineshop::TOfferInfo* pOffer=nullptr;
+
+	for (DWORD i = 0; i < pSubPack->dwOfferCount; i++)
+	{
+		data = Decode(pOffer, data);
+		OFFSHOP_DEBUG("offer shop : id %u , shopid %u, itemid %u, buyer %u ",pOffer->dwOfferID, pOffer->dwOwnerID, pOffer->dwItemID , pOffer->dwOffererID);
+		offlineshop::CShop* pkShop = rManager.GetShopByOwnerID(pOffer->dwOwnerID);
+
+		if (!pkShop)
+		{
+			sys_err("CANNOT FIND SHOP BY OWNERID (TOfferInfo) %d ",pOffer->dwOwnerID);
+			continue;
+		}
+
+		pkShop->AddOffer(pOffer);
+
+		//if(!pOffer->bAccepted)
+		rManager.PutsNewOffer(pOffer);
+	}
+
+
+	offlineshop::TAuctionInfo*		pTempAuction=nullptr;
+	offlineshop::TAuctionOfferInfo* pTempAuctionOffer=nullptr;
+
+
+	for (DWORD i = 0; i < pSubPack->dwAuctionCount; i++)
+	{
+		data = Decode(pTempAuction, data);
+		rManager.PutsAuction(*pTempAuction);
+
+		OFFSHOP_DEBUG("auction %u id , %s name , %u minutes ",pTempAuction->dwOwnerID , pTempAuction->szOwnerName, pTempAuction->dwDuration);
+	}
+
+
+	for (DWORD i = 0; i < pSubPack->dwAuctionOfferCount; i++)
+	{
+		data = Decode(pTempAuctionOffer, data);
+		rManager.PutsAuctionOffer(*pTempAuctionOffer);
+
+		OFFSHOP_DEBUG("offer %u shop , %s buyer ",pTempAuctionOffer->dwOwnerID, pTempAuctionOffer->szBuyerName);
+	}
+}
+
+
+void OfflineShopBuyItemPacket(const char* data)
+{
+	offlineshop::TSubPacketDGBuyItem* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopBuyDBPacket(subpack->dwBuyerID, subpack->dwOwnerID, subpack->dwItemID);
+}
+
+
+void OfflineShopLockedBuyItemPacket(const char* data)
+{
+	offlineshop::TSubPacketDGLockedBuyItem* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopLockedBuyItemDBPacket(subpack->dwBuyerID, subpack->dwOwnerID, subpack->dwItemID);
+}
+
+
+void OfflineShopEditItemPacket(const char* data)
+{
+	offlineshop::TSubPacketDGEditItem* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopEditItemDBPacket(subpack->dwOwnerID , subpack->dwItemID, subpack->price);
+}
+
+
+void OfflineShopRemoveItemPacket(const char* data)
+{
+	offlineshop::TSubPacketDGRemoveItem* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopRemoveItemDBPacket(subpack->dwOwnerID , subpack->dwItemID);
+}
+
+
+void OfflineShopAddItemPacket(const char* data)
+{
+	offlineshop::TSubPacketDGAddItem* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopAddItemDBPacket(subpack->dwOwnerID, subpack->item);
+}
+
+
+void OfflineShopForceClosePacket(const char* data)
+{
+	offlineshop::TSubPacketDGShopForceClose* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopForceCloseDBPacket(subpack->dwOwnerID);
+}
+
+
+void OfflineShopShopCreateNewPacket(const char* data)
+{
+	offlineshop::TSubPacketDGShopCreateNew* subpack;
+	data = Decode(subpack, data);
+
+	OFFSHOP_DEBUG("shop %u , dur %u , count %u ",subpack->shop.dwOwnerID , subpack->shop.dwDuration , subpack->shop.dwCount);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+
+	std::vector<offlineshop::TItemInfo> vec;
+	vec.reserve(subpack->shop.dwCount);
+
+	offlineshop::TItemInfo* pItemInfo=nullptr;
+
+	for (DWORD i = 0; i < subpack->shop.dwCount; i++)
+	{
+		data = Decode(pItemInfo, data);
+		vec.push_back(*pItemInfo);
+
+		OFFSHOP_DEBUG("item id %u , item vnum %u , item count %u ",pItemInfo->dwItemID , pItemInfo->item.dwVnum , pItemInfo->item.dwCount);
+	}
+
+
+	rManager.RecvShopCreateNewDBPacket(subpack->shop, vec);
+}
+
+
+void OfflineShopShopChangeNamePacket(const char* data)
+{
+	offlineshop::TSubPacketDGShopChangeName* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopChangeNameDBPacket(subpack->dwOwnerID , subpack->szName);
+}
+
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+void OfflineShopShopExtendTimePacket(const char* data)
+{
+	offlineshop::TSubPacketDGShopExtendTime* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopExtendTimeDBPacket(subpack->dwOwnerID , subpack->dwTime);
+}
+#endif
+
+void OfflineShopOfferCreatePacket(const char* data)
+{
+	offlineshop::TSubPacketDGOfferCreate* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopOfferNewDBPacket(subpack->offer);
+}
+
+
+void OfflineShopOfferNotifiedPacket(const char* data)
+{
+	offlineshop::TSubPacketDGOfferNotified* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopOfferNotifiedDBPacket(subpack->dwOfferID , subpack->dwOwnerID);
+}
+
+
+void OfflineShopOfferAcceptPacket(const char* data)
+{
+	offlineshop::TSubPacketDGOfferAccept* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopOfferAcceptDBPacket(subpack->dwOfferID , subpack->dwOwnerID);
+}
+
+
+
+
+void OfflineShopOfferCancelPacket(const char* data)
+{
+	offlineshop::TSubPacketDGOfferCancel* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopOfferCancelDBPacket(subpack->dwOfferID , subpack->dwOwnerID, subpack->IsRemovingItem);//offlineshop-updated 05/08/19
+}
+
+
+
+
+void OfflineShopSafeboxAddItemPacket(const char* data)
+{
+	offlineshop::TSubPacketDGSafeboxAddItem* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopSafeboxAddItemDBPacket(subpack->dwOwnerID , subpack->dwItemID , subpack->item);
+}
+
+
+void OfflineShopSafeboxAddValutesPacket(const char* data)
+{
+	offlineshop::TSubPacketDGSafeboxAddValutes* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopSafeboxAddValutesDBPacket(subpack->dwOwnerID , subpack->valute);
+}
+
+
+
+void OfflineShopSafeboxLoad(const char* data)
+{
+	offlineshop::TSubPacketDGSafeboxLoad* subpack;
+	data = Decode(subpack, data);
+
+	std::vector<DWORD> ids;
+	std::vector<offlineshop::TItemInfoEx> items;
+
+	ids.reserve(subpack->dwItemCount);
+	items.reserve(subpack->dwItemCount);
+
+	DWORD* pdwItemID=nullptr;
+	offlineshop::TItemInfoEx* temp;
+
+	for (DWORD i = 0; i < subpack->dwItemCount; i++)
+	{
+		data = Decode(pdwItemID, data);
+		data = Decode(temp, data);
+
+		ids.push_back(*pdwItemID);
+		items.push_back(*temp);
+	}
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopSafeboxLoadDBPacket(subpack->dwOwnerID , subpack->valute , ids, items);
+}
+
+
+//patch 08-03-2020
+void OfflineshopSafeboxExpiredItem(const char* data) {
+	offlineshop::TSubPacketDGSafeboxExpiredItem* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopSafeboxExpiredItemDBPacket(subpack->dwOwnerID, subpack->dwItemID);
+}
+
+
+void OfflineShopAuctionCreate(const char* data)
+{
+	offlineshop::TSubPacketDGAuctionCreate* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::GetManager().RecvAuctionCreateDBPacket(subpack->auction);
+}
+
+
+
+void OfflineShopAuctionAddOffer(const char* data)
+{
+	offlineshop::TSubPacketDGAuctionAddOffer* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::GetManager().RecvAuctionAddOfferDBPacket(subpack->offer);
+}
+
+
+
+void OfflineShopAuctionExpired(const char* data)
+{
+	offlineshop::TSubPacketDGAuctionExpired* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::GetManager().RecvAuctionExpiredDBPacket(subpack->dwOwnerID);
+}
+
+
+
+
+
+
+void OfflineshopShopExpired(const char* data)
+{
+	offlineshop::TSubPacketDGShopExpired* subpack;
+	data = Decode(subpack, data);
+
+	offlineshop::CShopManager& rManager = offlineshop::GetManager();
+	rManager.RecvShopExpiredDBPacket(subpack->dwOwnerID);
+}
+
+
+
+
+
+
+void OfflineshopPacket(const char* data)
+{
+	TPacketDGNewOfflineShop* pPack=nullptr;
+	data = Decode(pPack, data);
+
+	OFFSHOP_DEBUG("recv subheader %d",pPack->bSubHeader);
+
+	switch (pPack->bSubHeader)
+	{
+	case offlineshop::SUBHEADER_DG_LOAD_TABLES:
+		OfflineShopLoadTables(data);
+		return;
+
+	case offlineshop::SUBHEADER_DG_BUY_ITEM:
+		OfflineShopBuyItemPacket(data);
+		return;
+
+	case offlineshop::SUBHEADER_DG_LOCKED_BUY_ITEM:
+		OfflineShopLockedBuyItemPacket(data);
+		return;
+
+	case offlineshop::SUBHEADER_DG_EDIT_ITEM:
+		OfflineShopEditItemPacket(data);
+		return;
+	case offlineshop::SUBHEADER_DG_REMOVE_ITEM:
+		OfflineShopRemoveItemPacket(data);
+		return;
+
+
+	case offlineshop::SUBHEADER_DG_ADD_ITEM:
+		OfflineShopAddItemPacket(data);
+		return;
+
+
+	case offlineshop::SUBHEADER_DG_SHOP_FORCE_CLOSE:
+		OfflineShopForceClosePacket(data);
+		return;
+
+
+	case offlineshop::SUBHEADER_DG_SHOP_CREATE_NEW:
+		OfflineShopShopCreateNewPacket(data);
+		return;
+
+
+	case offlineshop::SUBHEADER_DG_SHOP_CHANGE_NAME:
+		OfflineShopShopChangeNamePacket(data);
+		return;
+
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+	case offlineshop::SUBHEADER_DG_SHOP_EXTEND_TIME:
+		OfflineShopShopExtendTimePacket(data);
+		return;
+#endif
+
+	case offlineshop::SUBHEADER_DG_SHOP_EXPIRED:
+		OfflineshopShopExpired(data);
+		break;
+
+
+	case offlineshop::SUBHEADER_DG_OFFER_CREATE:
+		OfflineShopOfferCreatePacket(data);
+		return;
+
+	case offlineshop::SUBHEADER_DG_OFFER_NOTIFIED:
+		OfflineShopOfferNotifiedPacket(data);
+		return;
+
+	case offlineshop::SUBHEADER_DG_OFFER_ACCEPT:
+		OfflineShopOfferAcceptPacket(data);
+		return;
+	
+	case offlineshop::SUBHEADER_DG_OFFER_CANCEL:
+		OfflineShopOfferCancelPacket(data);
+		return;
+
+	
+
+	case offlineshop::SUBHEADER_DG_SAFEBOX_ADD_ITEM:
+		OfflineShopSafeboxAddItemPacket(data);
+		return;
+
+	case offlineshop::SUBHEADER_DG_SAFEBOX_ADD_VALUTES:
+		OfflineShopSafeboxAddValutesPacket(data);
+		return;
+
+	case offlineshop::SUBHEADER_DG_SAFEBOX_LOAD:
+		OfflineShopSafeboxLoad(data);
+		return;
+
+	//patch 08-03-2020
+	case offlineshop::SUBHEADER_DG_SAFEBOX_EXPIRED_ITEM:
+		OfflineshopSafeboxExpiredItem(data);
+		return;
+
+
+	//AUCTION
+	case offlineshop::SUBHEADER_DG_AUCTION_CREATE:
+		OfflineShopAuctionCreate(data);
+		return;
+
+
+	case offlineshop::SUBHEADER_DG_AUCTION_ADD_OFFER:
+		OfflineShopAuctionAddOffer(data);
+		return;
+
+
+	case offlineshop::SUBHEADER_DG_AUCTION_EXPIRED:
+		OfflineShopAuctionExpired(data);
+		return;
+
+
+
+	default:
+		sys_err("UKNOWN SUB HEADER %d ", pPack->bSubHeader);
+		return;
+	}
+}
+#endif
+
 ////////////////////////////////////////////////////////////////////
 // Analyze
-// @version	05/06/10 Bang2ni - 아이템 가격정보 리스트 패킷(HEADER_DG_MYSHOP_PRICELIST_RES) 처리루틴 추가.
 ////////////////////////////////////////////////////////////////////
 int CInputDB::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 {
@@ -2542,6 +2684,7 @@ int CInputDB::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 	case HEADER_DG_BOOT:
 		Boot(c_pData);
 		break;
+
 	case HEADER_DG_LOGIN_SUCCESS:
 		LoginSuccess(m_dwHandle, c_pData);
 		break;
@@ -2599,27 +2742,9 @@ int CInputDB::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 		AffectLoad(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
 		break;
 
-	case HEADER_DG_MARRIAGE_LOAD:
-		MarriageLoad(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
-		break;
-
 	case HEADER_DG_SAFEBOX_LOAD:
 		SafeboxLoad(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
 		break;
-
-#if defined(__BL_MAILBOX__)
-	case HEADER_DG_RESPOND_MAILBOX_LOAD:
-		MailBoxRespondLoad(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
-		break;
-
-	case HEADER_DG_RESPOND_MAILBOX_CHECK_NAME:
-		MailBoxRespondName(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
-		break;
-
-	case HEADER_DG_RESPOND_MAILBOX_UNREAD:
-		MailBoxRespondUnreadData(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
-		break;
-#endif
 
 	case HEADER_DG_SAFEBOX_CHANGE_SIZE:
 		SafeboxChangeSize(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
@@ -2803,12 +2928,6 @@ int CInputDB::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 	case HEADER_DG_UPDATE_LAND:
 		UpdateLand(c_pData);
 		break;
-		
-#ifdef ENABLE_SPECIAL_AFFECT
-	case HEADER_DG_SPECIAL_AFFECTS:
-		SpecialAffect((TSpecialAffects*)c_pData);
-		break;
-#endif
 
 	case HEADER_DG_NOTICE:
 		Notice(c_pData);
@@ -2864,17 +2983,7 @@ int CInputDB::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 	case HEADER_DG_RELOAD_ADMIN:
 		ReloadAdmin(c_pData );
 		break;
-#ifdef ENABLE_EVENT_MANAGER
-	case HEADER_DG_EVENT_MANAGER:
-		EventManager(c_pData);
-		break;
-#endif
 	//END_RELOAD_ADMIN
-#ifdef GUILD_WAR_COUNTER
-	case HEADER_DG_GUILD_COUNTER:
-		GuildCounter(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
-		break;
-#endif
 
 	case HEADER_DG_ADD_MONARCH_MONEY:
 		AddMonarchMoney(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData );
@@ -2920,37 +3029,16 @@ int CInputDB::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 	case HEADER_DG_NEED_LOGIN_LOG:
 		DetailLog( (TPacketNeedLoginLogInfo*) c_pData );
 		break;
-	// 독일 선물 기능 테스트
+
 	case HEADER_DG_ITEMAWARD_INFORMER:
 		ItemAwardInformer((TPacketItemAwardInfromer*) c_pData);
 		break;
 	case HEADER_DG_RESPOND_CHANNELSTATUS:
 		RespondChannelStatus(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
 		break;
-
-#ifdef OFFLINE_SHOP
-	case HEADER_DG_TOTAL_ONLINE:
-		HandleCurrentOnline((TPacketOnlineSize*)c_pData);
-		break;
-#endif
-#ifdef __AUCTION__
-	case HEADER_DG_AUCTION_RESULT:
-		if (auction_server)
-			AuctionManager::instance().recv_result_auction(m_dwHandle, (TPacketDGResultAuction*)c_pData);
-		break;
-#endif
-#ifdef ENABLE_DECORUM
-	case HEADER_DG_DECORUM_LOAD:
-		DecorumLoad(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
-		break;
-	
-	case HEADER_DG_DECORUM_END_SEASON:
-		BroadcastedDecurumSeasonResult(c_pData);
-		break;
-#endif
-#ifdef __SPECIALSTAT_SYSTEM__
-	case HEADER_DG_SPECIALSTAT_LOAD_SUCCESS:
-		LoadSpecialStats(DESC_MANAGER::instance().FindByHandle(m_dwHandle), c_pData);
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	case HEADER_DG_NEW_OFFLINESHOP:
+		OfflineshopPacket(c_pData);
 		break;
 #endif
 	default:
@@ -3020,7 +3108,7 @@ void CInputDB::AddMonarchMoney(LPDESC d, const char * data )
 	if (ch)
 	{
 		if (number(1, 100) > 95)
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"현재 %s 국고에는 %u 의 돈이 있습니다"), EMPIRE_NAME(Empire), CMonarch::instance().GetMoney(Empire));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("현재 %s 국고에는 %u 의 돈이 있습니다"), EMPIRE_NAME(Empire), CMonarch::instance().GetMoney(Empire));
 	}
 }
 
@@ -3040,7 +3128,7 @@ void CInputDB::DecMonarchMoney(LPDESC d, const char * data)
 
 	if (ch)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"현재 %s 국고에는 %d 의 돈이 있습니다"), EMPIRE_NAME(Empire), CMonarch::instance().GetMoney(Empire));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("현재 %s 국고에는 %d 의 돈이 있습니다"), EMPIRE_NAME(Empire), CMonarch::instance().GetMoney(Empire));
 	}
 }
 
@@ -3061,7 +3149,7 @@ void CInputDB::TakeMonarchMoney(LPDESC d, const char * data)
 			return;
 
 		LPCHARACTER ch = d->GetCharacter();
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"국고에 돈이 부족하거나 돈을 가져올수 없는 상황입니다"));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("국고에 돈이 부족하거나 돈을 가져올수 없는 상황입니다"));
 	}
 }
 
@@ -3110,7 +3198,7 @@ void CInputDB::DetailLog(const TPacketNeedLoginLogInfo* info)
 
 void CInputDB::ItemAwardInformer(TPacketItemAwardInfromer *data)
 {
-	LPDESC d = DESC_MANAGER::instance().FindByLoginName(data->login);	//login정보
+	LPDESC d = DESC_MANAGER::instance().FindByLoginName(data->login);
 
 	if(d == NULL)
 		return;
@@ -3119,12 +3207,12 @@ void CInputDB::ItemAwardInformer(TPacketItemAwardInfromer *data)
 		if (d->GetCharacter())
 		{
 			LPCHARACTER ch = d->GetCharacter();
-			ch->SetItemAward_vnum(data->vnum);	// ch 에 임시 저장해놨다가 QuestLoad 함수에서 처리
+			ch->SetItemAward_vnum(data->vnum);
 			ch->SetItemAward_cmd(data->command);
 
-			if(d->IsPhase(PHASE_GAME))			//게임페이즈일때
+			if(d->IsPhase(PHASE_GAME))
 			{
-				quest::CQuestManager::instance().ItemInformer(ch->GetPlayerID(),ch->GetItemAward_vnum());	//questmanager 호출
+				quest::CQuestManager::instance().ItemInformer(ch->GetPlayerID(),ch->GetItemAward_vnum());
 			}
 		}
 	}
@@ -3148,167 +3236,4 @@ void CInputDB::RespondChannelStatus(LPDESC desc, const char* pcData)
 	desc->Packet(&bSuccess, sizeof(bSuccess));
 	desc->SetChannelStatusRequested(false);
 }
-
-#ifdef ENABLE_DECORUM
-void CInputDB::DecorumLoad(LPDESC d, const char * c_pData)
-{
-	if (NULL == d || NULL == d->GetCharacter() || NULL == c_pData)
-		return;
-
-	LPCHARACTER ch = d->GetCharacter();
-	TDecorumTable * pDecTable = (TDecorumTable *)c_pData;
-	if (0 == pDecTable->dwPID)
-		return;
-
-	if (ch->GetPlayerID() != pDecTable->dwPID)
-	{
-		sys_err("PID differs with DecorumID %u %u", ch->GetPlayerID(), pDecTable->dwPID);
-		return;
-	}
-
-	DECORUM * pkDec = CDecorumManager::instance().GetDecorum(ch->GetPlayerID());
-	
-	if (pkDec->IsLoaded())
-	{
-		sys_log(0, "Load Decorum for Player %s: [decorum: %d, kill: %d, death: %d], [promotion: %d, demotion: %d] JUST LOADED", ch->GetName(), 
-		pkDec->GetDecorumPoint(), pkDec->GetKill(), pkDec->GetDeath(), pkDec->GetPromotion(), pkDec->GetDemotion());
-		return;
-	}
-	
-	if (!pDecTable->dwDecorum)
-	{
-		sys_log(0, "Load Decorum for Player %s: [decorum: %d, kill: %d, death: %d], [promotion: %d, demotion: %d] dwDecorum = 0", ch->GetName(), 
-		pkDec->GetDecorumPoint(), pkDec->GetKill(), pkDec->GetDeath(), pkDec->GetPromotion(), pkDec->GetDemotion());
-		return;
-	}
-		
-	pkDec->SetDecorumPoint(pDecTable->dwDecorum);
-	pkDec->SetKill(pDecTable->dwKill);
-	pkDec->SetDeath(pDecTable->dwDeath);
-	pkDec->SetPromotion(pDecTable->dwPromotion);
-	pkDec->SetDemotion(pDecTable->dwDemotion);
-	pkDec->SetBlock(pDecTable->dwBlock);
-	pkDec->SetLastKills(pDecTable->adwLastKills);
-	pkDec->SetLastArena(pDecTable->dwLastArena);
-	
-	pkDec->SetDuelResult(pDecTable->adwDuel[0], pDecTable->adwDuel[1]);
-	pkDec->SetArenaResult(ARENA1, pDecTable->adwDecorumArena[ARENA1][0], pDecTable->adwDecorumArena[ARENA1][1]);
-	pkDec->SetArenaResult(ARENA2, pDecTable->adwDecorumArena[ARENA2][0], pDecTable->adwDecorumArena[ARENA2][1]);
-	pkDec->SetArenaResult(ARENA3, pDecTable->adwDecorumArena[ARENA3][0], pDecTable->adwDecorumArena[ARENA3][1]);
-	pkDec->SetFFAResult(pDecTable->adwFFA[0], pDecTable->adwFFA[1]);
-	
-	pkDec->SetELORating(pDecTable->dwELORating);
-	//pkDec->SetLoaded();
-	
-	sys_log(0, "Loaded Decorum for Player %s: [decorum: %d, kill: %d, death: %d], [promotion: %d, demotion: %d]", ch->GetName(), 
-		pkDec->GetDecorumPoint(), pkDec->GetKill(), pkDec->GetDeath(), pkDec->GetPromotion(), pkDec->GetDemotion());
-
-}
-
-void CInputDB::BroadcastedDecurumSeasonResult(const char * c_pData)
-{
-	if (NULL == c_pData)
-		return;
-
-	BYTE bCount = decode_byte(c_pData);
-	c_pData += 1;
-	TRankingEntry * aEntry = (TRankingEntry*)c_pData;
-
-	CDecorumManager::instance().SeasonResult(aEntry, bCount);
-}
-#endif
-
-#ifdef __SPECIALSTAT_SYSTEM__
-void CInputDB::LoadSpecialStats(LPDESC desc, const char * data) {
-
-	TSpecialStats * stab = (TSpecialStats *)data;
-
-	LPCHARACTER ch;
-
-	if (!desc || !(ch = desc->GetCharacter())){
-		sys_err("Cannot find desco or character while LoadSpecialStats is running.");
-		return;
-	}
-
-	ch->LoadStats(stab);
-}
-#endif
-
-#ifdef GUILD_WAR_COUNTER
-void CInputDB::GuildCounter(LPDESC d, const char* c_pData)
-{
-	const BYTE subIndex = *(BYTE*)c_pData;
-	c_pData += sizeof(BYTE);
-	if (subIndex == SUB_GUILDWAR_LOADWAR)
-	{
-		const TGuildWarReserve& warReserverData = *(TGuildWarReserve*)c_pData;
-		c_pData += sizeof(TGuildWarReserve);
-		CGuildManager::Instance().SetWarStatisticsInfo(warReserverData);
-	}
-	else if (subIndex == SUB_GUILDWAR_LOADDATA)
-	{
-		if (!d)
-			return;
-		LPCHARACTER ch = d->GetCharacter();
-		if (!ch)
-			return;
-		const DWORD warID = *(DWORD*)c_pData;
-		c_pData += sizeof(DWORD);
-
-		const int packetSize = *(int*)c_pData;
-		c_pData += sizeof(int);
-		std::vector<war_static_ptr> m_data;
-		m_data.clear();
-		for (int j = 0; j < packetSize; ++j)
-		{
-			const war_static_ptr& warPtr = *(war_static_ptr*)c_pData;
-			m_data.emplace_back(warPtr);
-			c_pData += sizeof(war_static_ptr);
-		}
-		CGuildManager::Instance().SetWarStatisticsData(warID, m_data);
-		CGuildManager::Instance().SendWarStatisticsData(ch, warID);
-	}
-}
-#endif
-
-#ifdef ENABLE_EVENT_MANAGER
-void CInputDB::EventManager(const char* c_pData)
-{
-	CHARACTER_MANAGER& chrMngr = CHARACTER_MANAGER::Instance();
-	const BYTE subIndex = *(BYTE*)c_pData;
-	c_pData += sizeof(BYTE);
-	if (subIndex == EVENT_MANAGER_LOAD)
-	{
-		chrMngr.ClearEventData();
-		const BYTE dayCount = *(BYTE*)c_pData;
-		c_pData += sizeof(BYTE);
-		for (DWORD x = 0; x < dayCount; ++x)
-		{
-			const BYTE dayIndex = *(BYTE*)c_pData;
-			c_pData += sizeof(BYTE);
-			const BYTE dayEventCount = *(BYTE*)c_pData;
-			c_pData += sizeof(BYTE);
-			std::vector<TEventManagerData> m_vec;
-			m_vec.clear();
-			for (DWORD j = 0; j < dayEventCount; ++j)
-			{
-				const TEventManagerData& eventData = *(TEventManagerData*)c_pData;
-				c_pData += sizeof(TEventManagerData);
-				tm start = eventData.startTime;
-				//sys_err("START TIME: %d-%d-%d %d:%d:%d", start.tm_year, start.tm_mon, start.tm_mday, start.tm_hour, start.tm_min, start.tm_sec);
-				//sys_err("DIFFERENCE: %d", eventData.startRealTime-time(0));
-				m_vec.emplace_back(eventData);
-			}
-			chrMngr.SetEventData(dayIndex, m_vec);
-		}
-	}
-	else if (EVENT_MANAGER_EVENT_STATUS == subIndex)
-	{
-		const bool eventStatus = *(bool*)c_pData;
-		c_pData += sizeof(bool);
-		const TEventManagerData& eventData = *(TEventManagerData*)c_pData;
-		c_pData += sizeof(TEventManagerData);
-		chrMngr.SetEventStatus(eventData, eventStatus);
-	}
-}
-#endif
+//martysama0134's 2022

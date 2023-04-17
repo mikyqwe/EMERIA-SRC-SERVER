@@ -161,7 +161,7 @@ static DWORD SP_boxes[8][64]=
     }
 };
 
-static DWORD KeyPerm[8][64] = 
+static DWORD KeyPerm[8][64] =
 {
     /* for C bits (numbered as per FIPS 46) 1 2 3 4 5 6 */
     {
@@ -323,4 +323,4 @@ static DWORD KeyPerm[8][64] =
 	0x00002822,0x04002822,0x00042822,0x04042822
     }
 };
-
+//martysama0134's 2022

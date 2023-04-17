@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 
 #include "AsyncSQL.h"
 
@@ -20,11 +21,10 @@ CAsyncSQL::CAsyncSQL()
 	: m_stHost(""), m_stUser(""), m_stPassword(""), m_stDB(""), m_stLocale(""),
 	m_iMsgCount(0), m_iPort(0), m_bEnd(false),
 #ifndef __WIN32__
-	m_hThread(0), 
+	m_hThread(0),
 #else
 	m_hThread(INVALID_HANDLE_VALUE),
 #endif
-	m_mtxQuery(NULL), m_mtxResult(NULL),
 	m_iQueryFinished(0), m_ulThreadID(0), m_bConnected(false), m_iCopiedQuery(0)
 {
 	memset( &m_hDB, 0, sizeof(m_hDB) );
@@ -51,23 +51,21 @@ void CAsyncSQL::Destroy()
 	if (m_mtxQuery)
 	{
 #ifndef __WIN32__
-		pthread_mutex_destroy(m_mtxQuery);
+		pthread_mutex_destroy(m_mtxQuery.get());
 #else
-		::DeleteCriticalSection(m_mtxQuery);
+		::DeleteCriticalSection(m_mtxQuery.get());
 #endif
-		delete m_mtxQuery;
-		m_mtxQuery = NULL;
+		m_mtxQuery.release();
 	}
 
 	if (m_mtxResult)
 	{
 #ifndef __WIN32__
-		pthread_mutex_destroy(m_mtxResult);
+		pthread_mutex_destroy(m_mtxResult.get());
 #else
-		::DeleteCriticalSection(m_mtxResult);
+		::DeleteCriticalSection(m_mtxResult.get());
 #endif
-		delete m_mtxResult;
-		m_mtxQuery = NULL;
+		m_mtxResult.release();
 	}
 }
 
@@ -103,7 +101,7 @@ bool CAsyncSQL::QueryLocaleSet()
 	if (mysql_set_character_set(&m_hDB, m_stLocale.c_str()))
 	{
 		sys_err("cannot set locale %s by 'mysql_set_character_set', errno %u %s", m_stLocale.c_str(), mysql_errno(&m_hDB) , mysql_error(&m_hDB));
-		return false; 
+		return false;
 	}
 
 	sys_log(0, "\t--mysql_set_character_set(%s)", m_stLocale.c_str());
@@ -144,10 +142,6 @@ bool CAsyncSQL::Connect()
 
 	fprintf(stdout, "AsyncSQL: connected to %s (reconnect %d)\n", m_stHost.c_str(), m_hDB.reconnect);
 
-	// db cache는 common db의 LOCALE 테이블에서 locale을 알아오고, 이후 character set을 수정한다.
-	// 따라서 최초 Connection을 맺을 때에는 locale을 모르기 때문에 character set을 정할 수가 없음에도 불구하고,
-	// 강제로 character set을 euckr로 정하도록 되어있어 이 부분을 주석처리 하였다.
-	// (아래 주석을 풀면 mysql에 euckr이 안 깔려있는 디비에 접근할 수가 없다.)
 	//while (!QueryLocaleSet());
 	m_ulThreadID = mysql_thread_id(&m_hDB);
 
@@ -158,10 +152,10 @@ bool CAsyncSQL::Connect()
 bool CAsyncSQL::Setup(CAsyncSQL * sql, bool bNoThread)
 {
 	return Setup(sql->m_stHost.c_str(),
-			sql->m_stUser.c_str(), 
-			sql->m_stPassword.c_str(), 
-			sql->m_stDB.c_str(), 
-			sql->m_stLocale.c_str(), 
+			sql->m_stUser.c_str(),
+			sql->m_stPassword.c_str(),
+			sql->m_stDB.c_str(),
+			sql->m_stLocale.c_str(),
 			bNoThread,
 			sql->m_iPort);
 }
@@ -182,24 +176,17 @@ bool CAsyncSQL::Setup(const char * c_pszHost, const char * c_pszUser, const char
 
 	if (!bNoThread)
 	{
-		/*
-		if (!mysql_thread_safe())//
-	    {
-			fprintf(stderr, "FATAL ERROR!! mysql client library was not compiled with thread safety\n");
-			return false;
-		}
-		*/
 #ifndef __WIN32__
-		m_mtxQuery = new pthread_mutex_t;
-		m_mtxResult = new pthread_mutex_t;
+		m_mtxQuery = std::make_unique<pthread_mutex_t>();
+		m_mtxResult = std::make_unique<pthread_mutex_t>();
 
-		if (0 != pthread_mutex_init(m_mtxQuery, NULL))
+		if (0 != pthread_mutex_init(m_mtxQuery.get(), NULL))
 		{
 			perror("pthread_mutex_init");
 			exit(0);
 		}
 
-		if (0 != pthread_mutex_init(m_mtxResult, NULL))
+		if (0 != pthread_mutex_init(m_mtxResult.get(), NULL))
 		{
 			perror("pthread_mutex_init");
 			exit(0);
@@ -207,11 +194,11 @@ bool CAsyncSQL::Setup(const char * c_pszHost, const char * c_pszUser, const char
 
 		pthread_create(&m_hThread, NULL, AsyncSQLThread, this);
 #else
-		m_mtxQuery = new CRITICAL_SECTION;
-		m_mtxResult = new CRITICAL_SECTION;
+		m_mtxQuery = std::make_unique<CRITICAL_SECTION>();
+		m_mtxResult = std::make_unique<CRITICAL_SECTION>();
 
-		::InitializeCriticalSection(m_mtxQuery);
-		::InitializeCriticalSection(m_mtxResult);
+		::InitializeCriticalSection(m_mtxQuery.get());
+		::InitializeCriticalSection(m_mtxResult.get());
 
 		m_hThread = (HANDLE)::_beginthreadex(NULL, 0, AsyncSQLThread, this, 0, NULL);
 		if (m_hThread == INVALID_HANDLE_VALUE) {
@@ -245,7 +232,7 @@ void CAsyncSQL::Quit()
 #endif
 }
 
-SQLMsg * CAsyncSQL::DirectQuery(const char * c_pszQuery)
+std::unique_ptr<SQLMsg> CAsyncSQL::DirectQuery(const char * c_pszQuery)
 {
 	if (m_ulThreadID != mysql_thread_id(&m_hDB))
 	{
@@ -254,7 +241,7 @@ SQLMsg * CAsyncSQL::DirectQuery(const char * c_pszQuery)
 		m_ulThreadID = mysql_thread_id(&m_hDB);
 	}
 
-	SQLMsg * p = new SQLMsg;
+	auto p = std::make_unique<SQLMsg>();
 
 	p->m_pkSQL = &m_hDB;
 	p->iID = ++m_iMsgCount;
@@ -302,70 +289,70 @@ void CAsyncSQL::ReturnQuery(const char * c_pszQuery, void * pvUserData)
 
 void CAsyncSQL::PushResult(SQLMsg * p)
 {
-	MUTEX_LOCK(m_mtxResult);
+	MUTEX_LOCK(m_mtxResult.get());
 
 	m_queue_result.push(p);
 
-	MUTEX_UNLOCK(m_mtxResult);
+	MUTEX_UNLOCK(m_mtxResult.get());
 }
 
 bool CAsyncSQL::PopResult(SQLMsg ** pp)
 {
-	MUTEX_LOCK(m_mtxResult);
+	MUTEX_LOCK(m_mtxResult.get());
 
 	if (m_queue_result.empty())
 	{
-		MUTEX_UNLOCK(m_mtxResult);
+		MUTEX_UNLOCK(m_mtxResult.get());
 		return false;
 	}
 
 	*pp = m_queue_result.front();
 	m_queue_result.pop();
-	MUTEX_UNLOCK(m_mtxResult);
+	MUTEX_UNLOCK(m_mtxResult.get());
 	return true;
 }
 
 void CAsyncSQL::PushQuery(SQLMsg * p)
 {
-	MUTEX_LOCK(m_mtxQuery);
+	MUTEX_LOCK(m_mtxQuery.get());
 
 	m_queue_query.push(p);
 	//m_map_kSQLMsgUnfinished.insert(std::make_pair(p->iID, p));
 
 	m_sem.Release();
 
-	MUTEX_UNLOCK(m_mtxQuery);
+	MUTEX_UNLOCK(m_mtxQuery.get());
 }
 
 bool CAsyncSQL::PeekQuery(SQLMsg ** pp)
 {
-	MUTEX_LOCK(m_mtxQuery);
+	MUTEX_LOCK(m_mtxQuery.get());
 
 	if (m_queue_query.empty())
 	{
-		MUTEX_UNLOCK(m_mtxQuery);
+		MUTEX_UNLOCK(m_mtxQuery.get());
 		return false;
 	}
 
 	*pp = m_queue_query.front();
-	MUTEX_UNLOCK(m_mtxQuery);
+	MUTEX_UNLOCK(m_mtxQuery.get());
 	return true;
 }
 
 bool CAsyncSQL::PopQuery(int iID)
 {
-	MUTEX_LOCK(m_mtxQuery);
+	MUTEX_LOCK(m_mtxQuery.get());
 
 	if (m_queue_query.empty())
 	{
-		MUTEX_UNLOCK(m_mtxQuery);
+		MUTEX_UNLOCK(m_mtxQuery.get());
 		return false;
 	}
 
 	m_queue_query.pop();
 	//m_map_kSQLMsgUnfinished.erase(iID);
 
-	MUTEX_UNLOCK(m_mtxQuery);
+	MUTEX_UNLOCK(m_mtxQuery.get());
 	return true;
 }
 
@@ -380,11 +367,11 @@ bool CAsyncSQL::PeekQueryFromCopyQueue(SQLMsg ** pp)
 
 int CAsyncSQL::CopyQuery()
 {
-	MUTEX_LOCK(m_mtxQuery);
+	MUTEX_LOCK(m_mtxQuery.get());
 
 	if (m_queue_query.empty())
 	{
-		MUTEX_UNLOCK(m_mtxQuery);
+		MUTEX_UNLOCK(m_mtxQuery.get());
 		return -1;
 	}
 
@@ -397,9 +384,9 @@ int CAsyncSQL::CopyQuery()
 
 	//m_map_kSQLMsgUnfinished.erase(iID);
 
-	int count = m_queue_query_copy.size();	
+	int count = m_queue_query_copy.size();
 
-	MUTEX_UNLOCK(m_mtxQuery);
+	MUTEX_UNLOCK(m_mtxQuery.get());
 	return count;
 }
 
@@ -471,7 +458,7 @@ void __timediff(struct timeval *a, struct timeval *b, struct timeval *rslt)
 class cProfiler
 {
 	public:
-		cProfiler() 
+		cProfiler()
 		{
 			m_nInterval = 0 ;
 
@@ -479,7 +466,7 @@ class cProfiler
 			memset( &now, 0, sizeof(now) );
 			memset( &interval, 0, sizeof(interval) );
 
-			Start(); 
+			Start();
 		}
 
 		cProfiler(int nInterval = 100000)
@@ -490,7 +477,7 @@ class cProfiler
 			memset( &now, 0, sizeof(now) );
 			memset( &interval, 0, sizeof(interval) );
 
-			Start(); 
+			Start();
 		}
 
 		void Start()
@@ -500,12 +487,12 @@ class cProfiler
 
 		void Stop()
 		{
-			gettimeofday(&now, (struct timezone*) 0); 
+			gettimeofday(&now, (struct timezone*) 0);
 			__timediff(&now, &prev, &interval);
 		}
 
 		bool IsOk()
-		{ 
+		{
 			if (interval.tv_sec > (m_nInterval / 1000000))
 				return false;
 
@@ -528,7 +515,7 @@ class cProfiler
 
 void CAsyncSQL::ChildLoop()
 {
-	cProfiler profiler(500000); // 0.5초
+	cProfiler profiler(500000);
 
 	while (!m_bEnd)
 	{
@@ -545,7 +532,6 @@ void CAsyncSQL::ChildLoop()
 
 		while (count--)
 		{
-			//시간 체크 시작 
 			profiler.Start();
 
 			if (!PeekQueryFromCopyQueue(&p))
@@ -562,7 +548,7 @@ void CAsyncSQL::ChildLoop()
 			{
 				p->uiSQLErrno = mysql_errno(&m_hDB);
 
-				sys_err("AsyncSQL: query failed: %s (query: %s errno: %d)", 
+				sys_err("AsyncSQL: query failed: %s (query: %s errno: %d)",
 						mysql_error(&m_hDB), p->stQuery.c_str(), p->uiSQLErrno);
 
 				switch (p->uiSQLErrno)
@@ -589,10 +575,9 @@ void CAsyncSQL::ChildLoop()
 			}
 
 			profiler.Stop();
-			
-			// 0.5초 이상 걸렸으면 로그에 남기기
+
 			if (!profiler.IsOk())
-				sys_log(0, "[QUERY : LONG INTERVAL(OverSec %ld.%ld)] : %s", 
+				sys_log(0, "[QUERY : LONG INTERVAL(OverSec %ld.%ld)] : %s",
 						profiler.GetResultSec(), profiler.GetResultUSec(), p->stQuery.c_str());
 
 			PopQueryFromCopyQueue();
@@ -692,9 +677,8 @@ size_t CAsyncSQL::EscapeString(char* dst, size_t dstSize, const char *src, size_
 
 	if (dstSize < srcSize * 2 + 1)
 	{
-		// \0이 안붙어있을 때를 대비해서 256 바이트만 복사해서 로그로 출력
 		char tmp[256];
-		size_t tmpLen = sizeof(tmp) > srcSize ? srcSize : sizeof(tmp); // 둘 중에 작은 크기
+		size_t tmpLen = sizeof(tmp) > srcSize ? srcSize : sizeof(tmp);
 		strlcpy(tmp, src, tmpLen);
 
 		sys_err("FATAL ERROR!! not enough buffer size (dstSize %u srcSize %u src%s: %s)",
@@ -709,7 +693,7 @@ size_t CAsyncSQL::EscapeString(char* dst, size_t dstSize, const char *src, size_
 
 void CAsyncSQL2::SetLocale(const std::string & stLocale)
 {
-	m_stLocale = stLocale;	
+	m_stLocale = stLocale;
 	QueryLocaleSet();
 }
-
+//martysama0134's 2022

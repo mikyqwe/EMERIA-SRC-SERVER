@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "questmanager.h"
 #include "BattleArena.h"
@@ -27,4 +26,4 @@ namespace quest
 		CQuestManager::instance(). AddLuaFunctionTable("ba", ba_functions);
 	}
 }
-
+//martysama0134's 2022

@@ -51,25 +51,17 @@ enum SCMD_XMAS
 };
 
 extern void Shutdown(int iSec);
-extern void SendLog(const char * c_pszBuf);		// 운영자에게만 공지
+extern void SendLog(const char * c_pszBuf);
 #ifdef ENABLE_FULL_NOTICE
 extern void SendNotice(const char * c_pszBuf, bool bBigFont=false);
 extern void BroadcastNotice(const char * c_pszBuf, bool bBigFont=false);
 #else
-extern void SendNotice(const char * c_pszBuf);		// 이 게임서버에만 공지
-extern void BroadcastNotice(const char * c_pszBuf);	// 전 서버에 공지
+extern void SendNotice(const char * c_pszBuf);
+extern void BroadcastNotice(const char * c_pszBuf);
 #endif
-#ifdef __WORLD_BOSS_YUMA__
-extern void SendNewNotice(const char* c_pszBuf, const char* c_pszName, int iSecondsToSpawn);
-extern void BroadcastNewNotice(const char* c_pszBuf, const char* c_pszName, int iSecondsToSpawn=0);
-#endif
-extern void SendNoticeMap(const char* c_pszBuf, int nMapIndex, bool bBigFont); // 지정 맵에만 공지
-extern void SendMonarchNotice(BYTE bEmpire, const char * c_pszBuf);		// 같은 제국에게 공지
-#ifdef ENABLE_MAINTENANCE_SYSTEM
-extern void __StopCurrentShutdown(bool bSendP2P = false);
-extern void __StartNewShutdown(int iStartSec, bool bIsMaintenance, int iMaintenanceDuration, bool bSendP2P = false);
-extern void __SendMaintenancePacketToPlayer(LPCHARACTER pkChr);
-#endif
+extern void SendNoticeMap(const char* c_pszBuf, int nMapIndex, bool bBigFont);
+extern void SendMonarchNotice(BYTE bEmpire, const char * c_pszBuf);
+
 // LUA_ADD_BGM_INFO
 void CHARACTER_SetBGMVolumeEnable();
 void CHARACTER_AddBGMInfo(unsigned mapIndex, const char* name, float vol);
@@ -80,3 +72,4 @@ extern void CHARACTER_AddGotoInfo(const std::string& c_st_name, BYTE empire, int
 // END_OF_LUA_ADD_GOTO_INFO
 
 #endif
+//martysama0134's 2022

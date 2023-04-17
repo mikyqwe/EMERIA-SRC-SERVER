@@ -15,3 +15,4 @@ crc_t	get_fast_hash(const char * key, size_t len);
 #define CRC32CASE(buf) get_crc32_case(buf, strlen(buf))
 
 #endif
+//martysama0134's 2022

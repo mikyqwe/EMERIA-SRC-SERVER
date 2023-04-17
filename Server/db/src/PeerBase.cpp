@@ -50,7 +50,9 @@ bool CPeerBase::Accept(socket_t fd_accept)
 	}
 
 #ifdef ENABLE_PORT_SECURITY
-	if (strcmp(inet_ntoa(peer.sin_addr), "127.0.0.1")) // refuse if remote host != localhost (only the same machine must be able to connect in here)
+	// refuse if remote host != localhost (only the same machine must be able to connect in here)
+	std::string targetIP = inet_ntoa(peer.sin_addr);
+	if (targetIP.rfind("127.0.0.1", 0) && targetIP.rfind("192.168.", 0) && targetIP.rfind("10.", 0))
 	{
 		sys_log(0, "BLOCK CONNECTION FROM %s", inet_ntoa(peer.sin_addr));
 		Destroy();
@@ -225,3 +227,4 @@ int CPeerBase::Send()
 
 	return (result);
 }
+//martysama0134's 2022

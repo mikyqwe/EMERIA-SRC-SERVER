@@ -17,7 +17,7 @@
 #include "party.h"
 #include "locale_service.h"
 #include "dungeon.h"
-#include "questnpc.h"
+#include "../../common/service.h"
 #ifdef __QUEST_RENEWAL__
 #ifdef _QR_MS_
 #include <vector>
@@ -75,37 +75,40 @@ namespace quest
 
 		m_pSelectedDungeon = NULL;
 
-		m_mapEventName.insert(TEventNameMap::value_type("click", QUEST_CLICK_EVENT));		// NPC를 클릭
-		m_mapEventName.insert(TEventNameMap::value_type("kill", QUEST_KILL_EVENT));		// Mob을 사냥
-		m_mapEventName.insert(TEventNameMap::value_type("timer", QUEST_TIMER_EVENT));		// 미리 지정해둔 시간이 지남
-		m_mapEventName.insert(TEventNameMap::value_type("levelup", QUEST_LEVELUP_EVENT));	// 레벨업을 함
-		m_mapEventName.insert(TEventNameMap::value_type("login", QUEST_LOGIN_EVENT));		// 로그인 시
-		m_mapEventName.insert(TEventNameMap::value_type("logout", QUEST_LOGOUT_EVENT));		// 로그아웃 시
-		m_mapEventName.insert(TEventNameMap::value_type("button", QUEST_BUTTON_EVENT));		// 퀘스트 버튼을 누름
-		m_mapEventName.insert(TEventNameMap::value_type("info", QUEST_INFO_EVENT));		// 퀘스트 정보창을 염
-		m_mapEventName.insert(TEventNameMap::value_type("chat", QUEST_CHAT_EVENT));		// 특정 키워드로 대화를 함
-		m_mapEventName.insert(TEventNameMap::value_type("in", QUEST_ATTR_IN_EVENT));		// 맵의 특정 속성에 들어감
-		m_mapEventName.insert(TEventNameMap::value_type("out", QUEST_ATTR_OUT_EVENT));		// 맵의 특정 속성에서 나옴
-		m_mapEventName.insert(TEventNameMap::value_type("use", QUEST_ITEM_USE_EVENT));		// 퀘스트 아이템을 사용
-		m_mapEventName.insert(TEventNameMap::value_type("server_timer", QUEST_SERVER_TIMER_EVENT));	// 서버 타이머 (아직 테스트 안됐음)
-		m_mapEventName.insert(TEventNameMap::value_type("enter", QUEST_ENTER_STATE_EVENT));	// 현재 스테이트가 됨
-		m_mapEventName.insert(TEventNameMap::value_type("leave", QUEST_LEAVE_STATE_EVENT));	// 현재 스테이트에서 다른 스테이트로 바뀜
-		m_mapEventName.insert(TEventNameMap::value_type("letter", QUEST_LETTER_EVENT));		// 로긴 하거나 스테이트가 바껴 새로 정보를 세팅해줘야함
-		m_mapEventName.insert(TEventNameMap::value_type("take", QUEST_ITEM_TAKE_EVENT));	// 아이템을 받음
-		m_mapEventName.insert(TEventNameMap::value_type("target", QUEST_TARGET_EVENT));		// 타겟
-		m_mapEventName.insert(TEventNameMap::value_type("party_kill", QUEST_PARTY_KILL_EVENT));	// 파티 멤버가 몬스터를 사냥 (리더에게 옴)
-		m_mapEventName.insert(TEventNameMap::value_type("unmount", QUEST_UNMOUNT_EVENT));
-		m_mapEventName.insert(TEventNameMap::value_type("pick", QUEST_ITEM_PICK_EVENT));	// 떨어져있는 아이템을 습득함.
-		m_mapEventName.insert(TEventNameMap::value_type("sig_use", QUEST_SIG_USE_EVENT));		// Special item group에 속한 아이템을 사용함.
-		m_mapEventName.insert(TEventNameMap::value_type("item_informer", QUEST_ITEM_INFORMER_EVENT));	// 독일선물기능테스트
+		m_mapEventName.emplace("click", QUEST_CLICK_EVENT);
+		m_mapEventName.emplace("kill", QUEST_KILL_EVENT);
+		m_mapEventName.emplace("timer", QUEST_TIMER_EVENT);
+		m_mapEventName.emplace("levelup", QUEST_LEVELUP_EVENT);
+		m_mapEventName.emplace("login", QUEST_LOGIN_EVENT);
+		m_mapEventName.emplace("logout", QUEST_LOGOUT_EVENT);
+		m_mapEventName.emplace("button", QUEST_BUTTON_EVENT);
+		m_mapEventName.emplace("info", QUEST_INFO_EVENT);
+		m_mapEventName.emplace("chat", QUEST_CHAT_EVENT);
+		m_mapEventName.emplace("in", QUEST_ATTR_IN_EVENT);
+		m_mapEventName.emplace("out", QUEST_ATTR_OUT_EVENT);
+		m_mapEventName.emplace("use", QUEST_ITEM_USE_EVENT);
+		m_mapEventName.emplace("server_timer", QUEST_SERVER_TIMER_EVENT);
+		m_mapEventName.emplace("enter", QUEST_ENTER_STATE_EVENT);
+		m_mapEventName.emplace("leave", QUEST_LEAVE_STATE_EVENT);
+		m_mapEventName.emplace("letter", QUEST_LETTER_EVENT);
+		m_mapEventName.emplace("take", QUEST_ITEM_TAKE_EVENT);
+		m_mapEventName.emplace("target", QUEST_TARGET_EVENT);
+		m_mapEventName.emplace("party_kill", QUEST_PARTY_KILL_EVENT);
+		m_mapEventName.emplace("unmount", QUEST_UNMOUNT_EVENT);
+		m_mapEventName.emplace("pick", QUEST_ITEM_PICK_EVENT);
+		m_mapEventName.emplace("sig_use", QUEST_SIG_USE_EVENT);
+		m_mapEventName.emplace("item_informer", QUEST_ITEM_INFORMER_EVENT);
 #ifdef ENABLE_QUEST_DIE_EVENT
-		m_mapEventName.insert(TEventNameMap::value_type("die", QUEST_DIE_EVENT));
+		m_mapEventName.emplace("die", QUEST_DIE_EVENT);
 #endif
-#ifdef ENABLE_MELEY_LAIR_DUNGEON
-		m_mapEventName.insert(TEventNameMap::value_type("attack", QUEST_ATTACK_EVENT));
+#ifdef ENABLE_QUEST_BOOT_EVENT
+		m_mapEventName.emplace("boot", QUEST_BOOT_EVENT);
 #endif
-
+#ifdef ENABLE_QUEST_DND_EVENT
+		m_mapEventName.emplace("dnd", QUEST_DND_EVENT);
+#endif
 		m_bNoSend = false;
+
 		m_iCurrentSkin = QUEST_SKIN_NORMAL;
 
 		{
@@ -244,7 +247,7 @@ namespace quest
 
 		while (1)
 		{
-			//받은 quest_index를 quest_name로 변환 후 비교
+
 			string qn = CQuestManager::instance().GetQuestNameByIndex(q_index);
 
 			unsigned int category_num;
@@ -300,7 +303,7 @@ namespace quest
 		//m_mapNPC[0].Set(0, "notarget");
 
 
-		//enum 순서대로 카테고리 인덱스를 리턴
+
 		return c_qi;
 	}
 
@@ -337,7 +340,6 @@ namespace quest
 		}
 	}
 
-// Add above
 #ifdef __QUEST_RENEWAL__
 	int CQuestManager::GetQuestCategoryByQuestIndex(WORD q_index)
 	{
@@ -395,6 +397,7 @@ namespace quest
 	}
 #endif
 
+
 	void CQuestManager::Select(unsigned int pc, unsigned int selection)
 	{
 		PC* pPC;
@@ -405,9 +408,9 @@ namespace quest
 
 			if (!pPC->GetRunningQuestState()->chat_scripts.empty())
 			{
-				// 채팅 이벤트인 경우
-				// 현재 퀘스트는 어느 퀘스트를 실행할 것인가를 고르는 퀘스트 이므로
-				// 끝내고 선택된 퀘스트를 실행한다.
+
+
+
 				QuestState& old_qs = *pPC->GetRunningQuestState();
 				CloseState(old_qs);
 
@@ -520,7 +523,7 @@ namespace quest
 			pPC->CancelRunning();
 		}
 
-		// 지우기 전에 로그아웃 한다.
+
 		Logout(ch->GetPlayerID());
 
 		if (ch == m_pCurrentCharacter)
@@ -532,7 +535,6 @@ namespace quest
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 	//
-	// Quest Event 관련
 	//
 	///////////////////////////////////////////////////////////////////////////////////////////
 	void CQuestManager::Login(unsigned int pc, const char * c_pszQuest)
@@ -580,10 +582,6 @@ namespace quest
 			if (!CheckQuestLoaded(pPC))
 				return;
 
-			/* [hyo] 몹 kill시 중복 카운팅 이슈 관련한 수정사항
-			   quest script에 when 171.kill begin ... 등의 코드로 인하여 스크립트가 처리되었더라도
-			   바로 return하지 않고 다른 검사도 수행하도록 변경함. (2011/07/21)
-			*/
 			// kill call script
 			if (npc >= MAIN_RACE_MAX_NUM) //@fixme109
 				m_mapNPC[npc].OnKill(*pPC); //@warme004
@@ -626,6 +624,47 @@ namespace quest
 		}
 		else
 			sys_err("QUEST: no such pc id : %d", pc);
+	}
+#endif
+
+#ifdef ENABLE_QUEST_BOOT_EVENT
+	bool CQuestManager::Boot()
+	{
+		sys_log(0, "XXX Boot Call NPC %p", GetPCForce(0));
+		m_pCurrentPC = GetPCForce(0);
+		m_pCurrentCharacter = NULL;
+		m_pSelectedDungeon = NULL;
+		return m_mapNPC[QUEST_NO_NPC].OnBoot(*m_pCurrentPC);
+	}
+#endif
+
+#ifdef ENABLE_QUEST_DND_EVENT
+	bool CQuestManager::DND(uint32_t pc, LPITEM item_dnd, LPITEM item_victim, bool bReceiveAll)
+	{
+		if (test_server)
+			sys_log( 0, "CQuestManager::DND_EVENT Start: item_dnd(%d), item_victim(%d), PC(%d)", item_dnd->GetOriginalVnum(), item_victim->GetOriginalVnum(), pc);
+		PC * pPC;
+		if ((pPC = GetPC(pc)))
+		{
+			if (!CheckQuestLoaded(pPC))
+			{
+				LPCHARACTER ch = CHARACTER_MANAGER::instance().FindByPID(pc);
+				if (ch)
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
+				return false;
+			}
+			// call script
+			SetCurrentItem(item_victim);
+			SetCurrentDNDItem(item_dnd);
+			return m_mapNPC[item_dnd->GetVnum()].OnDND(*pPC, bReceiveAll);
+		}
+		else
+		{
+			//cout << "no such pc id : " << pc;
+			sys_err("QUEST DND_EVENT no such pc id : %d", pc);
+			return false;
+		}
+
 	}
 #endif
 
@@ -745,12 +784,12 @@ namespace quest
 				LPCHARACTER ch = CHARACTER_MANAGER::instance().FindByPID(pc);
 
 				if (ch)
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
 
 				return;
 			}
 
-			//퀘스트 창에서 퀘스트 클릭과 NPC 클릭시의 구분을 위한 플래그
+
 			m_bQuestInfoFlag = 1;
 			m_mapNPC[QUEST_NO_NPC].OnInfo(*pPC, quest_index);
 		}
@@ -772,7 +811,7 @@ namespace quest
 				LPCHARACTER ch = CHARACTER_MANAGER::instance().FindByPID(pc);
 				if (ch)
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
 				}
 				return;
 			}
@@ -797,7 +836,7 @@ namespace quest
 				LPCHARACTER ch = CHARACTER_MANAGER::instance().FindByPID(pc);
 				if (ch)
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
 				}
 				return false;
 			}
@@ -825,7 +864,7 @@ namespace quest
 				LPCHARACTER ch = CHARACTER_MANAGER::instance().FindByPID(pc);
 				if (ch)
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
 				}
 				return false;
 			}
@@ -856,7 +895,6 @@ namespace quest
 		}
 	}
 
-	// Speical Item Group에 정의된 Group Use
 	bool CQuestManager::SIGUse(unsigned int pc, DWORD sig_vnum, LPITEM item, bool bReceiveAll)
 	{
 		if (test_server)
@@ -869,7 +907,7 @@ namespace quest
 				LPCHARACTER ch = CHARACTER_MANAGER::instance().FindByPID(pc);
 				if (ch)
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
 				}
 				return false;
 			}
@@ -923,7 +961,7 @@ namespace quest
 				LPCHARACTER ch = CHARACTER_MANAGER::instance().FindByPID(pc);
 
 				if (ch)
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
 
 				return false;
 			}
@@ -1004,7 +1042,7 @@ namespace quest
 		else
 			sys_err("QUEST no such pc id : %d", pc);
 	}
-	//독일 선물 기능 테스트
+
 	void CQuestManager::ItemInformer(unsigned int pc,unsigned int vnum)
 	{
 
@@ -1014,7 +1052,7 @@ namespace quest
 		m_mapNPC[QUEST_NO_NPC].OnItemInformer(*pPC,vnum);
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////
-	// END OF 퀘스트 이벤트 처리
+
 	///////////////////////////////////////////////////////////////////////////////////////////
 
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -1109,7 +1147,7 @@ namespace quest
 
 	void CQuestManager::SendScript()
 	{
-		if (m_bNoSend)
+		if (m_bNoSend || !GetCurrentCharacterPtr() || !GetCurrentCharacterPtr()->GetDesc()) // @fixme174 (ch check)
 		{
 			m_bNoSend = false;
 			ClearScript();
@@ -1137,7 +1175,7 @@ namespace quest
 #ifdef ENABLE_QUEST_CATEGORY
 		packet_script.quest_flag = 0;
 
-		//퀘스트 창에서 퀘스트 클릭과 NPC 클릭시의 구분을 위한 플래그
+
 		if(m_bQuestInfoFlag == 1)
 			packet_script.quest_flag = 1;
 #endif
@@ -1246,29 +1284,22 @@ namespace quest
 			GetCurrentCharacterPtr()->SetQuestItemPtr(item);
 	}
 
-#ifdef ENABLE_MELEY_LAIR_DUNGEON
-	LPCHARACTER CQuestManager::GetCurrentNPCAttackCharacterPtr()
-	{ 
-		return GetCurrentCharacterPtr() ? GetCurrentCharacterPtr()->GetQuestNPCAttack() : NULL; 
-	}
-	void CQuestManager::Attack(unsigned int pc, unsigned int npc)
+#ifdef ENABLE_QUEST_DND_EVENT
+	LPITEM CQuestManager::GetCurrentDNDItem()
 	{
-		PC * pPC;
-		LPCHARACTER ch = CHARACTER_MANAGER::instance().FindByPID(pc);
-		if(!ch || ch == NULL)
-		{
-			return;
-		}
-		if ((pPC = GetPC(pc)))
-		{
-			if (!CheckQuestLoaded(pPC))
-				return;
-			m_mapNPC[npc].OnAttack(*pPC);
-		}
-		else
-		{
-			sys_err("QUEST: no such pc id : %d", pc);
-		}
+		return GetCurrentCharacterPtr() ? GetCurrentCharacterPtr()->GetQuestDNDItemPtr() : NULL;
+	}
+
+	void CQuestManager::ClearCurrentDNDItem()
+	{
+		if (GetCurrentCharacterPtr())
+			GetCurrentCharacterPtr()->ClearQuestDNDItemPtr();
+	}
+
+	void CQuestManager::SetCurrentDNDItem(LPITEM item)
+	{
+		if (GetCurrentCharacterPtr())
+			GetCurrentCharacterPtr()->SetQuestDNDItemPtr(item);
 	}
 #endif
 
@@ -1476,19 +1507,17 @@ namespace quest
 					continue;
 				if (value)
 				{
-					// 밤
 					ch->ChatPacket(CHAT_TYPE_COMMAND, "DayMode dark");
 				}
 				else
 				{
-					// 낮
 					ch->ChatPacket(CHAT_TYPE_COMMAND, "DayMode light");
 				}
 			}
 
 			if (value && !prev_value)
 			{
-				// 없으면 만들어준다
+
 				struct SNPCSellFireworkPosition
 				{
 					long lMapIndex;
@@ -1524,7 +1553,7 @@ namespace quest
 			}
 			else if (!value && prev_value)
 			{
-				// 있으면 지워준다
+
 				CharacterVectorInteractor i;
 
 				if (CHARACTER_MANAGER::instance().GetCharactersByRaceNum(xmas::MOB_XMAS_FIRWORK_SELLER_VNUM, i))
@@ -1618,11 +1647,11 @@ namespace quest
 		}
 		else if (name == "box_use_limit_time")
 		{
-			g_BoxUseTimeLimitValue = value * 0;
+			g_BoxUseTimeLimitValue = value * 1000;
 		}
 		else if (name == "buysell_limit_time")
 		{
-			g_BuySellTimeLimitValue = value * 0;
+			g_BuySellTimeLimitValue = value * 1000;
 		}
 		else if (name == "no_drop_metin_stone")
 		{
@@ -1637,30 +1666,8 @@ namespace quest
 			g_NoPotionsOnPVP = !!value;
 		}
 #endif
-#ifdef ENABLE_DECORUM
-		else if (name.compare(0, strlen("season_decorum_position"), "season_decorum_position") == 0)
-		{
-			if (name == "season_decorum_position_1")
-				CHARACTER_MANAGER::instance().SetSeasonChampionDecorum(0, value);
-			else if (name == "season_decorum_position_2")
-				CHARACTER_MANAGER::instance().SetSeasonChampionDecorum(1, value);
-			else if (name == "season_decorum_position_3")
-				CHARACTER_MANAGER::instance().SetSeasonChampionDecorum(2, value);
-			
-			const DESC_MANAGER::DESC_SET & c_ref_set = DESC_MANAGER::instance().GetClientSet();
-			for (itertype(c_ref_set) it = c_ref_set.begin(); it != c_ref_set.end(); ++it)
-			{
-				LPCHARACTER ch = (*it)->GetCharacter();
-
-				if (!ch) continue;
-				if (ch->GetPlayerID() == (DWORD)value || ch->GetPlayerID() == (DWORD)prev_value)
-					ch->UpdatePacket();
-			}
-		}
-#endif
 		else if (name == "new_xmas_event")
 		{
-			// 20126 new산타.
 			static DWORD new_santa = 20126;
 			if (value != 0)
 			{
@@ -1799,12 +1806,12 @@ namespace quest
 
 	bool CQuestManager::ExecuteQuestScript(PC& pc, const string& quest_name, const int state, const char* code, const int code_size, vector<AArgScript*>* pChatScripts, bool bUseCache)
 	{
-		// 실행공간을 생성
+
 		QuestState qs = CQuestManager::instance().OpenState(quest_name, state);
 		if (pChatScripts)
 			qs.chat_scripts.swap(*pChatScripts);
 
-		// 코드를 읽어들임
+
 		if (bUseCache)
 		{
 			lua_getglobal(qs.co, "__codecache");
@@ -1843,10 +1850,10 @@ namespace quest
 		else
 			luaL_loadbuffer(qs.co, code, code_size, quest_name.c_str());
 
-		// 플레이어와 연결
+
 		pc.SetQuest(quest_name, qs);
 
-		// 실행
+
 		QuestState& rqs = *pc.GetRunningQuestState();
 		if (!CQuestManager::instance().RunState(rqs))
 		{
@@ -1976,24 +1983,14 @@ namespace quest
 
 	void CQuestManager::CancelServerTimers(DWORD arg)
 	{
-		vector<pair<string, DWORD>> ServerTimersToDelete;
-
-		for (auto& kv : m_mapServerTimer) {
-			if (kv.first.second == arg) {
-				LPEVENT event = kv.second;
-				event_cancel(&event);
-				ServerTimersToDelete.push_back(kv.first);
-			}
+		for (auto it = m_mapServerTimer.begin(); it != m_mapServerTimer.end();) {
+			if (it->first.second == arg) {
+				event_cancel(&it->second);
+				it = m_mapServerTimer.erase(it);
+			} else
+				++it;
 		}
-
-		// Delete all the required server timers
-		for (auto &timer : ServerTimersToDelete)
-			m_mapServerTimer.erase(timer);
-
-		// Clean up
-		ServerTimersToDelete.clear();
 	}
-
 
 	void CQuestManager::SetServerTimerArg(DWORD dwArg)
 	{
@@ -2022,7 +2019,7 @@ namespace quest
 				LPCHARACTER ch = CHARACTER_MANAGER::instance().FindByPID(pc);
 				if (ch)
 				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("퀘스트를 로드하는 중입니다. 잠시만 기다려 주십시오."));
 				}
 				return false;
 			}
@@ -2090,4 +2087,4 @@ namespace quest
 		return m_pOtherPCBlockRootPC;
 	}
 }
-
+//martysama0134's 2022

@@ -15,9 +15,7 @@ CSafebox::CSafebox(LPCHARACTER pkChrOwner, int iSize, DWORD dwGold) : m_pkChrOwn
 	memset(m_pkItems, 0, sizeof(m_pkItems));
 
 	if (m_iSize)
-		m_pkGrid = M2_NEW CGrid(5, m_iSize);
-	else
-		m_pkGrid = NULL;
+		m_pkGrid = std::make_unique<CGrid>(5, m_iSize); // @fixme191
 
 	m_bWindowMode = SAFEBOX;
 }
@@ -46,11 +44,8 @@ void CSafebox::__Destroy()
 		}
 	}
 
-	if (m_pkGrid)
-	{
-		M2_DELETE(m_pkGrid);
-		m_pkGrid = NULL;
-	}
+	if (m_pkGrid.get()) // @fixme191
+		m_pkGrid.release();
 }
 
 bool CSafebox::Add(DWORD dwPos, LPITEM pkItem)
@@ -63,7 +58,7 @@ bool CSafebox::Add(DWORD dwPos, LPITEM pkItem)
 
 	pkItem->SetWindow(m_bWindowMode);
 	pkItem->SetCell(m_pkChrOwner, dwPos);
-	pkItem->Save(); // 강제로 Save를 불러줘야 한다.
+	pkItem->Save();
 	ITEM_MANAGER::instance().FlushDelayedSave(pkItem);
 
 	m_pkGrid->Put(dwPos, 1, pkItem->GetSize());
@@ -75,16 +70,13 @@ bool CSafebox::Add(DWORD dwPos, LPITEM pkItem)
 	pack.Cell	= TItemPos(m_bWindowMode, dwPos);
 	pack.vnum	= pkItem->GetVnum();
 	pack.count	= pkItem->GetCount();
-#ifdef CHANGELOOK_SYSTEM
-	pack.transmutation = pkItem->GetTransmutation();
-#endif
 	pack.flags	= pkItem->GetFlag();
 	pack.anti_flags	= pkItem->GetAntiFlag();
 	thecore_memcpy(pack.alSockets, pkItem->GetSockets(), sizeof(pack.alSockets));
 	thecore_memcpy(pack.aAttr, pkItem->GetAttributes(), sizeof(pack.aAttr));
 
 	m_pkChrOwner->GetDesc()->Packet(&pack, sizeof(pack));
-	sys_log(1, "SAFEBOX: ADD %s %s count %d", m_pkChrOwner->GetName(), pkItem->GetName(m_pkChrOwner->GetLanguage()), pkItem->GetCount());
+	sys_log(1, "SAFEBOX: ADD %s %s count %d", m_pkChrOwner->GetName(), pkItem->GetName(), pkItem->GetCount());
 	return true;
 }
 
@@ -118,7 +110,7 @@ LPITEM CSafebox::Remove(DWORD dwPos)
 	pack.pos	= dwPos;
 
 	m_pkChrOwner->GetDesc()->Packet(&pack, sizeof(pack));
-	sys_log(1, "SAFEBOX: REMOVE %s %s count %d", m_pkChrOwner->GetName(), pkItem->GetName(m_pkChrOwner->GetLanguage()), pkItem->GetCount());
+	sys_log(1, "SAFEBOX: REMOVE %s %s count %d", m_pkChrOwner->GetName(), pkItem->GetName(), pkItem->GetCount());
 	return pkItem;
 }
 
@@ -145,20 +137,17 @@ bool CSafebox::IsEmpty(DWORD dwPos, BYTE bSize)
 
 void CSafebox::ChangeSize(int iSize)
 {
-	// 현재 사이즈가 인자보다 크면 사이즈를 가만 둔다.
 	if (m_iSize >= iSize)
 		return;
 
 	m_iSize = iSize;
 
-	CGrid * pkOldGrid = m_pkGrid;
+	std::unique_ptr<CGrid> pkOldGrid = std::move(m_pkGrid); // @fixme191
 
-	if (pkOldGrid) {
-		m_pkGrid = M2_NEW CGrid(pkOldGrid, 5, m_iSize);
-		delete pkOldGrid;
-	}
+	if (m_pkGrid.get())
+		m_pkGrid = std::make_unique<CGrid>(pkOldGrid.get(), 5, m_iSize);
 	else
-		m_pkGrid = M2_NEW CGrid(5, m_iSize);
+		m_pkGrid = std::make_unique<CGrid>(5, m_iSize);
 }
 
 LPITEM CSafebox::GetItem(BYTE bCell)
@@ -172,9 +161,12 @@ LPITEM CSafebox::GetItem(BYTE bCell)
 	return m_pkItems[bCell];
 }
 
-bool CSafebox::MoveItem(BYTE bCell, BYTE bDestCell, short count)
+bool CSafebox::MoveItem(BYTE bCell, BYTE bDestCell, BYTE count)
 {
-	LPITEM item;
+	if (bCell == bDestCell) // @fixme196
+		return false;
+
+	LPITEM item{};
 
 	int max_position = 5 * m_iSize;
 
@@ -195,7 +187,7 @@ bool CSafebox::MoveItem(BYTE bCell, BYTE bDestCell, short count)
 
 		if ((item2 = GetItem(bDestCell)) && item != item2 && item2->IsStackable() &&
 				!IS_SET(item2->GetAntiFlag(), ITEM_ANTIFLAG_STACK) &&
-				item2->GetVnum() == item->GetVnum()) // 합칠 수 있는 아이템의 경우
+				item2->GetVnum() == item->GetVnum())
 		{
 			for (int i = 0; i < ITEM_SOCKET_MAX_NUM; ++i)
 				if (item2->GetSocket(i) != item->GetSocket(i))
@@ -204,7 +196,7 @@ bool CSafebox::MoveItem(BYTE bCell, BYTE bDestCell, short count)
 			if (count == 0)
 				count = item->GetCount();
 
-			count = MIN(ITEM_MAX_COUNT - item2->GetCount(), count);
+			count = MIN(g_bItemCountLimit - item2->GetCount(), count);
 
 			if (item->GetCount() >= count)
 				Remove(bCell);
@@ -232,7 +224,7 @@ bool CSafebox::MoveItem(BYTE bCell, BYTE bDestCell, short count)
 			m_pkGrid->Put(bCell, 1, item->GetSize());
 		}
 
-		sys_log(1, "SAFEBOX: MOVE %s %d -> %d %s count %d", m_pkChrOwner->GetName(), bCell, bDestCell, item->GetName(m_pkChrOwner->GetLanguage()), item->GetCount());
+		sys_log(1, "SAFEBOX: MOVE %s %d -> %d %s count %d", m_pkChrOwner->GetName(), bCell, bDestCell, item->GetName(), item->GetCount());
 
 		Remove(bCell);
 		Add(bDestCell, item);
@@ -251,4 +243,4 @@ bool CSafebox::IsValidPosition(DWORD dwPos)
 
 	return true;
 }
-
+//martysama0134's 460ea0c504d227c3e92ba87763869d8d

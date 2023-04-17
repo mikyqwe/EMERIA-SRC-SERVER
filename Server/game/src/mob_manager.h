@@ -1,13 +1,10 @@
 #ifndef __INC_METIN_II_MOB_MANAGER_H__
 #define __INC_METIN_II_MOB_MANAGER_H__
-#ifdef __INGAME_WIKI__
-	#include "../../common/in_game_wiki.h"
-#endif
 
 typedef struct SMobSplashAttackInfo
 {
-	DWORD	dwTiming; // 스킬 사용 후 실제로 데미지 먹힐때까지 기다리는 시간 (ms)
-	DWORD	dwHitDistance; // 스킬 사용시 실제로 스킬 계산이 되는 거리 (전방 몇cm)
+	DWORD	dwTiming;
+	DWORD	dwHitDistance;
 
 	SMobSplashAttackInfo(DWORD dwTiming, DWORD dwHitDistance)
 		: dwTiming(dwTiming)
@@ -40,8 +37,8 @@ class CMobInstance
 	public:
 		CMobInstance();
 
-		PIXEL_POSITION	m_posLastAttacked;	// 마지막 맞은 위치
-		DWORD		m_dwLastAttackedTime;	// 마지막 맞은 시간
+		PIXEL_POSITION	m_posLastAttacked;
+		DWORD		m_dwLastAttackedTime;
 		DWORD		m_dwLastWarpTime;
 
 		bool m_IsBerserk;
@@ -146,13 +143,6 @@ class CMobManager : public singleton<CMobManager>
 		const iterator	end()	{ return m_map_pkMobByVnum.end();	}
 
 		void RebindMobProto(LPCHARACTER ch);
-#ifdef __INGAME_WIKI__
-		typedef std::vector<CommonWikiData::TWikiMobDropInfo> TMobWikiInfoVector;
-		typedef std::map<DWORD, TMobWikiInfoVector> TMobWikiInfoMap;
-		
-		TMobWikiInfoMap&	GetMobWikiInfoMap() { return m_wikiInfoMap; }
-		TMobWikiInfoVector&	GetMobWikiInfo(DWORD vnum) { return m_wikiInfoMap[vnum]; }
-#endif
 
 		void			IncRegenCount(BYTE bRegenType, DWORD dwVnum, int iCount, int iTime);
 		void			DumpRegenCount(const char* c_szFilename);
@@ -162,10 +152,9 @@ class CMobManager : public singleton<CMobManager>
 		std::map<std::string, CMob *> m_map_pkMobByName;
 		std::map<DWORD, CMobGroup *> m_map_pkMobGroup;
 		std::map<DWORD, CMobGroupGroup *> m_map_pkMobGroupGroup;
-#ifdef __INGAME_WIKI__
-		TMobWikiInfoMap	m_wikiInfoMap;
-#endif
+
 		std::map<DWORD, double> m_mapRegenCount;
 };
 
 #endif
+//martysama0134's 2022

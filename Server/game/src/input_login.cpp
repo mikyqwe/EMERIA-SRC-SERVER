@@ -28,29 +28,24 @@
 #include "block_country.h"
 #include "dev_log.h"
 #include "log.h"
-#ifdef ENABLE_BIOLOG_SYSTEM	
-	#include "biolog.h"
-#endif
 #include "horsename_manager.h"
 #include "MarkManager.h"
-#ifdef ENABLE_SWITCHBOT
-#include "switchbot.h"
-#endif
-
 #include "HackShield.h"
 #include "XTrapManager.h"
 #include "../../common/CommonDefines.h"
-#ifdef ENABLE_DECORUM
-#include "decorum_arena.h"
-#include "decorum_manager.h"
+#ifdef ENABLE_ANTI_MULTIPLE_FARM
+#include "HAntiMultipleFarm.h"
+#endif
+#ifdef ENABLE_SWITCHBOT
+#include "switchbot.h"
 #endif
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 	#include "MountSystem.h"
 #endif
-#ifdef ENABLE_ANTI_MULTIPLE_FARM
-#include "HAntiMultipleFarm.h"
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+#include "new_offlineshop.h"
+#include "new_offlineshop_manager.h"
 #endif
-
 #ifdef ENABLE_WOLFMAN_CHARACTER
 
 // #define USE_LYCAN_CREATE_POSITION
@@ -83,27 +78,18 @@ inline DWORD LYCAN_CREATE_START_Y(BYTE e, BYTE job)
 
 #endif
 
-#ifdef ANTY_WAIT_HACK
-extern std::map<BYTE, std::string> AntyWHRegex;
-#endif
-
 static void _send_bonus_info(LPCHARACTER ch)
 {
 	int	item_drop_bonus = 0;
 	int gold_drop_bonus = 0;
 	int gold10_drop_bonus	= 0;
 	int exp_bonus		= 0;
-#ifdef ENABLE_DECORUM
-	int decorum_bonus	= 0;
-#endif
 
 	item_drop_bonus		= CPrivManager::instance().GetPriv(ch, PRIV_ITEM_DROP);
 	gold_drop_bonus		= CPrivManager::instance().GetPriv(ch, PRIV_GOLD_DROP);
 	gold10_drop_bonus	= CPrivManager::instance().GetPriv(ch, PRIV_GOLD10_DROP);
 	exp_bonus			= CPrivManager::instance().GetPriv(ch, PRIV_EXP_PCT);
-#ifdef ENABLE_DECORUM
-	decorum_bonus		= CPrivManager::instance().GetPriv(ch, PRIV_DECORUM_GAIN);
-#endif
+
 	if (item_drop_bonus)
 	{
 		ch->ChatPacket(CHAT_TYPE_NOTICE,
@@ -124,26 +110,19 @@ static void _send_bonus_info(LPCHARACTER ch)
 		ch->ChatPacket(CHAT_TYPE_NOTICE,
 				LC_TEXT("경험치 %d%% 추가 획득 이벤트 중입니다."), exp_bonus);
 	}
-#ifdef ENABLE_DECORUM
-	if (decorum_bonus)
-	{
-		ch->ChatPacket(CHAT_TYPE_NOTICE, 
-				LC_TEXT("The Rate of gain Decorum increased by %d%%."), decorum_bonus);
-	}
-#endif	
 }
 
 static bool FN_is_battle_zone(LPCHARACTER ch)
 {
 	switch (ch->GetMapIndex())
 	{
-		case 1:         // 신수 1차 마을
-		case 2:         // 신수 2차 마을
-		case 21:        // 천조 1차 마을
-		case 23:        // 천조 2차 마을
-		case 41:        // 진노 1차 마을
-		case 43:        // 진노 2차 마을
-		case 113:       // OX 맵
+		case 1:
+		case 2:
+		case 21:
+		case 23:
+		case 41:
+		case 43:
+		case 113:
 			return false;
 	}
 
@@ -329,24 +308,11 @@ void CInputLogin::CharacterSelect(LPDESC d, const char * data)
 		return;
 	}
 
-	if (!c_r.players[pinfo->index].dwID)
-	{
-		d->SetPhase(PHASE_CLOSE);
-		return;
-	}
-
 	TPlayerLoadPacket player_load_packet;
 
 	player_load_packet.account_id	= c_r.id;
 	player_load_packet.player_id	= c_r.players[pinfo->index].dwID;
 	player_load_packet.account_index	= pinfo->index;
-
-	if (player_load_packet.player_id == 0)
-	{
-		sys_err("invalid player_id from account %d\n",c_r.id);
-		d->DelayedDisconnect(0);
-		return;
-	}
 
 	db_clientdesc->DBPacket(HEADER_GD_PLAYER_LOAD, d->GetHandle(), &player_load_packet, sizeof(TPlayerLoadPacket));
 }
@@ -393,10 +359,6 @@ bool NewPlayerTable(TPlayerTable * table,
 	table->dir	= 0;
 	table->playtime = 0;
 	table->gold 	= 0;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	table->cheque = 0;
-#endif
-
 	table->skill_group = 0;
 
 	if (china_event_server)
@@ -473,7 +435,7 @@ bool RaceToJob(unsigned race, unsigned* ret_job)
 	return true;
 }
 
-// 신규 캐릭터 지원
+
 bool NewPlayerTable2(TPlayerTable * table, const char * name, BYTE race, BYTE shape, BYTE bEmpire)
 {
 	if (race >= MAIN_RACE_MAX_NUM)
@@ -497,7 +459,7 @@ bool NewPlayerTable2(TPlayerTable * table, const char * name, BYTE race, BYTE sh
 	strlcpy(table->name, name, sizeof(table->name));
 
 	table->level		= 1;
-	table->job			= race;	// 직업대신 종족을 넣는다
+	table->job			= race;
 	table->voice		= 0;
 	table->part_base	= shape;
 
@@ -521,10 +483,6 @@ bool NewPlayerTable2(TPlayerTable * table, const char * name, BYTE race, BYTE sh
 	table->dir		= 0;
 	table->playtime = 0;
 	table->gold 	= 0;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	table->cheque = 0;
-#endif
-
 	table->skill_group = 0;
 
 	return true;
@@ -551,7 +509,7 @@ void CInputLogin::CharacterCreate(LPDESC d, const char * data)
 		return;
 	}
 
-	// 사용할 수 없는 이름이거나, 잘못된 평상복이면 생설 실패
+
 	if (!check_name(pinfo->name) || pinfo->shape > 1)
 	{
 		d->Packet(&packFailure, sizeof(packFailure));
@@ -648,7 +606,7 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 		d->SetPhase(PHASE_CLOSE);
 		return;
 	}
-	
+
 	PIXEL_POSITION pos = ch->GetXYZ();
 
 	if (!SECTREE_MANAGER::instance().GetMovablePosition(ch->GetMapIndex(), pos.x, pos.y, pos))
@@ -666,24 +624,22 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 
 	CGuildManager::instance().LoginMember(ch);
 
-	// 캐릭터를 맵에 추가
+
 	ch->Show(ch->GetMapIndex(), pos.x, pos.y, pos.z);
 
 	SECTREE_MANAGER::instance().SendNPCPosition(ch);
 #ifdef ENABLE_ATLAS_BOSS
 	SECTREE_MANAGER::instance().SendBossPosition(ch);
-#endif
-	ch->ReviveInvisible(5);
-
-	// test 
-	//ch->ChatPacket(CHAT_TYPE_INFO, "channel: %d", g_bChannel);
+#endif	
 	
-	//
-
+#ifdef ENABLE_ANTI_EXP
+	ch->SetAntiExp(ch->GetQuestFlag("anti_exp.status"));
+#endif	
+	ch->ReviveInvisible(5);
 	d->SetPhase(PHASE_GAME);
 
-	if(ch->GetItemAward_cmd())																		//게임페이즈 들어가면
-		quest::CQuestManager::instance().ItemInformer(ch->GetPlayerID(),ch->GetItemAward_vnum());	//questmanager 호출
+	if(ch->GetItemAward_cmd())
+		quest::CQuestManager::instance().ItemInformer(ch->GetPlayerID(),ch->GetItemAward_vnum());
 
 	sys_log(0, "ENTERGAME: %s %dx%dx%d %s map_index %d",
 			ch->GetName(), ch->GetX(), ch->GetY(), ch->GetZ(), d->GetHostName(), ch->GetMapIndex());
@@ -693,27 +649,14 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 		ch->EnterHorse();
 	}
 
-	// 플레이시간 레코딩 시작
-	ch->CheckSummonItems();
+
 	ch->ResetPlayTime();
-#ifdef ENABLE_MAINTENANCE_SYSTEM
-	__SendMaintenancePacketToPlayer(ch);
-#endif
-	// 자동 저장 이벤트 추가
+
+
 	ch->StartSaveEvent();
 	ch->StartRecoveryEvent();
-#ifdef ENABLE_CSHIELD
-	ch->StartCShieldEvent();
-	ch->StartCShieldDataEvent();
-#endif
 	ch->StartCheckSpeedHackEvent();
-#ifdef ENABLE_AFK_MODE_SYSTEM
-	ch->StartUpdateCharacterEvent();
-#endif
-#ifdef ENABLE_EXPRESSING_EMOTION
-	ch->LoadingInfoEmotions();
-	ch->StartCheckTimeEmotion();
-#endif
+
 	CPVPManager::instance().Connect(ch);
 	CPVPManager::instance().SendList(d);
 
@@ -730,16 +673,9 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 	int8_t i8GetOldState = static_cast<int8_t>(CAntiMultipleFarm::instance().GetPlayerDropState(sMAIf, ch->GetPlayerID()));
 	CAntiMultipleFarm::instance().Login(sMAIf, ch->GetPlayerID(), i8GetOldState);
 #endif
-
-#ifdef ENABLE_EVENT_MANAGER
-	CHARACTER_MANAGER::Instance().SendDataPlayer(ch);
+#ifdef ENABLE_NEW_DETAILS_GUI
+	ch->SendKillLog();
 #endif
-#ifdef ENABLE_ANTI_EXP
-	ch->SetAntiExp(ch->GetQuestFlag("anti_exp.status"));
-#endif
-	ch->ReviveInvisible(5);
-	d->SetPhase(PHASE_GAME);
-
 
 	TPacketGCTime p;
 	p.bHeader = HEADER_GC_TIME;
@@ -753,53 +689,7 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 
 	ch->SendGreetMessage();
 
-#ifdef ENABLE_BIOLOG_SYSTEM	
-	int pGetCompleted[] =
-	{
-		(ch->GetBiologState("biolog_lv92.completed")), (ch->GetBiologState("biolog_lv94.completed")), (ch->GetBiologState("biolog_lv92.used_window")), (ch->GetBiologState("biolog_lv94.used_window"))
-	};
-
-	if (pGetCompleted[1] != 1) {
-		BiologManager::instance().SendUpdate_Binary(ch);
-	}
-
-	if (pGetCompleted[0] == 1 && pGetCompleted[2] < 1) {
-		BiologManager::instance().SendWindow_SelectType(ch, 1);
-	}
-
-	if (pGetCompleted[1] == 1 && pGetCompleted[3] < 1) {
-		BiologManager::instance().SendWindow_SelectType(ch, 2);
-	}
-#endif	
-
-
-#ifdef ANTY_WAIT_HACK
-	if (quest::CQuestManager::Instance().GetEventFlag("wh_off") == 0)
-	{
-		TPacketGCAntyWH wh;
-		memset(&wh, 0, sizeof(TPacketGCAntyWH));
-		wh.bHeader = HEADER_GC_ANTY_WAIT_HACK;
-		strlcpy(wh.regex, AntyWHRegex[ch->GetRealJob()].c_str(), 255);
-		ch->GetDesc()->Packet(&wh, sizeof(TPacketGCAntyWH));
-		ch->StartCheckWH();
-	}
-#endif
-
 	_send_bonus_info(ch);
-#if defined(__BL_MAILBOX__)
-	CMailBox::UnreadData(ch);
-#endif
-#if defined(__BL_SOUL_ROULETTE__)
-	CSoulRoulette::StateError(CSoulRoulette::Error::GIVE, ch);
-#endif	
-#ifdef __BATTLE_PASS__
-	ch->ExternBattlePass();
-	ch->Load_BattlePass();
-#endif	
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM
-	ch->FuncHideCostumeLoad();
-#endif
-
 	for (int i = 0; i <= PREMIUM_MAX_NUM; ++i)
 	{
 		int remain = ch->GetPremiumRemainSeconds(i);
@@ -844,78 +734,12 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 	if (ch->IsGM() == true)
 		ch->ChatPacket(CHAT_TYPE_COMMAND, "ConsoleEnable");
 
-
-#ifdef ENABLE_DECORUM
-	DECORUM * pDec = CDecorumManager::instance().GetDecorum(ch->GetPlayerID());
-	if (pDec->IsDecored())
-		pDec->SendDecorumData(ch);
-	
-	if (ch->GetQuestFlag("arena.ban_notify"))
-	{
-		ch->SetQuestFlag("arena.ban_notify", 0);
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(), "<Arena> You have desert too many times, for 3 days you cannot join any Decorum Arena."));
-	}
 	if (ch->GetMapIndex() >= 10000)
 	{
-		if (CDecoredArenaManager::instance().IsArenaMap(ch->GetMapIndex()))
-		{
-			if(ch->GetHorse())
-				ch->HorseSummon(false);
-			
-			LPITEM mount = ch->GetWear(WEAR_COSTUME_MOUNT);
-			
-			if(mount != nullptr){
-				ch->UnequipItem(mount);
-			}
-		}
-	}					
-#endif	
-
-	if (ch->GetMapIndex() >= 10000)
-	{
-		if (CWarMapManager::instance().IsWarMap(ch->GetMapIndex())) 
-		{
-			CWarMap * pMap = CWarMapManager::instance().Find(ch->GetMapIndex());
-#ifdef __IMPROVED_GUILD_WAR__
-			if (pMap)
-			{
-				BYTE bIdx;
-				if (ch->GetGuild() && pMap->GetTeamIndex(ch->GetGuild()->GetID(), bIdx))
-				{
-					// sys_err("[TEST]Current: %d Max: %d", pMap->GetCurrentPlayer(bIdx), pMap->GetMaxPlayer(bIdx));
-
-					if (pMap->GetCurrentPlayer(bIdx) + 1 > pMap->GetMaxPlayer(bIdx)) {
-						ch->ChatPacket(CHAT_TYPE_BIG_NOTICE, "The player limit has been reached!");
-						ch->GoHome();
-						return;
-					}
-				}
-			}
-#endif
-			ch->SetWarMap(pMap);
-		}
+		if (CWarMapManager::instance().IsWarMap(ch->GetMapIndex()))
+			ch->SetWarMap(CWarMapManager::instance().Find(ch->GetMapIndex()));
 		else if (marriage::WeddingManager::instance().IsWeddingMap(ch->GetMapIndex()))
 			ch->SetWeddingMap(marriage::WeddingManager::instance().Find(ch->GetMapIndex()));
-
-#ifdef ENABLE_DECORUM
-		else if (CDecoredArenaManager::instance().IsArenaMap(ch->GetMapIndex()))
-		{
-			CDecoredArena * pArena = CDecoredArenaManager::instance().FindDecoredArena(ch->GetMapIndex());
-			if (!pArena || (pArena->IsEngaged() && CDecoredArenaManager::instance().IsMember(ch->GetMapIndex(), ch->GetPlayerID()) == MEMBER_DUELIST_DECORUM))
-			{
-				if(pArena && pArena->IsEngaged())
-					//sys_err("PD1: arena isengaged input login");
-					ch->WarpSet(ARENA_RETURN_POINT_X(ch->GetEmpire()), ARENA_RETURN_POINT_Y(ch->GetEmpire()));
-					
-				if(pArena && CDecoredArenaManager::instance().IsMember(ch->GetMapIndex(), ch->GetPlayerID()) == MEMBER_DUELIST_DECORUM)
-					//sys_err("PD1: arena ismember duelist input login");
-					ch->WarpSet(ARENA_RETURN_POINT_X(ch->GetEmpire()), ARENA_RETURN_POINT_Y(ch->GetEmpire()));
-			}
-				
-			else
-				CDecoredArenaManager::instance().OnConnect(ch, ch->GetMapIndex());
-		}
-#endif
 		else {
 			ch->SetDungeon(CDungeonManager::instance().FindByMapIndex(ch->GetMapIndex()));
 		}
@@ -989,29 +813,13 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 		if (ch->IsRiding())
 			ch->StopRiding();
 #endif
-		// ox 이벤트 맵
 		if (COXEventManager::instance().Enter(ch) == false)
 		{
-			// ox 맵 진입 허가가 나지 않음. 플레이어면 마을로 보내자
+
 			if (ch->GetGMLevel() == GM_PLAYER)
 				ch->WarpSet(EMPIRE_START_X(ch->GetEmpire()), EMPIRE_START_Y(ch->GetEmpire()));
 		}
 	}
-// #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
-	// else if (ch->GetMapIndex() == 1 || ch->GetMapIndex() == 21 || ch->GetMapIndex() == 41 || ch->GetMapIndex() == 74 || ch->GetMapIndex() == 83 || ch->GetMapIndex() == 106 || ch->GetMapIndex() == 102 || ch->GetMapIndex() == 114)
-	// {
-		// if (ch->IsHorseRiding() == true)
-		// {
-			// ch->StopRiding();
-			// ch->HorseSummon(false);
-		// }
-
-		// ch->RemoveAffect(AFFECT_MOUNT);
-		// ch->RemoveAffect(AFFECT_MOUNT_BONUS);
-		// if (ch->IsRiding())
-			// ch->StopRiding();
-	// }
-// #endif
 	else
 	{
 		if (CWarMapManager::instance().IsWarMap(ch->GetMapIndex()) ||
@@ -1020,17 +828,10 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 			if (!test_server)
 				ch->WarpSet(EMPIRE_START_X(ch->GetEmpire()), EMPIRE_START_Y(ch->GetEmpire()));
 		}
-#ifdef ENABLE_DECORUM
-		else if (CDecoredArenaManager::instance().IsArenaBaseMap(ch->GetMapIndex()))
-		{
-			if(!quest::CQuestManager::instance().GetEventFlag("pvp_tournament_enable") || ch->GetMapIndex() != MAP_INDEX_ARENA_5VS5)
-				ch->WarpSet(ARENA_RETURN_POINT_X(ch->GetEmpire()), ARENA_RETURN_POINT_Y(ch->GetEmpire()));
-		}
-#endif		
 	}
 
-	// 청소년 보호
-	if (g_TeenDesc) // BufferedPacket 사용 금지
+
+	if (g_TeenDesc)
 	{
 		TPacketGTLogin p;
 
@@ -1049,9 +850,24 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 		if (pid != 0 && CHorseNameManager::instance().GetHorseName(pid) == NULL)
 			db_clientdesc->DBPacket(HEADER_GD_REQ_HORSE_NAME, 0, &pid, sizeof(DWORD));
 
+		// @fixme182 BEGIN
 		ch->SetHorseLevel(ch->GetHorseLevel());
 		ch->SkillLevelPacket();
+		// @fixme182 END
 	}
+	
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	if (ch->IsPC())
+	{
+		offlineshop::CShop* pkShop= offlineshop::GetManager().GetShopByOwnerID(ch->GetPlayerID());
+		if(pkShop)
+			ch->SetOfflineShop(pkShop);
+
+		offlineshop::CAuction* auction = offlineshop::GetManager().GetAuctionByOwnerID(ch->GetPlayerID());
+		if(auction)
+			ch->SetAuction(auction);
+	}
+#endif
 
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 	// if (ch->GetMapIndex() != 113 && ch->GetMapIndex() != 1 && ch->GetMapIndex() != 21 && ch->GetMapIndex() != 41 && ch->GetMapIndex() != 74 && ch->GetMapIndex() != 83 && ch->GetMapIndex() != 106 && ch->GetMapIndex() != 102 && ch->GetMapIndex() != 114 && CArenaManager::instance().IsArenaMap(ch->GetMapIndex()) == false)
@@ -1064,8 +880,6 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 	ch->SendBioData();
 #endif
 
-
-	// 중립맵에 들어갔을때 안내하기
 	if (g_noticeBattleZone)
 	{
 		if (FN_is_battle_zone(ch))
@@ -1075,21 +889,15 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 			ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("본인의 주성 및 부성으로 돌아가시기 바랍니다."));
 		}
 	}
-
-#ifdef __SPECIALSTAT_SYSTEM__
-	ch->SpecialStatsPacket();
-#endif // __SPECIALSTAT_SYSTEM__
+#if defined(__BL_OFFICIAL_LOOT_FILTER__) && !defined(__PREMIUM_LOOT_FILTER__)
+	ch->SetLootFilter();
+#endif
 #ifdef ENABLE_SWITCHBOT
 	CSwitchbotManager::Instance().EnterGame(ch);
 #endif
-
 #ifdef ENABLE_HUNTING_SYSTEM
 	ch->CheckHunting();
 #endif
-	ch->RestoreTalismanBonus();
-#ifdef ENABLE_ENTITY_PRELOADING
-	SECTREE_MANAGER::Instance().SendPreloadEntitiesPacket(ch);
-#endif	
 }
 
 void CInputLogin::Empire(LPDESC d, const char * c_pData)
@@ -1140,13 +948,13 @@ int CInputLogin::GuildSymbolUpload(LPDESC d, const char* c_pData, size_t uiBytes
 
 	if (iSymbolSize <= 0 || iSymbolSize > 64 * 1024)
 	{
-		// 64k 보다 큰 길드 심볼은 올릴수없다
-		// 접속을 끊고 무시
+
+
 		d->SetPhase(PHASE_CLOSE);
 		return 0;
 	}
 
-	// 땅을 소유하지 않은 길드인 경우.
+
 	if (!test_server)
 		if (!building::CManager::instance().FindLandByGuild(p->guild_id))
 		{
@@ -1262,7 +1070,7 @@ void CInputLogin::GuildMarkCRCList(LPDESC d, const char* c_pData)
 	CGuildMarkManager::instance().GetDiffBlocks(pCG->imgIdx, pCG->crclist, mapDiffBlocks);
 
 	DWORD blockCount = 0;
-	TEMP_BUFFER buf(1024 * 1024); // 1M 버퍼
+	TEMP_BUFFER buf(1024 * 1024);
 
 	for (itertype(mapDiffBlocks) it = mapDiffBlocks.begin(); it != mapDiffBlocks.end(); ++it)
 	{
@@ -1409,4 +1217,4 @@ int CInputLogin::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 
 	return (iExtraLen);
 }
-
+//martysama0134's 2022

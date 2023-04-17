@@ -1,4 +1,3 @@
-
 #include <boost/unordered_map.hpp>
 
 #include "../../common/stl.h"
@@ -34,4 +33,4 @@ class CDragonLairManager : public singleton<CDragonLairManager>
 	private:
 		boost::unordered_map<DWORD, CDragonLair*> LairMap_;
 };
-
+//martysama0134's 2022

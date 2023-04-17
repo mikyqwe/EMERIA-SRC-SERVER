@@ -225,13 +225,13 @@ void CDungeon::DecMember(LPCHARACTER ch)
 
 	m_set_pkCharacter.erase(it);
 
-	if (m_set_pkCharacter.empty() && GetFlag("DungeonBlock")==0)
+	if (m_set_pkCharacter.empty())
 	{
 		dungeon_id_info* info = AllocEventInfo<dungeon_id_info>();
 		info->dungeon_id = m_id;
 
 		event_cancel(&deadEvent);
-		deadEvent = event_create(dungeon_dead_event, info, PASSES_PER_SEC(300));
+		deadEvent = event_create(dungeon_dead_event, info, PASSES_PER_SEC(10));
 	}
 }
 
@@ -669,35 +669,8 @@ void CDungeon::KillUnique(const std::string& key)
 	}
 	LPCHARACTER ch = it->second;
 	m_map_UniqueMob.erase(it);
-	ch->Dead();
+	ch->DeadNoReward(); // @fixme188 from Dead()
 }
-
-
-#ifdef ENABLE_DUNGEON_FUNC
-void CDungeon::BlockUniqueHP(const std::string& key, BYTE uniqTargetHP)
-{
-	TUniqueMobMap::iterator it = m_map_UniqueMob.find(key);
-	if (it == m_map_UniqueMob.end())
-	{
-		sys_err("Unknown Key : %s", key.c_str());
-		return;
-	}
-
-	it->second->BlockMonsterHP(uniqTargetHP);
-}
-
-void CDungeon::UnblockUniqueHP(const std::string& key)
-{
-	TUniqueMobMap::iterator it = m_map_UniqueMob.find(key);
-	if (it == m_map_UniqueMob.end())
-	{
-		sys_err("Unknown Key : %s", key.c_str());
-		return;
-	}
-
-	it->second->UnblockMonsterHP();
-}
-#endif
 
 DWORD CDungeon::GetUniqueVid(const std::string& key)
 {
@@ -721,19 +694,6 @@ float CDungeon::GetUniqueHpPerc(const std::string& key)
 	}
 	return (100.f*it->second->GetHP())/it->second->GetMaxHP();
 }
-
-#ifdef ENABLE_DUNGEON_FUNC
-int CDungeon::GetUniqueHp(const std::string& key)
-{
-	TUniqueMobMap::iterator it = m_map_UniqueMob.find(key);
-	if (it == m_map_UniqueMob.end())
-	{
-		sys_err("Unknown Key : %s", key.c_str());
-		return false;
-	}
-	return it->second->GetHP();
-}
-#endif
 
 void CDungeon::DeadCharacter(LPCHARACTER ch)
 {
@@ -999,11 +959,10 @@ namespace
 			if (ent->IsType(ENTITY_CHARACTER))
 			{
 				LPCHARACTER ch = (LPCHARACTER) ent;
-#ifdef NEW_PET_SYSTEM
+
 				if (!ch->IsPC() && !ch->IsPet() && !ch->IsNewPet() && !ch->IsMount())
 				//if (!ch->IsPC() && !ch->IsPet() && !ch->IsHydraNPC() && !ch->IsNewPet() && !ch->IsMount())
-#endif
-					ch->Dead();
+					ch->DeadNoReward(); // @fixme188 from Dead()
 			}
 		}
 	};
@@ -1016,22 +975,14 @@ namespace
 			if (ent->IsType(ENTITY_CHARACTER))
 			{
 				LPCHARACTER ch = (LPCHARACTER) ent;
-#ifdef NEW_PET_SYSTEM
-				if (!ch->IsPC() && !ch->IsPet() && !ch->IsNewPet() && !ch->IsMount())
-				//if (!ch->IsPC() && !ch->IsPet() && !ch->IsHydraNPC() && !ch->IsNewPet() && !ch->IsMount())
-#endif
-				{
+
+				if (!ch->IsPC() && !ch->IsPet() && !ch->IsNewPet() && !ch->IsMount()) {
 					M2_DESTROY_CHARACTER(ch);
 				}
 			}
 			else if (ent->IsType(ENTITY_ITEM))
 			{
 				LPITEM item = (LPITEM) ent;
-#ifdef __ENABLE_ITEM_GARBAGE__
-				if (!Garbage<CItem, LPEVENT>::Ref().VerifyObject(item, NULL, __FUNCTION__, __LINE__)) {
-					return;
-				}
-#endif
 				M2_DESTROY_ITEM(item);
 			}
 			else
@@ -1110,10 +1061,7 @@ struct FCountMonster
 		if (ent->IsType(ENTITY_CHARACTER))
 		{
 			LPCHARACTER ch = (LPCHARACTER) ent;
-#ifdef NEW_PET_SYSTEM
-			if (!ch->IsPC() && !ch->IsPet() && !ch->IsNewPet() && !ch->IsMount() && !ch->IsDead() && ch->IsMonster() && ch->IsStone()) //CORE FIX
-			//if (!ch->IsPC() && !ch->IsPet() && !ch->IsNewPet()) //CORE FIX
-#endif
+			if (ch->IsMonster() || ch->IsStone() || ch->IsPet() || ch->IsNewPet() || ch->IsMount() ) // @fixme171 previously (!ch->IsPC())
 				n++;
 		}
 	}
@@ -1180,10 +1128,8 @@ namespace
 			if (ent->IsType(ENTITY_CHARACTER))
 			{
 				LPCHARACTER ch = (LPCHARACTER) ent;
-				if (ch->IsPC()) //FIX
-				{
+				if (ch->IsPC()) // @fixme172
 					ch->ChatPacket(CHAT_TYPE_NOTICE, "%s", m_psz);
-				}
 			}
 		}
 
@@ -1219,7 +1165,7 @@ struct FExitDungeonToStartPosition
 			{
 				PIXEL_POSITION posWarp;
 
-				// 현재 맵 인덱스를 넣는 것이 아니라 시작하는 맵 인덱스를 넣는다.
+
 				if (SECTREE_MANAGER::instance().GetRecallPositionByEmpire(g_start_map[ch->GetEmpire()], ch->GetEmpire(), posWarp))
 					ch->WarpSet(posWarp.x, posWarp.y);
 				else
@@ -1369,7 +1315,7 @@ void CDungeon::JumpToEliminateLocation()
 	}
 	else
 	{
-		// 일반 맵으로 워프
+
 		LPSECTREE_MAP pMap = SECTREE_MANAGER::instance().GetMap(m_lMapIndex);
 
 		if (!pMap)
@@ -1446,79 +1392,4 @@ const CDungeon::ItemGroup* CDungeon::GetItemGroup (std::string& group_name)
 	else
 		return NULL;
 }
-
-/* void CDungeon::NewKillAll(DWORD dwMapIndex)
-{
-	LPSECTREE_MAP pkMap = SECTREE_MANAGER::instance().GetMap(dwMapIndex);
-	if (pkMap == NULL) {
-		sys_err("CDungeon: SECTREE_MAP not found for #%ld", dwMapIndex);
-		return;
-	}
-	FKillSectree f;
-	pkMap->for_each(f);
-} */
-
-struct FCommand
-{
-	const char * m_psz;
-	FCommand(const char * psz) : m_psz(psz)
-	{}
-	void operator() (LPENTITY ent)
-	{
-		if (ent->IsType(ENTITY_CHARACTER))
-		{
-			LPCHARACTER ch = (LPCHARACTER) ent;
-			if(ch->IsPC())
-			{
-				ch->ChatPacket(CHAT_TYPE_COMMAND, "%s", m_psz);
-			}
-		}
-	}
-};
-void CDungeon::DungeonCommand(DWORD dwMapIndex, const char* msg)
-{
-	LPSECTREE_MAP pMap = SECTREE_MANAGER::instance().GetMap(dwMapIndex);
-	if (pMap != NULL)
-	{
-		FCommand f(msg);
-		pMap->for_each(f);
-	}
-	else
-	{
-		sys_err("DungeonCommand NULL DUNGEON INDEX %d ",dwMapIndex);
-		return;
-	}
-}
-
-struct FMission
-{
-	const char * m_psz;
-	BYTE value;
-	FMission(const char * psz, BYTE getValue):m_psz(psz),value(getValue){}
-	void operator() (LPENTITY ent)
-	{
-		if (ent->IsType(ENTITY_CHARACTER))
-		{
-			LPCHARACTER ch = (LPCHARACTER) ent;
-			if(ch->IsPC())
-			{
-				ch->ChatPacket(CHAT_TYPE_MISSION, "%s", m_psz);
-			}
-		}
-	}
-};
-
-void CDungeon::MissionNotice(DWORD dwMapIndex, const char* msg, BYTE value)
-{
-	LPSECTREE_MAP pMap = SECTREE_MANAGER::instance().GetMap(dwMapIndex);
-	if (pMap != NULL)
-	{
-		FMission f(msg,value);
-		pMap->for_each(f);
-	}
-	else
-	{
-		sys_err("MissionNotice NULL DUNGEON INDEX %d ",dwMapIndex);
-		return;
-	}
-}
+//martysama0134's 2022

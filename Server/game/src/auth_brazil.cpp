@@ -133,7 +133,6 @@ int auth_brazil(const char *login, const char *pwd)
 	    return AUTH_BRAZIL_SERVER_ERR;
 	}
 
-	// 응답받은 경우에만 query count를 늘린다.
 	auth_brazil_inc_query_count();
 
 	return FN_parse_reply(reply);
@@ -179,4 +178,4 @@ void auth_brazil_log()
     // reset query count
     s_query_count = 0;
 }
-
+//martysama0134's 2022

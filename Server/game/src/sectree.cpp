@@ -52,9 +52,8 @@ void SECTREE::Destroy()
 			else if (ent->IsType(ENTITY_ITEM))
 			{
 				LPITEM item = (LPITEM) ent;
-				LPCHARACTER ch = (LPCHARACTER) ent;
 
-				sys_err("Sectree: destroying Item: %s", item->GetName(ch->GetLanguage()));
+				sys_err("Sectree: destroying Item: %s", item->GetName());
 
 				M2_DESTROY_ITEM(item);
 			}
@@ -89,8 +88,11 @@ void SECTREE::IncreasePC()
 
 void SECTREE::DecreasePC()
 {
+#ifdef __clang__
+	LPSECTREE_LIST::const_iterator it_tree = m_neighbor_list.begin();
+#else
 	LPSECTREE_LIST::iterator it_tree = m_neighbor_list.begin();
-
+#endif
 	while (it_tree != m_neighbor_list.end())
 	{
 		LPSECTREE tree = *it_tree++;
@@ -150,7 +152,7 @@ bool SECTREE::InsertEntity(LPENTITY pkEnt)
 			if (pkCurTree)
 				pkCurTree->DecreasePC();
 		}
-		else if (m_iPCCount > 0 && !pkChr->IsWarp() && !pkChr->IsGoto()) // PC가 아니고 이 곳에 PC가 있다면 Idle event를 시작 시킨다.
+		else if (m_iPCCount > 0 && !pkChr->IsWarp() && !pkChr->IsGoto())
 		{
 			pkChr->StartStateMachine();
 		}
@@ -218,4 +220,4 @@ int SECTREE::GetEventAttribute(long x, long y)
 {
 	return GetAttribute(x, y) >> 8;
 }
-
+//martysama0134's 2022

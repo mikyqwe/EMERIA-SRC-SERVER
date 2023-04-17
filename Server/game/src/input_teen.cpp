@@ -245,4 +245,4 @@ bool CInputTeen::ProcessMain(LPDESC lpDesc, const void * c_pvOrig, size_t uiByte
 
 	return true;
 }
-
+//martysama0134's 2022

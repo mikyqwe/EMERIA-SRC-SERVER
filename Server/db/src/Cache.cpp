@@ -1,12 +1,8 @@
-
 #include "stdafx.h"
 #include "Cache.h"
 
 #include "QID.h"
 #include "ClientManager.h"
-#ifdef __AUCTION__
-#include "AuctionManager.h"
-#endif
 #include "Main.h"
 
 extern CPacketInfo g_item_info;
@@ -18,7 +14,6 @@ extern int g_iItemPriceListTableCacheFlushSeconds;
 // END_OF_MYSHOP_PRICE_LIST
 //
 extern int g_item_count;
-const int auctionMinFlushSec = 1800;
 
 CItemCache::CItemCache()
 {
@@ -29,12 +24,12 @@ CItemCache::~CItemCache()
 {
 }
 
-// 이거 이상한데...
-// Delete를 했으면, Cache도 해제해야 하는것 아닌가???
-// 근데 Cache를 해제하는 부분이 없어.
-// 못 찾은 건가?
-// 이렇게 해놓으면, 계속 시간이 될 때마다 아이템을 계속 지워...
-// 이미 사라진 아이템인데... 확인사살??????
+
+
+
+
+
+
 // fixme
 // by rtsummit
 void CItemCache::Delete()
@@ -53,12 +48,11 @@ void CItemCache::Delete()
 	OnFlush();
 
 	//m_bNeedQuery = false;
-	//m_lastUpdateTime = time(0) - m_expireTime; // 바로 타임아웃 되도록 하자.
 }
 
 void CItemCache::OnFlush()
 {
-	if (m_data.vnum == 0) // vnum이 0이면 삭제하라고 표시된 것이다.
+	if (m_data.vnum == 0)
 	{
 		char szQuery[QUERY_MAX_LEN];
 		snprintf(szQuery, sizeof(szQuery), "DELETE FROM item%s WHERE id=%u", GetTablePostfix(), m_data.id);
@@ -88,41 +82,21 @@ void CItemCache::OnFlush()
 		char szValues[QUERY_MAX_LEN];
 		char szUpdate[QUERY_MAX_LEN];
 
-		int iLen = snprintf(szColumns, sizeof(szColumns), "id, owner_id, window, pos, count, vnum, transmutation");
+		int iLen = snprintf(szColumns, sizeof(szColumns), "id, owner_id, `window`, pos, count, vnum");
 
-		int iValueLen = snprintf(szValues, sizeof(szValues), "%u, %u, %d, %d, %u, %u, %u",
-				p->id, p->owner, p->window, p->pos, p->count, p->vnum, p->transmutation);
+		int iValueLen = snprintf(szValues, sizeof(szValues), "%u, %u, %d, %d, %u, %u",
+				p->id, p->owner, p->window, p->pos, p->count, p->vnum);
 
-		int iUpdateLen = snprintf(szUpdate, sizeof(szUpdate), "owner_id=%u, window=%d, pos=%d, count=%u, vnum=%u, transmutation=%u",
-				p->owner, p->window, p->pos, p->count, p->vnum, p->transmutation);
+		int iUpdateLen = snprintf(szUpdate, sizeof(szUpdate), "owner_id=%u, `window`=%d, pos=%d, count=%u, vnum=%u",
+				p->owner, p->window, p->pos, p->count, p->vnum);
 
 		if (isSocket)
 		{
-			iLen += snprintf(szColumns + iLen, sizeof(szColumns) - iLen, ", socket0, socket1, socket2"
-#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-			", socket3 "
-#endif
-			);
+			iLen += snprintf(szColumns + iLen, sizeof(szColumns) - iLen, ", socket0, socket1, socket2");
 			iValueLen += snprintf(szValues + iValueLen, sizeof(szValues) - iValueLen,
-					", %lu, %lu, %lu"
-#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-					" , %u "
-#endif
-					, p->alSockets[0], p->alSockets[1], p->alSockets[2]
-#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-					, p->alSockets[3]
-#endif
-					);
+					", %lu, %lu, %lu", p->alSockets[0], p->alSockets[1], p->alSockets[2]);
 			iUpdateLen += snprintf(szUpdate + iUpdateLen, sizeof(szUpdate) - iUpdateLen,
-					", socket0=%lu, socket1=%lu, socket2=%lu"
-#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-					", socket3=%lu "
-#endif
-					, p->alSockets[0], p->alSockets[1], p->alSockets[2]
-#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-					, p->alSockets[3]
-#endif
-					);
+					", socket0=%lu, socket1=%lu, socket2=%lu", p->alSockets[0], p->alSockets[1], p->alSockets[2]);
 		}
 
 		if (isAttr)
@@ -192,7 +166,6 @@ void CItemCache::OnFlush()
 				p->aAttr[6].bType, p->aAttr[6].sValue, p->aAttr[6].isFrozen);
 
 #endif
-			
 		}
 
 		char szItemQuery[QUERY_MAX_LEN + QUERY_MAX_LEN];
@@ -228,7 +201,6 @@ void CPlayerTableCache::OnFlush()
 		sys_log(0, "PlayerTableCache::Flush : %s", m_data.name);
 
 	char szQuery[QUERY_MAX_LEN];
-
 	CreatePlayerSaveQuery(szQuery, sizeof(szQuery), &m_data);
 	CDBManager::instance().ReturnQuery(szQuery, QID_PLAYER_SAVE, 0, NULL);
 }
@@ -248,7 +220,7 @@ CItemPriceListTableCache::CItemPriceListTableCache()
 void CItemPriceListTableCache::UpdateList(const TItemPriceListTable* pUpdateList)
 {
 	//
-	// 이미 캐싱된 아이템과 중복된 아이템을 찾고 중복되지 않는 이전 정보는 tmpvec 에 넣는다.
+
 	//
 
 	std::vector<TItemPriceInfo> tmpvec;
@@ -264,7 +236,7 @@ void CItemPriceListTableCache::UpdateList(const TItemPriceListTable* pUpdateList
 	}
 
 	//
-	// pUpdateList 를 m_data 에 복사하고 남은 공간을 tmpvec 의 앞에서 부터 남은 만큼 복사한다.
+
 	//
 
 	if (pUpdateList->byCount > SHOP_PRICELIST_MAX_NUM)
@@ -277,7 +249,7 @@ void CItemPriceListTableCache::UpdateList(const TItemPriceListTable* pUpdateList
 
 	thecore_memcpy(m_data.aPriceInfo, pUpdateList->aPriceInfo, sizeof(TItemPriceInfo) * pUpdateList->byCount);
 
-	int nDeletedNum;	// 삭제된 가격정보의 갯수
+	int nDeletedNum;
 
 	if (pUpdateList->byCount < SHOP_PRICELIST_MAX_NUM)
 	{
@@ -307,26 +279,21 @@ void CItemPriceListTableCache::OnFlush()
 	char szQuery[QUERY_MAX_LEN];
 
 	//
-	// 이 캐시의 소유자에 대한 기존에 DB 에 저장된 아이템 가격정보를 모두 삭제한다.
+
 	//
 
 	snprintf(szQuery, sizeof(szQuery), "DELETE FROM myshop_pricelist%s WHERE owner_id = %u", GetTablePostfix(), m_data.dwOwnerID);
 	CDBManager::instance().ReturnQuery(szQuery, QID_ITEMPRICE_DESTROY, 0, NULL);
 
 	//
-	// 캐시의 내용을 모두 DB 에 쓴다.
+
 	//
 
 	for (int idx = 0; idx < m_data.byCount; ++idx)
 	{
 		snprintf(szQuery, sizeof(szQuery),
-#ifdef ENABLE_CHEQUE_SYSTEM
-			"REPLACE myshop_pricelist%s(owner_id, item_vnum, price, cheque) VALUES(%u, %u, %u, %u)", // @fixme204 (INSERT INTO -> REPLACE)
-			GetTablePostfix(), m_data.dwOwnerID, m_data.aPriceInfo[idx].dwVnum, m_data.aPriceInfo[idx].price.dwPrice, m_data.aPriceInfo[idx].price.byChequePrice);
-#else
-			"REPLACE myshop_pricelist%s(owner_id, item_vnum, price) VALUES(%u, %u, %u)", // @fixme204 (INSERT INTO -> REPLACE)
-			GetTablePostfix(), m_data.dwOwnerID, m_data.aPriceInfo[idx].dwVnum, m_data.aPriceInfo[idx].dwPrice);
-#endif
+				"REPLACE myshop_pricelist%s(owner_id, item_vnum, price) VALUES(%u, %u, %u)", // @fixme204 (INSERT INTO -> REPLACE)
+				GetTablePostfix(), m_data.dwOwnerID, m_data.aPriceInfo[idx].dwVnum, m_data.aPriceInfo[idx].dwPrice);
 		CDBManager::instance().ReturnQuery(szQuery, QID_ITEMPRICE_SAVE, 0, NULL);
 	}
 
@@ -340,95 +307,4 @@ CItemPriceListTableCache::~CItemPriceListTableCache()
 }
 
 // END_OF_MYSHOP_PRICE_LIST
-#ifdef __AUCTION__
-CAuctionItemInfoCache::CAuctionItemInfoCache()
-{
-	m_expireTime = MIN (auctionMinFlushSec, g_iItemCacheFlushSeconds);
-}
-
-CAuctionItemInfoCache::~CAuctionItemInfoCache()
-{
-
-}
-
-void CAuctionItemInfoCache::Delete()
-{
-	if (m_data.item_num == 0)
-		return;
-
-	if (g_test_server)
-		sys_log(0, "CAuctionItemInfoCache::Delete : DELETE %u", m_data.item_id);
-
-	m_data.item_num = 0;
-	m_bNeedQuery = true;
-	m_lastUpdateTime = time(0);
-	OnFlush();
-	delete this;
-}
-
-void CAuctionItemInfoCache::OnFlush()
-{
-	char szQuery[QUERY_MAX_LEN];
-
-	if (m_data.item_num == 0)
-	{
-		snprintf(szQuery, sizeof(szQuery), "DELETE FROM auction where item_id = %d", m_data.item_id);
-		CDBManager::instance().AsyncQuery(szQuery);
-	}
-	else
-	{
-		snprintf(szQuery, sizeof(szQuery), "REPLACE INTO auction VALUES (%u, %d, %d, %u, \"%s\", %u, %u, %u, %u)",
-			m_data.item_num, m_data.offer_price, m_data.price, m_data.offer_id, m_data.shown_name, (DWORD)m_data.empire, (DWORD)m_data.expired_time,
-			m_data.item_id, m_data.bidder_id);
-
-		CDBManager::instance().AsyncQuery(szQuery);
-	}
-}
-
-CSaleItemInfoCache::CSaleItemInfoCache()
-{
-	m_expireTime = MIN (auctionMinFlushSec, g_iItemCacheFlushSeconds);
-}
-
-CSaleItemInfoCache::~CSaleItemInfoCache()
-{
-}
-
-void CSaleItemInfoCache::Delete()
-{
-}
-
-void CSaleItemInfoCache::OnFlush()
-{
-	char szQuery[QUERY_MAX_LEN];
-
-	snprintf(szQuery, sizeof(szQuery), "REPLACE INTO sale VALUES (%u, %d, %d, %u, \"%s\", %u, %u, %u, %u)",
-		m_data.item_num, m_data.offer_price, m_data.price, m_data.offer_id, m_data.shown_name, (DWORD)m_data.empire, (DWORD)m_data.expired_time,
-		m_data.item_id, m_data.wisher_id);
-
-	CDBManager::instance().AsyncQuery(szQuery);
-}
-
-CWishItemInfoCache::CWishItemInfoCache()
-{
-	m_expireTime = MIN (auctionMinFlushSec, g_iItemCacheFlushSeconds);
-}
-
-CWishItemInfoCache::~CWishItemInfoCache()
-{
-}
-
-void CWishItemInfoCache::Delete()
-{
-}
-
-void CWishItemInfoCache::OnFlush()
-{
-	char szQuery[QUERY_MAX_LEN];
-
-	snprintf(szQuery, sizeof(szQuery), "REPLACE INTO wish VALUES (%u, %d, %d, %u, \"%s\", %u, %d)",
-		m_data.item_num, m_data.offer_price, m_data.price, m_data.offer_id, m_data.shown_name, (DWORD)m_data.empire, (DWORD)m_data.expired_time);
-
-	CDBManager::instance().AsyncQuery(szQuery);
-}
-#endif
+//martysama0134's 2022

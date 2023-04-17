@@ -33,9 +33,10 @@ extern "C"
     extern float		thecore_pulse_per_second(void);
 	extern int			thecore_is_shutdowned(void);
 
-	extern void			thecore_tick(void); // tics ¡ı∞°
+	extern void			thecore_tick(void);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
+//martysama0134's 2022

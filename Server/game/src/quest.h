@@ -9,8 +9,6 @@
 
 #include "lua_incl.h"
 
-#define ENABLE_QUEST_DIE_EVENT
-
 namespace quest
 {
 	enum
@@ -63,8 +61,11 @@ namespace quest
 #ifdef ENABLE_QUEST_DIE_EVENT
 		QUEST_DIE_EVENT,
 #endif
-#ifdef ENABLE_MELEY_LAIR_DUNGEON
-		QUEST_ATTACK_EVENT,
+#ifdef ENABLE_QUEST_BOOT_EVENT
+		QUEST_BOOT_EVENT,
+#endif
+#ifdef ENABLE_QUEST_DND_EVENT
+		QUEST_DND_EVENT,
 #endif
 		QUEST_EVENT_COUNT
 	};
@@ -122,7 +123,7 @@ namespace quest
 		int		iIndex;
 		bool		bStart;
 		int		st;
-		std::string quest_name;
+
 		std::string	_title;
 		std::string	_clock_name;
 		std::string	_counter_name;
@@ -139,3 +140,4 @@ namespace quest
 	};
 }
 #endif
+//martysama0134's 2022

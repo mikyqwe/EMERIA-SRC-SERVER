@@ -3,7 +3,7 @@
 #include "SpeedServer.h"
 #include "locale_service.h"
 
-// 쾌도 서버 보너스 경험치 시스템
+
 // by rtsummit
 
 CSpeedServerManager::CSpeedServerManager()
@@ -361,13 +361,13 @@ HME CSpeedServerEmpireExp::GetCurrentExpPriv(int &duration, bool &is_change)
 
 	HME hme;
 
-	// 현재 날짜가 holiday이면 holiday bonus를 도입한다.
+
 	if (holi_it != holiday_map.end())
 	{
 		for (std::list <HME>::iterator it = holi_it->second.begin();
 				it != wday_exp_table[datetime->tm_wday].end(); it++)
 		{
-			// 현재 시각이 시간 구간 안에 포함되면,
+
 			if (total_sec < (it->hour * 3600 + it->min * 60 ))
 			{
 				hme = *it;
@@ -380,7 +380,7 @@ HME CSpeedServerEmpireExp::GetCurrentExpPriv(int &duration, bool &is_change)
 		for (std::list <HME>::iterator it =  wday_exp_table[datetime->tm_wday].begin();
 				it != wday_exp_table[datetime->tm_wday].end(); it++)
 		{
-			// 현재 시각이 시간 구간 안에 포함되면,
+
 			if (total_sec < (it->hour * 3600 + it->min * 60 ))
 			{
 				hme = *it;
@@ -397,3 +397,4 @@ HME CSpeedServerEmpireExp::GetCurrentExpPriv(int &duration, bool &is_change)
 	return hme;
 
 }
+//martysama0134's 2022

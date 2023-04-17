@@ -1,9 +1,3 @@
-/*
- *    Filename: queue.c
- * Description: 钮 贸府
- *
- *      Author: 辫茄林 (aka. 厚勘, Cronan), 价康柳 (aka. myevan, 壶磊风)
- */
 #include "stdafx.h"
 
 #include "event_queue.h"
@@ -76,4 +70,4 @@ int CEventQueue::Size()
 {
 	return m_pq_queue.size();
 }
-
+//martysama0134's 2022

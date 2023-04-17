@@ -94,3 +94,4 @@ extern void	regen_free();
 
 extern bool	is_regen_exception(long x, long y);
 extern void	regen_reset(int x, int y);
+//martysama0134's 2022

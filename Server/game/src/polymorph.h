@@ -1,4 +1,3 @@
-
 #ifndef __POLYMORPH_UTILS__
 #define __POLYMORPH_UTILS__
 
@@ -34,3 +33,4 @@ class CPolymorphUtils : public singleton<CPolymorphUtils>
 };
 
 #endif /*__POLYMORPH_UTILS__*/
+//martysama0134's 2022

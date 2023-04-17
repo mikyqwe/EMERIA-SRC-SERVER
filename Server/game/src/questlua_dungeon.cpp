@@ -602,29 +602,6 @@ namespace quest
 		lua_pushnumber(L,0);
 		return 1;
 	}
-	
-#ifdef ENABLE_DUNGEON_FUNC
-	ALUA(dungeon_unique_get_hp)
-	{
-		if (!lua_isstring(L,1))
-		{
-			lua_pushnumber(L,0);
-			return 1;
-		}
-
-		CQuestManager& q = CQuestManager::instance();
-		LPDUNGEON pDungeon = q.GetCurrentDungeon();
-
-		if (pDungeon)
-		{
-			lua_pushnumber(L, pDungeon->GetUniqueHp(lua_tostring(L,1)));
-			return 1;
-		}
-
-		lua_pushnumber(L,0);
-		return 1;
-	}
-#endif
 
 	ALUA(dungeon_is_unique_dead)
 	{
@@ -729,6 +706,73 @@ namespace quest
 
 		return 0;
 	}
+
+#ifdef ENABLE_NEWSTUFF
+	struct FKillArea
+	{
+		int x1, y1, x2, y2;
+		LPCHARACTER ExceptChar;
+
+		FKillArea(int a, int b, int c, int d, LPCHARACTER p)
+			: x1(a), y1(b), x2(c), y2(d),
+			ExceptChar(p)
+		{}
+
+		void operator () (LPENTITY ent)
+		{
+			if (true == ent->IsType(ENTITY_CHARACTER))
+			{
+				LPCHARACTER pChar = static_cast<LPCHARACTER>(ent);
+
+				if (pChar == ExceptChar)
+					return;
+
+				if (!pChar->IsPet() && (true == pChar->IsMonster() || true == pChar->IsStone()))
+				{
+					if (x1 <= pChar->GetX() && pChar->GetX() <= x2 && y1 <= pChar->GetY() && pChar->GetY() <= y2)
+					{
+						if (!pChar->IsDead())
+							pChar->DeadNoReward(); // @fixme188 from Dead()
+					}
+				}
+			}
+		}
+	};
+
+	ALUA(dungeon_kill_area)
+	{
+		if (!lua_isnumber(L,1) || !lua_isnumber(L,2) || !lua_isnumber(L,3) || !lua_isnumber(L,4))
+			return 0;
+		sys_log(0,"QUEST_DUNGEON_KILL_AREA");
+
+		int x1 = lua_tonumber(L, 1);
+		int y1 = lua_tonumber(L, 2);
+		int x2 = lua_tonumber(L, 3);
+		int y2 = lua_tonumber(L, 4);
+
+		CQuestManager& q = CQuestManager::instance();
+		LPDUNGEON pDungeon = q.GetCurrentDungeon();
+
+		const int mapIndex = pDungeon->GetMapIndex();
+
+		if (0 == mapIndex)
+		{
+			sys_err("_kill_area: cannot get a map index with (%u, %u)", x1, y1);
+			return 0;
+		}
+
+		LPSECTREE_MAP pSectree = SECTREE_MANAGER::instance().GetMap(mapIndex);
+
+		if (NULL != pSectree)
+		{
+			FKillArea func(x1, y1, x2, y2, CQuestManager::instance().GetCurrentNPCCharacterPtr());
+
+			pSectree->for_each(func);
+		}
+
+		return 0;
+	}
+#endif
 
 	ALUA(dungeon_kill_unique)
 	{
@@ -1249,7 +1293,7 @@ namespace quest
 		return 0;
 	}
 
-	ALUA(dungeon_exit) // 던전에 들어오기 전 위치로 보냄
+	ALUA(dungeon_exit)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
 
@@ -1257,7 +1301,7 @@ namespace quest
 		return 0;
 	}
 
-	ALUA(dungeon_exit_all) // 던전에 있는 모든 사람을 던전에 들어오기 전 위치로 보냄
+	ALUA(dungeon_exit_all)
 	{
 		CQuestManager& q = CQuestManager::instance();
 		LPDUNGEON pDungeon = q.GetCurrentDungeon();
@@ -1284,7 +1328,7 @@ namespace quest
 					struct ::packet_script packet_script;
 					TEMP_BUFFER buf;
 
-					for (CDungeon::ItemGroup::const_iterator it = item_group->begin(); it != item_group->end(); ++it)	//@fixme541
+					for (CDungeon::ItemGroup::const_iterator it = item_group->begin(); it != item_group->end(); it++)
 					{
 						if(ch->CountSpecifyItem(it->first) >= it->second)
 						{
@@ -1372,7 +1416,7 @@ namespace quest
 
 				if (ch->IsPC())
 				{
-					for (CDungeon::ItemGroup::const_iterator it = item_group->begin(); it != item_group->end(); ++it)	//@fixme541
+					for (CDungeon::ItemGroup::const_iterator it = item_group->begin(); it != item_group->end(); it++)
 					{
 						if(ch->CountSpecifyItem(it->first) >= it->second)
 						{
@@ -1385,7 +1429,7 @@ namespace quest
 		}
 	};
 
-	ALUA(dungeon_exit_all_by_item_group) // 특정 아이템 그룹에 속한 아이템이 없는사람은 강퇴
+	ALUA(dungeon_exit_all_by_item_group)
 	{
 		if (!lua_isstring(L, 1))
 		{
@@ -1437,7 +1481,7 @@ namespace quest
 
 				if (ch->IsPC())
 				{
-					for (CDungeon::ItemGroup::const_iterator it = item_group->begin(); it != item_group->end(); ++it)	//@fixme541
+					for (CDungeon::ItemGroup::const_iterator it = item_group->begin(); it != item_group->end(); it++)
 					{
 						if(ch->CountSpecifyItem(it->first) >= it->second)
 						{
@@ -1450,7 +1494,7 @@ namespace quest
 		}
 	};
 
-	ALUA(dungeon_delete_item_in_item_group_from_all) // 특정 아이템을 던전 내 pc에게서 삭제.
+	ALUA(dungeon_delete_item_in_item_group_from_all)
 	{
 		if (!lua_isstring(L, 1))
 		{
@@ -1653,6 +1697,23 @@ namespace quest
 		return 0;
 	}
 
+#if defined(__DUNGEON_INFO_SYSTEM__)
+	ALUA(dungeon_update_ranking)
+	{
+		CQuestManager& q = CQuestManager::instance();
+		const std::string c_szQuestName = q.GetCurrentPC()->GetCurrentQuestName();
+
+		LPDUNGEON pDungeon = q.GetCurrentDungeon();
+		if (pDungeon)
+		{
+			FUpdateDungeonRanking f(c_szQuestName);
+			pDungeon->ForEachMember(f);
+		}
+
+		return 0;
+	}
+#endif
+
 	ALUA(dungeon_set_quest_flag2)
 	{
 		CQuestManager & q = CQuestManager::instance();
@@ -1674,339 +1735,6 @@ namespace quest
 
 		return 0;
 	}
-	
-#if defined(__DUNGEON_INFO_SYSTEM__)
-	int dungeon_update_ranking(lua_State* L)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		const std::string c_szQuestName = q.GetCurrentPC()->GetCurrentQuestName();
-
-		LPDUNGEON pDungeon = q.GetCurrentDungeon();
-		if (pDungeon)
-		{
-			FUpdateDungeonRanking f(c_szQuestName);
-			pDungeon->ForEachMember(f);
-		}
-
-		return 0;
-	}
-#endif
-
-
-	struct FGlobalWarpAllToBase
-	{
-		int GetX,GetY;
-		FGlobalWarpAllToBase(int x,int y)
-		: GetX(x),GetY(y)
-		{}
-		void operator()(LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				if (ch->IsPC())
-				{
-					ch->WarpSet(GetX,GetY);
-				}
-			}
-		}
-	};
-
-	EVENTINFO(global_warp_all_to_base_event_info)
-	{
-		int x;
-		int y;
-		int MapIndex;
-		global_warp_all_to_base_event_info() 
-		: x(0),y(0),MapIndex(0)
-		{
-		}
-	};
-
-	EVENTFUNC(global_warp_all_to_base_event)
-	{
-		global_warp_all_to_base_event_info * info = dynamic_cast<global_warp_all_to_base_event_info *>(event->info);
-		if (info == NULL)
-		{
-			sys_err( "global_warp_all_to_base_event> <Factor> Null pointer" );
-			return 0;
-		}
-
-		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(info->MapIndex);
-		if (NULL != pSecMap)
-		{
-			FGlobalWarpAllToBase func(info->x,info->y);
-			pSecMap->for_each(func);
-		}
-		return 0;
-	}
-
-	int dungeon_global_warp_all_to_base(lua_State * L)
-	{
-		int x 			= static_cast<int>(lua_tonumber(L, 1));
-		int y			= static_cast<int>(lua_tonumber(L, 2));
-		int MapIndex	= static_cast<int>(lua_tonumber(L, 3));
-		long sec		= static_cast<int>(lua_tonumber(L, 4));
-
-		global_warp_all_to_base_event_info* info = AllocEventInfo<global_warp_all_to_base_event_info>();
-		info->x = x;
-		info->y = y;
-		info->MapIndex = MapIndex;
-		event_create(global_warp_all_to_base_event, info, PASSES_PER_SEC(sec));
-		return 0;
-	}
-
-/* 	int dungeon_new_kill_all(lua_State* L)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		LPDUNGEON pDungeon = q.GetCurrentDungeon();
-		if (pDungeon == NULL || !pDungeon)
-			return 0;
-		if (pDungeon)
-			pDungeon->NewKillAll(pDungeon->GetMapIndex());
-		return 0;
-	} */
-
-	int dungeon_command(lua_State* L)
-	{
-		if (!lua_isstring(L, 1))
-			return 0;
-		CQuestManager& q = CQuestManager::instance();
-		LPDUNGEON pDungeon = q.GetCurrentDungeon();
-		if(!pDungeon || pDungeon == NULL)
-			return 0;
-		if (pDungeon)
-			pDungeon->DungeonCommand(pDungeon->GetMapIndex(),lua_tostring(L, 1));
-		return 0;
-	}
-	
-	struct FRemove_All
-	{
-		int item;
-		FRemove_All(int needitem)
-			: item(needitem)
-		{}
-		void operator () (LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				CQuestManager& q = CQuestManager::instance();
-				LPDUNGEON pDungeon = q.GetCurrentDungeon();
-				if(pDungeon)
-				{
-					if(ch->IsPC())
-					{
-						ch->RemoveSpecifyItem(item,99);
-					}
-				}
-			}
-		}
-	};
-
-	int special_dungeon_remove_all(lua_State* L)
-	{
-		if (!lua_isnumber(L,1))
-			return 0;
-
-		int needitem = lua_tonumber(L, 1);
-		CQuestManager& q = CQuestManager::instance();
-		LPDUNGEON pDungeon = q.GetCurrentDungeon();
-		if (pDungeon == NULL || !pDungeon)
-			return 0;
-		const int mapIndex = pDungeon->GetMapIndex();
-		if(mapIndex==0)
-			return 0;
-		LPSECTREE_MAP pSectree = SECTREE_MANAGER::instance().GetMap(mapIndex);
-		if (NULL != pSectree)
-		{
-			FRemove_All func(needitem);
-			pSectree->for_each(func);
-		}
-		return 0;
-	}
-
-	int dungeon_mission_notice(lua_State* L)
-	{
-		if (!lua_isstring(L, 1))
-			return 0;
-		CQuestManager& q = CQuestManager::instance();
-		LPDUNGEON pDungeon = q.GetCurrentDungeon();
-		if(!pDungeon || pDungeon == NULL)
-			return 0;
-		if (pDungeon){
-			pDungeon->MissionNotice(lua_isnumber(L, 1)?(int)lua_tonumber(L, 1):pDungeon->GetMapIndex(),lua_tostring(L, 2));
-		}
-		return 0;
-	}
-	
-#ifdef ENABLE_DEFENSAWE_SHIP
-	EVENTINFO(spawn_monster_get_hp_event_info)
-	{
-		int vid;
-		int MapIndex;
-		spawn_monster_get_hp_event_info() : vid(0),MapIndex(0){}
-	};
-	struct FGetMonsterHP
-	{
-		int GetVid,GetY;
-		FGetMonsterHP(int vid)
-		: GetVid(vid)
-		{}
-		void operator()(LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				LPCHARACTER mch = CHARACTER_MANAGER::instance().Find(GetVid);
-				
-				if(!mch || mch == NULL)
-					return;
-				if (ch->IsPC())
-				{
-					ch->ChatPacket(CHAT_TYPE_COMMAND, "gethydrahp %d",mch->GetHP());
-				}
-			}
-		}
-	};
-	EVENTFUNC(spawn_monster_get_hp_event)
-	{
-		spawn_monster_get_hp_event_info * info = dynamic_cast<spawn_monster_get_hp_event_info *>(event->info);
-		if (info == NULL)
-		{
-			sys_err( "spawn_monster_get_hp_event> <Factor> Null pointer" );
-			return 0;
-		}
-		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(info->MapIndex);
-		LPDUNGEON pDungeon = CDungeonManager::instance().FindByMapIndex(info->MapIndex);
-		if (NULL != pSecMap)
-		{
-			LPCHARACTER mch = CHARACTER_MANAGER::instance().Find(info->vid);
-			if(!mch)
-			{
-				global_warp_all_to_base_event_info* warpinfo = AllocEventInfo<global_warp_all_to_base_event_info>();
-				warpinfo->x = 1108200;
-				warpinfo->y = 1782400;
-				warpinfo->MapIndex = info->MapIndex;
-				event_create(global_warp_all_to_base_event, warpinfo, PASSES_PER_SEC(15));
-				SendNoticeMap("15 Saniye sonra baseye gonderiliceksiniz.", info->MapIndex, false);
-				sys_log(0,"%d MapIndex defensawe ship unsuccess",info->MapIndex);
-				if(pDungeon != NULL)
-					pDungeon->SetFlag("Complete",1);
-				return 0;
-			}
-			else
-			{
-				FGetMonsterHP func(info->vid);
-				pSecMap->for_each(func);
-			}
-		}
-		return PASSES_PER_SEC(2);
-	}
-
-	int dungeon_spawn_mob_new(lua_State* L)
-	{
-		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3))
-		{
-			sys_err("invalid argument");
-			return 0;
-		}
-		CQuestManager& q = CQuestManager::instance();
-		LPDUNGEON pDungeon = q.GetCurrentDungeon();
-		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
-		if(!ch || ch == NULL)
-			return 0;
-		if (pDungeon == NULL || !pDungeon)
-			return 0;
-		DWORD vid = 0;
-		if (pDungeon)
-		{
-			DWORD dwVnum = (DWORD) lua_tonumber(L, 1);
-			long x = (long) lua_tonumber(L, 2);
-			long y = (long) lua_tonumber(L, 3);
-			float radius = lua_isnumber(L, 4) ? (float) lua_tonumber(L, 4) : 0;
-			DWORD count = (lua_isnumber(L, 5)) ? (DWORD) lua_tonumber(L, 5) : 1;
-			sys_log(0, "dungeon_spawn_mob %u %d %d", dwVnum, x, y);
-			if (count == 0)
-				count = 1;
-			while (count --)
-			{
-				if (radius<1)
-				{
-					LPCHARACTER tch = pDungeon->SpawnMob(dwVnum, x, y);
-					if (tch)
-						vid = tch->GetVID();
-					spawn_monster_get_hp_event_info* info = AllocEventInfo<spawn_monster_get_hp_event_info>();
-					info->vid = vid;
-					info->MapIndex = ch->GetMapIndex();
-					event_create(spawn_monster_get_hp_event, info, PASSES_PER_SEC(1));
-				}
-				else
-				{
-					float angle = number(0, 999) * M_PI * 2 / 1000;
-					float r = number(0, 999) * radius / 1000;
-
-					long nx = x + (long)(r * cos(angle));
-					long ny = y + (long)(r * sin(angle));
-
-					LPCHARACTER tch = pDungeon->SpawnMob(dwVnum, nx, ny);
-					if (tch)
-						vid = tch->GetVID();
-					spawn_monster_get_hp_event_info* info = AllocEventInfo<spawn_monster_get_hp_event_info>();
-					info->vid = vid;
-					info->MapIndex = pDungeon->GetMapIndex();
-					event_create(spawn_monster_get_hp_event, info, PASSES_PER_SEC(1));
-				}
-			}
-		}
-		lua_pushnumber(L, vid);
-		return 1;
-	}
-#endif
-
-#ifdef ENABLE_DUNGEON_FUNC
-	ALUA(dungeon_block_unique_hp)
-	{
-		if (!lua_isstring(L, 1) || !lua_isnumber(L, 2))
-		{
-			lua_pushnumber(L, 0);
-			return 1;
-		}
-
-		CQuestManager& q = CQuestManager::instance();
-		LPDUNGEON pDungeon = q.GetCurrentDungeon();
-
-		if (pDungeon)
-		{
-			pDungeon->BlockUniqueHP(lua_tostring(L, 1), lua_tonumber(L, 2));
-			return 1;
-		}
-
-		lua_pushnumber(L, 0);
-		return 1;
-	}
-
-	ALUA(dungeon_unblock_unique_hp)
-	{
-		if (!lua_isstring(L, 1))
-		{
-			lua_pushnumber(L, 0);
-			return 1;
-		}
-
-		CQuestManager& q = CQuestManager::instance();
-		LPDUNGEON pDungeon = q.GetCurrentDungeon();
-
-		if (pDungeon)
-		{
-			pDungeon->UnblockUniqueHP(lua_tostring(L, 1));
-			return 1;
-		}
-
-		lua_pushnumber(L, 0);
-		return 1;
-	}
-#endif
 
 	void RegisterDungeonFunctionTable()
 	{
@@ -2036,11 +1764,11 @@ namespace quest
 			{ "purge_unique",		dungeon_purge_unique	},
 			{ "purge_area",			dungeon_purge_area	},
 			{ "kill_unique",		dungeon_kill_unique	},
+#ifdef ENABLE_NEWSTUFF
+			{ "kill_area",			dungeon_kill_area	},
+#endif
 			{ "is_unique_dead",		dungeon_is_unique_dead	},
 			{ "unique_get_hp_perc",		dungeon_unique_get_hp_perc},
-#ifdef ENABLE_DUNGEON_FUNC
-			{ "unique_get_hp",		dungeon_unique_get_hp},
-#endif
 			{ "unique_set_def_grade",	dungeon_unique_set_def_grade},
 			{ "unique_set_hp",		dungeon_unique_set_hp	},
 			{ "unique_set_maxhp",		dungeon_unique_set_maxhp},
@@ -2056,7 +1784,7 @@ namespace quest
 #ifdef ENABLE_D_NJGUILD
 			// d.new_jump_guild(map_index, x, y)
 			{ "new_jump_all_guild",		dungeon_new_jump_guild	},	// [return nothing]
-			{ "new_jump_guild",			dungeon_new_jump_guild	},	// [return nothing]
+			{ "new_jump_guild",			dungeon_new_jump_guild	},	// alias
 #endif
 			{ "new_jump_party",		dungeon_new_jump_party	},
 			{ "new_jump",			dungeon_new_jump	},
@@ -2085,6 +1813,7 @@ namespace quest
 #endif
 #ifdef ENABLE_NEWSTUFF
 			{ "is_available0",					dungeon_is_available0			},	// [return lua boolean]
+			{ "is_available",					dungeon_is_available0			},	// alias
 #endif
 			{ "select",			dungeon_select		},
 			{ "find",			dungeon_find		},
@@ -2093,22 +1822,8 @@ namespace quest
 			{ "all_near_to",	dungeon_all_near_to	},
 			{ "set_warp_location",	dungeon_set_warp_location	},
 			{ "setqf2",			dungeon_set_quest_flag2	},
-
 #if defined(__DUNGEON_INFO_SYSTEM__)
 			{ "update_ranking", dungeon_update_ranking },
-#endif
-			//{ "new_kill_all",		dungeon_new_kill_all	},
-			{ "command", dungeon_command},
-			{ "global_warp_all_to_base", dungeon_global_warp_all_to_base},
-			{ "dungeon_remove_all",			special_dungeon_remove_all	},
-			{ "mission_notice", dungeon_mission_notice},
-#ifdef ENABLE_DEFENSAWE_SHIP
-			{ "spawn_mob_new",		dungeon_spawn_mob_new	},
-#endif
-
-#ifdef ENABLE_DUNGEON_FUNC
-			{ "block_unique_hp",			dungeon_block_unique_hp		},
-			{ "unblock_unique_hp",			dungeon_unblock_unique_hp		},
 #endif
 			{ NULL,				NULL			}
 		};
@@ -2116,3 +1831,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("d", dungeon_functions);
 	}
 }
+//martysama0134's 2022

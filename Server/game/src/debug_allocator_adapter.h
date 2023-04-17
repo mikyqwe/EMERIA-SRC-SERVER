@@ -315,3 +315,4 @@ private:
 };
 
 #endif // _DEBUG_ADAPTER_H_
+//martysama0134's 2022

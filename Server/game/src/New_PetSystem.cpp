@@ -459,7 +459,7 @@ void CNewPetActor::Unsummon()
 		
 		if (pSummonItem != NULL)
 		{
-			std::auto_ptr<SQLMsg> pmsg2(DBManager::instance().DirectQuery("UPDATE new_petsystem SET level = %d, evolution=%d, exp=%d, expi=%d, bonus0=%d, bonus1=%d, bonus2=%d, skill0=%d, skill0lv= %d, skill1=%d, skill1lv= %d, skill2=%d, skill2lv= %d, duration=%d, tduration=%d WHERE id = %lu ", this->GetLevel(), this->m_dwevolution, this->GetExp(), this->GetExpI(), this->m_dwbonuspet[0][1], this->m_dwbonuspet[1][1], this->m_dwbonuspet[2][1], this->m_dwskillslot[0], this->m_dwskill[0], this->m_dwskillslot[1], this->m_dwskill[1], this->m_dwskillslot[2], this->m_dwskill[2], this->m_dwduration, this->m_dwtduration, pSummonItem->GetID()));
+			std::unique_ptr<SQLMsg> pmsg2(DBManager::instance().DirectQuery("UPDATE new_petsystem SET level = %d, evolution=%d, exp=%d, expi=%d, bonus0=%d, bonus1=%d, bonus2=%d, skill0=%d, skill0lv= %d, skill1=%d, skill1lv= %d, skill2=%d, skill2lv= %d, duration=%d, tduration=%d WHERE id = %lu ", this->GetLevel(), this->m_dwevolution, this->GetExp(), this->GetExpI(), this->m_dwbonuspet[0][1], this->m_dwbonuspet[1][1], this->m_dwbonuspet[2][1], this->m_dwskillslot[0], this->m_dwskill[0], this->m_dwskillslot[1], this->m_dwskill[1], this->m_dwskillslot[2], this->m_dwskill[2], this->m_dwduration, this->m_dwtduration, pSummonItem->GetID()));
 			this->ClearBuff();
 
 			for (int b = 0; b < 3; b++)
@@ -534,7 +534,7 @@ DWORD CNewPetActor::Summon(const char* petName, LPITEM pSummonItem, bool bSpawnF
 	int evocation = 0;
 	char szQuery2[1024];
 	snprintf(szQuery2, sizeof(szQuery2), "SELECT level,evolution,evocation FROM new_petsystem WHERE id = %d ", pSummonItem->GetID());
-	std::auto_ptr<SQLMsg> pmsg3(DBManager::instance().DirectQuery(szQuery2));
+	std::unique_ptr<SQLMsg> pmsg3(DBManager::instance().DirectQuery(szQuery2));
 	if (pmsg3->Get()->uiNumRows > 0) {
 		MYSQL_ROW row1 = mysql_fetch_row(pmsg3->Get()->pSQLResult);	
 		ilevel = atoi(row1[0]);
@@ -619,7 +619,7 @@ DWORD CNewPetActor::Summon(const char* petName, LPITEM pSummonItem, bool bSpawnF
 
 	char szQuery1[1024];
 	snprintf(szQuery1, sizeof(szQuery1), "SELECT name,level,exp,expi,bonus0,bonus1,bonus2,skill0,skill0lv,skill1,skill1lv,skill2,skill2lv,duration,tduration,evolution FROM new_petsystem WHERE id = %d ", pSummonItem->GetID());
-	std::auto_ptr<SQLMsg> pmsg2(DBManager::instance().DirectQuery(szQuery1));
+	std::unique_ptr<SQLMsg> pmsg2(DBManager::instance().DirectQuery(szQuery1));
 	if (pmsg2->Get()->uiNumRows > 0) {
 		MYSQL_ROW row = mysql_fetch_row(pmsg2->Get()->pSQLResult);			
 		this->SetName(row[0]);		

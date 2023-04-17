@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "config.h"
 
@@ -192,4 +191,4 @@ int BlueDragon_Damage (LPCHARACTER me, LPCHARACTER pAttacker, int dam)
 
 	return dam;
 }
-
+//martysama0134's 2022

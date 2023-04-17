@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include "map_location.h"
@@ -50,4 +49,4 @@ void CMapLocation::Insert(long lIndex, const char * c_pszHost, WORD wPort)
 	m_map_address.insert(std::make_pair(lIndex, loc));
 	sys_log(0, "MapLocation::Insert : %d %s %d", lIndex, c_pszHost, wPort);
 }
-
+//martysama0134's 2022

@@ -1,7 +1,6 @@
 #ifndef __INC_PACKET_H__
 #define __INC_PACKET_H__
 #include "stdafx.h"
-#include "../../common/CommonDefines.h"
 
 enum
 {
@@ -18,7 +17,6 @@ enum
 	HEADER_CG_CHARACTER_SELECT			= 6,
 	HEADER_CG_MOVE				= 7,
 	HEADER_CG_SYNC_POSITION			= 8,
-	HEADER_CG_DIRECT_ENTER			= 9,
 	HEADER_CG_ENTERGAME				= 10,
 
 	HEADER_CG_ITEM_USE				= 11,
@@ -30,9 +28,6 @@ enum
 	HEADER_CG_QUICKSLOT_DEL			= 17,
 	HEADER_CG_QUICKSLOT_SWAP			= 18,
 	HEADER_CG_WHISPER				= 19,
-#ifdef NEW_ADD_INVENTORY
-	ENVANTER_BLACK		            = 23,
-#endif
 	HEADER_CG_ITEM_DROP2			= 20,
 #ifdef ENABLE_SELL_ITEM
 	HEADER_CG_ITEM_SELL								= 22,
@@ -50,21 +45,18 @@ enum
 	HEADER_CG_ADD_FLY_TARGETING			= 53,
 	HEADER_CG_SHOOT				= 54,
 	HEADER_CG_MYSHOP				= 55,
-#ifdef OFFLINE_SHOP
-	HEADER_CG_OFFLINE_SHOP = 56,
-	HEADER_CG_MY_OFFLINE_SHOP = 57,
-#endif
+
 	HEADER_CG_ITEM_USE_TO_ITEM			= 60,
 	HEADER_CG_TARGET			 	= 61,
 
-	HEADER_CG_TEXT				= 64,	// @ �� ���۵Ǹ� �ؽ�Ʈ�� �Ľ��Ѵ�.
+	HEADER_CG_TEXT				= 64,
 	HEADER_CG_WARP				= 65,
 	HEADER_CG_SCRIPT_BUTTON			= 66,
 	HEADER_CG_MESSENGER				= 67,
 
 	HEADER_CG_MALL_CHECKOUT			= 69,
-	HEADER_CG_SAFEBOX_CHECKIN			= 70,	// �������� â���� �ֆ��´�.
-	HEADER_CG_SAFEBOX_CHECKOUT			= 71,	// �������� â���� ���� ���´�.
+	HEADER_CG_SAFEBOX_CHECKIN			= 70,
+	HEADER_CG_SAFEBOX_CHECKOUT			= 71,
 
 	HEADER_CG_PARTY_INVITE			= 72,
 	HEADER_CG_PARTY_INVITE_ANSWER		= 73,
@@ -102,92 +94,50 @@ enum
 	// SCRIPT_SELECT_ITEM
 	HEADER_CG_SCRIPT_SELECT_ITEM	= 114,
 	// END_OF_SCRIPT_SELECT_ITEM
-	HEADER_CG_LOGIN5_OPENID			= 116,	//OpenID : Ŭ���̾�Ʈ�κ��� OpenID ����Ű�� �޴´�.
-#ifdef PRIVATESHOP_SEARCH_SYSTEM
-	HEADER_CG_PSHOP_SEARCH = 117,
-	HEADER_CG_PSHOP_SEARCH_NAME_ONLY = 118,
-	HEADER_CG_PSHOP_SEARCH_BUY = 119,
+
+	HEADER_CG_LOGIN5_OPENID			= 116,
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	HEADER_CG_NEW_OFFLINESHOP		= 119,
 #endif
-#ifdef ENABLE_SORT_INVEN
-	SORT_INVEN = 140,
-#endif
+
 #ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
 	HEADER_CG_REQUEST_FLAG		= 135,
 #endif
+
 #ifdef ENABLE_SWITCHBOT
 	HEADER_CG_SWITCHBOT				= 171,
 #endif
-#ifdef WON_EXCHANGE
-	HEADER_CG_WON_EXCHANGE			= 172,
-#endif
+
 //	HEADER_CG_ROULETTE				= 200,
 //	HEADER_CG_RUNUP_MATRIX_ANSWER	= 201,
 
 	//
 	HEADER_CG_PASSPOD_ANSWER		= 202,
 
-	//NOTE : �̷� ��XXX ���� �̰� Packet������ �����? ������. �̷��� �ڵ��ϰ� ���� �Ѿ��.
-	//enum�� ������ ������ �ϴ���. �ƴ� namepsace�� ������ �ϴ���..
-	//���� packet generator������ �ٶ����� �ʴ´�. �̷� ��XX
-	//�̷��ٰ� ���� ��ġ�� ���� å�����µ�???
+
+
+
+
 	HEADER_CG_HS_ACK				= 203,
 	HEADER_CG_XTRAP_ACK				= 204,
 
 	HEADER_CG_DRAGON_SOUL_REFINE			= 205,
 	HEADER_CG_STATE_CHECKER					= 206,
-#ifdef ANTY_WAIT_HACK
-	HEADER_CG_ANTY_WAIT_HACK 				= 207,
-#endif
-
-#ifdef ENABLE_BUY_BONUS_CHANGER_IN_SWITCH_BOT
-HEADER_CG_BUY_BONUS_CHANGER_IN_SWITCH_BOT	=  214,
-#endif
 
 #ifdef ENABLE_CUBE_RENEWAL_WORLDARD
 	HEADER_CG_CUBE_RENEWAL 						= 215,
 #endif
 
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	HEADER_CG_67_BONUS_NEW = 216,
-#endif	
-
-#ifdef __ULTIMATE_TOOLTIP__
-	HEADER_CG_CHEST_DROP_INFO = 217,
-#endif	
-
-#ifdef ENABLE_GUILD_REQUEST
-	HEADER_CG_GUILD_REQUEST = 218,
-#endif
-
-#ifdef ENABLE_NEW_FISHING_SYSTEM
-	HEADER_CG_FISHING_NEW = 219, 
-#endif
-
-
 #ifdef ENABLE_HUNTING_SYSTEM
 	HEADER_CG_SEND_HUNTING_ACTION			= 223,
-#endif
-
-#ifdef SYSTEM_PDA
-	HEADER_CG_SOULSTONE_USE				= 224,
-#endif
-
-#if defined(BL_REMOTE_SHOP)
-	HEADER_CG_REMOTE_SHOP = 225,
 #endif
 
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	HEADER_CG_ANTI_FARM							= 226,
 #endif
 
-#ifdef ENABLE_CSHIELD
-	HEADER_CG_CSHIELD				= 240,
-#endif
-
-#if defined(__BL_MAILBOX__)
-	HEADER_CG_MAILBOX_WRITE = 227,
-	HEADER_CG_MAILBOX_WRITE_CONFIRM = 228,
-	HEADER_CG_MAILBOX_PROCESS = 229,
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+	HEADER_CG_LOOT_FILTER = 230,
 #endif
 
 	HEADER_CG_CLIENT_VERSION			= 0xfd,
@@ -258,28 +208,19 @@ HEADER_CG_BUY_BONUS_CHANGER_IN_SWITCH_BOT	=  214,
 	HEADER_GC_PING				= 44,
 	HEADER_GC_SCRIPT				= 45,
 	HEADER_GC_QUEST_CONFIRM			= 46,
-#ifdef OFFLINE_SHOP
-	HEADER_GC_OFFLINE_SHOP = 47,
-	HEADER_GC_OFFLINE_SHOP_SIGN = 48,
-#endif
-#ifdef __WORLD_BOSS_YUMA__
-	HEADER_GG_NEW_NOTICE				= 49,
-#endif
-
-#ifdef GUILD_WAR_COUNTER
-	HEDAER_GC_GUILD_WAR = 57,
-#endif
-
-	HEADER_GC_MOUNT				= 61,
-	HEADER_GC_OWNERSHIP				= 62,
-	HEADER_GC_TARGET			 	= 63,
 #ifdef TARGET_INFORMATION_SYSTEM
 	HEADER_GC_TARGET_INFO			= 58,
 	HEADER_CG_TARGET_INFO_LOAD		= 59,
 #endif
+	HEADER_GC_MOUNT				= 61,
+	HEADER_GC_OWNERSHIP				= 62,
+	HEADER_GC_TARGET			 	= 63,
 
 	HEADER_GC_WARP				= 65,
 
+#ifdef ENABLE_NEW_DETAILS_GUI
+	HEADER_GC_KILL_LOG			= 68,
+#endif
 	HEADER_GC_ADD_FLY_TARGETING			= 69,
 	HEADER_GC_CREATE_FLY			= 70,
 	HEADER_GC_FLY_TARGETING			= 71,
@@ -363,39 +304,23 @@ HEADER_CG_BUY_BONUS_CHANGER_IN_SWITCH_BOT	=  214,
 	// SUPPORT_BGM
 	HEADER_GC_MAIN_CHARACTER3_BGM		= 137,
 	HEADER_GC_MAIN_CHARACTER4_BGM_VOL	= 138,
-#ifdef ENABLE_ENTITY_PRELOADING
-	HEADER_GC_PRELOAD_ENTITIES = 139,
-#endif
 	// END_OF_SUPPORT_BGM
-#if defined(__BL_SOUL_ROULETTE__)
-	HEADER_CG_SOUL_ROULETTE = 145,
-#endif
-#if defined(__BL_SOUL_ROULETTE__)
-	HEADER_GC_SOUL_ROULETTE = 146,
-#endif
+
 #ifdef NEW_PET_SYSTEM
-        HEADER_CG_PetSetName = 147,
+	HEADER_CG_PetSetName = 147,
 #endif
+
 	HEADER_GC_AUTH_SUCCESS			= 150,
+
 	HEADER_GC_PANAMA_PACK			= 151,
 
 	//HYBRID CRYPT
 	HEADER_GC_HYBRIDCRYPT_KEYS		= 152,
 	HEADER_GC_HYBRIDCRYPT_SDB		= 153, // SDB means Supplmentary Data Blocks
 	//HYBRID CRYPT
+
 	HEADER_GC_AUTH_SUCCESS_OPENID	= 154,
-#ifdef PRIVATESHOP_SEARCH_SYSTEM
-	HEADER_GC_PSHOP_SEARCH_ITEM_INFO = 155,
-#endif
-#ifdef ANTY_WAIT_HACK
-	HEADER_GC_ANTY_WAIT_HACK 		= 156,
-#endif
-#ifdef ENABLE_DECORUM
-	HEADER_GC_DECORUM_STAT				= 164,
-	HEADER_GC_DECORUM_BASE				= 165,
-	HEADER_GC_DECORUM_BATTLE			= 166,
-	HEADER_GC_DECORUM_KILLS				= 167,
-#endif
+
 #ifdef ENABLE_SWITCHBOT
 	HEADER_GC_SWITCHBOT						= 171,
 #endif
@@ -414,59 +339,24 @@ HEADER_CG_BUY_BONUS_CHANGER_IN_SWITCH_BOT	=  214,
 
 	HEADER_GC_DRAGON_SOUL_REFINE			= 209,
 	HEADER_GC_RESPOND_CHANNELSTATUS			= 210,
-#if defined(__BL_DROP_DESTROY_TIME__)
-	HEADER_GC_ITEM_DESTROY_TIME = 212,
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	HEADER_GC_NEW_OFFLINESHOP				= 214,
 #endif
-#ifdef ENABLE_NEW_DETAILS_GUI
-	HEADER_GC_KILL_LOG			= 214,
-#endif
+
 #ifdef ENABLE_CUBE_RENEWAL_WORLDARD
 	HEADER_GC_CUBE_RENEWAL = 217,
 #endif
-#ifdef __ULTIMATE_TOOLTIP__
-	HEADER_GC_CHEST_DROP_INFO = 219,
-#endif
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	HEADER_GC_67_BONUS_NEW = 220,
+
+#ifdef ENABLE_ATLAS_BOSS
+	HEADER_GC_BOSS_POSITION = 222,
 #endif
 
-	HEADER_GC_SEARCH_SYSTEM 				= 221,
-	
-#ifdef ENABLE_NEW_FISHING_SYSTEM
-	HEADER_GC_FISHING_NEW = 222, 
-#endif	
-	
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	HEADER_GC_ANTI_FARM						= 225,
 #endif
 
-
-#ifdef ENABLE_GUILD_REQUEST
-	HEADER_GC_GUILD_REQUEST = 226,
-#endif
-
-#ifdef ENABLE_ATLAS_BOSS
-	HEADER_GC_BOSS_POSITION = 227,
-#endif
-
-#if defined(__BL_PARTY_POSITION__)
-	HEADER_GC_PARTY_POSITION_INFO 			= 235,
-#endif
-
-#if defined(__BL_MAILBOX__)
-	HEADER_GC_MAILBOX_PROCESS = 235,
-	HEADER_GC_MAILBOX = 236,
-	HEADER_GC_MAILBOX_ADD_DATA = 237,
-	HEADER_GC_MAILBOX_ALL = 238,
-	HEADER_GC_MAILBOX_UNREAD = 239,
-#endif
-	
-#ifdef ENABLE_MAINTENANCE_SYSTEM
-	HEADER_GC_MAINTENANCE						= 241,
-#endif	
-	
-#if defined(__BL_KILL_BAR__)
-	HEADER_GC_KILLBAR 						= 242,
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+	HEADER_GC_LOOT_FILTER = 240,
 #endif
 
 #ifdef ENABLE_HUNTING_SYSTEM
@@ -477,22 +367,15 @@ HEADER_CG_BUY_BONUS_CHANGER_IN_SWITCH_BOT	=  214,
 	HEADER_GC_HUNTING_RECIVE_RAND_ITEMS	= 248,
 #endif
 
-#ifdef ENABLE_EVENT_MANAGER
-	HEADER_GC_EVENT_MANAGER = 249,
-#endif
-
-#ifdef ENABLE_CSHIELD
-	HEADER_GC_CSHIELD	= 240,
-#endif
-
 	/////////////////////////////////////////////////////////////////////////////
+
 	HEADER_GG_LOGIN				= 1,
 	HEADER_GG_LOGOUT				= 2,
 	HEADER_GG_RELAY				= 3,
 	HEADER_GG_NOTICE				= 4,
 	HEADER_GG_SHUTDOWN				= 5,
 	HEADER_GG_GUILD				= 6,
-	HEADER_GG_DISCONNECT			= 7,	// �������� ������ ������ ���� ��
+	HEADER_GG_DISCONNECT			= 7,
 	HEADER_GG_SHOUT				= 8,
 	HEADER_GG_SETUP				= 9,
 	HEADER_GG_MESSENGER_ADD                     = 10,
@@ -514,114 +397,23 @@ HEADER_CG_BUY_BONUS_CHANGER_IN_SWITCH_BOT	=  214,
 	HEADER_GG_MONARCH_NOTICE		= 26,
 	HEADER_GG_MONARCH_TRANSFER		= 27,
 	HEADER_GG_PCBANG_UPDATE			= 28,
+
 	HEADER_GG_CHECK_AWAKENESS		= 29,
 #ifdef ENABLE_FULL_NOTICE
 	HEADER_GG_BIG_NOTICE			= 30,
 #endif
-#ifdef ENABLE_MESSENGER_BLOCK
-	HEADER_GG_MESSENGER_BLOCK_ADD		= 31,
-	HEADER_GG_MESSENGER_BLOCK_REMOVE	= 32,
-#endif
 #ifdef ENABLE_SWITCHBOT
 	HEADER_GG_SWITCHBOT					= 33,
-#endif
-#ifdef ENABLE_DECORUM
-	HEADER_GG_DECORUM_ARENA_START		= 34,
-	HEADER_GG_DECORUM_RANDOM_REQUEST	= 35,
-	HEADER_GG_DECORUM_RANDOM_DELETE		= 36,
-	HEADER_GG_DECORUM_RANDOM_BROADCAST	= 37,
-	HEADER_GG_WARP_CHARACTER_ARENA		= 38,
-#endif
-#ifdef CROSS_CHANNEL_FRIEND_REQUEST
-	HEADER_GG_MESSENGER_REQUEST_ADD = 39,
-#endif
-#ifdef OFFLINE_SHOP
-	HEADER_GG_OFFLINE_SHOP_SEND_MESSAGE = 40,
-#endif
-#ifdef ENABLE_MAINTENANCE_SYSTEM
-	HEADER_GG_PLAYER_PACKET					= 42,
 #endif
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	HEADER_GG_ANTI_FARM						= 43,
 #endif
-
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+	HEADER_GG_OFFLINE_SHOP_NOTIFICATION	= 48,
+#endif
 };
 
 #pragma pack(1)
-
-#ifdef ENABLE_EVENT_MANAGER
-typedef struct SPacketGCEventManager
-{
-	BYTE	header;
-	DWORD	size;
-} TPacketGCEventManager;
-typedef struct event_struct_client_
-{
-	BYTE	eventIndex;
-	char	startText[40];
-	int		startRealTime;
-	char	endText[40];
-	int		endRealTime;
-	bool	isAlreadyStart;
-	BYTE	empireFlag;
-	BYTE	channelFlag;
-	DWORD	value[4];
-
-	/*
-	BYTE	eventIndex;
-	char	startText[40];
-	tm		startTime;
-	time_t	startRealTime;
-	char	endText[40];
-	tm		endTime;
-	time_t	endRealTime;
-	BYTE	empireFlag;
-	BYTE	channelFlag;
-	DWORD	value[4];
-	*/
-}TEventManagerDataClient;
-#endif
-
-#ifdef __ULTIMATE_TOOLTIP__
-typedef struct SPacketCGChestDropInfo
-{
-	BYTE	header;
-	WORD	wInventoryCell;
-	DWORD	item_vnum;
-} TPacketCGChestDropInfo;
-
-typedef struct SChestDropInfoTable
-{
-	BYTE	bPageIndex;
-	BYTE	bSlotIndex;
-	DWORD	dwItemVnum;
-	int		bItemCount;
-} TChestDropInfoTable;
-
-typedef struct SPacketGCChestDropInfo
-{
-	BYTE	bHeader;
-	WORD	wSize;
-	DWORD	dwChestVnum;
-	BYTE	sub;
-} TPacketGCChestDropInfo;
-#endif
-
-#ifdef ANTY_WAIT_HACK
-
-typedef struct packet_anty_wh
-{
-	BYTE			bHeader;
-	char			regex[255 + 1];
-} TPacketGCAntyWH;
-typedef struct packet_anty_wh_cg
-{
-	BYTE			bHeader;
-	char			hash[32 + 1];
-	char			file[32 + 1];
-} TPacketCGAntyWH;
-#endif
-
 typedef struct SPacketGGSetup
 {
 	BYTE	bHeader;
@@ -665,16 +457,6 @@ typedef struct SPacketGGNotice
 	long	lSize;
 } TPacketGGNotice;
 
-#ifdef __WORLD_BOSS_YUMA__
-typedef struct SPacketGGNewNotice
-{
-	BYTE	bHeader;
-	long	lSize;
-	char	szName[CHARACTER_NAME_MAX_LEN + 1];
-	int		iSecondsToSpawn;
-} TPacketGGNewNotice;
-#endif
-
 typedef struct SPacketGGMonarchNotice
 {
 	BYTE	bHeader;
@@ -690,32 +472,10 @@ typedef struct SPacketGGForkedMapInfo
 	BYTE	bSungzi;
 } TPacketGGForkedMapInfo;
 //END_FORKED_ROAD
-
-#ifdef ENABLE_MAINTENANCE_SYSTEM
-typedef struct SPacketGGPlayerPacket
-{
-	BYTE	header;
-	int		size;
-	// int		language;
-} TPacketGGPlayerPacket;
-typedef struct SPacketGCMaintenance {
-	BYTE	header;
-	DWORD	dwTimeLeft;
-	DWORD	dwDuration;
-} TPacketGCMaintenance;
-typedef struct SPacketGGShutdown
-{
-	unsigned char	bHeader;
-	int				iShutdownTimer;
-	bool			bMaintenance;
-	int				iMaintenanceDuration;
-} TPacketGGShutdown;
-#else
 typedef struct SPacketGGShutdown
 {
 	BYTE	bHeader;
 } TPacketGGShutdown;
-#endif
 
 typedef struct SPacketGGGuild
 {
@@ -728,9 +488,6 @@ enum
 {
 	GUILD_SUBHEADER_GG_CHAT,
 	GUILD_SUBHEADER_GG_SET_MEMBER_COUNT_BONUS,
-#ifdef ENABLE_GUILD_REQUEST
-	GUILD_SUBHEADER_UPDATE_REQUEST,
-#endif	
 };
 
 typedef struct SPacketGGGuildChat
@@ -788,29 +545,12 @@ typedef struct SMessengerData
 	char        szMobile[MOBILE_MAX_LEN + 1];
 } TMessengerData;
 
-#if defined(BL_REMOTE_SHOP)
-typedef struct command_remote_shop
-{
-	BYTE	header;
-	BYTE	shop_index;
-} TPacketCGRemoteShop;
-#endif
-
 typedef struct SPacketGGMessenger
 {
 	BYTE        bHeader;
 	char        szAccount[CHARACTER_NAME_MAX_LEN + 1];
 	char        szCompanion[CHARACTER_NAME_MAX_LEN + 1];
 } TPacketGGMessenger;
-
-#ifdef CROSS_CHANNEL_FRIEND_REQUEST
-typedef struct SPacketGGMessengerRequest
-{
-	uint8_t	header;
-	char	account[CHARACTER_NAME_MAX_LEN + 1];
-	char	target[CHARACTER_NAME_MAX_LEN + 1];
-} TPacketGGMessengerRequest;
-#endif
 
 typedef struct SPacketGGMessengerMobile
 {
@@ -822,8 +562,8 @@ typedef struct SPacketGGMessengerMobile
 typedef struct SPacketGGFindPosition
 {
 	BYTE header;
-	DWORD dwFromPID; // �� ��ġ�� �����Ϸ��� ���?
-	DWORD dwTargetPID; // ã�� ���?
+	DWORD dwFromPID;
+	DWORD dwTargetPID;
 } TPacketGGFindPosition;
 
 typedef struct SPacketGGWarpCharacter
@@ -832,7 +572,9 @@ typedef struct SPacketGGWarpCharacter
 	DWORD pid;
 	long x;
 	long y;
-	DWORD mapIndex;
+#ifdef ENABLE_CMD_WARP_IN_DUNGEON
+	int mapIndex;
+#endif
 } TPacketGGWarpCharacter;
 
 //  HEADER_GG_GUILD_WAR_ZONE_MAP_INDEX	    = 15,
@@ -865,14 +607,14 @@ typedef struct SPacketGGBlockChat
 	long	lBlockDuration;
 } TPacketGGBlockChat;
 
-/* Ŭ���̾�Ʈ ������ ������ ��Ŷ */
+
 
 typedef struct command_text
 {
 	BYTE	bHeader;
 } TPacketCGText;
 
-/* �α��� (1) */
+
 typedef struct command_handshake
 {
 	BYTE	bHeader;
@@ -978,7 +720,7 @@ typedef struct command_player_create_success
 	TSimplePlayer	player;
 } TPacketGCPlayerCreateSuccess;
 
-// ����
+
 typedef struct command_attack
 {
 	BYTE	bHeader;
@@ -1000,7 +742,7 @@ enum EMoveFuncType
 	FUNC_SKILL = 0x80,
 };
 
-// �̵�
+
 typedef struct command_move
 {
 	BYTE	bHeader;
@@ -1019,22 +761,22 @@ typedef struct command_sync_position_element
 	long	lY;
 } TPacketCGSyncPositionElement;
 
-// ��ġ ����ȭ
-typedef struct command_sync_position	// ���� ��Ŷ
+
+typedef struct command_sync_position
 {
 	BYTE	bHeader;
 	WORD	wSize;
 } TPacketCGSyncPosition;
 
-/* ä�� (3) */
-typedef struct command_chat	// ���� ��Ŷ
+
+typedef struct command_chat
 {
 	BYTE	header;
 	WORD	size;
 	BYTE	type;
 } TPacketCGChat;
 
-/* �ӼӸ� */
+
 typedef struct command_whisper
 {
 	BYTE	bHeader;
@@ -1072,7 +814,7 @@ typedef struct command_item_drop2
 	BYTE 	header;
 	TItemPos 	Cell;
 	DWORD	gold;
-	short	count;
+	WORD	count;
 } TPacketCGItemDrop2;
 
 typedef struct command_item_move
@@ -1080,7 +822,7 @@ typedef struct command_item_move
 	BYTE 	header;
 	TItemPos	Cell;
 	TItemPos	CellTo;
-	short	count;
+	WORD count;
 } TPacketCGItemMove;
 
 #ifdef ENABLE_SELL_ITEM
@@ -1092,44 +834,11 @@ typedef struct command_item_sell
 } TPacketCGItemSell;
 #endif
 
-#ifdef ENABLE_SORT_INVEN
-typedef struct sort_inven
-{
-	BYTE	header;
-	BYTE 	option;
-} TPacketCGSortInven;
-#endif	
-
-#ifdef NEW_ADD_INVENTORY
-typedef struct envanter_paketi
-{
-	BYTE		header;
-} TPacketCGEnvanter;
-#endif
-
 typedef struct command_item_pickup
 {
 	BYTE 	header;
 	DWORD	vid;
 } TPacketCGItemPickup;
-
-#if defined(__BL_SOUL_ROULETTE__)
-typedef struct command_cgroulette
-{
-	BYTE	header;
-	BYTE 	option;
-} TPacketCGSoulRoulette;
-typedef struct command_gcroulette
-{
-	BYTE	header;
-	BYTE 	option;
-	int		yang;
-	struct {
-		DWORD vnum;
-		BYTE count;
-	} ItemInfo[ROULETTE_ITEM_MAX];
-} TPacketGCSoulRoulette;
-#endif
 
 typedef struct command_quickslot_add
 {
@@ -1137,7 +846,6 @@ typedef struct command_quickslot_add
 	BYTE	pos;
 	TQuickslot	slot;
 } TPacketCGQuickslotAdd;
-
 
 typedef struct command_quickslot_del
 {
@@ -1152,18 +860,48 @@ typedef struct command_quickslot_swap
 	BYTE	change_pos;
 } TPacketCGQuickslotSwap;
 
+#ifdef ENABLE_ATLAS_BOSS
+typedef struct SPacketGCBossPosition
+{
+	BYTE	bHeader;
+	WORD	wSize;
+	WORD	wCount;
+} TPacketGCBossPosition;
+
+struct TBossPosition
+{
+	BYTE	bType;
+
+	char	szName[CHARACTER_NAME_MAX_LEN + 1];
+
+	long	lX;
+	long	lY;
+	long	lTime;
+};
+#endif
+
+
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+typedef struct SPacketCGLootFilter
+{
+	BYTE		header;
+	BYTE		settings[ELootFilter::LOOT_FILTER_SETTINGS_MAX];
+} TPacketCGLootFilter;
+
+typedef struct SPacketGCLootFilter
+{
+	BYTE		header;
+	bool		enable;
+	DWORD		vid;
+} TPacketGCLootFilter;
+#endif
+
 enum
 {
 	SHOP_SUBHEADER_CG_END,
 	SHOP_SUBHEADER_CG_BUY,
 	SHOP_SUBHEADER_CG_SELL,
-	SHOP_SUBHEADER_CG_SELL2,
-#ifdef OFFLINE_SHOP
-	SHOP_SUBHEADER_CG_PUT_ITEM,
-	SHOP_SUBHEADER_CG_DESTROY_OFFLINE_SHOP,
-	SHOP_SUBHEADER_CG_DEL_ITEM,
-	SHOP_SUBHEADER_CG_EDIT_ITEM
-#endif
+	SHOP_SUBHEADER_CG_SELL2
 };
 
 typedef struct command_shop_buy
@@ -1180,7 +918,7 @@ typedef struct command_shop_sell
 typedef struct command_shop
 {
 	BYTE	header;
-	short	subheader;
+	BYTE	subheader;
 } TPacketCGShop;
 
 typedef struct command_on_click
@@ -1189,53 +927,12 @@ typedef struct command_on_click
 	DWORD	vid;
 } TPacketCGOnClick;
 
-#if defined(__BL_MAILBOX__)
-typedef struct packet_mailbox_process
-{
-	BYTE							bHeader;
-	BYTE							bSubHeader;
-	BYTE							bArg1;
-	BYTE							bArg2;
-} TPacketMailboxProcess;
-
-typedef struct packet_mailbox_process_all
-{
-	BYTE							Index;
-} TPacketGCMailboxProcessAll;
-
-typedef struct packet_mailbox
-{
-	BYTE							bHeader;
-	WORD							wSize;
-} TPacketGCMailBox;
-
-typedef struct packet_mailbox_write
-{
-	BYTE							bHeader;
-	char							szName[CHARACTER_NAME_MAX_LEN + 1];
-	char							szTitle[25 + 1];
-	char							szMessage[100 + 1];
-	TItemPos						pos;
-	int								iYang;
-	int								iWon;
-} TPacketCGMailboxWrite;
-
-typedef struct packet_mailbox_write_confirm
-{
-	BYTE							bHeader;
-	char							szName[CHARACTER_NAME_MAX_LEN + 1];
-} TPacketCGMailboxWriteConfirm;
-#endif
-
 enum
 {
 	EXCHANGE_SUBHEADER_CG_START,	/* arg1 == vid of target character */
 	EXCHANGE_SUBHEADER_CG_ITEM_ADD,	/* arg1 == position of item */
 	EXCHANGE_SUBHEADER_CG_ITEM_DEL,	/* arg1 == position of item */
 	EXCHANGE_SUBHEADER_CG_ELK_ADD,	/* arg1 == amount of gold */
-#ifdef ENABLE_CHEQUE_SYSTEM
-	EXCHANGE_SUBHEADER_CG_CHEQUE_ADD,	/* arg1 == amount of cheque */
-#endif
 	EXCHANGE_SUBHEADER_CG_ACCEPT,	/* arg1 == not used */
 	EXCHANGE_SUBHEADER_CG_CANCEL,	/* arg1 == not used */
 };
@@ -1244,7 +941,11 @@ typedef struct command_exchange
 {
 	BYTE	header;
 	BYTE	sub_header;
+#ifdef ENABLE_LONG_LONG
+	long long arg1;
+#else
 	DWORD	arg1;
+#endif
 	BYTE	arg2;
 	TItemPos	Pos;
 } TPacketCGExchange;
@@ -1283,9 +984,7 @@ typedef struct command_quest_confirm
 	DWORD requestPID;
 } TPacketCGQuestConfirm;
 
-/*
- * ���� ������ ������ ��Ŷ
- */
+
 typedef struct packet_quest_confirm
 {
 	BYTE header;
@@ -1400,15 +1099,6 @@ enum ECharacterEquipmentPart
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	CHR_EQUIPPART_ACCE,
 #endif
-#ifdef __NEW_ARROW_SYSTEM__
-	CHR_PART_ARROW_TYPE,
-#endif
-#ifdef ENABLE_AURA_SYSTEM
-	CHR_EQUIPPART_AURA,
-#endif
-#ifdef ENABLE_EFFECT_COSTUME_SYSTEM
-	CHR_EQUIPPART_EFFECT,
-#endif
 	CHR_EQUIPPART_NUM,
 };
 
@@ -1428,7 +1118,7 @@ typedef struct packet_add_char
 	BYTE	bAttackSpeed;
 
 	BYTE	bStateFlag;
-	DWORD	dwAffectFlag[2];	// ȿ��
+	DWORD	dwAffectFlag[2];
 } TPacketGCCharacterAdd;
 
 typedef struct packet_char_additional_info
@@ -1436,51 +1126,24 @@ typedef struct packet_char_additional_info
 	BYTE    header;
 	DWORD   dwVID;
 	char    name[CHARACTER_NAME_MAX_LEN + 1];
-	WORD    awPart[CHR_EQUIPPART_NUM];
+	DWORD    awPart[CHR_EQUIPPART_NUM];
 	BYTE	bEmpire;
 	DWORD   dwGuildID;
 	DWORD   dwLevel;
 	short	sAlignment;
 	BYTE	bPKMode;
 	DWORD	dwMountVnum;
-#ifdef ENABLE_DECORUM
-	DWORD	dwDecorumPoint;
-#endif
 #ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
 	char	language[LANGUAGE_MAX_LEN + 1];
 #endif
-#ifdef GUILD_RANK_EFFECT
-	DWORD	guildRank;
-#endif
-
 } TPacketGCCharacterAdditionalInfo;
-
-/*
-   typedef struct packet_update_char_old
-   {
-   BYTE	header;
-   DWORD	dwVID;
-
-   WORD        awPart[CHR_EQUIPPART_NUM];
-   BYTE	bMovingSpeed;
-   BYTE	bAttackSpeed;
-
-   BYTE	bStateFlag;
-   DWORD	dwAffectFlag[2];
-
-   DWORD	dwGuildID;
-   short	sAlignment;
-   BYTE	bPKMode;
-   DWORD	dwMountVnum;
-   } TPacketGCCharacterUpdateOld;
- */
 
 typedef struct packet_update_char
 {
 	BYTE	header;
 	DWORD	dwVID;
 
-	WORD        awPart[CHR_EQUIPPART_NUM];
+	DWORD        awPart[CHR_EQUIPPART_NUM];
 	BYTE	bMovingSpeed;
 	BYTE	bAttackSpeed;
 
@@ -1495,12 +1158,6 @@ typedef struct packet_update_char
 	BYTE	bPKMode;
 	DWORD	dwMountVnum;
 	//WORD	wRaceNum;
-#ifdef ENABLE_DECORUM
-	DWORD	dwDecorumPoint;
-#endif
-#ifdef GUILD_RANK_EFFECT
-	DWORD	guildRank;
-#endif
 } TPacketGCCharacterUpdate;
 
 typedef struct packet_del_char
@@ -1509,7 +1166,7 @@ typedef struct packet_del_char
 	DWORD	id;
 } TPacketGCCharacterDelete;
 
-typedef struct packet_chat	// ���� ��Ŷ
+typedef struct packet_chat
 {
 	BYTE	header;
 	WORD	size;
@@ -1518,7 +1175,7 @@ typedef struct packet_chat	// ���� ��Ŷ
 	BYTE	bEmpire;
 } TPacketGCChat;
 
-typedef struct packet_whisper	// ���� ��Ŷ
+typedef struct packet_whisper
 {
 	BYTE	bHeader;
 	WORD	wSize;
@@ -1581,7 +1238,11 @@ typedef struct packet_main_character4_bgm_vol
 typedef struct packet_points
 {
 	BYTE	header;
-	INT		points[POINT_MAX_NUM];
+#ifdef ENABLE_LONG_LONG
+long long	points[POINT_MAX_NUM];
+#else
+	int		points[POINT_MAX_NUM];
+#endif
 } TPacketGCPoints;
 
 typedef struct packet_skill_level
@@ -1595,8 +1256,13 @@ typedef struct packet_point_change
 	int		header;
 	DWORD	dwVID;
 	BYTE	type;
+#ifdef ENABLE_LONG_LONG
+	long long	amount;
+	long long	value;
+#else
 	long	amount;
 	long	value;
+#endif
 } TPacketGCPointChange;
 
 typedef struct packet_stun
@@ -1605,109 +1271,18 @@ typedef struct packet_stun
 	DWORD	vid;
 } TPacketGCStun;
 
-#ifdef RENEWAL_DEAD_PACKET
-enum EReviveTypes
-{
-	REVIVE_TYPE_HERE,
-	REVIVE_TYPE_TOWN,
-	REVIVE_TYPE_AUTO_TOWN,
-	REVIVE_TYPE_MAX
-};
-#endif
 typedef struct packet_dead
 {
-#ifdef RENEWAL_DEAD_PACKET
-	packet_dead() {	memset(&t_d, 0, sizeof(t_d)); }
-#endif
 	BYTE	header;
 	DWORD	vid;
-#ifdef RENEWAL_DEAD_PACKET
-	BYTE	t_d[REVIVE_TYPE_MAX];
-#endif
 } TPacketGCDead;
-
-#if defined(__BL_PARTY_POSITION__)
-struct TPartyPosition
-{
-	DWORD	dwPID;
-	long	lX;
-	long	lY;
-	float	fRot;
-};
-
-typedef struct SPacketGCPartyPosition
-{
-	BYTE bHeader;
-	WORD wSize;
-} TPacketGCPartyPosition;
-#endif
-
-#if defined(GUILD_RANK_SYSTEM)
-enum GUILD_RANK
-{
-	SUBHEADER_GUILD_RANKING_SEND,
-	SUBHEADER_GUILD_RANKING_OPEN,
-	GUILD_RANKING_MAX_NUM = 100,
-	HEADER_GC_GUILD_RANKING = 161,
-};
-typedef struct packet_guild_ranking_send
-{
-	packet_guild_ranking_send()
-	{
-		strncpy(szOwnerName, "", sizeof(szOwnerName));
-		strncpy(szGuildName, "", sizeof(szGuildName));
-	}
-	packet_guild_ranking_send(int32_t c_id, const char* c_guild, const char* c_name, int32_t c_level, int32_t c_point, int32_t c_win, int32_t c_draw, int32_t c_loss)
-		: subheader(GUILD_RANK::SUBHEADER_GUILD_RANKING_SEND), id(c_id), level(c_level), point(c_point), win(c_win), draw(c_draw), loss(c_loss)
-	{
-		strncpy(szOwnerName, c_name, sizeof(szOwnerName));
-		strncpy(szGuildName, c_guild, sizeof(szGuildName));
-	}
-	uint8_t	header = HEADER_GC_GUILD_RANKING;
-	uint8_t	subheader = SUBHEADER_GUILD_RANKING_OPEN;
-	int32_t		id = 0;
-	char	szGuildName[GUILD_NAME_MAX_LEN + 1];
-	char	szOwnerName[CHARACTER_NAME_MAX_LEN + 1];
-	int32_t		level = 0;
-	int32_t		point = 0;
-	int32_t		win = 0;
-	int32_t		draw = 0;
-	int32_t		loss = 0;
-} TPacketGCGuildRankingSend;
-#endif
-
-#if defined(__BL_RANKING__)
-enum ERANKINFO
-{
-	HEADER_GC_RANKING = 160,
-	RANKING_MAX_NUM = 500,
-};
-
-typedef struct packet_ranking_send
-{
-	BYTE bHeader;
-	WORD wSize;
-} TPacketGCRankingSend;
-
-typedef struct packet_ranking_info
-{
-	char	szName[CHARACTER_NAME_MAX_LEN + 1];
-	int		iLevel;
-	BYTE	bJob;
-	BYTE	bEmpire;
-	char	szGuildName[GUILD_NAME_MAX_LEN + 1];
-} TPacketGCRankingInfo;
-#endif
 
 struct TPacketGCItemDelDeprecated
 {
 	BYTE	header;
 	TItemPos Cell;
 	DWORD	vnum;
-	short	count;
-#ifdef CHANGELOOK_SYSTEM
-	DWORD	transmutation;
-#endif
+	BYTE	count;
 	long	alSockets[ITEM_SOCKET_MAX_NUM];
 	TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_MAX_NUM];
 };
@@ -1717,10 +1292,7 @@ typedef struct packet_item_set
 	BYTE	header;
 	TItemPos Cell;
 	DWORD	vnum;
-	short	count;
-#ifdef CHANGELOOK_SYSTEM
-	DWORD	transmutation;
-#endif
+	WORD	count;
 	DWORD	flags;
 	DWORD	anti_flags;
 	bool	highlight;
@@ -1754,21 +1326,32 @@ typedef struct packet_item_update
 {
 	BYTE	header;
 	TItemPos Cell;
-	short	count;
-#ifdef CHANGELOOK_SYSTEM
-	DWORD	transmutation;
-#endif
+
+	DWORD	count;
 	long	alSockets[ITEM_SOCKET_MAX_NUM];
 	TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_MAX_NUM];
 } TPacketGCItemUpdate;
 
 typedef struct packet_item_ground_add
 {
+#ifdef ENABLE_EXTENDED_ITEMNAME_ON_GROUND
+	packet_item_ground_add()
+	{
+		memset(&alSockets, 0, sizeof(alSockets));
+		memset(&aAttrs, 0, sizeof(aAttrs));
+	}
+#endif
+
 	BYTE	bHeader;
 	long 	x, y, z;
 	DWORD	dwVID;
 	DWORD	dwVnum;
+#ifdef ENABLE_EXTENDED_ITEMNAME_ON_GROUND
+	long	alSockets[ITEM_SOCKET_MAX_NUM];//3
+	TPlayerItemAttribute aAttrs[ITEM_ATTRIBUTE_MAX_NUM];//7
+#endif
 } TPacketGCItemGroundAdd;
+
 
 typedef struct packet_item_ownership
 {
@@ -1776,15 +1359,6 @@ typedef struct packet_item_ownership
 	DWORD	dwVID;
 	char	szName[CHARACTER_NAME_MAX_LEN + 1];
 } TPacketGCItemOwnership;
-
-#if defined(__BL_DROP_DESTROY_TIME__)
-typedef struct packet_item_destroy_time
-{
-	BYTE	bHeader;
-	DWORD	dwVID;
-	time_t	tDestroyTime;
-} TPacketGCItemDestroyTime;
-#endif
 
 typedef struct packet_item_ground_del
 {
@@ -1834,130 +1408,22 @@ enum EPacketShopSubHeaders
 	SHOP_SUBHEADER_GC_SOLD_OUT,
 	SHOP_SUBHEADER_GC_START_EX,
 	SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY_EX,
-#ifdef OFFLINE_SHOP
-	SHOP_SUBHEADER_CG_REFRESH_OFFLINE_SHOP_MONEY,
-	SHOP_SUBHEADER_GC_OFFLINE_SHOP_INFO,
-#endif
-#ifdef ENABLE_MULTISHOP
-	SHOP_SUBHEADER_GC_NOT_ENOUGH_ITEM,
-#endif
 };
 
-#pragma pack(push, 1)
 struct packet_shop_item
-{   
+{
 	DWORD       vnum;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	TItemPriceType	price;
+#ifdef ENABLE_LONG_LONG
+	long long price;
 #else
-	DWORD		price;
+	DWORD price;
 #endif
-    short        count;
-#ifdef ENABLE_MULTISHOP
-	DWORD		wPriceVnum;
-	DWORD		wPrice;
-#endif
+
+	WORD count;
 	BYTE		display_pos;
 	long	alSockets[ITEM_SOCKET_MAX_NUM];
 	TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_MAX_NUM];
-#ifdef CHANGELOOK_SYSTEM
-	DWORD		transmutation;
-#endif
 };
-
-#ifdef ENABLE_HUNTING_SYSTEM
-typedef struct SPacketCGHuntingAction
-{
-	BYTE	bHeader;
-	BYTE	bAction;
-	DWORD	dValue;
-} TPacketGCHuntingAction;
-
-typedef struct SPacketCGOpenWindowHuntingMain
-{
-	BYTE	bHeader;
-	DWORD	dLevel;
-	DWORD	dMonster;
-	DWORD	dCurCount;
-	DWORD	dDestCount;
-	DWORD	dMoneyMin;
-	DWORD	dMoneyMax;
-	DWORD	dExpMin;
-	DWORD	dExpMax;
-	DWORD	dRaceItem;
-	DWORD	dRaceItemCount;
-} TPacketGCOpenWindowHuntingMain;
-
-typedef struct SPacketCGOpenWindowHuntingSelect
-{
-	BYTE	bHeader;
-	DWORD	dLevel;
-	BYTE	bType;
-	DWORD	dMonster;
-	DWORD	dCount;
-	DWORD	dMoneyMin;
-	DWORD	dMoneyMax;
-	DWORD	dExpMin;
-	DWORD	dExpMax;
-	DWORD	dRaceItem;
-	DWORD	dRaceItemCount;
-} TPacketGCOpenWindowHuntingSelect;
-
-typedef struct SPacketGCOpenWindowReward
-{
-	BYTE	bHeader;
-	DWORD	dLevel;
-	DWORD	dReward;
-	DWORD	dRewardCount;
-	DWORD	dRandomReward;
-	DWORD	dRandomRewardCount;
-	DWORD	dMoney;
-	BYTE	bExp;
-} TPacketGCOpenWindowReward;
-
-typedef struct SPacketGCUpdateHunting
-{
-	BYTE	bHeader;
-	DWORD	dCount;
-} TPacketGCUpdateHunting;
-
-typedef struct SPacketGCReciveRandomItems
-{
-	BYTE	bHeader;
-	BYTE	bWindow;
-	DWORD	dItemVnum;
-	DWORD	dItemCount;
-} TPacketGCReciveRandomItems;
-#endif
-
-
-#pragma pack(pop)
-
-#ifdef OFFLINE_SHOP
-struct packet_shop_offline_item
-{
-	DWORD		vnum;
-	// BEGIN_MAX_YANG
-	DWORD		price;
-	// END_OF_MAX_YANG
-
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int		cheque;
-#endif
-
-	BYTE		count;
-	BYTE		display_pos;
-	bool		bIsSold;
-	char		buyerName[24];
-	long		alSockets[ITEM_SOCKET_MAX_NUM];
-	TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_MAX_NUM];
-
-#ifdef CHANGELOOK_SYSTEM
-	DWORD		transmutation;
-#endif
-};
-#endif
-
 
 typedef struct packet_shop_start
 {
@@ -1965,18 +1431,7 @@ typedef struct packet_shop_start
 	struct packet_shop_item	items[SHOP_HOST_ITEM_MAX_NUM];
 } TPacketGCShopStart;
 
-#ifdef OFFLINE_SHOP
-typedef struct packet_offline_shop_start
-{
-	DWORD	owner_vid;
-	struct packet_shop_offline_item items[OFFLINE_SHOP_HOST_ITEM_MAX_NUM];
-	DWORD	m_dwDisplayedCount;
-	DWORD	dwRemainTime;
-	int		map, x, y;
-} TPacketGCOfflineShopStart;
-#endif
-
-typedef struct packet_shop_start_ex // ������ TSubPacketShopTab* shop_tabs �� �����?.
+typedef struct packet_shop_start_ex
 {
 	typedef struct sub_packet_shop_tab
 	{
@@ -1994,34 +1449,19 @@ typedef struct packet_shop_update_item
 	struct packet_shop_item	item;
 } TPacketGCShopUpdateItem;
 
-#ifdef OFFLINE_SHOP
-typedef struct packet_shop_update_offline_item
-{
-	BYTE	pos;
-	struct packet_shop_offline_item	item;
-} TPacketGCShopUpdateOfflineItem;
-
-typedef struct packet_offline_shop_money
-{
-	// BEGIN_MAX_YANG
-	long long	llMoney;
-	// END_OF_MAX_YANG
-
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int	bCheque;
-#endif
-} TPacketGCOfflineShopMoney;
-#endif
-
 typedef struct packet_shop_update_price
 {
+#ifdef ENABLE_LONG_LONG
+	long long		iPrice;
+#else
 	int				iPrice;
+#endif
 } TPacketGCShopUpdatePrice;
 
-typedef struct packet_shop	// ���� ��Ŷ
+typedef struct packet_shop
 {
 	BYTE        header;
-	WORD		size;
+	WORD	size;
 	BYTE        subheader;
 } TPacketGCShop;
 
@@ -2030,17 +1470,18 @@ struct packet_exchange
 	BYTE	header;
 	BYTE	sub_header;
 	BYTE	is_me;
+#ifdef ENABLE_LONG_LONG
+	long long arg1;
+#else
 	DWORD	arg1;	// vnum
+#endif
 	TItemPos	arg2;	// cell
 	DWORD	arg3;	// count
 #ifdef WJ_ENABLE_TRADABLE_ICON
-	TItemPos	arg4;	// srccell
+	TItemPos	arg4;
 #endif
 	long	alSockets[ITEM_SOCKET_MAX_NUM];
 	TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_MAX_NUM];
-#ifdef CHANGELOOK_SYSTEM
-	DWORD	dwTransmutation;
-#endif
 };
 
 enum EPacketTradeSubHeaders
@@ -2049,16 +1490,10 @@ enum EPacketTradeSubHeaders
 	EXCHANGE_SUBHEADER_GC_ITEM_ADD,	/* arg1 == vnum  arg2 == pos  arg3 == count */
 	EXCHANGE_SUBHEADER_GC_ITEM_DEL,
 	EXCHANGE_SUBHEADER_GC_GOLD_ADD,	/* arg1 == gold */
-#ifdef ENABLE_CHEQUE_SYSTEM
-	EXCHANGE_SUBHEADER_GC_CHEQUE_ADD,	/* arg1 == cheque */
-#endif
 	EXCHANGE_SUBHEADER_GC_ACCEPT,	/* arg1 == accept */
 	EXCHANGE_SUBHEADER_GC_END,		/* arg1 == not used */
 	EXCHANGE_SUBHEADER_GC_ALREADY,	/* arg1 == not used */
 	EXCHANGE_SUBHEADER_GC_LESS_GOLD,	/* arg1 == not used */
-#ifdef ENABLE_CHEQUE_SYSTEM
-	EXCHANGE_SUBHEADER_GC_LESS_CHEQUE,	/* arg1 == not used */
-#endif
 };
 
 struct packet_position
@@ -2113,7 +1548,7 @@ typedef struct packet_move
 	DWORD		dwDuration;
 } TPacketGCMove;
 
-// ������
+
 typedef struct packet_ownership
 {
 	BYTE		bHeader;
@@ -2121,7 +1556,7 @@ typedef struct packet_ownership
 	DWORD		dwVictimVID;
 } TPacketGCOwnership;
 
-// ��ġ ����ȭ ��Ŷ�� bCount ��ŭ �ٴ� ����
+
 typedef struct packet_sync_position_element
 {
 	DWORD	dwVID;
@@ -2129,11 +1564,11 @@ typedef struct packet_sync_position_element
 	long	lY;
 } TPacketGCSyncPositionElement;
 
-// ��ġ ����ȭ
-typedef struct packet_sync_position	// ���� ��Ŷ
+
+typedef struct packet_sync_position
 {
 	BYTE	bHeader;
-	WORD	wSize;	// ���� = (wSize - sizeof(TPacketGCSyncPosition)) / sizeof(TPacketGCSyncPositionElement)
+	WORD	wSize;
 } TPacketGCSyncPosition;
 
 typedef struct packet_fly
@@ -2168,7 +1603,7 @@ typedef struct packet_shoot
 typedef struct packet_duel_start
 {
 	BYTE	header;
-	WORD	wSize;	// DWORD�� �? ���� = (wSize - sizeof(TPacketGCPVPList)) / 4
+	WORD	wSize;
 } TPacketGCDuelStart;
 
 enum EPVPModes
@@ -2184,10 +1619,7 @@ typedef struct packet_pvp
 	BYTE        bHeader;
 	DWORD       dwVIDSrc;
 	DWORD       dwVIDDst;
-	BYTE        bMode;	// 0 Off 1 On
-#ifdef ENABLE_DECORUM
-	bool        bIsDecored;
-#endif	
+	BYTE        bMode;
 } TPacketGCPVP;
 
 typedef struct command_use_skill
@@ -2207,10 +1639,6 @@ typedef struct packet_target
 {
 	BYTE	header;
 	DWORD	dwVID;
-#if defined(__SHIP_DEFENSE__)
-	bool bAlliance;
-	int64_t iAllianceMinHP, iAllianceMaxHP;
-#endif
 	BYTE	bHPPercent;
 #ifdef ELEMENT_TARGET
 	BYTE	bElement;
@@ -2225,9 +1653,6 @@ typedef struct packet_target_info
 	DWORD	race;
 	DWORD	dwVnum;
 	BYTE	count;
-#ifdef ENABLE_SEND_TARGET_INFO_EXTENDED
-	DWORD	rarity;
-#endif
 } TPacketGCTargetInfo;
 
 typedef struct packet_target_info_load
@@ -2253,35 +1678,17 @@ typedef struct command_warp
 
 struct packet_quest_info
 {
-	BYTE	header;
-	WORD	size;
-	WORD	index;
+	BYTE header;
+	WORD size;
+	WORD index;
 #ifdef __QUEST_RENEWAL__
-	WORD	c_index;
+	WORD c_index;
 #endif
-	BYTE	flag;
-	char	szTitle[30 + 1];
-	BYTE	isBegin;
-	char	szClockName[16 + 1];
-	int		iClockValue;
-	char	szCounterName[16 + 1];
-	int		iCounterValue;
-	char	szIconFileName[24 + 1];
+	BYTE flag;
 };
 
-enum 
+enum
 {
-#ifdef ENABLE_MESSENGER_BLOCK
-	MESSENGER_SUBHEADER_GC_BLOCK_LIST,
-	MESSENGER_SUBHEADER_GC_BLOCK_LOGIN,
-	MESSENGER_SUBHEADER_GC_BLOCK_LOGOUT,
-	MESSENGER_SUBHEADER_GC_BLOCK_INVITE,//not used
-#endif
-#ifdef ENABLE_MESSENGER_TEAM
-	MESSENGER_SUBHEADER_GC_TEAM_LIST,
-	MESSENGER_SUBHEADER_GC_TEAM_LOGIN,
-	MESSENGER_SUBHEADER_GC_TEAM_LOGOUT,
-#endif
 	MESSENGER_SUBHEADER_GC_LIST,
 	MESSENGER_SUBHEADER_GC_LOGIN,
 	MESSENGER_SUBHEADER_GC_LOGOUT,
@@ -2328,68 +1735,19 @@ typedef struct packet_messenger_list_online
 	BYTE length;
 } TPacketGCMessengerListOnline;
 
-#ifdef ENABLE_MESSENGER_TEAM
-typedef struct packet_messenger_team_list_offline
+enum
 {
-	BYTE connected;
-	BYTE length;
-} TPacketGCMessengerTeamListOffline;
-
-typedef struct packet_messenger_team_list_online
-{
-	BYTE connected;
-	BYTE length;
-} TPacketGCMessengerTeamListOnline;
-#endif
-
-#ifdef ENABLE_MESSENGER_BLOCK
-typedef struct packet_messenger_block_list_offline
-{
-	BYTE connected; // always 0
-	BYTE length;
-} TPacketGCMessengerBlockListOffline;
-
-typedef struct packet_messenger_block_list_online
-{
-	BYTE connected; // always 1
-	BYTE length;
-} TPacketGCMessengerBlockListOnline;
-#endif
-
-enum 
-{
-#ifdef ENABLE_MESSENGER_BLOCK
-	MESSENGER_SUBHEADER_CG_ADD_BLOCK_BY_VID,
-    MESSENGER_SUBHEADER_CG_ADD_BLOCK_BY_NAME,
-    MESSENGER_SUBHEADER_CG_REMOVE_BLOCK,
-#endif
 	MESSENGER_SUBHEADER_CG_ADD_BY_VID,
 	MESSENGER_SUBHEADER_CG_ADD_BY_NAME,
 	MESSENGER_SUBHEADER_CG_REMOVE,
 	MESSENGER_SUBHEADER_CG_INVITE_ANSWER,
 };
+
 typedef struct command_messenger
 {
 	BYTE header;
 	BYTE subheader;
 } TPacketCGMessenger;
-
-#ifdef ENABLE_MESSENGER_BLOCK
-typedef struct command_messenger_add_block_by_vid
-{
-	DWORD vid;
-} TPacketCGMessengerAddBlockByVID;
-
-typedef struct command_messenger_add_block_by_name
-{
-	BYTE length;
-} TPacketCGMessengerAddBlockByName;
-
-typedef struct command_messenger_remove_block
-{
-	char login[LOGIN_MAX_LEN+1];
-} TPacketCGMessengerRemoveBlock;
-#endif
 
 typedef struct command_messenger_add_by_vid
 {
@@ -2469,7 +1827,6 @@ typedef struct packet_party_update
 	DWORD	pid;
 	BYTE	role;
 	BYTE	percent_hp;
-	BYTE	percent_sp;
 	short	affects[7];
 } TPacketGCPartyUpdate;
 
@@ -2630,12 +1987,6 @@ typedef struct packet_guild_war
 	DWORD	dwGuildOpp;
 	BYTE	bType;
 	BYTE 	bWarState;
-#ifdef __IMPROVED_GUILD_WAR__
-	int		iMaxPlayer;
-	int		iMaxScore;
-	DWORD	flags;
-	int		custom_map_index;
-#endif
 } TPacketGCGuildWar;
 
 typedef struct command_guild
@@ -2696,7 +2047,7 @@ typedef struct packet_mark_idxlist
 	BYTE    header;
 	DWORD	bufSize;
 	WORD	count;
-	//�ڿ� size * (WORD + WORD)��ŭ ������ ����
+
 } TPacketGCMarkIDXList;
 
 typedef struct packet_mark_block
@@ -2705,7 +2056,7 @@ typedef struct packet_mark_block
 	DWORD	bufSize;
 	BYTE	imgIdx;
 	DWORD	count;
-	// �ڿ� 64 x 48 x �ȼ�ũ��(4����Ʈ) = 12288��ŭ ������ ����
+
 } TPacketGCMarkBlock;
 
 typedef struct command_symbol_upload
@@ -2761,7 +2112,7 @@ typedef struct command_give_item
 	BYTE byHeader;
 	DWORD dwTargetVID;
 	TItemPos ItemPos;
-	short byItemCount;
+	BYTE	byItemCount;
 } TPacketCGGiveItem;
 
 typedef struct SPacketCGHack
@@ -2794,6 +2145,9 @@ typedef struct SPacketGCShopSign
 {
 	BYTE	bHeader;
 	DWORD	dwVID;
+#ifdef KASMIR_PAKET_SYSTEM
+	BYTE	bShopKasmirTitle;
+#endif
 	char	szSign[SHOP_SIGN_MAX_LEN + 1];
 } TPacketGCShopSign;
 
@@ -2801,30 +2155,12 @@ typedef struct SPacketCGMyShop
 {
 	BYTE	bHeader;
 	char	szSign[SHOP_SIGN_MAX_LEN + 1];
-	short	bCount;
-} TPacketCGMyShop;
-
-#ifdef OFFLINE_SHOP
-typedef struct SOfflineShopItemTable
-{
-	TItemPos	item_pos;
-	// BEGIN_MAX_YANG
-	int			price;
-	// END_OF_MAX_YANG
-	int			iPos;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int		cheque;
-#endif
-} TOfflineShopItemTable;
-
-typedef struct TPacketCGMyOfflineShop
-{
-	BYTE	bHeader;
-	char	szSign[SHOP_SIGN_MAX_LEN + 1];
 	BYTE	bCount;
-	BYTE	bTime;
-} TPacketCGMyOfflineShop;
+#ifdef KASMIR_PAKET_SYSTEM
+	DWORD	dwKasmirNpc;
+	BYTE	bKasmirBaslik;
 #endif
+} TPacketCGMyShop;
 
 typedef struct SPacketGCTime
 {
@@ -2871,9 +2207,9 @@ typedef struct SPacketGCRefineInformaion
 	BYTE	pos;
 	DWORD	src_vnum;
 	DWORD	result_vnum;
-	short	material_count;
-	int		cost; // �ҿ� ���?
-	int		prob; // Ȯ��
+	BYTE	material_count;
+	int		cost;
+	int		prob;
 	TRefineMaterial materials[REFINE_MATERIAL_MAX_NUM];
 } TPacketGCRefineInformation;
 
@@ -2936,18 +2272,6 @@ typedef struct packet_channel
 	BYTE channel;
 } TPacketGCChannel;
 
-#if defined(__BL_KILL_BAR__)
-typedef struct command_kill_bar
-{
-	BYTE	bHeader;
-	BYTE	bKillerRace;
-	BYTE	bKillerWeaponType;
-	BYTE	bVictimRace;
-	char	szKiller[CHARACTER_NAME_MAX_LEN + 1];
-	char	szVictim[CHARACTER_NAME_MAX_LEN + 1];
-} TPacketGCKillBar;
-#endif
-
 typedef struct SEquipmentItemSet
 {
 	DWORD   vnum;
@@ -2960,7 +2284,6 @@ typedef struct pakcet_view_equip
 {
 	BYTE  header;
 	DWORD vid;
-	short count;
 	TEquipmentItemSet equips[WEAR_MAX_NUM];
 } TPacketViewEquip;
 
@@ -3047,8 +2370,7 @@ typedef struct command_script_select_item
 typedef struct packet_damage_info
 {
 	BYTE header;
-	DWORD dwVictimVID;
-	DWORD dwAttackerVID;
+	DWORD dwVID;
 	BYTE flag;
 	int damage;
 } TPacketGCDamageInfo;
@@ -3110,6 +2432,17 @@ typedef struct SPacketGGCheckAwakeness
 	BYTE bHeader;
 } TPacketGGCheckAwakeness;
 
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+typedef struct SPacketGGOfflineShopNotification
+{
+	BYTE		bHeader;
+	int			ownerId;
+	int			vnum;
+	long long	price;
+	WORD		count;
+} TPacketGGOfflineShopNotification;
+#endif
+
 typedef struct SPacketGCPanamaPack
 {
 	BYTE	bHeader;
@@ -3117,13 +2450,13 @@ typedef struct SPacketGCPanamaPack
 	BYTE	abIV[32];
 } TPacketGCPanamaPack;
 
-//TODO :  �ƿ� ¯��..������Ŷ ������ �޾Ƶ��ϼ� �ְ� ��Ŷ �ڵ鷯 Refactoring ����.
+
 typedef struct SPacketGCHybridCryptKeys
 {
 	SPacketGCHybridCryptKeys() : m_pStream(NULL) {}
 	~SPacketGCHybridCryptKeys()
 	{
-		//GCC ���� NULL delete �ص� ������? �ϴ� �����ϰ� NULL üũ ����. ( �ٵ� �̰� C++ ǥ�ؾƴϾ��� --a )
+
 		if( m_pStream )
 		{
 			delete[] m_pStream;
@@ -3156,7 +2489,7 @@ typedef struct SPacketGCHybridCryptKeys
 	}
 
 	BYTE	bHeader;
-	WORD    uDynamicPacketSize; // �������? Ŭ��  DynamicPacketHeader ���������� ��������Ѵ�? -_-;
+	WORD    uDynamicPacketSize;
 	int		KeyStreamLen;
 	BYTE*   pDataKeyStream;
 
@@ -3204,7 +2537,7 @@ typedef struct SPacketGCPackageSDB
 	}
 
 	BYTE	bHeader;
-	WORD    uDynamicPacketSize; // �������? Ŭ��  DynamicPacketHeader ���������� ��������Ѵ�? -_-;
+	WORD    uDynamicPacketSize;
 	int		iStreamLen;
 	BYTE*   m_pDataSDBStream;
 
@@ -3240,7 +2573,7 @@ typedef struct SPacketGCSpecificEffect
 	char effect_file[MAX_EFFECT_FILE_NAME];
 } TPacketGCSpecificEffect;
 
-// ��ȥ��
+
 enum EDragonSoulRefineWindowRefineType
 {
 	DragonSoulRefineWindow_UPGRADE,
@@ -3296,95 +2629,350 @@ typedef struct SPacketGCStateCheck
 	unsigned char state;
 } TPacketGCStateCheck;
 
+#ifdef __ENABLE_NEW_OFFLINESHOP__
 
-#ifdef OFFLINE_SHOP
-typedef struct SPacketGGOfflineShopMessage
+//ACTIONS PACKETS
+typedef struct
 {
-	BYTE	bHeader;
-	DWORD	dwTargetPID;
-	char	szName[CHARACTER_NAME_MAX_LEN + 1];
-	char	szItemName[ITEM_NAME_MAX_LEN + 1];
-} TPacketGGOfflineShopMessage;
+	BYTE bHeader;
+#ifdef __ENABLE_LARGE_DYNAMIC_PACKET__
+	int wSize;
+#else
+	WORD wSize;
+#endif
+	BYTE bSubHeader;
+} TPacketGCNewOfflineshop;
+
+typedef struct {
+	BYTE bHeader;
+	WORD wSize;
+	BYTE bSubHeader;
+} TPacketCGNewOfflineShop;
+
+namespace offlineshop
+{
+	//common
+	typedef struct {
+		BYTE		bType;
+		BYTE		bSubType;
+
+		char		szName[ITEM_NAME_MAX_LEN];
+		TPriceInfo	priceStart, priceEnd;
+		int			iLevelStart, iLevelEnd;
+
+		DWORD		dwWearFlag;
+		TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_NORM_NUM];
+		// int         iRarity = -1;
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+		bool		bPlayerName;
+#endif
+	}TFilterInfo;
+
+
+	typedef struct {
+		TItemPos	pos;
+		TPriceInfo	price;
+	}TShopItemInfo;
+
+	//AUCTION
+	typedef struct {
+		TAuctionInfo	auction;
+		TPriceInfo		actual_best;
+		DWORD			dwOfferCount;
+	}TAuctionListElement;
+
+	//offlineshop-updated 03/08/19
+	typedef struct {
+		TItemInfo item;
+		char szShopName[OFFLINE_SHOP_NAME_MAX_LEN];
+	} TMyOfferExtraInfo;
+
+
+	//GAME TO CLIENT
+	enum eSubHeaderGC
+	{
+		SUBHEADER_GC_SHOP_LIST,
+		SUBHEADER_GC_SHOP_OPEN,
+		SUBHEADER_GC_SHOP_OPEN_OWNER,
+		SUBHEADER_GC_SHOP_OPEN_OWNER_NO_SHOP,
+		SUBHEADER_GC_SHOP_CLOSE,
+		SUBHEADER_GC_SHOP_BUY_ITEM_FROM_SEARCH,
+
+		SUBHEADER_GC_OFFER_LIST,
+
+		SUBHEADER_GC_SHOP_FILTER_RESULT,
+		SUBHEADER_GC_SHOP_SAFEBOX_REFRESH,
+
+		//AUCTION
+		SUBHEADER_GC_AUCTION_LIST,
+		SUBHEADER_GC_OPEN_MY_AUCTION,
+		SUBHEADER_GC_OPEN_MY_AUCTION_NO_AUCTION,
+		SUBHEADER_GC_OPEN_AUCTION,
+#ifdef ENABLE_NEW_SHOP_IN_CITIES
+		SUBHEADER_GC_INSERT_SHOP_ENTITY,
+		SUBHEADER_GC_REMOVE_SHOP_ENTITY,
+#endif
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+		SUBHEADER_GC_NOTIFICATION,
+#endif
+	};
+
+
+	typedef struct {
+		DWORD	dwShopCount;
+	} TSubPacketGCShopList;
+
+
+	typedef struct {
+		TShopInfo	shop;
+
+	} TSubPacketGCShopOpen;
+
+
+	typedef struct {
+		TShopInfo	shop;
+		DWORD		dwSoldCount;
+		DWORD		dwOfferCount;
+
+	} TSubPacketGCShopOpenOwner;
+
+
+
+	typedef struct {
+		DWORD dwOwnerID;
+		DWORD dwItemID;
+	}TSubPacketGCShopBuyItemFromSearch;
+
+
+	typedef struct {
+		DWORD dwCount;
+	} TSubPacketGCShopFilterResult;
+
+
+	typedef struct {
+		DWORD dwOfferCount;
+
+	} TSubPacketGCShopOfferList;
+
+
+
+	typedef struct {
+		TValutesInfo	valute;
+		DWORD			dwItemCount;
+
+	}TSubPacketGCShopSafeboxRefresh;
+
+	//AUCTION
+	typedef struct {
+		DWORD dwCount;
+		bool bOwner;
+	}TSubPacketGCAuctionList;
+
+
+
+	typedef struct {
+		TAuctionInfo auction;
+		DWORD dwOfferCount;
+
+
+	}TSubPacketGCAuctionOpen;
+#ifdef ENABLE_NEW_SHOP_IN_CITIES
+	typedef struct {
+		DWORD	dwVID;
+		char	szName[OFFLINE_SHOP_NAME_MAX_LEN];
+		int		iType;
+
+		long 	x, y, z;
+#ifdef KASMIR_PAKET_SYSTEM
+		DWORD	dwKasmirNpc;
+#endif
+	} TSubPacketGCInsertShopEntity;
+
+
+	typedef struct {
+		DWORD dwVID;
+	} TSubPacketGCRemoveShopEntity;
 #endif
 
-#ifdef PRIVATESHOP_SEARCH_SYSTEM
-typedef struct SPacketGCShopSearchItemInfo
-{
-	BYTE	bHeader;
-	DWORD	dwVID;
-
-	char	szOwnerName[CHARACTER_NAME_MAX_LEN + 1];
-	BYTE	bPos;
-
-	DWORD	dwGold;
-
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int	bCheque;
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+	typedef struct {
+		DWORD dwItemID;
+		long long dwItemPrice;
+		WORD dwItemCount;
+	} TSubPacketGCNotification;
+	
+	typedef struct
+	{
+		DWORD dwTime;
+	}TSubPacketCGShopExtendTime;
 #endif
 
-	DWORD	dwVnum;
-	BYTE	bCount;
-	DWORD	dwFlags;
-	DWORD	dwAntiFlags;
-	long	alSockets[ITEM_SOCKET_MAX_NUM];
-	TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_MAX_NUM];
-
-#ifdef CHANGELOOK_SYSTEM
-	DWORD	dwTransmutation;
+	// CLIENT TO GAME
+	enum eSubHeaderCG
+	{
+		SUBHEADER_CG_SHOP_CREATE_NEW,
+		SUBHEADER_CG_SHOP_CHANGE_NAME,
+#ifdef ENABLE_NEW_OFFLINESHOP_RENEWAL
+		SUBHEADER_CG_SHOP_EXTEND_TIME,
 #endif
-} TPacketGCShopSearchItemInfo;
+		SUBHEADER_CG_SHOP_FORCE_CLOSE,
+		SUBHEADER_CG_SHOP_REQUEST_SHOPLIST,
+		SUBHEADER_CG_SHOP_OPEN,
+		SUBHEADER_CG_SHOP_OPEN_OWNER,
+		SUBHEADER_CG_SHOP_BUY_ITEM,
 
-typedef struct SPacketCGShopSearchInfo
-{
-	BYTE	bHeader;
+		SUBHEADER_CG_SHOP_ADD_ITEM,
+		SUBHEADER_CG_SHOP_REMOVE_ITEM,
+		SUBHEADER_CG_SHOP_EDIT_ITEM,
 
-	// BYTE	bJob;
-	BYTE	bItemType;
-	BYTE	bItemSubType;
-	// BYTE	bMinLevel;
-	// BYTE	bMaxLevel;
-	// BYTE	bMinRefine;
-	// BYTE	bMaxRefine;
+		SUBHEADER_CG_SHOP_FILTER_REQUEST,
 
-	long	lMinGold;
-	long	lMaxGold;
+		SUBHEADER_CG_SHOP_OFFER_CREATE,
+		SUBHEADER_CG_SHOP_OFFER_ACCEPT,
+		SUBHEADER_CG_SHOP_OFFER_CANCEL,
+		SUBHEADER_CG_SHOP_REQUEST_OFFER_LIST,
 
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int	bMinCheque;
-	int	bMaxCheque;
+		SUBHEADER_CG_SHOP_SAFEBOX_OPEN,
+		SUBHEADER_CG_SHOP_SAFEBOX_GET_ITEM,
+		SUBHEADER_CG_SHOP_SAFEBOX_GET_VALUTES,
+		SUBHEADER_CG_SHOP_SAFEBOX_CLOSE,
+
+		//AUCTION
+		SUBHEADER_CG_AUCTION_LIST_REQUEST,
+		SUBHEADER_CG_AUCTION_OPEN_REQUEST,
+		SUBHEADER_CG_MY_AUCTION_OPEN_REQUEST,
+		SUBHEADER_CG_CREATE_AUCTION,
+		SUBHEADER_CG_AUCTION_ADD_OFFER,
+		SUBHEADER_CG_EXIT_FROM_AUCTION,
+
+		SUBHEADER_CG_CLOSE_BOARD,
+#ifdef ENABLE_NEW_SHOP_IN_CITIES
+		SUBHEADER_CG_CLICK_ENTITY,
+#endif
+		SUBHEADER_CG_AUCTION_CLOSE,
+	};
+
+
+
+
+	typedef struct
+	{
+		TShopInfo shop;
+	}TSubPacketCGShopCreate;
+
+
+	typedef struct
+	{
+		char szName[OFFLINE_SHOP_NAME_MAX_LEN];
+	}TSubPacketCGShopChangeName;
+
+
+
+	typedef struct
+	{
+		DWORD dwOwnerID;
+	}TSubPacketCGShopOpen;
+
+
+
+	typedef struct
+	{
+		TItemPos	pos;
+		TPriceInfo  price;
+	}TSubPacketCGAddItem;
+
+
+	typedef struct
+	{
+		DWORD dwItemID;
+	}TSubPacketCGRemoveItem;
+
+
+
+	typedef struct
+	{
+		DWORD dwItemID;
+		TPriceInfo price;
+	}TSubPacketCGEditItem;
+
+
+
+	typedef struct
+	{
+		TFilterInfo filter;
+	}TSubPacketCGFilterRequest;
+
+
+
+	typedef struct
+	{
+		TOfferInfo offer;
+	}TSubPacketCGOfferCreate;
+
+
+	typedef struct
+	{
+		DWORD dwOfferID;
+	}TSubPacketCGOfferAccept;
+
+
+
+	typedef struct
+	{
+		DWORD dwOfferID;
+		DWORD dwOwnerID;
+	}TSubPacketCGOfferCancel;
+
+
+	typedef struct
+	{
+		DWORD dwItemID;
+	}TSubPacketCGShopSafeboxGetItem;
+
+
+	typedef struct
+	{
+		TValutesInfo valutes;
+	}TSubPacketCGShopSafeboxGetValutes;
+
+	typedef struct
+	{
+		DWORD dwOwnerID;
+		DWORD dwItemID;
+		bool  bIsSearch;
+	}TSubPacketCGShopBuyItem;
+
+	//AUCTION
+	typedef struct {
+		DWORD dwOwnerID;
+	} TSubPacketCGAuctionOpenRequest;
+
+	typedef struct {
+		DWORD		dwDuration;
+		TItemPos	pos;
+
+		TPriceInfo	init_price;
+	} TSubPacketCGAuctionCreate;
+
+
+	typedef struct {
+		DWORD		dwOwnerID;
+		TPriceInfo	price;
+	}TSubPacketCGAuctionAddOffer;
+
+	typedef struct {
+		DWORD dwOwnerID;
+	} TSubPacketCGAuctionExitFrom;
+
+
+
+#ifdef ENABLE_NEW_SHOP_IN_CITIES
+	typedef struct {
+		DWORD dwShopVID;
+	} TSubPacketCGShopClickEntity;
 #endif
 
-	char	szItemName[ITEM_NAME_MAX_LEN + 1];
-} TPacketCGShopSearchInfo;
-
-typedef struct SPacketCGS
-{
-	BYTE	bHeader;
-	DWORD	dwShopVID;
-	BYTE	bItemPos;
-} TPacketCGShopSearchBuyItem;
-#endif
-
-#ifdef CHANGELOOK_SYSTEM
-enum
-{
-	HEADER_CG_CL = 213,
-	HEADER_GC_CL = 218,
-	CL_SUBHEADER_OPEN = 0,
-	CL_SUBHEADER_CLOSE,
-	CL_SUBHEADER_ADD,
-	CL_SUBHEADER_REMOVE,
-	CL_SUBHEADER_REFINE,
-};
-
-typedef struct SPacketChangeLook
-{
-	BYTE	header;
-	BYTE	subheader;
-	DWORD	dwCost;
-	BYTE	bPos;
-	TItemPos	tPos;
-} TPacketChangeLook;
+}
 #endif
 
 
@@ -3403,6 +2991,7 @@ enum
 	ACCE_SUBHEADER_CG_REMOVE,
 	ACCE_SUBHEADER_CG_REFINE,
 };
+
 typedef struct SPacketAcce
 {
 	BYTE	header;
@@ -3417,13 +3006,46 @@ typedef struct SPacketAcce
 } TPacketAcce;
 #endif
 
-typedef struct SPacketCGSoulStoneUse {
-	BYTE		header;
-	DWORD		skillIndex;
-	TItemPos	Cell;
-	bool		all;
-} TPacketCGSoulStoneUse;
+#ifdef ENABLE_ANTI_MULTIPLE_FARM
+enum EAntiFarmSubHeader
+{
+	AF_SH_SENDING_DATA,
+	AF_SH_SEND_STATUS_UPDATE,
+	AF_SH_SENDING_CONFIRM_DATA,
+};
 
+typedef struct SAntiFarmPlayerInfo
+{
+	SAntiFarmPlayerInfo(DWORD dwPID, bool bDropStatus) :
+		dwPID(dwPID), bDropStatus(bDropStatus)
+	{
+		memset(szName, 0, sizeof(szName));
+	}
+
+	char	szName[CHARACTER_NAME_MAX_LEN + 1];
+	DWORD	dwPID;
+	bool	bDropStatus;
+} TAntiFarmPlayerInfo;
+
+typedef struct SSendAntiFarmInfo
+{
+	SSendAntiFarmInfo(BYTE header, int size, BYTE subheader) :
+		header(header), size(size), subheader(subheader)
+	{}
+
+	BYTE	header;
+	int		size;
+	BYTE	subheader;
+} TSendAntiFarmInfo;
+#endif
+
+#ifdef ENABLE_NEW_DETAILS_GUI
+typedef struct SPacketGCKillLOG
+{
+	BYTE	header;
+	long	kill_log[KILL_MAX_NUM];
+} TPacketGCKillLOG;
+#endif
 
 #ifdef ENABLE_SWITCHBOT
 struct TPacketGGSwitchbot
@@ -3476,12 +3098,6 @@ struct TSwitchbotUpdateItem
 	TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_MAX_NUM];
 };
 #endif
-
-typedef struct SPacketGGHandshakeValidate
-{
-	BYTE header;
-	char sUserIP[64];
-} TPacketGGHandshakeValidate;
 
 #ifdef ENABLE_CUBE_RENEWAL_WORLDARD
 enum
@@ -3547,355 +3163,72 @@ typedef struct packet_receive_cube_renewal
 }TPacketGCCubeRenewalReceive;
 #endif
 
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-enum
-{
-	BONUS_67_NEW_SUB_HEADER_CLOSE = 0,
-	BONUS_67_NEW_SUB_HEADER_OPEN = 1,
-	BONUS_67_NEW_SUB_HEADER_COMB_SKILLBOOK = 2,
-
-	BONUS_67_NEW_SUB_HEADER_GET_FRAGMENT,
-	BONUS_67_NEW_SUB_HEADER_ADD,
-
-	BONUS_67_NEW_SUB_HEADER_FRAGMENT_RECEIVE,
-};
-
-typedef struct packet_send_67_bonus_system
-{
-	BYTE header;
-	BYTE subheader;
-	int  cell[c_skillbook_slot_max];
-	int  regist_slot;
-	int  count_fragment;
-	int  cell_additive;
-	int  count_additive;
-
-
-} TPacketCG67BonusSend;
-
-typedef struct packet_receive_67_bonus_new
-{
-	packet_receive_67_bonus_new() : header(HEADER_GC_67_BONUS_NEW)
-	{}
-
-	BYTE header;
-	BYTE subheader;
-	DWORD vnum_fragment;
-
-}TPacketGC67BonusReceive;
-#endif
-
-typedef struct SPacketSearchShopSystem
-{
-	BYTE	header;
-	int		Founded;
-	char	szSeller[CHARACTER_NAME_MAX_LEN + 1];
-	DWORD	dwVid;
-	DWORD	vnum;
-	DWORD	count;
-	int		iItemRefine;
-	int		iItemPrice;
-	BYTE	bItemPriceCheque;
-	int		iItemLevel;
-	long	alSockets[ITEM_SOCKET_MAX_NUM];
-	TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_MAX_NUM];
-// #ifdef CHANGELOOK_SYSTEM
-	DWORD	dwTransmutation;
-// #endif
-	int		index;
-} TPacketGCShopSearchSystem;
-
-#ifdef WON_EXCHANGE
-enum EWonExchangeCGSubHeader
-{
-	WON_EXCHANGE_CG_SUBHEADER_SELL,
-	WON_EXCHANGE_CG_SUBHEADER_BUY
-};
-
-typedef struct SPacketCGWonExchange
-{
-	SPacketCGWonExchange() :
-		bHeader(HEADER_CG_WON_EXCHANGE)
-	{}
-	BYTE bHeader;
-	BYTE bSubHeader;
-	WORD wValue;
-} TPacketCGWonExchange;
-
-#endif
-
-#ifdef ENABLE_DECORUM
-typedef struct SPacketGCDecorumStat
-{
-	BYTE        bHeader;
-	DWORD		m_dwVid;
-	DWORD		m_dwDecorum;
-	BYTE		m_bLegue;
-	DWORD		m_dwKill;
-	DWORD		m_dwDeath;
-	DWORD		m_dwPromotion;
-	DWORD		m_dwDemotion;
-	DWORD		m_dwBlock;
-	DWORD		m_adwDecorumArena[3][2];
-	DWORD		m_adwDuel[2];
-	
-} TPacketGCDecorumStat;
-
-typedef struct SPacketGCDecorumBase
-{
-	BYTE        bHeader;
-	DWORD		dwDecorum;
-	BYTE		bLegue;
-	DWORD		dwPromotion;
-	DWORD		dwDemotion;
-	DWORD		dwBlock;
-} TPacketGCDecorumBase;
-
-typedef struct SPacketGCDecorumBattle
-{
-	BYTE        bHeader;
-	BYTE		bBattleType;
-	DWORD		dwBattleData[2];
-} TPacketGCDecorumBattle;
-
-typedef struct SPacketGCDecorumKills
-{
-	BYTE        bHeader;
-	DWORD		dwKill;
-	DWORD		dwDeath;
-} TPacketGCDecorumKills;
-
-typedef struct SPacketGGDecorumArenaStart
-{
-	BYTE bHeader;
-	BYTE bType;
-	DWORD dwMapIndex;
-	long lSize;
-	int nCountA;
-	int nCountB;
-	
-} TPacketGGDecorumArenaStart;
-
-typedef struct SPacketGGDecorumArenaRequest
-{
-	BYTE bHeader;
-	BYTE bType;
-	WORD wMiddleELO;
-	DWORD dwMiddleLevel;
-	DWORD dwOwnerPID;
-	long lSize;
-	int nCount;
-	int nCountA;
-	int nCountB;
-	
-} TPacketGGDecorumArenaRequest;
-
-typedef struct SPacketGGDecorumArenaDelete
-{
-	BYTE bHeader;
-	DWORD dwPID;
-	
-} TPacketGGDecorumArenaDelete;
-
-enum EArenaPacketType
-{
-	DECORUM_RANDOM_ARENA_BROADCAST_GC,
-	DECORUM_RANDOM_ARENA_BROADCAST_CG,
-};
-
-typedef struct SPacketGGDecorumArenaBroadcast
-{
-	BYTE				bHeader;
-	DWORD				dwArenaID;
-	BYTE				bArenaType;
-	EArenaPacketType	PacketType; // 0 = from game to client, 1 from client to game
-	DWORD				dwMiddleLevel;
-	DWORD				dwArgument; // middle ELO when from game to game, PID otherwise
-	DWORD				dwExceptPID;
-	
-} TPacketGGDecorumArenaBroadcast;
-#endif
-
-#ifdef GUILD_WAR_COUNTER
-enum
-{
-	GUILD_STATIC_LOAD,
-	GUILD_STATIC_KILL_DEAD,
-	GUILD_STATIC_DMG,
-	GUILD_STATIC_ADD_MEMBER,
-	GUILD_STATIC_SPY,
-	GUILD_STATIC_UPDATE_ONLINE,
-	GUILD_STATIC_USER_COUNT,
-	GUILD_STATIC_UPDATE_OBSERVER,
-	/* LOG */
-	GUILD_STATIC_INFO,
-	GUILD_STATIC_DATA,
-	GUILD_STATIC_EVENT,
-	/* LOG */
-#ifdef ENABLE_GUILD_ONLINE_LIST
-	GUILD_ONLINE_LIST,
-	GUILD_ONLINE_UPDATE,
-#endif
-};
-typedef struct SPacketGCGuildStatic
-{
-	BYTE	header;
-	DWORD	size;
-	BYTE	sub_index;
-	BYTE	packet_size;
-	//UINT	observer;
-} TPacketGCGuildStatic;
-#endif
-
-#ifdef ENABLE_ANTI_MULTIPLE_FARM
-enum EAntiFarmSubHeader
-{
-	AF_SH_SENDING_DATA,
-	AF_SH_SEND_STATUS_UPDATE,
-	AF_SH_SENDING_CONFIRM_DATA,
-};
-
-typedef struct SAntiFarmPlayerInfo
-{
-	SAntiFarmPlayerInfo(DWORD dwPID, bool bDropStatus) :
-		dwPID(dwPID), bDropStatus(bDropStatus)
-	{
-		memset(szName, 0, sizeof(szName));
-	}
-
-	char	szName[CHARACTER_NAME_MAX_LEN + 1];
-	DWORD	dwPID;
-	bool	bDropStatus;
-} TAntiFarmPlayerInfo;
-
-typedef struct SSendAntiFarmInfo
-{
-	SSendAntiFarmInfo(BYTE header, int size, BYTE subheader) :
-		header(header), size(size), subheader(subheader)
-	{}
-
-	BYTE	header;
-	int		size;
-	BYTE	subheader;
-} TSendAntiFarmInfo;
-#endif
-
-#ifdef ENABLE_NEW_DETAILS_GUI
-typedef struct SPacketGCKillLOG
-{
-	BYTE	header;
-	long	kill_log[KILL_MAX_NUM];
-} TPacketGCKillLOG;
-#endif
-
-#ifdef ENABLE_CSHIELD
-typedef struct SPacketGCCShield
-{
-	BYTE	header;
-	bool	start;
-	DWORD	num;
-} TPacketGCCShield;
-
-typedef struct SPacketCGCShield
-{
-	BYTE	header;
-	char	key[128];
-} TPacketCGCShield;
-#endif
-
-#ifdef ENABLE_GUILD_REQUEST
-typedef struct SGuildRequest
-{
-	WORD	index;
-	DWORD	g_id;
-	char	name[GUILD_NAME_MAX_LEN+1];
-	BYTE	level;
-	DWORD	ladder_point;
-	WORD	member[2];
-	bool	isRequest;
-} TGuildRequest;
-typedef struct SPacketGCGuildRequest
-{
-	BYTE	header;
-	DWORD	size;
-	BYTE	sub_index;
-} TPacketGCGuildRequest;
-typedef struct SPacketCGGuildRequest
+#ifdef ENABLE_HUNTING_SYSTEM
+typedef struct SPacketCGHuntingAction
 {
 	BYTE	bHeader;
-	BYTE	sub_index;
-} TPacketCGGuildRequest;
-enum
-{
-	SUB_REQUEST_PAGEINDEX,
-	SUB_REQUEST_NAME,
-	SUB_REQUEST_REQUEST,
-};
-typedef struct guild_request_
-{
-	WORD	index;
-	DWORD	pid;
-	char	name[CHARACTER_NAME_MAX_LEN + 1];
-	int		level;
-	int		race;
-	int		skillIndex;
-} TGuild_request;
-#endif
+	BYTE	bAction;
+	DWORD	dValue;
+} TPacketGCHuntingAction;
 
-
-#ifdef ENABLE_ATLAS_BOSS
-typedef struct SPacketGCBossPosition
+typedef struct SPacketCGOpenWindowHuntingMain
 {
 	BYTE	bHeader;
-	WORD	wSize;
-	WORD	wCount;
-} TPacketGCBossPosition;
+	DWORD	dLevel;
+	DWORD	dMonster;
+	DWORD	dCurCount;
+	DWORD	dDestCount;
+	DWORD	dMoneyMin;
+	DWORD	dMoneyMax;
+	DWORD	dExpMin;
+	DWORD	dExpMax;
+	DWORD	dRaceItem;
+	DWORD	dRaceItemCount;
+} TPacketGCOpenWindowHuntingMain;
 
-struct TBossPosition
+typedef struct SPacketCGOpenWindowHuntingSelect
 {
+	BYTE	bHeader;
+	DWORD	dLevel;
 	BYTE	bType;
-#ifdef ENABLE_MULTI_NAMES
-	DWORD	szName;
-#else
-	char	szName[CHARACTER_NAME_MAX_LEN + 1];
-#endif
-	long	lX;
-	long	lY;
-	long	lTime;
-};
-#endif
+	DWORD	dMonster;
+	DWORD	dCount;
+	DWORD	dMoneyMin;
+	DWORD	dMoneyMax;
+	DWORD	dExpMin;
+	DWORD	dExpMax;
+	DWORD	dRaceItem;
+	DWORD	dRaceItemCount;
+} TPacketGCOpenWindowHuntingSelect;
 
-#ifdef ENABLE_NEW_FISHING_SYSTEM
-enum {
-	FISHING_SUBHEADER_NEW_START = 0,
-	FISHING_SUBHEADER_NEW_STOP = 1,
-	FISHING_SUBHEADER_NEW_CATCH = 2,
-	FISHING_SUBHEADER_NEW_CATCH_FAIL = 3,
-	FISHING_SUBHEADER_NEW_CATCH_SUCCESS = 4,
-	FISHING_SUBHEADER_NEW_CATCH_FAILED = 5,
-};
-
-typedef struct SPacketFishingNew
+typedef struct SPacketGCOpenWindowReward
 {
-	BYTE header;
-	BYTE subheader;
-	DWORD vid;
-	int dir;
-	BYTE need;
-	BYTE count;
-} TPacketFishingNew;
-#endif
+	BYTE	bHeader;
+	DWORD	dLevel;
+	DWORD	dReward;
+	DWORD	dRewardCount;
+	DWORD	dRandomReward;
+	DWORD	dRandomRewardCount;
+	DWORD	dMoney;
+	BYTE	bExp;
+} TPacketGCOpenWindowReward;
 
-#ifdef ENABLE_ENTITY_PRELOADING
-/*** HEADER_GC_PRELOAD_ENTITIES ***/
-typedef struct packet_preload_entities
+typedef struct SPacketGCUpdateHunting
 {
-	uint8_t header;
-	uint16_t size;
-	uint16_t count;
-} TPacketGCPreloadEntities;
+	BYTE	bHeader;
+	DWORD	dCount;
+} TPacketGCUpdateHunting;
+
+typedef struct SPacketGCReciveRandomItems
+{
+	BYTE	bHeader;
+	BYTE	bWindow;
+	DWORD	dItemVnum;
+	DWORD	dItemCount;
+} TPacketGCReciveRandomItems;
 #endif
 
 
 #pragma pack()
 #endif
+//martysama0134's 2022

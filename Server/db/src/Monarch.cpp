@@ -2,9 +2,6 @@
 #include "../../common/utils.h"
 #include "Main.h"
 #include "ClientManager.h"
-#include "../../common/service.h"
-#include "../../common/length.h"
-#include "../../common/tables.h"
 
 extern int g_test_server;
 
@@ -180,13 +177,10 @@ bool CMonarch::LoadMonarch()
 	MonarchInfo * p = &m_MonarchInfo;
     char szQuery[256];
 	snprintf(szQuery, sizeof(szQuery), "SELECT a.empire, a.pid, b.name, a.money, a.windate FROM monarch a, player%s b WHERE a.pid=b.id", GetTablePostfix());
-    SQLMsg * pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_PLAYER);
+   auto pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_PLAYER);
 
     if (pMsg->Get()->uiNumRows == 0)
-    {
-        delete pMsg;
         return false;
-    }
 
     MYSQL_ROW row;
     for (int n = 0; (row = mysql_fetch_row(pMsg->Get()->pSQLResult)) != NULL; ++n)
@@ -204,7 +198,6 @@ bool CMonarch::LoadMonarch()
         	sys_log(0, "[LOAD_MONARCH] Empire %d pid %d money %lld windate %s", Empire, p->pid[Empire], p->money[Empire], p->date[Empire]);
     }
 
-    delete pMsg;
     return true;
 }
 
@@ -212,15 +205,11 @@ bool CMonarch::SetMonarch(const char * name)
 {
 	MonarchInfo * p = &m_MonarchInfo;
     char szQuery[256];
-
 	snprintf(szQuery, sizeof(szQuery), "SELECT player_index.empire, player.id, player.name, player.gold FROM player JOIN player_index ON player_index.id = player.account_id WHERE player.name = '%s'", name);
-    SQLMsg * pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_PLAYER);
 
+	auto pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_PLAYER);
     if (pMsg->Get()->uiNumRows == 0)
-    {
-        delete pMsg;
         return false;
-    }
 
     MYSQL_ROW row;
 	int Empire = 0;
@@ -236,9 +225,7 @@ bool CMonarch::SetMonarch(const char * name)
 		if (g_test_server)
 			sys_log(0, "[Set_MONARCH] Empire %d pid %d money %lld windate %s", Empire, p->pid[Empire], p->money[Empire], p->date[Empire]);
     }
-    delete pMsg;
 
-	//db¿¡ ÀÔ·Â
 	snprintf(szQuery, sizeof(szQuery),
 					"REPLACE INTO monarch (empire, name, windate, money) VALUES(%d, %d, now(), %lld)", Empire, p->pid[Empire], p->money[Empire]);
 
@@ -249,17 +236,11 @@ bool CMonarch::SetMonarch(const char * name)
 bool CMonarch::DelMonarch(int Empire)
 {
 	char szQuery[256];
-
 	snprintf(szQuery, sizeof(szQuery), "DELETE FROM monarch WHERE empire=%d", Empire);
-	SQLMsg * pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_PLAYER);
 
+	auto pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_PLAYER);
 	if (pMsg->Get()->uiNumRows == 0)
-	{
-		delete pMsg;
 		return false;
-	}
-
-	delete pMsg;
 
 	memset(m_MonarchInfo.name[Empire], 0, sizeof(m_MonarchInfo.name[Empire]));
 	m_MonarchInfo.money[Empire] = 0;
@@ -277,16 +258,13 @@ bool CMonarch::DelMonarch(const char * name)
 
 			int Empire = n;
 			snprintf(szQuery, sizeof(szQuery), "DELETE FROM monarch WHERE empire=%d", Empire);
-			SQLMsg * pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_PLAYER);
 
+			auto pMsg = CDBManager::instance().DirectQuery(szQuery, SQL_PLAYER);
 			if (pMsg->Get()->uiNumRows == 0)
 			{
 				sys_err(" DirectQuery failed(%s)", szQuery);
-				delete pMsg;
 				return false;
 			}
-
-			delete pMsg;
 
 			memset(m_MonarchInfo.name[Empire], 0, 32);
 			m_MonarchInfo.money[Empire] = 0;
@@ -310,3 +288,4 @@ int CMonarch::GetCandidacyIndex(DWORD pid)
 
 	return -1;
 }
+//martysama0134's 2022

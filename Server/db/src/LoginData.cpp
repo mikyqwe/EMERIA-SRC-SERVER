@@ -120,4 +120,4 @@ int * CLoginData::GetPremiumPtr()
 {
 	return &m_aiPremiumTimes[0];
 }
-
+//martysama0134's 2022

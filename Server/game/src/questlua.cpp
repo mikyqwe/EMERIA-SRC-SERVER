@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include <sstream>
@@ -18,7 +17,6 @@
 #include "guild.h"
 #include "guild_manager.h"
 #include "sectree_manager.h"
-#include "../../common/CommonDefines.h"
 
 #undef sys_err
 #ifndef __WIN32__
@@ -59,7 +57,7 @@ namespace quest
 			ch->UpdateDungeonRanking(m_strQuestName);
 		}
 	}
-#endif	
+#endif
 
 	void FSetWarpLocation::operator() (LPCHARACTER ch)
 	{
@@ -125,6 +123,17 @@ namespace quest
 			}
 		}
 	}
+
+#ifdef ENABLE_NEWSTUFF
+	void FSendChatPacket::operator() (LPENTITY ent)
+	{
+		if (ent->IsType(ENTITY_CHARACTER))
+		{
+			LPCHARACTER ch = (LPCHARACTER) ent;
+			ch->ChatPacket(m_chat_type, "%s", m_text.c_str());
+		}
+	}
+#endif
 
 	void FSendPacketToEmpire::operator() (LPENTITY ent)
 	{
@@ -647,9 +656,7 @@ namespace quest
 		lua_settop(L, x);
 	}
 
-	/**
-	 * @version 05/06/08	Bang2ni - __get_guildid_byname 스크립트 함수 등록
-	 */
+
 	bool CQuestManager::InitializeLua()
 	{
 #if LUA_V == 503
@@ -698,20 +705,11 @@ namespace quest
 		RegisterBattleArenaFunctionTable();
 		RegisterDanceEventFunctionTable();
 		RegisterDragonLairFunctionTable();
-#if defined(__SHIP_DEFENSE__)
-		RegisterShipDefenseManagerFunctionTable();
-#endif
 		RegisterSpeedServerFunctionTable();
 		RegisterDragonSoulFunctionTable();
-		//RegisterMysqlFunctionTable();
-
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-		Register67BonusNewFunctionTable();
+#ifdef ENABLE_QUEST_DND_EVENT
+		RegisterDNDFunctionTable();
 #endif
-
-#ifdef ENABLE_DECORUM
-		RegisterDecorumLuaFunctionTable();
-#endif		
 		{
 			luaL_reg member_functions[] =
 			{
@@ -904,6 +902,7 @@ namespace quest
 			else
 			{
 				sys_err("SELECT wrong data %s", lua_typename(qs.co, -1));
+				sys_err("here");
 			}
 			lua_pop(qs.co,1);
 		}
@@ -912,7 +911,6 @@ namespace quest
 
 		AddScript(os.str());
 		qs.suspend_state = SUSPEND_STATE_SELECT;
-		qs.quest_name = GetCurrentPC() ? GetCurrentPC()->GetCurrentQuestName() : "no_quest";
 		if ( test_server )
 			sys_log( 0, "%s", m_strScript.c_str() );
 		SendScript();
@@ -945,7 +943,7 @@ namespace quest
 
 		if (chReply)
 		{
-			// 시간 지나면 알아서 닫힘
+
 		}
 
 		if (chWait)
@@ -965,12 +963,12 @@ namespace quest
 
 		sys_log(0, "GotoConfirmState vid %u msg '%s', timeout %d", dwVID, szMsg, iTimeout);
 
-		// 1. 상대방에게 확인창 띄움
-		// 2. 나에게 확인 기다린다고 표시하는 창 띄움
-		// 3. 타임아웃 설정 (타임아웃 되면 상대방 창 닫고 나에게도 창 닫으라고 보냄)
+
+
+
 
 		// 1
-		// 상대방이 없는 경우는 그냥 상대방에게 보내지 않는다. 타임아웃에 의해서 넘어가게됨
+
 		LPCHARACTER ch = CHARACTER_MANAGER::instance().Find(dwVID);
 		if (ch && ch->IsPC())
 		{
@@ -1006,7 +1004,7 @@ namespace quest
 		AddScript("[INPUT]");
 		SendScript();
 
-		// 시간 제한을 검
+
 		//event_create(input_timeout_event, dwEI, PASSES_PER_SEC(iTimeout));
 	}
 
@@ -1044,7 +1042,6 @@ namespace quest
 	//
 	// decides script to wait for user input, or finish
 	//
-
 	bool CQuestManager::RunState(QuestState & qs)
 	{
 		ClearError();
@@ -1118,3 +1115,4 @@ namespace quest
 		}
 	}
 }
+//martysama0134's 2022

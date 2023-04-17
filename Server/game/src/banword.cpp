@@ -123,4 +123,4 @@ void CBanwordManager::ConvertString(char * c_pszString, size_t _len)
 		it++;
 	}
 }
-
+//martysama0134's 2022

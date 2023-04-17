@@ -14,14 +14,18 @@
 #include "exchange.h"
 #include "DragonSoul.h"
 #include "questmanager.h" // @fixme150
-#ifdef ENABLE_MESSENGER_BLOCK
-#include "messenger_manager.h"
+
+#ifdef ENABLE_LONG_LONG
+void exchange_packet(LPCHARACTER ch, BYTE sub_header, bool is_me, long long arg1, TItemPos arg2, DWORD arg3, void * pvData = NULL);
+#else
+void exchange_packet(LPCHARACTER ch, BYTE sub_header, bool is_me, DWORD arg1, TItemPos arg2, DWORD arg3, void * pvData = NULL);
 #endif
 
-void exchange_packet(LPCHARACTER ch, BYTE sub_header, bool is_me, DWORD arg1, TItemPos arg2, DWORD arg3, void * pvData = NULL);
-
-// 교환 패킷
+#ifdef ENABLE_LONG_LONG
+void exchange_packet(LPCHARACTER ch, BYTE sub_header, bool is_me, long long arg1, TItemPos arg2, DWORD arg3, void * pvData)
+#else
 void exchange_packet(LPCHARACTER ch, BYTE sub_header, bool is_me, DWORD arg1, TItemPos arg2, DWORD arg3, void * pvData)
+#endif
 {
 	if (!ch->GetDesc())
 		return;
@@ -42,9 +46,6 @@ void exchange_packet(LPCHARACTER ch, BYTE sub_header, bool is_me, DWORD arg1, TI
 #endif
 		thecore_memcpy(&pack_exchg.alSockets, ((LPITEM) pvData)->GetSockets(), sizeof(pack_exchg.alSockets));
 		thecore_memcpy(&pack_exchg.aAttr, ((LPITEM) pvData)->GetAttributes(), sizeof(pack_exchg.aAttr));
-#ifdef CHANGELOOK_SYSTEM
-		pack_exchg.dwTransmutation = ((LPITEM)pvData)->GetTransmutation();
-#endif
 	}
 	else
 	{
@@ -53,31 +54,20 @@ void exchange_packet(LPCHARACTER ch, BYTE sub_header, bool is_me, DWORD arg1, TI
 #endif
 		memset(&pack_exchg.alSockets, 0, sizeof(pack_exchg.alSockets));
 		memset(&pack_exchg.aAttr, 0, sizeof(pack_exchg.aAttr));
-#ifdef CHANGELOOK_SYSTEM
-		pack_exchg.dwTransmutation = 0;
-#endif
 	}
 
 	ch->GetDesc()->Packet(&pack_exchg, sizeof(pack_exchg));
 }
 
-// 교환을 시작
+
 bool CHARACTER::ExchangeStart(LPCHARACTER victim)
-{
-	#ifdef ENABLE_MESSENGER_BLOCK
-	if (MessengerManager::instance().CheckMessengerList(GetName(), victim->GetName(), SYST_BLOCK))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"%s blokkk"), victim->GetName());
-		return false;
-	}
-	#endif	
-	
-	if (this == victim)	// 자기 자신과는 교환을 못한다.
+{	
+	if (this == victim)
 		return false;
 
 	if (IsObserverMode())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"관전 상태에서는 교환을 할 수 없습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("관전 상태에서는 교환을 할 수 없습니다."));
 		return false;
 	}
 
@@ -85,21 +75,13 @@ bool CHARACTER::ExchangeStart(LPCHARACTER victim)
 		return false;
 
 	//PREVENT_TRADE_WINDOW
-#ifdef OFFLINE_SHOP
-	if (IsOpenSafebox() || GetShopOwner() || GetMyShop() || IsCubeOpen() || GetOfflineShopOwner() || GetMailBox())
-#else
-	if (IsOpenSafebox() || GetShopOwner() || GetMyShop() || IsCubeOpen())
-#endif
+	if ( IsOpenSafebox() || GetShopOwner() || GetMyShop() || IsCubeOpen())
 	{
 		ChatPacket( CHAT_TYPE_INFO, LC_TEXT("다른 거래창이 열려있을경우 거래를 할수 없습니다." ) );
 		return false;
 	}
 
-#ifdef OFFLINE_SHOP
-	if (victim->IsOpenSafebox() || victim->GetShopOwner() || victim->GetMyShop() || victim->IsCubeOpen() || victim->GetOfflineShopOwner() || victim->GetMailBox())
-#else
-	if (victim->IsOpenSafebox() || victim->GetShopOwner() || victim->GetMyShop() || victim->IsCubeOpen())
-#endif
+	if ( victim->IsOpenSafebox() || victim->GetShopOwner() || victim->GetMyShop() || victim->IsCubeOpen() )
 	{
 		ChatPacket( CHAT_TYPE_INFO, LC_TEXT("상대방이 다른 거래중이라 거래를 할수 없습니다." ) );
 		return false;
@@ -107,7 +89,7 @@ bool CHARACTER::ExchangeStart(LPCHARACTER victim)
 	//END_PREVENT_TRADE_WINDOW
 	int iDist = DISTANCE_APPROX(GetX() - victim->GetX(), GetY() - victim->GetY());
 
-	// 거리 체크
+
 	if (iDist >= EXCHANGE_MAX_DISTANCE)
 		return false;
 
@@ -122,7 +104,7 @@ bool CHARACTER::ExchangeStart(LPCHARACTER victim)
 
 	if (victim->IsBlockMode(BLOCK_EXCHANGE))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"상대방이 교환 거부 상태입니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 교환 거부 상태입니다."));
 		return false;
 	}
 
@@ -156,9 +138,7 @@ CExchange::CExchange(LPCHARACTER pOwner)
 	}
 
 	m_lGold = 0;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	m_bCheque = 0;
-#endif
+
 	m_pOwner = pOwner;
 	pOwner->SetExchange(this);
 
@@ -181,7 +161,7 @@ bool CExchange::AddItem(TItemPos item_pos, BYTE display_pos)
 	if (!item_pos.IsValidItemPosition())
 		return false;
 
-	// 장비는 교환할 수 없음
+
 	if (item_pos.IsEquipPosition())
 		return false;
 
@@ -192,7 +172,7 @@ bool CExchange::AddItem(TItemPos item_pos, BYTE display_pos)
 
 	if (IS_SET(item->GetAntiFlag(), ITEM_ANTIFLAG_GIVE))
 	{
-		m_pOwner->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(m_pOwner->GetLanguage(),"아이템을 건네줄 수 없습니다."));
+		m_pOwner->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("아이템을 건네줄 수 없습니다."));
 		return false;
 	}
 
@@ -201,7 +181,7 @@ bool CExchange::AddItem(TItemPos item_pos, BYTE display_pos)
 		return false;
 	}
 
-	// 이미 교환창에 추가된 아이템인가?
+
 	if (item->IsExchanging())
 	{
 		sys_log(0, "EXCHANGE under exchanging");
@@ -250,7 +230,7 @@ bool CExchange::AddItem(TItemPos item_pos, BYTE display_pos)
 		return true;
 	}
 
-	// 추가할 공간이 없음
+
 	return false;
 }
 
@@ -279,14 +259,18 @@ bool CExchange::RemoveItem(BYTE pos)
 	return true;
 }
 
+#ifdef ENABLE_LONG_LONG
+bool CExchange::AddGold(long long gold)
+#else
 bool CExchange::AddGold(long gold)
+#endif
 {
 	if (gold <= 0)
 		return false;
 
 	if (GetOwner()->GetGold() < gold)
 	{
-		// 가지고 있는 돈이 부족.
+
 		exchange_packet(GetOwner(), EXCHANGE_SUBHEADER_GC_LESS_GOLD, 0, 0, NPOS, 0);
 		return false;
 	}
@@ -304,43 +288,11 @@ bool CExchange::AddGold(long gold)
 	return true;
 }
 
-#ifdef ENABLE_CHEQUE_SYSTEM
-bool CExchange::AddCheque(int Cheque)
-{
-	if (Cheque <= 0)
-		return false;
 
-	if (GetOwner()->GetCheque() < Cheque)
-	{
-		// 가지고 있는 돈이 부족.
-		exchange_packet(GetOwner(), EXCHANGE_SUBHEADER_GC_LESS_CHEQUE, 0, 0, NPOS, 0);
-		return false;
-	}
-
-	if (m_bCheque > 0)
-		return false;
-
-	Accept(false);
-	GetCompany()->Accept(false);
-
-	m_bCheque = Cheque;
-
-	exchange_packet(GetOwner(), EXCHANGE_SUBHEADER_GC_CHEQUE_ADD, true, m_bCheque, NPOS, 0);
-	exchange_packet(GetCompany()->GetOwner(), EXCHANGE_SUBHEADER_GC_CHEQUE_ADD, false, m_bCheque, NPOS, 0);
-	return true;
-}
-#endif
-
-// 돈이 충분히 있는지, 교환하려는 아이템이 실제로 있는지 확인 한다.
 bool CExchange::Check(int * piItemCount)
 {
 	if (GetOwner()->GetGold() < m_lGold)
 		return false;
-
-#ifdef ENABLE_CHEQUE_SYSTEM
-	if (GetOwner()->GetCheque() < m_bCheque)
-		return false;
-#endif
 
 	int item_count = 0;
 
@@ -457,6 +409,7 @@ bool CExchange::CheckSpace()
 		s_grid4.Put(i - INVENTORY_PAGE_SIZE*3, 1, item->GetSize());
 	}
 #endif
+
 #ifdef __SPECIAL_STORAGE_SYSTEM__
 	// SKILLBOOK_INVENTORY
 	for (i = 0; i < SPECIAL_STORAGE_INVENTORY_PAGE_SIZE; ++i)
@@ -590,27 +543,17 @@ bool CExchange::CheckSpace()
 		s_General_grid4.Put(i - SPECIAL_STORAGE_INVENTORY_PAGE_SIZE * 3, 1, item->GetSize());
 	}
 #endif
-	// 아... 뭔가 개병신 같지만... 용혼석 인벤을 노멀 인벤 보고 따라 만든 내 잘못이다 ㅠㅠ
+
+
 	static std::vector <WORD> s_vDSGrid(DRAGON_SOUL_INVENTORY_MAX_NUM);
 
-	// 일단 용혼석을 교환하지 않을 가능성이 크므로, 용혼석 인벤 복사는 용혼석이 있을 때 하도록 한다.
+
 	bool bDSInitialized = false;
 
 	for (i = 0; i < EXCHANGE_ITEM_MAX_NUM; ++i)
 	{
 		if (!(item = m_apItems[i]))
 			continue;
-		
-		#ifdef NEW_ADD_INVENTORY
-		int envanterblack;
-		if (item->IsDragonSoul())
-			envanterblack = victim->GetEmptyDragonSoulInventory(item);
-		else
-			envanterblack = victim->GetEmptyInventory(item->GetSize());
-
-		if (envanterblack < 0)
-			return false;
-		#endif
 
 		if (item->IsDragonSoul())
 		{
@@ -630,14 +573,10 @@ bool CExchange::CheckSpace()
 			if (wBasePos >= DRAGON_SOUL_INVENTORY_MAX_NUM)
 				return false;
 
-#ifdef ENABLE_EXTENDED_DS_INVENTORY
-			for (int i = 0; i < (DRAGON_SOUL_BOX_SIZE * DRAGON_SOUL_INVENTORY_PAGE_COUNT); i++)
-#else
 			for (int i = 0; i < DRAGON_SOUL_BOX_SIZE; i++)
-#endif
 			{
 				WORD wPos = wBasePos + i;
-				if (0 == s_vDSGrid[wPos])
+				if (0 == s_vDSGrid[wPos]) // @fixme159 (wBasePos to wPos)
 				{
 					bool bEmpty = true;
 					for (int j = 1; j < item->GetSize(); j++)
@@ -788,7 +727,7 @@ bool CExchange::CheckSpace()
 	return true;
 }
 
-// 교환 끝 (아이템과 돈 등을 실제로 옮긴다)
+
 bool CExchange::Done()
 {
 	int		empty_pos, i;
@@ -826,8 +765,8 @@ bool CExchange::Done()
 		}
 
 		m_pOwner->SyncQuickslot(QUICKSLOT_TYPE_ITEM, item->GetCell(), 255);
-		item->RemoveFromCharacter();
 
+		item->RemoveFromCharacter();
 		if (item->IsDragonSoul())
 			item->AddToCharacter(victim, TItemPos(DRAGON_SOUL_INVENTORY, empty_pos));
 #ifdef __SPECIAL_STORAGE_SYSTEM__
@@ -836,7 +775,6 @@ bool CExchange::Done()
 #endif
 		else
 			item->AddToCharacter(victim, TItemPos(INVENTORY, empty_pos));
-
 		ITEM_MANAGER::instance().FlushDelayedSave(item);
 
 		item->SetExchanging(false);
@@ -853,6 +791,11 @@ bool CExchange::Done()
 			{
 				LogManager::instance().GoldBarLog(victim->GetPlayerID(), item->GetID(), EXCHANGE_TAKE, "");
 				LogManager::instance().GoldBarLog(GetOwner()->GetPlayerID(), item->GetID(), EXCHANGE_GIVE, "");
+			}
+			
+			m_pOwner->CreateFly(FLY_SP_MEDIUM, victim);//ExchangeEffect
+			for (int i = 0; i < 3; i++){
+				m_pOwner->CreateFly(FLY_SP_SMALL, victim);
 			}
 		}
 
@@ -875,19 +818,11 @@ bool CExchange::Done()
 		}
 	}
 
-#ifdef ENABLE_CHEQUE_SYSTEM
-	if (m_bCheque)
-	{
-		GetOwner()->PointChange(POINT_CHEQUE, -m_bCheque, true);
-		victim->PointChange(POINT_CHEQUE, m_bCheque, true);
-	}
-#endif
-
 	m_pGrid->Clear();
 	return true;
 }
 
-// 교환을 동의
+
 bool CExchange::Accept(bool bAccept)
 {
 	if (m_bAccept == bAccept)
@@ -895,7 +830,7 @@ bool CExchange::Accept(bool bAccept)
 
 	m_bAccept = bAccept;
 
-	// 둘 다 동의 했으므로 교환 성립
+
 	if (m_bAccept && GetCompany()->m_bAccept)
 	{
 		int	iItemCount;
@@ -910,48 +845,48 @@ bool CExchange::Accept(bool bAccept)
 		// @fixme150 BEGIN
 		if (quest::CQuestManager::instance().GetPCForce(GetOwner()->GetPlayerID())->IsRunning() == true)
 		{
-			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetOwner()->GetLanguage(),"You cannot trade if you're using quests"));
-			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(victim->GetLanguage(),"You cannot trade if the other part using quests"));
+			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You cannot trade if you're using quests"));
+			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You cannot trade if the other part using quests"));
 			goto EXCHANGE_END;
 		}
 		else if (quest::CQuestManager::instance().GetPCForce(victim->GetPlayerID())->IsRunning() == true)
 		{
-			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(victim->GetLanguage(),"You cannot trade if you're using quests"));
-			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetOwner()->GetLanguage(),"You cannot trade if the other part using quests"));
+			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You cannot trade if you're using quests"));
+			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You cannot trade if the other part using quests"));
 			goto EXCHANGE_END;
 		}
 		// @fixme150 END
 
-		// exchange_check 에서는 교환할 아이템들이 제자리에 있나 확인하고,
-		// 엘크도 충분히 있나 확인한다, 두번째 인자로 교환할 아이템 개수
-		// 를 리턴한다.
+
+
+
 		if (!Check(&iItemCount))
 		{
-			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetOwner()->GetLanguage(),"돈이 부족하거나 아이템이 제자리에 없습니다."));
-			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(victim->GetLanguage(),"상대방의 돈이 부족하거나 아이템이 제자리에 없습니다."));
+			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("돈이 부족하거나 아이템이 제자리에 없습니다."));
+			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방의 돈이 부족하거나 아이템이 제자리에 없습니다."));
 			goto EXCHANGE_END;
 		}
 
-		// 리턴 받은 아이템 개수로 상대방의 소지품에 남은 자리가 있나 확인한다.
+
 		if (!CheckSpace())
 		{
-			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetOwner()->GetLanguage(),"상대방의 소지품에 빈 공간이 없습니다."));
-			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(victim->GetLanguage(),"소지품에 빈 공간이 없습니다."));
+			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방의 소지품에 빈 공간이 없습니다."));
+			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("소지품에 빈 공간이 없습니다."));
 			goto EXCHANGE_END;
 		}
 
-		// 상대방도 마찬가지로..
+
 		if (!GetCompany()->Check(&iItemCount))
 		{
-			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(victim->GetLanguage(),"돈이 부족하거나 아이템이 제자리에 없습니다."));
-			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetOwner()->GetLanguage(),"상대방의 돈이 부족하거나 아이템이 제자리에 없습니다."));
+			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("돈이 부족하거나 아이템이 제자리에 없습니다."));
+			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방의 돈이 부족하거나 아이템이 제자리에 없습니다."));
 			goto EXCHANGE_END;
 		}
 
 		if (!GetCompany()->CheckSpace())
 		{
-			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(victim->GetLanguage(),"상대방의 소지품에 빈 공간이 없습니다."));
-			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetOwner()->GetLanguage(),"소지품에 빈 공간이 없습니다."));
+			victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방의 소지품에 빈 공간이 없습니다."));
+			GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("소지품에 빈 공간이 없습니다."));
 			goto EXCHANGE_END;
 		}
 
@@ -965,25 +900,17 @@ bool CExchange::Accept(bool bAccept)
 
 		if (Done())
 		{
-#ifdef ENABLE_CHEQUE_SYSTEM
-			if (m_lGold || m_bCheque)
-#else
-			if (m_lGold) // 돈이 있을 떄만 저장
-#endif
+			if (m_lGold)
 				GetOwner()->Save();
 
 			if (GetCompany()->Done())
 			{
-#ifdef ENABLE_CHEQUE_SYSTEM
-				if (GetCompany()->m_lGold || GetCompany()->m_bCheque)
-#else
-				if (GetCompany()->m_lGold) // 돈이 있을 때만 저장
-#endif
+				if (GetCompany()->m_lGold)
 					victim->Save();
 
 				// INTERNATIONAL_VERSION
-				GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetOwner()->GetLanguage(),"%s 님과의 교환이 성사 되었습니다."), victim->GetName());
-				victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(victim->GetLanguage(),"%s 님과의 교환이 성사 되었습니다."), GetOwner()->GetName());
+				GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%s 님과의 교환이 성사 되었습니다."), victim->GetName());
+				victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%s 님과의 교환이 성사 되었습니다."), GetOwner()->GetName());
 				// END_OF_INTERNATIONAL_VERSION
 			}
 		}
@@ -994,14 +921,14 @@ EXCHANGE_END:
 	}
 	else
 	{
-		// 아니면 accept에 대한 패킷을 보내자.
+
 		exchange_packet(GetOwner(), EXCHANGE_SUBHEADER_GC_ACCEPT, true, m_bAccept, NPOS, 0);
 		exchange_packet(GetCompany()->GetOwner(), EXCHANGE_SUBHEADER_GC_ACCEPT, false, m_bAccept, NPOS, 0);
 		return true;
 	}
 }
 
-// 교환 취소
+
 void CExchange::Cancel()
 {
 	exchange_packet(GetOwner(), EXCHANGE_SUBHEADER_GC_END, 0, 0, NPOS, 0);
@@ -1021,4 +948,4 @@ void CExchange::Cancel()
 
 	M2_DELETE(this);
 }
-
+//martysama0134's 2022

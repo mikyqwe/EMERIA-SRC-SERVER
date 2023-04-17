@@ -8,7 +8,6 @@
 #include "text_file_loader.h"
 #include "questmanager.h"
 #include "locale_service.h"
-#include "../../common/CommonDefines.h"
 
 CMob::CMob()
 {
@@ -93,7 +92,7 @@ bool CMobManager::Initialize(TMobTable * pTable, int iSize)
 				t->dwVnum, t->szLocaleName, t->bLevel, t->dwMaxHP, t->wDef, t->dwExp, t->dwDropItemVnum, SkillCount);
 				#endif
 
-		if (t->bType == CHAR_TYPE_NPC || t->bType == CHAR_TYPE_PET || t->bType == CHAR_TYPE_WARP || t->bType == CHAR_TYPE_GOTO)
+		if (t->bType == CHAR_TYPE_NPC || t->bType == CHAR_TYPE_WARP || t->bType == CHAR_TYPE_GOTO)
 			CHARACTER_MANAGER::instance().RegisterRaceNum(t->dwVnum);
 
 		quest::CQuestManager::instance().RegisterNPCVnum(t->dwVnum);
@@ -393,4 +392,4 @@ bool CMobManager::LoadGroup(const char * c_pszFileName)
 
 	return true;
 }
-
+//martysama0134's 2022

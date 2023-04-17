@@ -1,9 +1,6 @@
 #ifndef __INC_METIN_II_GAME_SHOP_MANAGER_H__
 #define __INC_METIN_II_GAME_SHOP_MANAGER_H__
 
-#include "../../common/service.h"
-
-
 class CShop;
 typedef class CShop * LPSHOP;
 
@@ -27,14 +24,15 @@ public:
 
 	void	Buy(LPCHARACTER ch, BYTE pos);
 #ifdef __SPECIAL_STORAGE_SYSTEM__
-	void	Sell(LPCHARACTER ch, BYTE bCell, short bCount = 0, BYTE bType = 0);
+	void	Sell(LPCHARACTER ch, BYTE bCell, WORD bCount = 0, BYTE bType = 0);
 #else
-	void	Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount = 0);
+	void	Sell(LPCHARACTER ch, BYTE bCell, WORD bCount = 0);
 #endif
 
-	LPSHOP	CreatePCShop(LPCHARACTER ch, TShopItemTable * pTable, short bItemCount);
+	LPSHOP	CreatePCShop(LPCHARACTER ch, TShopItemTable * pTable, BYTE bItemCount);
 	LPSHOP	FindPCShop(DWORD dwVID);
 	void	DestroyPCShop(LPCHARACTER ch);
+
 private:
 	TShopMap	m_map_pkShop;
 	TShopMap	m_map_pkShopByNPCVnum;
@@ -43,6 +41,5 @@ private:
 	bool	ReadShopTableEx(const char* stFileName);
 };
 
-
-
 #endif
+//martysama0134's 2022

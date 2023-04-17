@@ -1,7 +1,7 @@
 /*
    (c) Copyright 2000-2002  convergence integrated media GmbH.
    (c) Copyright 2002       convergence GmbH.
-   
+
    All rights reserved.
 
    Written by Denis Oliver Kropp <dok@directfb.org>,
@@ -132,3 +132,4 @@
 void *(*thecore_memcpy) (void * to, const void * from, size_t len) = memcpy;
 
 #endif
+//martysama0134's 2022

@@ -11,3 +11,4 @@ class CItemAddonManager : public singleton<CItemAddonManager>
 };
 
 #endif
+//martysama0134's 2022

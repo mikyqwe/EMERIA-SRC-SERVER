@@ -4,6 +4,7 @@
 #include "../../common/VnumHelper.h"
 
 #include "char.h"
+
 #include "config.h"
 #include "utils.h"
 #include "crc32.h"
@@ -56,11 +57,19 @@
 #include "skill_power.h"
 #include "XTrapManager.h"
 #include "buff_on_attributes.h"
-#include "item.h"
-#include "System_Battlepass.cpp"
-
+#include "../../common/CommonDefines.h"
 #ifdef ENABLE_SWITCHBOT
 #include "switchbot.h"
+#endif
+#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
+#include "MountSystem.h"
+#endif
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+#include "loot_filter.h"
+#endif
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+#include "new_offlineshop.h"
+#include "new_offlineshop_manager.h"
 #endif
 #ifdef __PET_SYSTEM__
 #include "PetSystem.h"
@@ -68,31 +77,16 @@
 #ifdef NEW_PET_SYSTEM
 #include "New_PetSystem.h"
 #endif
-#include "DragonSoul.h"
-#ifdef OFFLINE_SHOP
-#include "offlineshop.h"
-#include "offlineshop_manager.h"
+#ifdef ENABLE_ANTI_MULTIPLE_FARM
+#include "HAntiMultipleFarm.h"
 #endif
+
 #ifdef TARGET_INFORMATION_SYSTEM
 #include <algorithm>
 #include <iterator>
 using namespace std;
 #endif
-#include "../../common/CommonDefines.h"
-#include <boost/algorithm/string.hpp>
-#ifdef ENABLE_ANTI_MULTIPLE_FARM
-#include "HAntiMultipleFarm.h"
-#endif
-#ifdef ENABLE_MOUNT_COSTUME_SYSTEM
-#include "MountSystem.h"
-#endif
-#ifdef ENABLE_DECORUM
-#include "decorum_arena.h"
-#include "decorum_manager.h"
-#endif
-#if defined(__SHIP_DEFENSE__)
-#	include "ShipDefense.h"
-#endif
+#include "DragonSoul.h"
 
 extern const BYTE g_aBuffOnAttrPoints;
 extern bool RaceToJob(unsigned race, unsigned *ret_job);
@@ -379,12 +373,7 @@ CHARACTER::~CHARACTER()
 void CHARACTER::Initialize()
 {
 	CEntity::Initialize(ENTITY_CHARACTER);
-	
-#if defined(__BL_MAILBOX__)
-	m_pkMailBox = nullptr;
-	bMailBoxLoading = false;
-	m_iMyMailBoxTime = 0;
-#endif
+
 	m_bNoOpenedShop = true;
 
 	m_bOpeningSafebox = false;
@@ -394,14 +383,9 @@ void CHARACTER::Initialize()
 #endif
 	m_fSyncTime = get_float_time()-3;
 	m_dwPlayerID = 0;
-#ifdef ENABLE_RENEWAL_PVP
-	memset(pvpSettings, false, sizeof(pvpSettings));
-#endif	
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	bAFisWarping = false;
 #endif
-	m_IsEditModeOfflineShop = false;
-	m_IsCreateModeOfflineShop = false;
 #ifdef NEW_PET_SYSTEM
 	m_stImmortalSt = 0;
 
@@ -415,11 +399,6 @@ void CHARACTER::Initialize()
 #endif
 
 	m_iMoveCount = 0;
-#ifdef ANTY_WAIT_HACK
-	m_pkCheckWH = NULL;
-	m_dwWHPass = 0;
-	memset(&m_stWHPass, 0, sizeof(m_stWHPass));
-#endif
 
 	m_pkRegen = NULL;
 	regen_id_ = 0;
@@ -432,19 +411,12 @@ void CHARACTER::Initialize()
 	m_pkMobInst		= NULL;
 
 	m_pkShop		= NULL;
-#if defined(__BL_SOUL_ROULETTE__)
-	pSoulRoulette = NULL;
-#endif
 	m_pkChrShopOwner	= NULL;
 	m_pkMyShop		= NULL;
 	m_pkExchange	= NULL;
 	m_pkParty		= NULL;
 	m_pkPartyRequestEvent = NULL;
-#ifdef OFFLINE_SHOP
-	m_pkOfflineShop = NULL;
-	m_pkChrOfflineShopOwner = NULL;
-	m_pkOfflineShopUpdateEvent = NULL;
-#endif
+
 	m_pGuild = NULL;
 
 	m_pkChrTarget = NULL;
@@ -479,9 +451,10 @@ void CHARACTER::Initialize()
 
 	m_pkChrSyncOwner = NULL;
 
-	memset(&m_points, 0, sizeof(m_points));
-	memset(&m_pointsInstant, 0, sizeof(m_pointsInstant));
+	m_points = {};
+	m_pointsInstant = {};
 	memset(&m_quickslot, 0, sizeof(m_quickslot));
+
 	m_bCharType = CHAR_TYPE_MONSTER;
 
 	SetPosition(POS_STANDING);
@@ -524,10 +497,7 @@ void CHARACTER::Initialize()
 	m_bSkipSave = false;
 
 	m_bItemLoaded = false;
-#ifdef ENABLE_AFK_MODE_SYSTEM
-	m_pkUpdateCharacter = NULL;
-	m_isAway = false;
-#endif
+
 	m_bHasPoisoned = false;
 #ifdef ENABLE_WOLFMAN_CHARACTER
 	m_bHasBled = false;
@@ -554,8 +524,7 @@ void CHARACTER::Initialize()
 
 	m_dwQuestNPCVID = 0;
 	m_dwQuestByVnum = 0;
-	//m_pQuestItem = NULL;
-	m_dwQuestItemVID = 0; //FIX ITEM_DUPE_BUG
+	m_pQuestItem = NULL;
 
 	m_szMobileAuth[0] = '\0';
 
@@ -582,6 +551,17 @@ void CHARACTER::Initialize()
 	m_bChatCounter = 0;
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 	m_bMountCounter = 0;
+#endif
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	m_pkOfflineShop = NULL;
+	m_pkShopSafebox	= NULL;
+	m_pkAuction		= NULL;
+	m_pkAuctionGuest= NULL;
+	//offlineshop-updated 03/08/19
+	m_pkOfflineShopGuest = NULL;
+
+	//offlineshop-updated 05/08/19
+	m_bIsLookingOfflineshopOfferList = false;
 #endif
 
 	ResetStopTime();
@@ -646,33 +626,12 @@ void CHARACTER::Initialize()
 
 	m_dwLogOffInterval = 0;
 
-
 	m_bComboSequence = 0;
 	m_dwLastComboTime = 0;
 	m_bComboIndex = 0;
 	m_iComboHackCount = 0;
 	m_dwSkipComboAttackByTime = 0;
-#ifdef ENABLE_CHECK_PICKUP_HACK
-	m_dwLastPickupTime = 0;
-#endif
-#ifdef ENABLE_CHECK_WALLHACK
-	m_dwCountWallhackPoint = 0;
-#endif
-#ifdef ENABLE_CHECK_GHOSTMODE
-	m_dwCountGhostmodePoint = 0;
-#endif
-#ifdef ENABLE_CSHIELD
-	m_pkCShieldEvent = NULL;
-	m_pkCShieldDataEvent = NULL;
-	m_cshield = nullptr;
-#endif	
-#if defined(BL_REMOTE_SHOP)
-	dwLastRemoteTime = 0;
-#endif
-#ifdef ENABLE_AURA_SYSTEM
-	auraAbs = false;
-	auraRefine = false;
-#endif
+
 	m_dwMountTime = 0;
 
 	m_dwLastGoldDropTime = 0;
@@ -680,10 +639,6 @@ void CHARACTER::Initialize()
 	m_dwLastItemDropTime = 0;
 	m_dwLastBoxUseTime = 0;
 	m_dwLastBuySellTime = 0;
-#endif
-
-#ifdef ENABLE_OVER_KILL
-	m_pOverKillInfo = NULL;
 #endif
 
 	m_HackShieldCheckEvent = NULL;
@@ -696,10 +651,15 @@ void CHARACTER::Initialize()
 	m_petSystem = 0;
 	m_bIsPet = false;
 #endif
+
 #ifdef NEW_PET_SYSTEM
 	m_newpetSystem = 0;
 	m_bIsNewPet = false;
 	m_eggvid = 0;
+#endif
+
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+	m_pLootFilter = nullptr;
 #endif
 #ifdef NEW_ICEDAMAGE_SYSTEM
 	m_dwNDRFlag = 0;
@@ -710,9 +670,6 @@ void CHARACTER::Initialize()
 	m_fDamMul = 1.0f;
 
 	m_pointsInstant.iDragonSoulActiveDeck = -1;
-#ifdef OFFLINE_SHOP
-	m_iMyOfflineShopTime = 0;
-#endif
 #ifdef ENABLE_ANTI_CMD_FLOOD
 	m_dwCmdAntiFloodCount = 0;
 	m_dwCmdAntiFloodPulse = 0;
@@ -723,74 +680,18 @@ void CHARACTER::Initialize()
 #endif
 	memset(&m_tvLastSyncTime, 0, sizeof(m_tvLastSyncTime));
 	m_iSyncHackCount = 0;
-#ifdef ENABLE_NEW_FISHING_SYSTEM
-	m_pkFishingNewEvent = NULL;
-	m_bFishCatch = 0;
-	m_dwLastCatch = 0;
-	m_dwCatchFailed = 0;
-#endif
-
 #ifdef FAST_EQUIP_WORLDARD
 	time_change_equip = 0;
 #endif
-	waitHackCounter = 0;	//@fixme503
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	m_isOpenCombSkillBook = false;
-	date_item_add = NULL;
-#endif
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
-	m_bAcceCombination = false;
-	m_bAcceAbsorption = false;
+	m_bAcceCombination	= false;
+	m_bAcceAbsorption	= false;
 #endif
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-	m_SortSpecialStoragePulse = 0;
-#endif
-#ifdef CHANGELOOK_SYSTEM
-	m_bChangeLook = false;
-#endif
-#ifdef ENABLE_DECORUM
-	m_pDecorumArena = NULL;
-#endif
-
-#ifdef ENABLE_DUNGEON_FUNC
-	m_iMonsterHpBlock = 0;
+#ifdef KASMIR_PAKET_SYSTEM
+	m_bKasmirPaketBaslik = 0;
+	m_bKasmirPaketDurum = false;
 #endif
 }
-
-#ifdef ENABLE_DUNGEON_FUNC
-void CHARACTER::BlockMonsterHP(BYTE hpPercentage)
-{
-	int monsterMaxHP = GetMaxHP();
-	int monsterCurentHP = GetHP();
-
-	int monsterHpByPercent = (monsterMaxHP) / 100 * hpPercentage;
-	if (monsterHpByPercent > monsterCurentHP)
-	{
-		sys_err("BlockMonsterHP: cannot set higher block monster hp then monster's hp");
-		return;
-	}
-
-	m_iMonsterHpBlock = monsterHpByPercent;
-}
-
-int CHARACTER::CanDamageMonster(int damage)
-{
-	int monsterCurentHP = GetHP();
-	
-	if (monsterCurentHP <= m_iMonsterHpBlock)
-		return 0;
-
-	int possibleMaxDmg = monsterCurentHP - m_iMonsterHpBlock;
-	if (possibleMaxDmg < 1)
-		return 0;
-	
-	if ((monsterCurentHP - possibleMaxDmg) < m_iMonsterHpBlock)
-		return 0;
-	
-	damage = MIN(damage, possibleMaxDmg);
-	return damage;
-}
-#endif
 
 void CHARACTER::Create(const char * c_pszName, DWORD vid, bool isPC)
 {
@@ -801,22 +702,13 @@ void CHARACTER::Create(const char * c_pszName, DWORD vid, bool isPC)
 	m_vid = VID(vid, GetCRC32(crc_string, strlen(crc_string)));
 
 	if (isPC)
-	{
 		m_stName = c_pszName;
-#ifdef ENABLE_CSHIELD
-		m_cshield = std::make_shared<CShield>();
-#endif
-	}
 }
 
 void CHARACTER::Destroy()
 {
 	CloseMyShop();
-#ifdef ANTY_WAIT_HACK
-	event_cancel(&m_pkCheckWH);
-	m_dwWHPass = 0;
-	memset(&m_stWHPass, 0, sizeof(m_stWHPass));
-#endif
+
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	bAFisWarping = false;
 #endif
@@ -856,6 +748,7 @@ void CHARACTER::Destroy()
 	}
 	HorseSummon(false);
 #endif
+
 #ifdef __PET_SYSTEM__
 	if (m_petSystem)
 	{
@@ -865,6 +758,7 @@ void CHARACTER::Destroy()
 		m_petSystem = 0;
 	}
 #endif
+
 #ifdef NEW_PET_SYSTEM
 	if (m_newpetSystem)
 	{
@@ -875,17 +769,12 @@ void CHARACTER::Destroy()
 	}
 #endif
 
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+	ClearLootFilter();
+#endif
+
 	HorseSummon(false);
-#if defined(__BL_MAILBOX__)
-	SetMailBox(nullptr);
-#endif
-	
-#if defined(__BL_SOUL_ROULETTE__)
-	if (pSoulRoulette) {
-		delete pSoulRoulette;
-		pSoulRoulette = NULL;
-	}
-#endif
+
 	if (GetRider())
 		GetRider()->ClearHorseInfo();
 
@@ -940,7 +829,7 @@ void CHARACTER::Destroy()
 				party->Quit(GetVID());
 		}
 
-		SetParty(NULL); // 안해도 되지만 안전하게.
+		SetParty(NULL);
 	}
 
 	if (m_pkMobInst)
@@ -963,7 +852,7 @@ void CHARACTER::Destroy()
 		m_pkMall = NULL;
 	}
 
-	for (TMapBuffOnAttrs::iterator it = m_map_buff_on_attrs.begin(); it != m_map_buff_on_attrs.end(); ++it)	//@fixme541
+	for (TMapBuffOnAttrs::iterator it = m_map_buff_on_attrs.begin();  it != m_map_buff_on_attrs.end(); it++)
 	{
 		if (NULL != it->second)
 		{
@@ -990,9 +879,6 @@ void CHARACTER::Destroy()
 	event_cancel(&m_pkPartyRequestEvent);
 	//DELAYED_WARP
 	event_cancel(&m_pkWarpEvent);
-#ifdef ENABLE_NEW_FISHING_SYSTEM
-	event_cancel(&m_pkFishingNewEvent);
-#endif
 	event_cancel(&m_pkCheckSpeedHackEvent);
 	//END_DELAYED_WARP
 
@@ -1002,10 +888,6 @@ void CHARACTER::Destroy()
 
 	// MINING
 	event_cancel(&m_pkMiningEvent);
-#ifdef ENABLE_CSHIELD
-	event_cancel(&m_pkCShieldEvent);
-	event_cancel(&m_pkCShieldDataEvent);
-#endif
 	// END_OF_MINING
 #if defined(__DUNGEON_INFO_SYSTEM__)
 	StopDungeonInfoReloadEvent();
@@ -1030,10 +912,6 @@ void CHARACTER::Destroy()
 		m_pSkillLevels = NULL;
 	}
 
-#ifdef ENABLE_OVER_KILL
-	if( m_pOverKillInfo )
-		delete(m_pOverKillInfo);
-#endif
 	CEntity::Destroy();
 
 	if (GetSectree())
@@ -1041,7 +919,6 @@ void CHARACTER::Destroy()
 
 	if (m_bMonsterLog)
 		CHARACTER_MANAGER::instance().UnregisterForMonsterLog(this);
-	
 }
 
 #ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
@@ -1099,7 +976,7 @@ const char * CHARACTER::GetLanguageAsChar() const
 	if (GetDesc())
 		return GetDesc()->GetAccountTable().language;
 		
-	return "it";
+	return "en";
 }
 
 const char * CHARACTER::GetLang() const
@@ -1107,7 +984,7 @@ const char * CHARACTER::GetLang() const
 	if (GetDesc())
 		return GetDesc()->GetAccountTable().language;
 
-	return "it";
+	return "en";
 }
 
 const char * CHARACTER::GetName(BYTE bLanguage) const
@@ -1121,68 +998,68 @@ const char * CHARACTER::GetName() const
 }
 #endif
 
-void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, short bItemCount)
+void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, BYTE bItemCount
+#ifdef KASMIR_PAKET_SYSTEM
+, DWORD KasmirNpc, BYTE KasmirBaslik
+#endif
+)
 {
 	if (!CanHandleItem()) // @fixme149
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"다른 거래중(창고,교환,상점)에는 개인상점을 사용할 수 없습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("다른 거래중(창고,교환,상점)에는 개인상점을 사용할 수 없습니다."));
 		return;
 	}
 
 #ifndef ENABLE_OPEN_SHOP_WITH_ARMOR
 	if (GetPart(PART_MAIN) > 2)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"갑옷을 벗어야 개인 상점을 열 수 있습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("갑옷을 벗어야 개인 상점을 열 수 있습니다."));
 		return;
 	}
 #endif
 
-	if (GetMyShop())	// 이미 샵이 열려 있으면 닫는다.
+	if (GetMyShop())
 	{
 		CloseMyShop();
 		return;
 	}
 
-	// 진행중인 퀘스트가 있으면 상점을 열 수 없다.
+
 	quest::PC * pPC = quest::CQuestManager::instance().GetPCForce(GetPlayerID());
 
-	// GetPCForce는 NULL일 수 없으므로 따로 확인하지 않음
+
 	if (pPC->IsRunning())
 		return;
 
 	if (bItemCount == 0)
 		return;
 
-	int64_t nTotalMoney = 0;
-#ifdef ENABLE_CHEQUE_SYSTEM
-	int64_t nTotalCheque = 0;
-#endif
+#ifdef ENABLE_LONG_LONG
+	long long nTotalMoney = 0;
+
 	for (int n = 0; n < bItemCount; ++n)
 	{
-		nTotalMoney += static_cast<int64_t>((pTable+n)->price);
-#ifdef ENABLE_CHEQUE_SYSTEM
-		nTotalCheque += static_cast<int64_t>((pTable + n)->cheque_price);
-#endif
+		nTotalMoney += static_cast<long long>((pTable+n)->price);
+	}
+
+	nTotalMoney += static_cast<long long>(GetGold());
+#else
+	int64_t nTotalMoney = 0;
+
+	for (int n = 0; n < bItemCount; ++n)
+	{
+		nTotalMoney += static_cast<int64_t>((pTable + n)->price);
 	}
 
 	nTotalMoney += static_cast<int64_t>(GetGold());
-#ifdef ENABLE_CHEQUE_SYSTEM
-	nTotalCheque += static_cast<int64_t>(GetCheque());
 #endif
+
 	if (GOLD_MAX <= nTotalMoney)
 	{
 		sys_err("[OVERFLOW_GOLD] Overflow (GOLD_MAX) id %u name %s", GetPlayerID(), GetName());
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"20억 냥을 초과하여 상점을 열수가 없습니다"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("20억 냥을 초과하여 상점을 열수가 없습니다"));
 		return;
 	}
-#ifdef ENABLE_CHEQUE_SYSTEM
-	if (CHEQUE_MAX <= nTotalCheque)
-	{
-		sys_err("[OVERFLOW_CHEQUE] Overflow (CHEQUE_MAX) id %u name %s", GetPlayerID(), GetName());
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti deschide depozitul pentru ca aveti 999 Won."));
-		return;
-	}
-#endif
 
 	char szSign[SHOP_SIGN_MAX_LEN+1];
 	strlcpy(szSign, c_pszSign, sizeof(szSign));
@@ -1194,20 +1071,25 @@ void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, shor
 
 	if (CBanwordManager::instance().CheckString(m_stShopSign.c_str(), m_stShopSign.length()))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"비속어나 은어가 포함된 상점 이름으로 상점을 열 수 없습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("비속어나 은어가 포함된 상점 이름으로 상점을 열 수 없습니다."));
 		return;
 	}
 
-	// MYSHOP_PRICE_LIST
-#ifdef ENABLE_CHEQUE_SYSTEM
-	std::map<DWORD, TItemPriceType> itemkind;
-#else
-	std::map<DWORD, DWORD> itemkind;  // 아이템 종류별 가격, first: vnum, second: 단일 수량 가격
+#ifdef KASMIR_PAKET_SYSTEM
+	m_bKasmirPaketBaslik = KasmirBaslik;
+	if (m_bKasmirPaketBaslik < 1 && m_bKasmirPaketBaslik > 6)
+	{
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("NegoSystem#1"));
+		return;
+	}
 #endif
+
+	// MYSHOP_PRICE_LIST
+	std::map<DWORD, DWORD> itemkind;
 	// END_OF_MYSHOP_PRICE_LIST
 
 	std::set<TItemPos> cont;
-	for (short i = 0; i < bItemCount; ++i)
+	for (BYTE i = 0; i < bItemCount; ++i)
 	{
 		if (cont.find((pTable + i)->pos) != cont.end())
 		{
@@ -1224,28 +1106,24 @@ void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, shor
 
 			if (item_table && (IS_SET(item_table->dwAntiFlags, ITEM_ANTIFLAG_GIVE | ITEM_ANTIFLAG_MYSHOP)))
 			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"유료화 아이템은 개인상점에서 판매할 수 없습니다."));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("유료화 아이템은 개인상점에서 판매할 수 없습니다."));
 				return;
 			}
 
 			if (pkItem->IsEquipped() == true)
 			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"장비중인 아이템은 개인상점에서 판매할 수 없습니다."));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("장비중인 아이템은 개인상점에서 판매할 수 없습니다."));
 				return;
 			}
 
 			if (true == pkItem->isLocked())
 			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"사용중인 아이템은 개인상점에서 판매할 수 없습니다."));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("사용중인 아이템은 개인상점에서 판매할 수 없습니다."));
 				return;
 			}
 
 			// MYSHOP_PRICE_LIST
-#ifdef ENABLE_CHEQUE_SYSTEM
-			itemkind[pkItem->GetVnum()] = TItemPriceType((pTable + i)->price / pkItem->GetCount(), (pTable + i)->cheque_price);
-#else
 			itemkind[pkItem->GetVnum()] = (pTable + i)->price / pkItem->GetCount();
-#endif
 			// END_OF_MYSHOP_PRICE_LIST
 		}
 
@@ -1253,39 +1131,36 @@ void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, shor
 	}
 
 	// MYSHOP_PRICE_LIST
-	// 보따리 개수를 감소시킨다.
-	if (CountSpecifyItem(71049)) { // 비단 보따리는 없애지 않고 가격정보를 저장한다.
 
-		//
-		// 아이템 가격정보를 저장하기 위해 아이템 가격정보 패킷을 만들어 DB 캐시에 보낸다.
-		//
+	if (CountSpecifyItem(71049)
+#ifdef KASMIR_PAKET_SYSTEM
+	|| CountSpecifyItem(88901)
+#endif
+	){
+
 		// @fixme403 BEGIN
-		TPacketMyshopPricelistHeader header;
-		TItemPriceInfo info;
+		TItemPriceListTable header;
+		memset(&header, 0, sizeof(TItemPriceListTable));
 
 		header.dwOwnerID = GetPlayerID();
 		header.byCount = itemkind.size();
 
-		TEMP_BUFFER buf;
-		buf.write(&header, sizeof(header));
-
+		size_t idx=0;
 		for (itertype(itemkind) it = itemkind.begin(); it != itemkind.end(); ++it)
 		{
-
-			info.dwVnum = it->first;
-			info.price.dwPrice = it->second.dwPrice;
-#ifdef ENABLE_CHEQUE_SYSTEM
-			info.price.byChequePrice = it->second.byChequePrice;
-#endif
-			buf.write(&info, sizeof(info));
+			header.aPriceInfo[idx].dwVnum = it->first;
+			header.aPriceInfo[idx].dwPrice = it->second;
+			idx++;
 		}
 
-		db_clientdesc->DBPacket(HEADER_GD_MYSHOP_PRICELIST_UPDATE, 0, buf.read_peek(), buf.size());
+		db_clientdesc->DBPacket(HEADER_GD_MYSHOP_PRICELIST_UPDATE, GetDesc()->GetHandle(), &header, sizeof(TItemPriceListTable));
+		// @fixme403 END
 	}
+	// END_OF_MYSHOP_PRICE_LIST
 	else if (CountSpecifyItem(50200))
 		RemoveSpecifyItem(50200, 1);
 	else
-		return; // 보따리가 없으면 중단.
+		return;
 
 	if (m_pkExchange)
 		m_pkExchange->Cancel();
@@ -1295,7 +1170,9 @@ void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, shor
 	p.bHeader = HEADER_GC_SHOP_SIGN;
 	p.dwVID = GetVID();
 	strlcpy(p.szSign, c_pszSign, sizeof(p.szSign));
-
+#ifdef KASMIR_PAKET_SYSTEM
+	p.bShopKasmirTitle = KasmirBaslik;
+#endif
 	PacketAround(&p, sizeof(TPacketGCShopSign));
 
 	m_pkMyShop = CShopManager::instance().CreatePCShop(this, pTable, bItemCount);
@@ -1309,15 +1186,18 @@ void CHARACTER::OpenMyShop(const char * c_pszSign, TShopItemTable * pTable, shor
 	{
 		HorseSummon( false, true );
 	}
-	// new mount 이용 중에, 개인 상점 열면 자동 unmount
-	// StopRiding으로 뉴마운트까지 처리하면 좋은데 왜 그렇게 안해놨는지 알 수 없다.
 	else if (GetMountVnum())
 	{
 		RemoveAffect(AFFECT_MOUNT);
 		RemoveAffect(AFFECT_MOUNT_BONUS);
 	}
 
-	SetPolymorph(30000, true);
+	DWORD dwNpcShop = 30000;
+#ifdef KASMIR_PAKET_SYSTEM
+	dwNpcShop = KasmirNpc >= 30000 && KasmirNpc <= 30007 ? KasmirNpc : 30000;
+#endif
+
+	SetPolymorph(dwNpcShop, true);
 
 }
 
@@ -1333,6 +1213,9 @@ void CHARACTER::CloseMyShop()
 
 		p.bHeader = HEADER_GC_SHOP_SIGN;
 		p.dwVID = GetVID();
+#ifdef KASMIR_PAKET_SYSTEM
+		p.bShopKasmirTitle = m_bKasmirPaketBaslik;
+#endif
 		p.szSign[0] = '\0';
 
 		PacketAround(&p, sizeof(p));
@@ -1396,7 +1279,6 @@ void CHARACTER::RestartAtSamePos()
 }
 
 // #define ENABLE_SHOWNPCLEVEL
-// Entity에 내가 나타났다고 패킷을 보낸다.
 void CHARACTER::EncodeInsertPacket(LPENTITY entity)
 {
 
@@ -1405,10 +1287,8 @@ void CHARACTER::EncodeInsertPacket(LPENTITY entity)
 	if (!(d = entity->GetDesc()))
 		return;
 
-	// 길드이름 버그 수정 코드
 	LPCHARACTER ch = (LPCHARACTER) entity;
 	ch->SendGuildName(GetGuild());
-	// 길드이름 버그 수정 코드
 
 	TPacketGCCharacterAdd pack;
 
@@ -1420,6 +1300,7 @@ void CHARACTER::EncodeInsertPacket(LPENTITY entity)
 	pack.y		= GetY();
 	pack.z		= GetZ();
 	pack.wRaceNum	= GetRaceNum();
+
 #ifdef NEW_PET_SYSTEM
 	if (IsPet() || IsNewPet())
 #else
@@ -1453,49 +1334,31 @@ void CHARACTER::EncodeInsertPacket(LPENTITY entity)
 
 	d->Packet(&pack, sizeof(pack));
 
-	if (IsPC() == true || m_bCharType == CHAR_TYPE_NPC || m_bCharType == CHAR_TYPE_PET)
+	if (IsPC() == true || m_bCharType == CHAR_TYPE_NPC)
 	{
 		TPacketGCCharacterAdditionalInfo addPacket;
 		memset(&addPacket, 0, sizeof(TPacketGCCharacterAdditionalInfo));
 
 		addPacket.header = HEADER_GC_CHAR_ADDITIONAL_INFO;
 		addPacket.dwVID = m_vid;
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM
-		SetHideCostumeUpdate();
-#endif
 
 		addPacket.awPart[CHR_EQUIPPART_ARMOR] = GetPart(PART_MAIN);
 		addPacket.awPart[CHR_EQUIPPART_WEAPON] = GetPart(PART_WEAPON);
 		addPacket.awPart[CHR_EQUIPPART_HEAD] = GetPart(PART_HEAD);
 		addPacket.awPart[CHR_EQUIPPART_HAIR] = GetPart(PART_HAIR);
-#ifdef __NEW_ARROW_SYSTEM__
-		addPacket.awPart[CHR_PART_ARROW_TYPE] = GetPart(PART_ARROW_TYPE);
-#endif
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 		addPacket.awPart[CHR_EQUIPPART_ACCE] = GetPart(PART_ACCE);
-#endif
-#ifdef ENABLE_AURA_SYSTEM
-		addPacket.awPart[CHR_EQUIPPART_AURA] = GetPart(PART_AURA);
-#endif
-#ifdef ENABLE_EFFECT_COSTUME_SYSTEM
-		addPacket.awPart[CHR_EQUIPPART_EFFECT] = GetPart(PART_EFFECT);
 #endif
 		addPacket.bPKMode = m_bPKMode;
 		addPacket.dwMountVnum = GetMountVnum();
 		addPacket.bEmpire = m_bEmpire;
 
-#ifdef ENABLE_DECORUM
-			DECORUM * pkDec = CDecorumManager::instance().GetDecorum(GetPlayerID());
-			addPacket.dwDecorumPoint = pkDec->GetDecorumPoint();
-#endif	
-
 #ifdef ENABLE_SHOWNPCLEVEL
 		if (1)
 #else
-		if (IsPC() == true || IsNewPet() == true)
+		if (IsPC() == true)
 #endif
 		{
-		
 			addPacket.dwLevel = GetLevel();
 		}
 		else
@@ -1507,7 +1370,7 @@ void CHARACTER::EncodeInsertPacket(LPENTITY entity)
 		{
 			LPCHARACTER ch = (LPCHARACTER) entity;
 
-			if (GetEmpire() == ch->GetEmpire() || ch->GetGMLevel() > GM_PLAYER || m_bCharType == CHAR_TYPE_NPC || m_bCharType == CHAR_TYPE_PET)
+			if (GetEmpire() == ch->GetEmpire() || ch->GetGMLevel() > GM_PLAYER || m_bCharType == CHAR_TYPE_NPC)
 			{
 				goto show_all_info;
 			}
@@ -1521,15 +1384,10 @@ void CHARACTER::EncodeInsertPacket(LPENTITY entity)
 		else
 		{
 		show_all_info:
-			{
-				strlcpy(addPacket.name, GetName(), sizeof(addPacket.name));
-#ifdef GUILD_RANK_EFFECT
-				addPacket.guildRank = GetGuild()?CGuildManager::Instance().GetMyGuildRank(GetGuild()):0;
+			strlcpy(addPacket.name, GetName(), sizeof(addPacket.name));
+#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
+			strlcpy(addPacket.language, GetLang(), sizeof(addPacket.language));
 #endif
-				#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
-				strlcpy(addPacket.language, GetLang(), sizeof(addPacket.language));
-				#endif
-			}
 			if (GetGuild() != NULL)
 			{
 				addPacket.dwGuildID = GetGuild()->GetID();
@@ -1541,7 +1399,7 @@ void CHARACTER::EncodeInsertPacket(LPENTITY entity)
 
 			addPacket.sAlignment = m_iAlignment / 10;
 		}
-		
+
 		d->Packet(&addPacket, sizeof(TPacketGCCharacterAdditionalInfo));
 	}
 
@@ -1578,29 +1436,13 @@ void CHARACTER::EncodeInsertPacket(LPENTITY entity)
 
 		p.bHeader = HEADER_GC_SHOP_SIGN;
 		p.dwVID = GetVID();
+#ifdef KASMIR_PAKET_SYSTEM
+		p.bShopKasmirTitle = m_bKasmirPaketBaslik;
+#endif
 		strlcpy(p.szSign, m_stShopSign.c_str(), sizeof(p.szSign));
 
 		d->Packet(&p, sizeof(TPacketGCShopSign));
 	}
-
-#ifdef OFFLINE_SHOP
-	if (IsOfflineShopNPC() && GetRaceNum() == 30000)
-	{
-		if (entity->IsType(ENTITY_CHARACTER))
-		{
-			LPOFFLINESHOP shop = GetOfflineShop();
-
-			if (shop)
-			{
-				TPacketGCShopSign p;
-				p.bHeader = HEADER_GC_OFFLINE_SHOP_SIGN;
-				p.dwVID = GetVID();
-				strlcpy(p.szSign, shop->GetShopSign(), sizeof(p.szSign));
-				d->Packet(&p, sizeof(TPacketGCShopSign));
-			}
-		}
-	}
-#endif
 
 	if (entity->IsType(ENTITY_CHARACTER))
 	{
@@ -1639,51 +1481,26 @@ void CHARACTER::UpdatePacket()
 
 	pack.header = HEADER_GC_CHARACTER_UPDATE;
 	pack.dwVID = m_vid;
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM
-	SetHideCostumeUpdate();
-#endif
 
 	pack.awPart[CHR_EQUIPPART_ARMOR] = GetPart(PART_MAIN);
 	pack.awPart[CHR_EQUIPPART_WEAPON] = GetPart(PART_WEAPON);
 	pack.awPart[CHR_EQUIPPART_HEAD] = GetPart(PART_HEAD);
 	pack.awPart[CHR_EQUIPPART_HAIR] = GetPart(PART_HAIR);
-#ifdef __NEW_ARROW_SYSTEM__
-	pack.awPart[CHR_PART_ARROW_TYPE] = GetPart(PART_ARROW_TYPE);
-#endif
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	pack.awPart[CHR_EQUIPPART_ACCE] = GetPart(PART_ACCE);
-#endif
-#ifdef ENABLE_AURA_SYSTEM
-	pack.awPart[CHR_EQUIPPART_AURA] = GetPart(PART_AURA);
-#endif
-#ifdef ENABLE_EFFECT_COSTUME_SYSTEM
-	pack.awPart[CHR_EQUIPPART_EFFECT] = GetPart(PART_EFFECT);
 #endif
 	pack.bMovingSpeed	= GetLimitPoint(POINT_MOV_SPEED);
 	pack.bAttackSpeed	= GetLimitPoint(POINT_ATT_SPEED);
 	pack.bStateFlag	= m_bAddChrState;
 	pack.dwAffectFlag[0] = m_afAffectFlag.bits[0];
 	pack.dwAffectFlag[1] = m_afAffectFlag.bits[1];
-
-#ifdef ENABLE_DECORUM
-	if (IsPC())
-	{
-		DECORUM * pkDec = CDecorumManager::instance().GetDecorum(GetPlayerID());
-		pack.dwDecorumPoint = pkDec->GetDecorumPoint();
-	}
-	else
-		pack.dwDecorumPoint = 0;
-#endif
-
 	pack.dwGuildID	= 0;
 	pack.sAlignment	= m_iAlignment / 10;
-	#ifdef NEW_PET_SYSTEM
+#ifdef NEW_PET_SYSTEM
 	pack.dwLevel = GetLevel();
 #endif
 	pack.bPKMode	= m_bPKMode;
-#ifdef GUILD_RANK_EFFECT
-	pack.guildRank = GetGuild()?CGuildManager::Instance().GetMyGuildRank(GetGuild()):0;
-#endif
+
 	if (GetGuild())
 		pack.dwGuildID = GetGuild()->GetID();
 
@@ -1803,10 +1620,6 @@ void CHARACTER::SetPosition(int pos)
 
 void CHARACTER::Save()
 {
-#ifdef ENABLE_DECORUM
-	DECORUM * pkDecorum = CDecorumManager::instance().GetDecorum(GetPlayerID());
-	pkDecorum->Save(this);
-#endif	
 	if (!m_bSkipSave)
 		CHARACTER_MANAGER::instance().DelayedSave(this);
 }
@@ -1832,18 +1645,11 @@ void CHARACTER::CreatePlayerProto(TPlayerTable & tab)
 	tab.level_step	= GetPoint(POINT_LEVEL_STEP);
 	tab.exp			= GetExp();
 	tab.gold		= GetGold();
-#ifdef ENABLE_CHEQUE_SYSTEM
-	tab.cheque = GetCheque();
-#endif
-
 	tab.job			= m_points.job;
 	tab.part_base	= m_pointsInstant.bBasePart;
 	tab.skill_group	= m_points.skill_group;
 #ifdef ENABLE_NEW_DETAILS_GUI
 	thecore_memcpy(tab.kill_log, m_points.kill_log, sizeof(tab.kill_log));
-#endif
-#ifdef NEW_ADD_INVENTORY
-	tab.envanter 		= Black_Envanter();
 #endif
 	DWORD dwPlayedTime = (get_dword_time() - m_dwPlayStartTime);
 
@@ -1967,7 +1773,6 @@ void CHARACTER::SaveReal()
 
 void CHARACTER::FlushDelayedSaveItem()
 {
-	// 저장 안된 소지품을 전부 저장시킨다.
 	LPITEM item;
 
 	for (int i = 0; i < INVENTORY_AND_EQUIP_SLOT_MAX; ++i)
@@ -1980,23 +1785,12 @@ void CHARACTER::Disconnect(const char * c_pszReason)
 	assert(GetDesc() != NULL);
 
 	sys_log(0, "DISCONNECT: %s (%s)", GetName(), c_pszReason ? c_pszReason : "unset" );
-	for (int i = 0; i < SPECIALSTATS_MAX; i++) {
-		RemoveAffect(SPECIALSTAT_AFFECT_START + i);
-	}
 
 	if (GetShop())
 	{
 		GetShop()->RemoveGuest(this);
 		SetShop(NULL);
 	}
-
-#ifdef OFFLINE_SHOP
-	if (GetOfflineShop())
-	{
-		GetOfflineShop()->RemoveGuest(this);
-		SetOfflineShop(NULL);
-	}
-#endif
 
 	if (GetArena() != NULL)
 	{
@@ -2015,6 +1809,7 @@ void CHARACTER::Disconnect(const char * c_pszReason)
 	bool is_warping = IsSetWarp();
 	if ((d = GetDesc())) { CAntiMultipleFarm::instance().Logout(d->GetLoginMacAdress(), GetPlayerID(), is_warping); }
 #endif
+
 	// P2P Logout
 	TPacketGGLogout p;
 	p.bHeader = HEADER_GG_LOGOUT;
@@ -2042,6 +1837,25 @@ void CHARACTER::Disconnect(const char * c_pszReason)
 	{
 		SetWeddingMap(NULL);
 	}
+	
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	offlineshop::GetManager().RemoveSafeboxFromCache(GetPlayerID());
+	offlineshop::GetManager().RemoveGuestFromShops(this);
+	
+	if(m_pkAuctionGuest)
+		m_pkAuctionGuest->RemoveGuest(this);
+
+	if (GetOfflineShop())
+		SetOfflineShop(NULL);
+
+	SetShopSafebox(NULL);
+
+	m_pkAuction		= NULL;
+	m_pkAuctionGuest= NULL;
+
+	//offlineshop-updated 05/08/19
+	m_bIsLookingOfflineshopOfferList = false;
+#endif
 
 	if (GetGuild())
 		GetGuild()->LogoutMember(this);
@@ -2051,18 +1865,12 @@ void CHARACTER::Disconnect(const char * c_pszReason)
 	if (GetParty())
 		GetParty()->Unlink(this);
 
-	// 죽었을 때 접속끊으면 경험치 줄게 하기
 	if (IsStun() || IsDead())
 	{
 		DeathPenalty(0);
 		PointChange(POINT_HP, 50 - GetHP());
 	}
-#ifdef ENABLE_DECORUM
-	CDecoredArenaManager::instance().OnDisconnect(GetPlayerID());
-	
-	if (GetDecorumArena() != NULL)
-		GetDecorumArena()->OnDisconnect(this);
-#endif
+
 
 	if (!CHARACTER_MANAGER::instance().FlushDelayedSave(this))
 	{
@@ -2074,7 +1882,7 @@ void CHARACTER::Disconnect(const char * c_pszReason)
 	SaveAffect();
 	m_bIsLoadedAffect = false;
 
-	m_bSkipSave = true; // 이 이후에는 더이상 저장하면 안된다.
+	m_bSkipSave = true;
 
 	quest::CQuestManager::instance().DisconnectPC(this);
 
@@ -2087,6 +1895,7 @@ void CHARACTER::Disconnect(const char * c_pszReason)
 	CTargetManager::instance().Logout(GetPlayerID());
 
 	MessengerManager::instance().Logout(GetName());
+
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 	if(GetMountVnum())
 	{
@@ -2094,9 +1903,7 @@ void CHARACTER::Disconnect(const char * c_pszReason)
 		RemoveAffect(AFFECT_MOUNT_BONUS);
 	}
 #endif
-#ifdef ENABLE_DECORUM
-	CDecorumManager::instance().Disconnect(this);
-#endif
+
 	if (g_TeenDesc)
 	{
 		int		offset = 0;
@@ -2147,19 +1954,13 @@ bool CHARACTER::Show(long lMapIndex, long x, long y, long z, bool bShowSpawnMoti
 	{
 		if (GetSectree())
 			GetSectree()->RemoveEntity(this);
-#ifdef ENABLE_GOTO_LAG_FIX
-		ViewCleanup(IsPC());
-#else
+
 		ViewCleanup();
-#endif
 	}
 
 	if (!IsNPC())
 	{
 		sys_log(0, "SHOW: %s %dx%dx%d", GetName(), x, y, z);
-#ifdef ENABLE_CHECK_MOVESPEED_HACK
-		GetCShield()->ResetMoveSpeedhack(get_dword_time());
-#endif
 		if (GetStamina() < GetMaxStamina())
 			StartAffectEvent();
 	}
@@ -2337,14 +2138,9 @@ void CHARACTER::PointsPacket()
 	pack.points[POINT_GOLD]		= GetGold();
 	pack.points[POINT_STAMINA]		= GetStamina();
 	pack.points[POINT_MAX_STAMINA]	= GetMaxStamina();
-#ifdef NEW_ADD_INVENTORY
-	pack.points[POINT_BLACK]		= Black_Envanter();
-#endif
+
 	for (int i = POINT_ST; i < POINT_MAX_NUM; ++i)
 		pack.points[i] = GetPoint(i);
-#ifdef ENABLE_CHEQUE_SYSTEM
-	pack.points[POINT_CHEQUE] = GetCheque();
-#endif
 
 	GetDesc()->Packet(&pack, sizeof(TPacketGCPoints));
 }
@@ -2425,24 +2221,6 @@ void CHARACTER::SetRace(BYTE race)
 	}
 
 	m_points.job = race;
-}
-
-void CHARACTER::RestoreTalismanBonus()
-{
-	BYTE equipped = 0;
-	int slot_table_num[] = { 9620, 9850, 10080, 10310, 10540, 10770 };
-	for (int i = WEAR_TALISMAN; i <= WEAR_TALISMAN_6; i++) {
-		LPITEM item = GetWear(i);
-		if (item) {
-			if (item->GetVnum() >= slot_table_num[(i - WEAR_TALISMAN)]) {
-				equipped += 1;
-			}
-		}
-	}
-
-	ApplyPoint(APPLY_ATTBONUS_MONSTER, equipped == 6 ? 10 : 0); //Bonus 1
-	// ApplyPoint(APPLY_MAX_HP, equipped == 6 ? 10000 : 0); //Bonus 2
-	// ApplyPoint(APPLY_MAX_HP, equipped == 6 ? 10000 : 0); //Bonus 3
 }
 
 BYTE CHARACTER::GetJob() const
@@ -2722,6 +2500,7 @@ void CHARACTER::additems(LPCHARACTER ch)
 }
 #endif
 
+
 void CHARACTER::SetEmpire(BYTE bEmpire)
 {
 	m_bEmpire = bEmpire;
@@ -2766,7 +2545,7 @@ void CHARACTER::ChannelSwitch(int iNewChannel){
    
    if (wPort == mother_port)
    {
-	   ChatPacket(CHAT_TYPE_INFO, "Sei gia' in questo channel.");
+	   ChatPacket(CHAT_TYPE_INFO, "You are already in this channel.");
 	   return;
    }
 	
@@ -2787,12 +2566,25 @@ void CHARACTER::ChannelSwitch(int iNewChannel){
     p.lX    = x;
     p.lY    = y;
     p.lAddr    = lAddr;
+#ifdef ENABLE_NEWSTUFF
+	if (!g_stProxyIP.empty())
+		p.lAddr = inet_addr(g_stProxyIP.c_str());
+#endif
     p.wPort    = wPort;
+#ifdef ENABLE_SWITCHBOT
+	CSwitchbotManager::Instance().SetIsWarping(GetPlayerID(), true);
+
+	if (p.wPort != mother_port)
+	{
+		CSwitchbotManager::Instance().P2PSendSwitchbot(GetPlayerID(), p.wPort);
+	}
+#endif
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	UpdateCharacterWarpCheck(true);
 #endif
     GetDesc()->Packet(&p, sizeof(TPacketGCWarp));
 }
+
 
 #define ENABLE_GM_FLAG_IF_TEST_SERVER
 #define ENABLE_GM_FLAG_FOR_LOW_WIZARD
@@ -2819,9 +2611,7 @@ void CHARACTER::SetPlayerProto(const TPlayerTable * t)
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	SetPart(PART_ACCE, t->parts[PART_ACCE]);
 #endif
-#ifdef ENABLE_AURA_SYSTEM
-	SetPart(PART_AURA, t->parts[PART_AURA]);
-#endif
+
 	m_points.iRandomHP = t->sRandomHP;
 	m_points.iRandomSP = t->sRandomSP;
 
@@ -2867,13 +2657,6 @@ void CHARACTER::SetPlayerProto(const TPlayerTable * t)
 	SetLevel(t->level);
 	SetExp(t->exp);
 	SetGold(t->gold);
-#ifdef ENABLE_CHEQUE_SYSTEM
-	SetCheque(t->cheque);
-#endif
-
-#ifdef NEW_ADD_INVENTORY
-	Set_Envanter_Black(t->envanter);
-#endif
 
 	SetMapIndex(t->lMapIndex);
 	SetXYZ(t->x, t->y, t->z);
@@ -2884,7 +2667,6 @@ void CHARACTER::SetPlayerProto(const TPlayerTable * t)
 	SetSP(t->sp);
 	SetStamina(t->stamina);
 
-	//GM일때 보호모드
 #ifndef ENABLE_GM_FLAG_IF_TEST_SERVER
 	if (!test_server)
 #endif
@@ -2923,9 +2705,8 @@ void CHARACTER::SetPlayerProto(const TPlayerTable * t)
 		LogManager::instance().CharLog(this, GetGMLevel(), "GM_LOGIN", "");
 		sys_log(0, "GM_LOGIN(gmlevel=%d, name=%s(%d), pos=(%d, %d)", GetGMLevel(), GetName(), GetPlayerID(), GetX(), GetY());
 	}
-	
+
 #ifdef __PET_SYSTEM__
-	// NOTE: 일단 캐릭터가 PC인 경우에만 PetSystem을 갖도록 함. 유럽 머신당 메모리 사용률때문에 NPC까지 하긴 좀..
 	if (m_petSystem)
 	{
 		m_petSystem->Destroy();
@@ -2934,6 +2715,7 @@ void CHARACTER::SetPlayerProto(const TPlayerTable * t)
 
 	m_petSystem = M2_NEW CPetSystem(this);
 #endif
+
 #ifdef NEW_PET_SYSTEM
 	if (m_newpetSystem)
 	{
@@ -2943,18 +2725,7 @@ void CHARACTER::SetPlayerProto(const TPlayerTable * t)
 
 	m_newpetSystem = M2_NEW CNewPetSystem(this);
 #endif
-#ifdef ENABLE_OVER_KILL
-	if( m_pOverKillInfo )
-		delete(m_pOverKillInfo);
-	
-	m_pOverKillInfo = new SOverKillInfo();
-#endif
 
-
-
-#ifdef ENABLE_SPECIAL_AFFECT
-	CHARACTER_MANAGER::instance().AddSpecialAffect(this);
-#endif
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 	if (m_mountSystem)
 	{
@@ -2965,7 +2736,6 @@ void CHARACTER::SetPlayerProto(const TPlayerTable * t)
 	m_mountSystem = M2_NEW CMountSystem(this);
 #endif
 }
-
 
 EVENTFUNC(kill_ore_load_event)
 {
@@ -3040,9 +2810,7 @@ void CHARACTER::SetProto(const CMob * pkMob)
 		SetPoint(POINT_ATT_GRADE_BONUS, 10);
 		SetPoint(POINT_DEF_GRADE_BONUS, 6);
 
-		//산타용
 		//m_dwPlayStartTime = get_dword_time() + 10 * 60 * 1000;
-		//신선자 노해
 		m_dwPlayStartTime = get_dword_time() + 30 * 1000;
 		if (test_server)
 			m_dwPlayStartTime = get_dword_time() + 30 * 1000;
@@ -3089,9 +2857,6 @@ void CHARACTER::SetProto(const CMob * pkMob)
 
 		m_pkMiningEvent = event_create(kill_ore_load_event, info, PASSES_PER_SEC(number(7 * 60, 15 * 60)));
 	}
-#ifdef OFFLINE_SHOP
-	SetOfflineShopVID(COfflineShopManager::instance().FindMyOfflineShop(GetPlayerID()));
-#endif
 	// END_OF_MINING
 }
 
@@ -3120,7 +2885,7 @@ float CHARACTER::GetMobDamageMultiply() const
 	float fDamMultiply = GetMobTable().fDamMultiply;
 
 	if (IsBerserk())
-		fDamMultiply = fDamMultiply * 2.0f; // BALANCE: 광폭화 시 두배
+		fDamMultiply = fDamMultiply * 2.0f;
 
 	return fDamMultiply;
 }
@@ -3153,7 +2918,7 @@ DWORD CHARACTER::GetMonsterDrainSPPoint() const
 BYTE CHARACTER::GetMobRank() const
 {
 	if (!m_pkMobData)
-		return MOB_RANK_KNIGHT;	// PC일 경우 KNIGHT급
+		return MOB_RANK_KNIGHT;
 
 	return m_pkMobData->m_table.bRank;
 }
@@ -3172,18 +2937,8 @@ WORD CHARACTER::GetMobAttackRange() const
 	{
 		case BATTLE_TYPE_RANGE:
 		case BATTLE_TYPE_MAGIC:
-#if defined(__SHIP_DEFENSE__)
-		// MOB (Hydra) attack range.
-		if (CShipDefenseManager::Instance().IsHydra(m_pkMobData->m_table.dwVnum))
-			return m_pkMobData->m_table.wAttackRange + GetPoint(POINT_BOW_DISTANCE) + 4000;
-#endif
 			return m_pkMobData->m_table.wAttackRange + GetPoint(POINT_BOW_DISTANCE);
 		default:
-#if defined(__SHIP_DEFENSE__)
-		// MOB melee attack range.
-		if (CShipDefenseManager::Instance().IsMinion(m_pkMobData->m_table.dwVnum))
-			return m_pkMobData->m_table.wAttackRange + 300;
-#endif
 			return m_pkMobData->m_table.wAttackRange;
 	}
 }
@@ -3226,7 +2981,7 @@ void CHARACTER::ComputeBattlePoints()
 		SetPoint(POINT_MAGIC_DEF_GRADE, GetPoint(POINT_DEF_GRADE));
 
 		//
-		// 기본 ATK = 2lev + 2str, 직업에 마다 2str은 바뀔 수 있음
+		// ATK = 2lev + 2str
 		//
 		int iAtk = GetLevel() * 2;
 		int iStatAtk = 0;
@@ -3247,7 +3002,6 @@ void CHARACTER::ComputeBattlePoints()
 				break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
 			case JOB_WOLFMAN:
-				// TODO: 수인족 공격력 공식 기획자에게 요청
 				iStatAtk = (2 * GetPoint(POINT_ST));
 				break;
 #endif
@@ -3257,14 +3011,11 @@ void CHARACTER::ComputeBattlePoints()
 				break;
 		}
 
-		// 말을 타고 있고, 스탯으로 인한 공격력이 ST*2 보다 낮으면 ST*2로 한다.
-		// 스탯을 잘못 찍은 사람 공격력이 더 낮지 않게 하기 위해서다.
 		if (GetMountVnum() && iStatAtk < 2 * GetPoint(POINT_ST))
 			iStatAtk = (2 * GetPoint(POINT_ST));
 
 		iAtk += iStatAtk;
 
-		// 승마(말) : 검수라 데미지 감소
 		if (GetMountVnum())
 		{
 			if (GetJob() == JOB_SURA && GetSkillGroup() == 1)
@@ -3285,7 +3036,7 @@ void CHARACTER::ComputeBattlePoints()
 		PointChange(POINT_ATT_GRADE, iAtk);
 
 		// DEF = LEV + CON + ARMOR
-		int iShowDef = GetLevel() + GetPoint(POINT_HT); // For Ymir(천마)
+		int iShowDef = GetLevel() + GetPoint(POINT_HT);
 		int iDef = GetLevel() + (int) (GetPoint(POINT_HT) / 1.25); // For Other
 		int iArmor = 0;
 
@@ -3301,7 +3052,6 @@ void CHARACTER::ComputeBattlePoints()
 				}
 			}
 
-		// 말 타고 있을 때 방어력이 말의 기준 방어력보다 낮으면 기준 방어력으로 설정
 		if( true == IsHorseRiding() )
 		{
 			if (iArmor < GetHorseArmor())
@@ -3358,9 +3108,7 @@ void CHARACTER::ComputePoints()
 
 	long lHPRecovery = GetPoint(POINT_HP_RECOVERY);
 	long lSPRecovery = GetPoint(POINT_SP_RECOVERY);
-#ifdef NEW_ADD_INVENTORY
-	long envanterim = Black_Envanter();
-#endif
+
 	memset(m_pointsInstant.points, 0, sizeof(m_pointsInstant.points));
 	BuffOnAttr_ClearAll();
 	m_SkillDamageBonus.clear();
@@ -3381,18 +3129,10 @@ void CHARACTER::ComputePoints()
 	SetPart(PART_WEAPON, GetOriginalPart(PART_WEAPON));
 	SetPart(PART_HEAD, GetOriginalPart(PART_HEAD));
 	SetPart(PART_HAIR, GetOriginalPart(PART_HAIR));
-#ifdef __NEW_ARROW_SYSTEM__
-	SetPart(PART_ARROW_TYPE, GetOriginalPart(PART_ARROW_TYPE));
-#endif
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	SetPart(PART_ACCE, GetOriginalPart(PART_ACCE));
 #endif
-#ifdef ENABLE_AURA_SYSTEM
-	SetPart(PART_AURA, GetOriginalPart(PART_AURA));
-#endif
-#ifdef ENABLE_EFFECT_COSTUME_SYSTEM
-	SetPart(PART_EFFECT, GetOriginalPart(PART_EFFECT));
-#endif
+
 	SetPoint(POINT_PARTY_ATTACKER_BONUS, lAttackerBonus);
 	SetPoint(POINT_PARTY_TANKER_BONUS, lTankerBonus);
 	SetPoint(POINT_PARTY_BUFFER_BONUS, lBufferBonus);
@@ -3406,9 +3146,6 @@ void CHARACTER::ComputePoints()
 	// PC_BANG_ITEM_ADD
 	SetPoint(POINT_PC_BANG_EXP_BONUS, 0);
 	SetPoint(POINT_PC_BANG_DROP_BONUS, 0);
-#ifdef NEW_ADD_INVENTORY
-	SetPoint(POINT_BLACK, envanterim);
-#endif
 	// END_PC_BANG_ITEM_ADD
 
 	int iMaxHP, iMaxSP;
@@ -3416,7 +3153,6 @@ void CHARACTER::ComputePoints()
 
 	if (IsPC())
 	{
-		// 최대 생명력/정신력
 		iMaxHP = JobInitialPoints[GetJob()].max_hp + m_points.iRandomHP + GetPoint(POINT_HT) * JobInitialPoints[GetJob()].hp_per_ht;
 		iMaxSP = JobInitialPoints[GetJob()].max_sp + m_points.iRandomSP + GetPoint(POINT_IQ) * JobInitialPoints[GetJob()].sp_per_iq;
 		iMaxStamina = JobInitialPoints[GetJob()].max_stamina + GetPoint(POINT_HT) * JobInitialPoints[GetJob()].stamina_per_con;
@@ -3432,7 +3168,6 @@ void CHARACTER::ComputePoints()
 			}
 		}
 
-		// 기본 값들
 		SetPoint(POINT_MOV_SPEED,	100);
 		SetPoint(POINT_ATT_SPEED,	100);
 		PointChange(POINT_ATT_SPEED, GetPoint(POINT_PARTY_HASTE_BONUS));
@@ -3451,9 +3186,6 @@ void CHARACTER::ComputePoints()
 
 	if (IsPC())
 	{
-		// 말 타고 있을 때는 기본 스탯이 말의 기준 스탯보다 낮으면 높게 만든다.
-		// 따라서 말의 기준 스탯이 무사 기준이므로, 수라/무당은 전체 스탯 합이
-		// 대채적으로 더 올라가게 될 것이다.
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 		if (GetMountVnum() && !GetWear(WEAR_COSTUME_MOUNT))
 #else
@@ -3477,17 +3209,16 @@ void CHARACTER::ComputePoints()
 
 	ComputeBattlePoints();
 
-	// 기본 HP/SP 설정
 	if (iMaxHP != GetMaxHP())
 	{
-		SetRealPoint(POINT_MAX_HP, iMaxHP); // 기본HP를 RealPoint에 저장해 놓는다.
+		SetRealPoint(POINT_MAX_HP, iMaxHP);
 	}
 
 	PointChange(POINT_MAX_HP, 0);
 
 	if (iMaxSP != GetMaxSP())
 	{
-		SetRealPoint(POINT_MAX_SP, iMaxSP); // 기본SP를 RealPoint에 저장해 놓는다.
+		SetRealPoint(POINT_MAX_SP, iMaxSP);
 	}
 
 	PointChange(POINT_MAX_SP, 0);
@@ -3509,13 +3240,6 @@ void CHARACTER::ComputePoints()
 		}
 	}
 
-	// 용혼석 시스템
-	// ComputePoints에서는 케릭터의 모든 속성값을 초기화하고,
-	// 아이템, 버프 등에 관련된 모든 속성값을 재계산하기 때문에,
-	// 용혼석 시스템도 ActiveDeck에 있는 모든 용혼석의 속성값을 다시 적용시켜야 한다.
-#ifdef ENABLE_EVENT_MANAGER
-		CHARACTER_MANAGER::Instance().CheckBonusEvent(this);
-#endif
 	if (DragonSoul_IsDeckActivated())
 	{
 		for (int i = WEAR_MAX_NUM + DS_SLOT_MAX * DragonSoul_GetActiveDeck();
@@ -3538,10 +3262,13 @@ void CHARACTER::ComputePoints()
 
 	ComputeSkillPoints();
 
-	RestoreTalismanBonus();
-
 	RefreshAffect();
-	// @fixme118 part2 (before petsystem stuff)
+
+	CPetSystem * pPetSystem = GetPetSystem();
+	if (NULL != pPetSystem)
+		pPetSystem->RefreshBuff();
+
+	// @fixme118 part2 (after petsystem stuff)
 	if (IsPC())
 	{
 		if (this->GetHP() != iCurHP)
@@ -3550,18 +3277,9 @@ void CHARACTER::ComputePoints()
 			this->PointChange(POINT_SP, iCurSP-this->GetSP());
 	}
 
-	CPetSystem* pPetSystem = GetPetSystem();
-	if (NULL != pPetSystem)
-	{
-		pPetSystem->RefreshBuff();
-	}
-
 	UpdatePacket();
 }
 
-// m_dwPlayStartTime의 단위는 milisecond다. 데이터베이스에는 분단위로 기록하기
-// 때문에 플레이시간을 계산할 때 / 60000 으로 나눠서 하는데, 그 나머지 값이 남았
-// 을 때 여기에 dwTimeRemain으로 넣어서 제대로 계산되도록 해주어야 한다.
 void CHARACTER::ResetPlayTime(DWORD dwTimeRemain)
 {
 	m_dwPlayStartTime = get_dword_time() - dwTimeRemain;
@@ -3586,16 +3304,6 @@ EVENTFUNC(recovery_event)
 
 	if (!ch->IsPC())
 	{
-#ifdef ENABLE_DUNGEON_FUNC
-		if (ch->IsMonsterBlocked())
-		{
-			ch->m_pkRecoveryEvent = NULL;
-			return 0;
-		}
-#endif
-		//
-		// 몬스터 회복
-		//
 		if (ch->IsAffectFlag(AFF_POISON))
 			return PASSES_PER_SEC(MAX(1, ch->GetMobTable().bRegenCycle));
 #ifdef ENABLE_WOLFMAN_CHARACTER
@@ -3654,17 +3362,11 @@ EVENTFUNC(recovery_event)
 	}
 	else
 	{
-		//
-		// PC 회복
-		//
 		ch->CheckTarget();
-		//ch->UpdateSectree(); // 여기서 이걸 왜하지?
 		ch->UpdateKillerMode();
 
 		if (ch->IsAffectFlag(AFF_POISON) == true)
 		{
-			// 중독인 경우 자동회복 금지
-			// 파법술인 경우 자동회복 금지
 			return 3;
 		}
 #ifdef ENABLE_WOLFMAN_CHARACTER
@@ -3673,8 +3375,6 @@ EVENTFUNC(recovery_event)
 #endif
 		int iSec = (get_dword_time() - ch->GetLastMoveTime()) / 3000;
 
-		// SP 회복 루틴.
-		// 왜 이걸로 해서 함수로 빼놨는가 ?!
 		ch->DistributeSP(ch);
 
 		if (ch->GetMaxHP() <= ch->GetHP())
@@ -3705,12 +3405,9 @@ void CHARACTER::StartRecoveryEvent()
 	if (IsDead() || IsStun())
 		return;
 
-	if (IsNPC() && GetHP() >= GetMaxHP()) // 몬스터는 체력이 다 차있으면 시작 안한다.
+	if (IsNPC() && GetHP() >= GetMaxHP())
 		return;
-#if defined(__SHIP_DEFENSE__)
-	if (CShipDefenseManager::Instance().IsMast(this->GetRaceNum()))
-		return;
-#endif
+
 	char_event_info* info = AllocEventInfo<char_event_info>();
 
 	info->ch = this;
@@ -3758,7 +3455,6 @@ void CHARACTER::SetRotation(float fRot)
 	m_pointsInstant.fRot = fRot;
 }
 
-// x, y 방향으로 보고 선다.
 void CHARACTER::SetRotationToXY(long x, long y)
 {
 	SetRotation(GetDegreeFromPositionXY(GetX(), GetY(), x, y));
@@ -3771,27 +3467,19 @@ bool CHARACTER::CannotMoveByAffect() const
 
 bool CHARACTER::CanMove() const
 {
-	if (IsDead()) // prevent dead move hack @fixme431
-		return false;	
-	
 	if (CannotMoveByAffect())
 		return false;
 
-	if (GetMyShop())	// 상점 연 상태에서는 움직일 수 없음
+	if (GetMyShop())
 		return false;
 
-	// 0.2초 전이라면 움직일 수 없다.
 	/*
 	   if (get_float_time() - m_fSyncTime < 0.2f)
 	   return false;
 	 */
-	if (get_dword_time() - m_fSyncTime < 50)
-		return false;		
-	 
 	return true;
 }
 
-// 무조건 x, y 위치로 이동 시킨다.
 bool CHARACTER::Sync(long x, long y)
 {
 	if (!GetSectree())
@@ -3815,24 +3503,11 @@ bool CHARACTER::Sync(long x, long y)
 		return false;
 	}
 
-#ifdef ENABLE_CHECK_MOVESPEED_HACK
-	if (IsPC())
-	{
-		if (GetCShield()->CheckMoveSpeedhack(x, y, get_dword_time(), IsRiding(), GetMoveSpeed()))
-		{
-			LogManager::instance().HackLog("CShield-ServerSide-ErrorCode: Movespeed Hack", this);
-			Show(GetMapIndex(), GetX(), GetY(), 0);
-			Stop();
-		}
-	}
-#endif
-
 	SetRotationToXY(x, y);
 	SetXYZ(x, y, 0);
 
 	if (GetDungeon())
 	{
-		// 던젼용 이벤트 속성 변화
 		int iLastEventAttr = m_iEventAttr;
 		m_iEventAttr = new_tree->GetEventAttribute(x, y);
 
@@ -3887,8 +3562,6 @@ void CHARACTER::Stop()
 
 bool CHARACTER::Goto(long x, long y)
 {
-	// TODO 거리체크 필요
-	// 같은 위치면 이동할 필요 없음 (자동 성공)
 	if (GetX() == x && GetY() == y)
 		return false;
 
@@ -4023,16 +3696,8 @@ void CHARACTER::CalculateMoveDuration()
 	m_dwMoveStartTime = get_dword_time();
 }
 
-// x y 위치로 이동 한다. (이동할 수 있는 가 없는 가를 확인 하고 Sync 메소드로 실제 이동 한다)
-// 서버는 char의 x, y 값을 바로 바꾸지만,
-// 클라에서는 이전 위치에서 바꾼 x, y까지 interpolation한다.
-// 걷거나 뛰는 것은 char의 m_bNowWalking에 달려있다.
-// Warp를 의도한 것이라면 Show를 사용할 것.
 bool CHARACTER::Move(long x, long y)
 {
-	if (IsPC() && IsDead())	//@fixme431
-		return false;	
-	// 같은 위치면 이동할 필요 없음 (자동 성공)
 	if (GetX() == x && GetY() == y)
 		return true;
 
@@ -4101,7 +3766,11 @@ int CHARACTER::GetPolymorphPoint(BYTE type) const
 	return GetPoint(type);
 }
 
+#ifdef ENABLE_LONG_LONG
+long long CHARACTER::GetPoint(BYTE type) const
+#else
 int CHARACTER::GetPoint(BYTE type) const
+#endif
 {
 	if (type >= POINT_MAX_NUM)
 	{
@@ -4109,8 +3778,13 @@ int CHARACTER::GetPoint(BYTE type) const
 		return 0;
 	}
 
+#ifdef ENABLE_LONG_LONG
+	long long val = m_pointsInstant.points[type];
+	long long max_val = INT_MAX;
+#else
 	int val = m_pointsInstant.points[type];
 	int max_val = INT_MAX;
+#endif
 
 	switch (type)
 	{
@@ -4184,7 +3858,11 @@ int CHARACTER::GetLimitPoint(BYTE type) const
 	return (val);
 }
 
+#ifdef ENABLE_LONG_LONG
+void CHARACTER::SetPoint(BYTE type, long long val)
+#else
 void CHARACTER::SetPoint(BYTE type, int val)
+#endif
 {
 	if (type >= POINT_MAX_NUM)
 	{
@@ -4194,14 +3872,17 @@ void CHARACTER::SetPoint(BYTE type, int val)
 
 	m_pointsInstant.points[type] = val;
 
-	// 아직 이동이 다 안끝났다면 이동 시간 계산을 다시 해야 한다.
 	if (type == POINT_MOV_SPEED && get_dword_time() < m_dwMoveStartTime + m_dwMoveDuration)
 	{
 		CalculateMoveDuration();
 	}
 }
 
+#ifdef ENABLE_LONG_LONG
+long long CHARACTER::GetAllowedGold() const
+#else
 INT CHARACTER::GetAllowedGold() const
+#endif
 {
 	if (GetLevel() <= 10)
 		return 100000;
@@ -4220,9 +3901,23 @@ void CHARACTER::CheckMaximumPoints()
 		PointChange(POINT_SP, GetMaxSP() - GetSP());
 }
 
-void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast)
+#ifdef ENABLE_LONG_LONG
+void CHARACTER::PointChange(BYTE type, long long amount, bool bAmount, bool bBroadcast
+#ifdef __ENABLE_BLOCK_EXP__
+, bool bForceExp
+#endif
+)
+{
+	long long val = 0;
+#else
+void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
+#ifdef __ENABLE_BLOCK_EXP__
+, bool bForceExp
+#endif
+)
 {
 	int val = 0;
+#endif
 
 	//sys_log(0, "PointChange %d %d | %d -> %d cHP %d mHP %d", type, amount, GetPoint(type), GetPoint(type)+amount, GetHP(), GetMaxHP());
 
@@ -4281,7 +3976,7 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 
 		case POINT_NEXT_EXP:
 			val = GetNextExp();
-			bAmount = false;	// 무조건 bAmount는 false 여야 한다.
+			bAmount = false;
 			break;
 
 		case POINT_EXP:
@@ -4289,7 +3984,6 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 				DWORD exp = GetExp();
 				DWORD next_exp = GetNextExp();
 
-				// 청소년보호
 				if (g_bChinaIntoxicationCheck)
 				{
 					if (IsOverTime(OT_NONE))
@@ -4308,7 +4002,6 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 					}
 				}
 
-				// exp가 0 이하로 가지 않도록 한다
 				if ((amount < 0) && (exp < (DWORD)(-amount)))
 				{
 					sys_log(1, "%s AMOUNT < 0 %d, CUR EXP: %d", GetName(), -amount, exp);
@@ -4321,16 +4014,12 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 				{
 					if (gPlayerMaxLevel <= GetLevel())
 						return;
-					
-					if (GetQuestFlag("blocca_exp.no_exp") == 1)
-						return;
 
 					if (test_server)
 						ChatPacket(CHAT_TYPE_INFO, "You have gained %d exp.", amount);
 
 					DWORD iExpBalance = 0;
 
-					// 레벨 업!
 					if (exp + amount >= next_exp)
 					{
 						iExpBalance = (exp + amount) - next_exp;
@@ -4348,7 +4037,6 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 					DWORD q = DWORD(next_exp / 4.0f);
 					int iLevStep = GetRealPoint(POINT_LEVEL_STEP);
 
-					// iLevStep이 4 이상이면 레벨이 올랐어야 하므로 여기에 올 수 없는 값이다.
 					if (iLevStep >= 4)
 					{
 						sys_err("%s LEVEL_STEP bigger than 4! (%d)", GetName(), iLevStep);
@@ -4425,12 +4113,12 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 				}
 
 /* 				if (GetLevel() <= 10)
-					AutoGiveItem(27110, 1);
+					AutoGiveItem(27001, 2);
 				else if (GetLevel() <= 30)
-					AutoGiveItem(27110, 1);
+					AutoGiveItem(27002, 2);
 				else
 				{
-					AutoGiveItem(27110, 1);
+					AutoGiveItem(27002, 2);
 //					AutoGiveItem(27003, 2);
 				} */
 
@@ -4489,16 +4177,15 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 
 				if (val == 0)
 				{
-					// Stamina가 없으니 걷자!
+					// Stamina
 					SetNowWalking(true);
 				}
 				else if (prev_val == 0)
 				{
-					// 없던 스테미나가 생겼으니 이전 모드 복귀
 					ResetWalking();
 				}
 
-				if (amount < 0 && val != 0) // 감소는 보내지않는다.
+				if (amount < 0 && val != 0)
 					return;
 			}
 			break;
@@ -4508,7 +4195,6 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 				SetPoint(type, GetPoint(type) + amount);
 
 				//SetMaxHP(GetMaxHP() + amount);
-				// 최대 생명력 = (기본 최대 생명력 + 추가) * 최대생명력%
 				int hp = GetRealPoint(POINT_MAX_HP);
 				int add_hp = MIN(3500, hp * GetPoint(POINT_MAX_HP_PCT) / 100);
 				add_hp += GetPoint(POINT_MAX_HP);
@@ -4525,7 +4211,6 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 				SetPoint(type, GetPoint(type) + amount);
 
 				//SetMaxSP(GetMaxSP() + amount);
-				// 최대 정신력 = (기본 최대 정신력 + 추가) * 최대정신력%
 				int sp = GetRealPoint(POINT_MAX_SP);
 				int add_sp = MIN(800, sp * GetPoint(POINT_MAX_SP_PCT) / 100);
 				add_sp += GetPoint(POINT_MAX_SP);
@@ -4555,34 +4240,26 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 			SetMaxStamina(GetMaxStamina() + amount);
 			val = GetMaxStamina();
 			break;
-			
-#ifdef NEW_ADD_INVENTORY
-		case POINT_BLACK:
-			{
-				const int64_t Envantertoplami = static_cast<int64_t>(Black_Envanter()) + static_cast<int64_t>(amount);
-				if (Envantertoplami > 18)
-				{
-					sys_err("[ENVANTER SINIRI HATASI]");
-					return;
-				}
-				Set_Envanter_Black(Black_Envanter() + amount);
-				val = Black_Envanter();
-			}
-			break;
-#endif
 
 		case POINT_GOLD:
 			{
+#ifdef ENABLE_LONG_LONG
+				const long long nTotalMoney = static_cast<long long>(GetGold()) + static_cast<long long>(amount);
+#else
 				const int64_t nTotalMoney = static_cast<int64_t>(GetGold()) + static_cast<int64_t>(amount);
+#endif
 
 				if (GOLD_MAX <= nTotalMoney)
 				{
+#ifdef ENABLE_LONG_LONG
+					sys_err("[OVERFLOW_GOLD] OriGold %d AddedGold %lld id %u Name %s ", GetGold(), amount, GetPlayerID(), GetName());
+#else
 					sys_err("[OVERFLOW_GOLD] OriGold %d AddedGold %d id %u Name %s ", GetGold(), amount, GetPlayerID(), GetName());
+#endif
 					LogManager::instance().CharLog(this, GetGold() + amount, "OVERFLOW_GOLD", "");
 					return;
 				}
 
-				// 청소년보호
 				if (g_bChinaIntoxicationCheck && amount > 0)
 				{
 					if (IsOverTime(OT_NONE))
@@ -4605,24 +4282,6 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 				val = GetGold();
 			}
 			break;
-	
-#ifdef ENABLE_CHEQUE_SYSTEM
-		case POINT_CHEQUE:
-		{
-			const int64_t nTotalCheque = static_cast<int64_t>(GetCheque()) + static_cast<int64_t>(amount);
-
-			if (CHEQUE_MAX <= nTotalCheque)
-			{
-				sys_err("[OVERFLOW_CHEQUE] OriCheque %d AddedCheque %d id %u Name %s ", GetCheque(), amount, GetPlayerID(), GetName());
-				LogManager::instance().CharLog(this, GetCheque() + amount, "OVERFLOW_CHEQUE", "");
-				return;
-			}
-
-			SetCheque(GetCheque() + amount);
-			val = GetCheque();
-		}
-		break;
-#endif
 
 		case POINT_SKILL:
 		case POINT_STAT:
@@ -4663,12 +4322,12 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 		case POINT_HP_RECOVERY:
 		case POINT_SP_RECOVERY:
 
-		case POINT_ATTBONUS_HUMAN:	// 42 인간에게 강함
-		case POINT_ATTBONUS_ANIMAL:	// 43 동물에게 데미지 % 증가
-		case POINT_ATTBONUS_ORC:		// 44 웅귀에게 데미지 % 증가
-		case POINT_ATTBONUS_MILGYO:	// 45 밀교에게 데미지 % 증가
-		case POINT_ATTBONUS_UNDEAD:	// 46 시체에게 데미지 % 증가
-		case POINT_ATTBONUS_DEVIL:	// 47 마귀(악마)에게 데미지 % 증가
+		case POINT_ATTBONUS_HUMAN:	// 42
+		case POINT_ATTBONUS_ANIMAL:	// 43
+		case POINT_ATTBONUS_ORC:	// 44
+		case POINT_ATTBONUS_MILGYO:	// 45
+		case POINT_ATTBONUS_UNDEAD:	// 46
+		case POINT_ATTBONUS_DEVIL:	// 47
 
 		case POINT_ATTBONUS_MONSTER:
 		case POINT_ATTBONUS_SURA:
@@ -4678,30 +4337,7 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 #ifdef ENABLE_WOLFMAN_CHARACTER
 		case POINT_ATTBONUS_WOLFMAN:
 #endif
-#ifdef ENABLE_NEW_TALISMAN_GF
-		case POINT_ATTBONUS_ELEC:
-		case POINT_ATTBONUS_FIRE:
-		case POINT_ATTBONUS_ICE:
-		case POINT_ATTBONUS_WIND:
-		case POINT_ATTBONUS_EARTH:
-		case POINT_ATTBONUS_DARK:
 
-		case POINT_RESIST_HUMAN:
-
-		case POINT_RESIST_SWORD_REDUCTION:		
-		case POINT_RESIST_TWOHAND_REDUCTION:	
-		case POINT_RESIST_DAGGER_REDUCTION:	
-		case POINT_RESIST_BELL_REDUCTION:		
-		case POINT_RESIST_FAN_REDUCTION:		
-		case POINT_RESIST_BOW_REDUCTION:
-
-		case POINT_ATTBONUS_ZODIAC:
-		case POINT_ATTBONUS_DESERT:
-		case POINT_ATTBONUS_INSECT:	
-#ifdef ENABLE_WOLFMAN_CHARACTER
-		case POINT_RESIST_CLAW_REDUCTION:
-#endif
-#endif
 		case POINT_POISON_PCT:
 #ifdef ENABLE_WOLFMAN_CHARACTER
 		case POINT_BLEEDING_PCT:
@@ -4718,11 +4354,11 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 		case POINT_RESIST_PENETRATE:
 		case POINT_CURSE_PCT:
 
-		case POINT_STEAL_HP:		// 48 생명력 흡수
-		case POINT_STEAL_SP:		// 49 정신력 흡수
+		case POINT_STEAL_HP:		// 48
+		case POINT_STEAL_SP:		// 49
 
-		case POINT_MANA_BURN_PCT:	// 50 마나 번
-		case POINT_DAMAGE_SP_RECOVER:	// 51 공격당할 시 정신력 회복 확률
+		case POINT_MANA_BURN_PCT:	// 50
+		case POINT_DAMAGE_SP_RECOVER:	// 51
 		case POINT_RESIST_NORMAL_DAMAGE:
 		case POINT_RESIST_SWORD:
 		case POINT_RESIST_TWOHAND:
@@ -4746,13 +4382,13 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 		case POINT_RESIST_ICE:
 		case POINT_RESIST_EARTH:
 		case POINT_RESIST_DARK:
-		case POINT_REFLECT_MELEE:	// 67 공격 반사
-		case POINT_REFLECT_CURSE:	// 68 저주 반사
-		case POINT_POISON_REDUCE:	// 69 독데미지 감소
+		case POINT_REFLECT_MELEE:	// 67
+		case POINT_REFLECT_CURSE:	// 68
+		case POINT_POISON_REDUCE:	// 69
 #ifdef ENABLE_WOLFMAN_CHARACTER
 		case POINT_BLEEDING_REDUCE:
 #endif
-		case POINT_KILL_SP_RECOVER:	// 70 적 소멸시 MP 회복
+		case POINT_KILL_SP_RECOVER:	// 70
 		case POINT_KILL_HP_RECOVERY:	// 75
 		case POINT_HIT_HP_RECOVERY:
 		case POINT_HIT_SP_RECOVERY:
@@ -4781,13 +4417,6 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 		case POINT_RESIST_ASSASSIN :
 		case POINT_RESIST_SURA :
 		case POINT_RESIST_SHAMAN :
-#ifdef ENABLE_BONUS_BOSS
-		case POINT_ATTBONUS_BOSS :
-#endif
-#ifdef ENABLE_BONUS_METIN
-		case POINT_ATTBONUS_METIN :
-#endif
-		case POINT_FISHING_RARE:
 #ifdef ENABLE_WOLFMAN_CHARACTER
 		case POINT_RESIST_WOLFMAN :
 #endif
@@ -4990,7 +4619,7 @@ void CHARACTER::ApplyPoint(BYTE bApplyType, int iVal)
 	switch (bApplyType)
 	{
 		case APPLY_NONE:			// 0
-			break;;
+			break;
 
 		case APPLY_CON:
 			PointChange(POINT_HT, iVal);
@@ -5006,9 +4635,8 @@ void CHARACTER::ApplyPoint(BYTE bApplyType, int iVal)
 		case APPLY_SKILL:
 			// SKILL_DAMAGE_BONUS
 			{
-				// 최상위 비트 기준으로 8비트 vnum, 9비트 add, 15비트 change
 				// 00000000 00000000 00000000 00000000
-				// ^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 				// vnum     ^ add       change
 				BYTE bSkillVnum = (BYTE) (((DWORD)iVal) >> 24);
 				int iAdd = iVal & 0x00800000;
@@ -5029,12 +4657,6 @@ void CHARACTER::ApplyPoint(BYTE bApplyType, int iVal)
 			// END_OF_SKILL_DAMAGE_BONUS
 			break;
 
-		// NOTE: 아이템에 의한 최대HP 보너스나 퀘스트 보상 보너스가 똑같은 방식을 사용하므로
-		// 그냥 MAX_HP만 계산하면 퀘스트 보상의 경우 문제가 생김. 사실 원래 이쪽이 합리적이기도 하고..
-		// 바꾼 공식은 현재 최대 hp와 보유 hp의 비율을 구한 뒤 바뀔 최대 hp를 기준으로 hp를 보정한다.
-		// 원래 PointChange에서 하는게 좋을것 같은데 설계 문제로 어려워서 skip..
-		// SP도 똑같이 계산한다.
-		// Mantis : 101460			~ ity ~
 		case APPLY_MAX_HP:
 		case APPLY_MAX_HP_PCT:
 			{
@@ -5153,45 +4775,16 @@ void CHARACTER::ApplyPoint(BYTE bApplyType, int iVal)
 #ifdef ENABLE_WOLFMAN_CHARACTER
 		case APPLY_RESIST_WOLFMAN :
 #endif
-		case APPLY_ENERGY:					// 82 기력
-		case APPLY_DEF_GRADE:				// 83 방어력. DEF_GRADE_BONUS는 클라에서 두배로 보여지는 의도된 버그(...)가 있다.
-		case APPLY_COSTUME_ATTR_BONUS:		// 84 코스튬 아이템에 붙은 속성치 보너스
-		case APPLY_MAGIC_ATTBONUS_PER:		// 85 마법 공격력 +x%
-		case APPLY_MELEE_MAGIC_ATTBONUS_PER:			// 86 마법 + 밀리 공격력 +x%
-#ifdef ENABLE_BONUS_METIN
-		case APPLY_ATTBONUS_METIN:
-#endif
-#ifdef ENABLE_BONUS_BOSS
-		case APPLY_ATTBONUS_BOSS:
-#endif
+		case APPLY_ENERGY:					// 82
+		case APPLY_DEF_GRADE:				// 83
+		case APPLY_COSTUME_ATTR_BONUS:		// 84
+		case APPLY_MAGIC_ATTBONUS_PER:		// 85
+		case APPLY_MELEE_MAGIC_ATTBONUS_PER:			// 86
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 		case APPLY_ACCEDRAIN_RATE:			//97
 #endif
 #ifdef ENABLE_MAGIC_REDUCTION_SYSTEM
 		case APPLY_RESIST_MAGIC_REDUCTION:	//98
-#endif
-#ifdef ENABLE_NEW_TALISMAN_GF
-		case APPLY_ATTBONUS_ELEC:
-		case APPLY_ATTBONUS_FIRE:
-		case APPLY_ATTBONUS_ICE:
-		case APPLY_ATTBONUS_WIND:
-		case APPLY_ATTBONUS_EARTH:
-		case APPLY_ATTBONUS_DARK:
-		case APPLY_RESIST_HUMAN: // 105
-
-		case APPLY_RESIST_SWORD_REDUCTION: //106		
-		case APPLY_RESIST_TWOHAND_REDUCTION: //107
-		case APPLY_RESIST_DAGGER_REDUCTION:	//108
-		case APPLY_RESIST_BELL_REDUCTION: //109		
-		case APPLY_RESIST_FAN_REDUCTION: //110		
-		case APPLY_RESIST_BOW_REDUCTION: //111
-
-		case APPLY_ATTBONUS_ZODIAC: //112
-		case APPLY_ATTBONUS_DESERT: //113
-		case APPLY_ATTBONUS_INSECT: //114	
-#ifdef ENABLE_WOLFMAN_CHARACTER
-		case APPLY_RESIST_CLAW_REDUCTION: //115
-#endif
 #endif
 			PointChange(aApplyInfo[bApplyType].bPointType, iVal);
 			break;
@@ -5220,46 +4813,6 @@ void CHARACTER::Motion(BYTE motion, LPCHARACTER victim)
 	MotionPacketEncode(motion, victim, &pack_motion);
 	PacketAround(&pack_motion, sizeof(struct packet_motion));
 }
-
-#ifdef ENABLE_AFK_MODE_SYSTEM
-EVENTFUNC(update_character_event)
-{
-	char_event_info* info = dynamic_cast<char_event_info*>( event->info );
-	if ( info == NULL )
-	{
-		sys_err( "update_character_event> <Factor> Null pointer" );
-		return 0;
-	}
-
-	LPCHARACTER	ch = info->ch;
-
-	if (NULL == ch || !ch->IsPC())
-		return 0;
-
-	if(ch->IsAway())
-		return PASSES_PER_SEC(15);
-
-	if (time(0)-ch->GetLastPacketTime() > (60*5))//3min
-	{
-		if (!ch->FindAffect(AFFECT_AFK))
-		{
-			ch->SetAway(true);
-			ch->AddAffect(AFFECT_AFK, POINT_NONE, 0, AFF_AFK, INFINITE_AFFECT_DURATION, 0, true, true);
-		}
-	}
-	return PASSES_PER_SEC(15);
-}
-
-void CHARACTER::StartUpdateCharacterEvent()
-{
-	if (m_pkUpdateCharacter)
-		return;
-	
-	char_event_info* info = AllocEventInfo<char_event_info>();
-	info->ch = this;
-	m_pkUpdateCharacter = event_create(update_character_event, info, PASSES_PER_SEC(15));
-}
-#endif
 
 EVENTFUNC(save_event)
 {
@@ -5317,7 +4870,6 @@ void CHARACTER::MonsterLog(const char* format, ...)
 	else
 		len += len2;
 
-	// \0 문자 포함
 	++len;
 
 	va_end(args);
@@ -5381,7 +4933,7 @@ void CHARACTER::mining_cancel()
 	{
 		sys_log(0, "XXX MINING CANCEL");
 		event_cancel(&m_pkMiningEvent);
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"채광을 중단하였습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("채광을 중단하였습니다."));
 	}
 }
 
@@ -5407,13 +4959,12 @@ void CHARACTER::mining(LPCHARACTER chLoad)
 
 	if (!pick || pick->GetType() != ITEM_PICK)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"곡괭이를 장착하세요."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("곡괭이를 장착하세요."));
 		return;
 	}
 
-	int count = number(5, 15); // 동작 횟수, 한 동작당 2초
+	int count = number(5, 15);
 
-	// 채광 동작을 보여줌
 	TPacketGCDigMotion p;
 	p.header = HEADER_GC_DIG_MOTION;
 	p.vid = GetVID();
@@ -5434,7 +4985,6 @@ void CHARACTER::fishing()
 		return;
 	}
 
-	// 못감 속성에서 낚시를 시도한다?
 	{
 		LPSECTREE_MAP pkSectreeMap = SECTREE_MANAGER::instance().GetMap(GetMapIndex());
 
@@ -5446,23 +4996,22 @@ void CHARACTER::fishing()
 
 		if (IS_SET(dwAttr, ATTR_BLOCK))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"낚시를 할 수 있는 곳이 아닙니다"));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("낚시를 할 수 있는 곳이 아닙니다"));
 			return;
 		}
 	}
 
 	LPITEM rod = GetWear(WEAR_WEAPON);
 
-	// 낚시대 장착
 	if (!rod || rod->GetType() != ITEM_ROD)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"낚시대를 장착 하세요."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("낚시대를 장착 하세요."));
 		return;
 	}
 
 	if (0 == rod->GetSocket(2))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"미끼를 끼고 던져 주세요."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("미끼를 끼고 던져 주세요."));
 		return;
 	}
 
@@ -5488,7 +5037,7 @@ void CHARACTER::fishing_take()
 	}
 	else
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"낚시대가 아닌 물건으로 낚시를 할 수 없습니다!"));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("낚시대가 아닌 물건으로 낚시를 할 수 없습니다!"));
 	}
 
 	event_cancel(&m_pkFishingEvent);
@@ -5532,7 +5081,6 @@ void CHARACTER::SetNextStatePulse(int iNextPulse)
 }
 
 
-// 캐릭터 인스턴스 업데이트 함수.
 void CHARACTER::UpdateCharacter(DWORD dwPulse)
 {
 	CFSM::Update();
@@ -5554,362 +5102,19 @@ void CHARACTER::SetExchange(CExchange * pkExchange)
 	m_pkExchange = pkExchange;
 }
 
-#if defined(__BL_SOUL_ROULETTE__)
-void CHARACTER::SetSoulRoulette(CSoulRoulette* pt)
-{
-	if (pSoulRoulette)
-		delete pSoulRoulette;
-	pSoulRoulette = pt;
-}
-#endif
-
-#ifdef OFFLINE_SHOP
-void CHARACTER::SetOfflineShop(LPOFFLINESHOP pkOfflineShop)
-{
-	if ((m_pkOfflineShop = pkOfflineShop))
-		SET_BIT(m_pointsInstant.instant_flag, INSTANT_FLAG_OFFLINE_SHOP);
-	else
-	{
-		REMOVE_BIT(m_pointsInstant.instant_flag, INSTANT_FLAG_OFFLINE_SHOP);
-		SetOfflineShopOwner(NULL);
-	}
-}
-
-void CHARACTER::OpenMyOfflineShop(const char * c_pszSign, TShopItemTable * pTable, BYTE bItemCount, BYTE bTime)
-{
-	if (thecore_pulse() - GetMyOfflineShopTime() < PASSES_PER_SEC(1))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Esti prea rapid! Mai incet!"));
-		return;
-	}
-
-#ifdef WJ_SECURITY_SYSTEM
-	if (IsActivateSecurity() == true)
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti deschide un offline shop cu cheia de securitate activa"));
-		return;
-	}
-#endif
-
-	SetMyOfflineShopTime();
-
-	quest::PC * pPC = quest::CQuestManager::Instance().GetPC(GetPlayerID());
-	if (pPC->IsRunning())
-		return;
-
-	if (IsOpenSafebox() || GetShop() || IsCubeOpen() || IsDead() || GetExchange() || GetOfflineShop() || GetMyShop() || GetMailBox() || bItemCount <= 0 || bItemCount > OFFLINE_SHOP_HOST_ITEM_MAX_NUM)
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Asigurati-va ca nu aveti alte ferestre deschise."));
-		return;
-	}
-#ifdef SASH_ITEM_COPY_FIX
-	if (IsSashCombinationOpen() || IsSashAbsorptionOpen())
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("EmeriaSecurityFix"));
-		return;
-	}
-#endif
-
-	if (!IsOwnerCreateShopOffline())
-		return;
-
-	if (!COfflineShopManager::instance().MapCheck(GetMapIndex(), GetEmpire()))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu puteti face asta in aceasta harta!"));
-		return;
-	}
-
-	if (!COfflineShopManager::instance().ChannelCheck(g_bChannel))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Nu puteti face asta pe acest canal!"));
-		return;
-	}
-
-	if (COfflineShopManager::instance().HaveOfflineShopOnAccount(GetDesc()->GetAccountTable().id))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti deschide mai multe magazine de pe acelasi cont."));
-		return;
-	}
-
-	if (IsAffectFlag(AFF_SHOPOWNER))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ai deja un magazin deschis."));
-		return;
-	}
-
-	std::set<TItemPos> cont;
-	for (BYTE i = 0; i < bItemCount; ++i)
-	{
-		if (cont.find((pTable + i)->pos) != cont.end())
-		{
-			sys_err("MYSHOP: duplicate shop item detected! (name: %s)", GetName());
-			return;
-		}
-
-		// ANTI_GIVE, ANTI_MYSHOP check
-		LPITEM pkItem = GetItem((pTable + i)->pos);
-
-		if (pkItem)
-		{
-			const TItemTable * item_table = pkItem->GetProto();
-
-			if (item_table && (IS_SET(item_table->dwAntiFlags, ITEM_ANTIFLAG_GIVE | ITEM_ANTIFLAG_MYSHOP)))
-			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("유료화 아이템은 개인상점에서 판매할 수 없습니다."));
-				return;
-			}
-
-
-#ifdef ENABLE_NEW_ITEM_LOCK_SYSTEM
-			if (pkItem->GetLocks() > 0)
-			{
-				ChatPacket(CHAT_TYPE_INFO, "Kilitli itemi satamazs?.!");
-				return;
-			}
-#endif
-
-			if (pkItem->IsEquipped() == true)
-			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("장비중인 아이템은 개인상점에서 판매할 수 없습니다."));
-				return;
-			}
-
-			if (true == pkItem->isLocked())
-			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("사용중인 아이템은 개인상점에서 판매할 수 없습니다."));
-				return;
-			}
-		}
-
-		cont.insert((pTable + i)->pos);
-	}
-
-	if (g_bOfflineShopNeedMoney && (GetGold() < g_iOfflineShopMoney))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu ai suficient yang pentru a deschide magazinul. (%d)"), g_iOfflineShopMoney);
-		return;
-	}
-
-	if (g_bOfflineShopNeedLevel && (GetLevel() < g_iOfflineShopLevel))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Trebuie sa fii cel putin nivelul: (%d)."), g_iOfflineShopLevel);
-		return;
-	}
-
-	// BEGIN_BUG_FIX
-	char szQuery[1024];
-	snprintf(szQuery, sizeof(szQuery),
-		"SELECT "
-		"pos"
-		", count"
-		", vnum"
-		", socket0"
-		", socket1"
-		", socket2"
-#ifdef ENABLE_FIX_PET_TRANSPORT_BOX
-		", socket3"
-#endif
-		", attrtype0"
-		", attrvalue0"
-		", attrtype1"
-		", attrvalue1"
-		", attrtype2"
-		", attrvalue2"
-		", attrtype3"
-		", attrvalue3"
-		", attrtype4"
-		", attrvalue4"
-		", attrtype5"
-		", attrvalue5"
-		", attrtype6"
-		", attrvalue6"
-#ifdef __FROZENBONUS_SYSTEM__
-		", attrfrozen0"
-		", attrfrozen1"
-		", attrfrozen2"
-		", attrfrozen3"
-		", attrfrozen4"
-		", attrfrozen5"
-		", attrfrozen6"
-#endif
-#ifdef CHANGELOOK_SYSTEM
-		", transmutation"
-#endif
-		" FROM %soffline_shop_item WHERE owner_id = %u", get_table_postfix(), GetPlayerID()
-		);
-
-	std::unique_ptr<SQLMsg> pMsg(DBManager::Instance().DirectQuery(szQuery));
-
-	if (pMsg->Get()->uiNumRows > 0)
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Mai intai trebuie sa colectati itemele pe care le aveti in magazinul offline!"));
-		return;
-	}
-	// END_OF_BUG_FIX
-
-	LPCHARACTER npc = CHARACTER_MANAGER::instance().SpawnMob(30000, GetMapIndex(), GetX(), GetY(), GetZ(), false, -1, false, true, GetPlayerID(), GetDesc()->GetAccountTable().id);
-
-	if (!npc)
-		return;
-
-	npc->SetOfflineShopTimer(bTime * 60 * 60);
-	npc->StartOfflineShopUpdateEvent(GetPlayerID());
-
-	LPOFFLINESHOP pkOfflineShop = COfflineShopManager::instance().CreateOfflineShop(npc, GetPlayerID());
-
-	if (!pkOfflineShop)
-		return;
-
-	// Close Shop Offlne
-	// TPacketOfflineShopDestroy pCloseShop;
-	// pCloseShop.dwOwnerID = GetPlayerID();
-	// db_clientdesc->DBPacket(HEADER_GD_OFFLINESHOP_DESTROY, 0, &pCloseShop, sizeof(pCloseShop));
-	// Close Shop Offlne		
-
-	// LogManager::instance().OfflineShopLog(GetDesc()->GetAccountTable().id, "", "OPEN");
-	COfflineShopManager::instance().InsertOfflineShopToAccount(GetDesc()->GetAccountTable().id);
-
-	AddAffect(AFFECT_SHOPOWNER, POINT_NONE, 0, AFF_SHOPOWNER, INFINITE_AFFECT_DURATION, 0, true);
-	if (g_bOfflineShopNeedMoney)
-		PointChange(POINT_GOLD, -g_iOfflineShopMoney);
-
-	npc->SetOfflineShop(pkOfflineShop);
-	pkOfflineShop->SetShopItems(pTable, bItemCount, this);
-
-	char szSign[SHOP_SIGN_MAX_LEN + 1];
-/* #ifdef OFFLINE_SHOP_BUG_FIX
-	if (strlen(szSign) == 0)
-	{
-		ChatPacket(CHAT_TYPE_INFO, "FIX");
-		return;
-	}
-
-	if (strstr(szSign, "%") || strstr(szSign, "'"))
-	{
-		ChatPacket(CHAT_TYPE_INFO, "FIX");
-		return;
-	}
-#endif */
-	strlcpy(szSign, c_pszSign, sizeof(szSign));
-	pkOfflineShop->SetShopSign(szSign);
-
-	npc->SetName(GetName());
-	SetOfflineShopVID(npc->GetVID());
-	npc->Show(GetMapIndex(), GetX(), GetY(), GetZ(), true);
-
-	TPacketGCShopSign p;
-	p.bHeader = HEADER_GC_OFFLINE_SHOP_SIGN;
-	p.dwVID = npc->GetVID();
-	strlcpy(p.szSign, c_pszSign, sizeof(p.szSign));
-	PacketAround(&p, sizeof(TPacketGCShopSign));
-
-	// Create Shop Offlne
-	TPacketOfflineShopCreate pStartShop;
-	pStartShop.dwID = GetDesc()->GetAccountTable().id;
-	pStartShop.dwOwnerID = GetPlayerID();
-	strlcpy(pStartShop.szNamePlayer, GetName(), sizeof(pStartShop.szNamePlayer));
-	strlcpy(pStartShop.szSign, c_pszSign, sizeof(pStartShop.szSign));
-	pStartShop.dwRemainTime = bTime * 60 * 60 + get_global_time();
-	pStartShop.iMapIndex = GetMapIndex();
-	pStartShop.x = GetX();
-	pStartShop.y = GetY();
-	pStartShop.z = GetZ();
-	pStartShop.channel = g_bChannel;
-	
-	db_clientdesc->DBPacket(HEADER_GD_OFFLINESHOP_CREATE, 0, &pStartShop, sizeof(pStartShop));
-	// Create Shop Offlne
-
-	ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Magazin Offline> Magazinul tau se va inchide dupa %d ore."), bTime);
-
-	// BEGIN_COUNTER_UPDATE
-	TPacketUpdateOfflineShopsCount pCount;
-	pCount.bIncrease = true;
-	db_clientdesc->DBPacket(HEADER_GD_UPDATE_OFFLINESHOP_COUNT, 0, &pCount, sizeof(pCount));
-	// END_OF_COUNTER_UPDATE
-
-	ChatPacket(CHAT_TYPE_COMMAND, "CloseOfflineShopBuilderWindow");
-}
-
-EVENTFUNC(offline_shop_update_event)
-{
-	char_event_info* pInfo = dynamic_cast<char_event_info*>(event->info);
-
-	if (pInfo == NULL)
-	{
-		sys_err("offline_shop_update_event> <Factor> Null pointer");
-		return 0;
-	}
-
-	LPCHARACTER npc = pInfo->ch;
-
-	if (npc == NULL)
-		return 0;
-
-	int remain = npc->GetOfflineShopTimer() - processing_time / passes_per_sec;
-
-	if (remain <= 0)
-	{
-		sys_log(0, "offline_shop_update_event: expired %s", npc->GetName());
-
-		COfflineShopManager::instance().DestroyOfflineShop(NULL, npc->GetVID(), pInfo->dwPlayerID, false);
-		M2_DESTROY_CHARACTER(npc);
-		return 0;
-	}
-
-	if (npc->GetOfflineShopSaveTime() >= g_iOfflineShopSaveTime)
-		npc->SetOfflineShopTimer(1);
-
-	npc->SetOfflineShopTimer(remain);
-	npc->SetOfflineShopSaveTime(npc->GetOfflineShopSaveTime() + 1);
-
-	return PASSES_PER_SEC(MIN(60, remain));
-}
-
-void CHARACTER::StartOfflineShopUpdateEvent(DWORD dwPlayerID)
-{
-	if (m_pkOfflineShopUpdateEvent)
-		return;
-
-	if (IsPC() || IsMonster())
-		return;
-
-	char_event_info * pInfo = AllocEventInfo<char_event_info>();
-	pInfo->ch = this;
-	pInfo->dwPlayerID = dwPlayerID;
-	m_pkOfflineShopUpdateEvent = event_create(offline_shop_update_event, pInfo, PASSES_PER_SEC(60));
-}
-
-void CHARACTER::StopOfflineShopUpdateEvent()
-{
-	m_pointsInstant.bSaveTime = 0;
-	m_pointsInstant.leftTime = 0;
-	event_cancel(&m_pkOfflineShopUpdateEvent);
-}
-#endif
-
-void CHARACTER::SetPart(BYTE bPartPos, WORD wVal)
+void CHARACTER::SetPart(BYTE bPartPos, DWORD wVal)
 {
 	assert(bPartPos < PART_MAX_NUM);
 	m_pointsInstant.parts[bPartPos] = wVal;
 }
 
-WORD CHARACTER::GetPart(BYTE bPartPos) const
-	{
-	    assert(bPartPos < PART_MAX_NUM);
-#if defined (ENABLE_EFFECT_COSTUME_SYSTEM) && defined (ENABLE_DECORUM)
-	if (bPartPos == PART_EFFECT && IsPC() && !m_pointsInstant.parts[bPartPos])
-	{
-		const int nStartEffectDecorum = 17;
-		
-		int nPosition = -1;	
-		if ((nPosition = CHARACTER_MANAGER::instance().IsSeasonChampionDecorum(GetPlayerID())) != -1)
-			return nStartEffectDecorum + nPosition;
-	}
-#endif		
-	    return m_pointsInstant.parts[bPartPos];
-	}
+DWORD CHARACTER::GetPart(BYTE bPartPos) const
+{
+	assert(bPartPos < PART_MAX_NUM);
+	return m_pointsInstant.parts[bPartPos];
+}
 
-WORD CHARACTER::GetOriginalPart(BYTE bPartPos) const
+DWORD CHARACTER::GetOriginalPart(BYTE bPartPos) const
 {
 	switch (bPartPos)
 	{
@@ -5918,20 +5123,20 @@ WORD CHARACTER::GetOriginalPart(BYTE bPartPos) const
 				return GetPart(PART_MAIN);
 			else
 				return m_pointsInstant.bBasePart;
+
 		case PART_HAIR:
 			return GetPart(PART_HAIR);
+
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 		case PART_ACCE:
 			return GetPart(PART_ACCE);
 #endif
+
 #ifdef ENABLE_WEAPON_COSTUME_SYSTEM
 		case PART_WEAPON:
 			return GetPart(PART_WEAPON);
 #endif
-#ifdef ENABLE_AURA_SYSTEM
-		case PART_AURA:
-			return GetPart(PART_AURA);
-#endif
+
 		default:
 			return 0;
 	}
@@ -5948,7 +5153,7 @@ bool CHARACTER::SetSyncOwner(LPCHARACTER ch, bool bRemoveFromList)
 	if (IS_SET(m_pointsInstant.dwAIFlag, AIFLAG_NOMOVE))
 		return false;
 	// END_OF_TRENT_MONSTER
-	
+
 	if (ch) // @fixme131
 	{
 		if (!battle_is_attackable(ch, this))
@@ -5974,7 +5179,6 @@ bool CHARACTER::SetSyncOwner(LPCHARACTER ch, bool bRemoveFromList)
 		if (m_pkChrSyncOwner)
 			sys_log(1, "SyncRelease %s %p from %s", GetName(), this, m_pkChrSyncOwner->GetName());
 
-		// 리스트에서 제거하지 않더라도 포인터는 NULL로 셋팅되어야 한다.
 		m_pkChrSyncOwner = NULL;
 	}
 	else
@@ -5982,12 +5186,14 @@ bool CHARACTER::SetSyncOwner(LPCHARACTER ch, bool bRemoveFromList)
 		if (!IsSyncOwner(ch))
 			return false;
 
-		// 거리가 200 이상이면 SyncOwner가 될 수 없다.
 		if (DISTANCE_APPROX(GetX() - ch->GetX(), GetY() - ch->GetY()) > 250)
 		{
 			sys_log(1, "SetSyncOwner distance over than 250 %s %s", GetName(), ch->GetName());
 
-			return m_pkChrSyncOwner == ch;
+			if (m_pkChrSyncOwner == ch)
+				return true;
+
+			return false;
 		}
 
 		if (m_pkChrSyncOwner != ch)
@@ -5995,27 +5201,21 @@ bool CHARACTER::SetSyncOwner(LPCHARACTER ch, bool bRemoveFromList)
 			if (m_pkChrSyncOwner)
 			{
 				sys_log(1, "SyncRelease %s %p from %s", GetName(), this, m_pkChrSyncOwner->GetName());
-				
-				if (std::find(m_pkChrSyncOwner->m_kLst_pkChrSyncOwned.begin(), m_pkChrSyncOwner->m_kLst_pkChrSyncOwned.end(), this) != m_pkChrSyncOwner->m_kLst_pkChrSyncOwned.end())
-					m_pkChrSyncOwner->m_kLst_pkChrSyncOwned.remove(this);
+				m_pkChrSyncOwner->m_kLst_pkChrSyncOwned.remove(this);
 			}
 
 			m_pkChrSyncOwner = ch;
 			m_pkChrSyncOwner->m_kLst_pkChrSyncOwned.push_back(this);
 
-			// SyncOwner가 바뀌면 LastSyncTime을 초기화한다.
 			static const timeval zero_tv = {0, 0};
 			SetLastSyncTime(zero_tv);
 
 			sys_log(1, "SetSyncOwner set %s %p to %s", GetName(), this, ch->GetName());
 		}
 
-		m_fSyncTime = get_dword_time();
+		m_fSyncTime = get_float_time();
 	}
 
-	// TODO: Sync Owner가 같더라도 계속 패킷을 보내고 있으므로,
-	//       동기화 된 시간이 3초 이상 지났을 때 풀어주는 패킷을
-	//       보내는 방식으로 하면 패킷을 줄일 수 있다.
 	TPacketGCOwnership pack;
 
 	pack.bHeader	= HEADER_GC_OWNERSHIP;
@@ -6031,7 +5231,7 @@ struct FuncClearSync
 	void operator () (LPCHARACTER ch)
 	{
 		assert(ch != NULL);
-		ch->SetSyncOwner(NULL, false);	// false 플래그로 해야 for_each 가 제대로 돈다.
+		ch->SetSyncOwner(NULL, false);
 	}
 };
 
@@ -6039,7 +5239,6 @@ void CHARACTER::ClearSync()
 {
 	SetSyncOwner(NULL);
 
-	// 아래 for_each에서 나를 m_pkChrSyncOwner로 가진 자들의 포인터를 NULL로 한다.
 	std::for_each(m_kLst_pkChrSyncOwned.begin(), m_kLst_pkChrSyncOwned.end(), FuncClearSync());
 	m_kLst_pkChrSyncOwned.clear();
 }
@@ -6049,77 +5248,11 @@ bool CHARACTER::IsSyncOwner(LPCHARACTER ch) const
 	if (m_pkChrSyncOwner == ch)
 		return true;
 
-	// 마지막으로 동기화 된 시간이 3초 이상 지났다면 소유권이 아무에게도
-	// 없다. 따라서 아무나 SyncOwner이므로 true 리턴
-	if (get_dword_time() - m_fSyncTime >= 100)
+	if (get_float_time() - m_fSyncTime >= 3.0f)
 		return true;
 
 	return false;
 }
-
-#ifdef ENABLE_SORT_INVEN
-void CHARACTER::SortInven(BYTE option)
-{
-	if (IsDead())
-		return;
-	
-	if(!CanHandleItem())
-		return;
-	
-	if (IsHack())
-		return;
-
-	// PREVENT BUG WHILE EDIT MODE
-	if (IsOwnerEditShopOffline() || IsOpenSafebox() || GetShop() || IsCubeOpen() || GetExchange() || GetOfflineShop() || GetMailBox() || GetMyShop())
-		return;
-	
-	if (IsOwnerCreateShopOffline())
-		return;
-	// PREVENT BUG WHILE EDIT MODE
-	
-	if (GetLastSortTime() > get_global_time()) {
-		ChatPacket(CHAT_TYPE_INFO, "You need to wait %d sec.", GetLastSortTime() - get_global_time());
-		return;
-	}
-
-	std::vector<LPITEM> all;
-	LPITEM myitems;
-	const auto size = static_cast<WORD>(INVENTORY_MAX_NUM);
-
-	for (WORD i = 0; i < size; ++i) {
-		if ((myitems = GetInventoryItem(i))) {
-			all.emplace_back(myitems);
-			myitems->RemoveFromCharacter();
-			SyncQuickslot(QUICKSLOT_TYPE_ITEM, static_cast<BYTE>(i), 255);
-		}
-	}
-	if (all.empty())
-		return;
-	std::sort(all.begin(), all.end(), [option](const LPITEM i1, const LPITEM i2) {
-		switch (option) {
-		case 2:
-			return i1->CustomSort() == i2->CustomSort() ? i1->GetSubType() < i2->GetSubType() : i1->CustomSort() < i2->CustomSort();
-		case 3:
-			return i1->GetLevelLimit() == i2->GetLevelLimit() ? i1->GetSubType() < i2->GetSubType() : i1->GetLevelLimit() > i2->GetLevelLimit();
-		default:
-			return std::strcmp(i1->GetName(), i2->GetName()) < 0;
-		}
-	});
-	for (const auto& getitem : all) {
-		const auto table = ITEM_MANAGER::instance().GetTable(getitem->GetVnum());
-		if (!table)
-			continue;
-		static const std::initializer_list<DWORD> out = { ITEM_AUTO_HP_RECOVERY_S, ITEM_AUTO_HP_RECOVERY_M, ITEM_AUTO_HP_RECOVERY_L, ITEM_AUTO_HP_RECOVERY_X, ITEM_AUTO_SP_RECOVERY_S, ITEM_AUTO_SP_RECOVERY_M, ITEM_AUTO_SP_RECOVERY_L, ITEM_AUTO_SP_RECOVERY_X };
-		if (table->dwFlags & ITEM_FLAG_STACKABLE && table->bType != ITEM_BLEND && std::find(out.begin(), out.end(), getitem->GetVnum()) == out.end()) {
-			AutoGiveItem(getitem->GetVnum(), getitem->GetCount(), -1, false);
-			M2_DESTROY_ITEM(getitem);
-		}
-		else
-			AutoGiveItem(getitem);
-	};
-	SetLastSortTime(get_global_time() + 15); // 15 sec
-}
-#endif
 
 void CHARACTER::SetParty(LPPARTY pkParty)
 {
@@ -6131,9 +5264,8 @@ void CHARACTER::SetParty(LPPARTY pkParty)
 
 	sys_log(1, "PARTY set to %p", get_pointer(pkParty));
 
-	if (m_pkDungeon && IsPC() && !pkParty)
-		SetDungeon(NULL);
-
+	//if (m_pkDungeon && IsPC())
+	//SetDungeon(NULL);
 	m_pkParty = pkParty;
 
 	if (IsPC())
@@ -6148,11 +5280,10 @@ void CHARACTER::SetParty(LPPARTY pkParty)
 }
 
 // PARTY_JOIN_BUG_FIX
-/// 파티 가입 event 정보
 EVENTINFO(TPartyJoinEventInfo)
 {
-	DWORD	dwGuestPID;		///< 파티에 참여할 캐릭터의 PID
-	DWORD	dwLeaderPID;		///< 파티 리더의 PID
+	DWORD	dwGuestPID;
+	DWORD	dwLeaderPID;
 
 	TPartyJoinEventInfo()
 	: dwGuestPID( 0 )
@@ -6190,7 +5321,7 @@ bool CHARACTER::RequestToParty(LPCHARACTER leader)
 
 	if (!leader)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"파티장이 접속 상태가 아니라서 요청을 할 수 없습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("파티장이 접속 상태가 아니라서 요청을 할 수 없습니다."));
 		return false;
 	}
 
@@ -6211,44 +5342,40 @@ bool CHARACTER::RequestToParty(LPCHARACTER leader)
 			break;
 
 		case PERR_SERVER:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 서버 문제로 파티 관련 처리를 할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 서버 문제로 파티 관련 처리를 할 수 없습니다."));
 			return false;
 
 		case PERR_DIFFEMPIRE:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 다른 제국과 파티를 이룰 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 다른 제국과 파티를 이룰 수 없습니다."));
 			return false;
 
 		case PERR_DUNGEON:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 던전 안에서는 파티 초대를 할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 던전 안에서는 파티 초대를 할 수 없습니다."));
 			return false;
 
 		case PERR_OBSERVER:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 관전 모드에선 파티 초대를 할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 관전 모드에선 파티 초대를 할 수 없습니다."));
 			return false;
 
 		case PERR_LVBOUNDARY:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> -30 ~ +30 레벨 이내의 상대방만 초대할 수 있습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> -30 ~ +30 레벨 이내의 상대방만 초대할 수 있습니다."));
 			return false;
 
 		case PERR_LOWLEVEL:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티내 최고 레벨 보다 30레벨이 낮아 초대할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티내 최고 레벨 보다 30레벨이 낮아 초대할 수 없습니다."));
 			return false;
 
 		case PERR_HILEVEL:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티내 최저 레벨 보다 30레벨이 높아 초대할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티내 최저 레벨 보다 30레벨이 높아 초대할 수 없습니다."));
 			return false;
 
 		case PERR_ALREADYJOIN:
 			return false;
 
 		case PERR_PARTYISFULL:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 더 이상 파티원을 초대할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 더 이상 파티원을 초대할 수 없습니다."));
 			return false;
-#ifdef ENABLE_DECORUM
-		case PERR_DECORUM_ARENA:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(), "<Group> You cannot join a party during a Decorum Arena."));
-			return false;
-#endif
+
 		default:
 			sys_err("Do not process party join error(%d)", errcode);
 			return false;
@@ -6262,7 +5389,7 @@ bool CHARACTER::RequestToParty(LPCHARACTER leader)
 	SetPartyRequestEvent(event_create(party_request_event, info, PASSES_PER_SEC(10)));
 
 	leader->ChatPacket(CHAT_TYPE_COMMAND, "PartyRequest %u", (DWORD) GetVID());
-	ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"%s 님에게 파티가입 신청을 했습니다."), leader->GetName());
+	ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%s 님에게 파티가입 신청을 했습니다."), leader->GetName());
 	return true;
 }
 
@@ -6316,7 +5443,7 @@ void CHARACTER::AcceptToParty(LPCHARACTER member)
 	event_cancel(&member->m_pkPartyRequestEvent);
 
 	if (!GetParty())
-		member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(member->GetLanguage(),"상대방이 파티에 속해있지 않습니다."));
+		member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 파티에 속해있지 않습니다."));
 	else
 	{
 		if (GetPlayerID() != GetParty()->GetLeaderPID())
@@ -6326,23 +5453,18 @@ void CHARACTER::AcceptToParty(LPCHARACTER member)
 		switch (errcode)
 		{
 			case PERR_NONE: 		member->PartyJoin(this); return;
-			case PERR_SERVER:		member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(member->GetLanguage(),"<파티> 서버 문제로 파티 관련 처리를 할 수 없습니다.")); break;
-			case PERR_DUNGEON:		member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(member->GetLanguage(),"<파티> 던전 안에서는 파티 초대를 할 수 없습니다.")); break;
-			case PERR_OBSERVER: 	member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(member->GetLanguage(),"<파티> 관전 모드에선 파티 초대를 할 수 없습니다.")); break;
-			case PERR_LVBOUNDARY:	member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(member->GetLanguage(),"<파티> -30 ~ +30 레벨 이내의 상대방만 초대할 수 있습니다.")); break;
-			case PERR_LOWLEVEL: 	member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(member->GetLanguage(),"<파티> 파티내 최고 레벨 보다 30레벨이 낮아 초대할 수 없습니다.")); break;
-			case PERR_HILEVEL: 		member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(member->GetLanguage(),"<파티> 파티내 최저 레벨 보다 30레벨이 높아 초대할 수 없습니다.")); break;
+			case PERR_SERVER:		member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 서버 문제로 파티 관련 처리를 할 수 없습니다.")); break;
+			case PERR_DUNGEON:		member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 던전 안에서는 파티 초대를 할 수 없습니다.")); break;
+			case PERR_OBSERVER: 	member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 관전 모드에선 파티 초대를 할 수 없습니다.")); break;
+			case PERR_LVBOUNDARY:	member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> -30 ~ +30 레벨 이내의 상대방만 초대할 수 있습니다.")); break;
+			case PERR_LOWLEVEL: 	member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티내 최고 레벨 보다 30레벨이 낮아 초대할 수 없습니다.")); break;
+			case PERR_HILEVEL: 		member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티내 최저 레벨 보다 30레벨이 높아 초대할 수 없습니다.")); break;
 			case PERR_ALREADYJOIN: 	break;
 			case PERR_PARTYISFULL: {
-									   ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 더 이상 파티원을 초대할 수 없습니다."));
-									   member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(member->GetLanguage(),"<파티> 파티의 인원제한이 초과하여 파티에 참가할 수 없습니다."));
+									   ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 더 이상 파티원을 초대할 수 없습니다."));
+									   member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티의 인원제한이 초과하여 파티에 참가할 수 없습니다."));
 									   break;
 								   }
-#ifdef ENABLE_DECORUM
-			case PERR_DECORUM_ARENA:
-				member->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(member->GetLanguage(), "<Group> You cannot join a party during a Decorum Arena.")); 
-				break;
-#endif								   
 			default: sys_err("Do not process party join error(%d)", errcode);
 		}
 	}
@@ -6350,10 +5472,6 @@ void CHARACTER::AcceptToParty(LPCHARACTER member)
 	member->ChatPacket(CHAT_TYPE_COMMAND, "PartyRequestDenied");
 }
 
-/**
- * 파티 초대 event callback 함수.
- * event 가 발동하면 초대 거절로 처리한다.
- */
 EVENTFUNC(party_invite_event)
 {
 	TPartyJoinEventInfo * pInfo = dynamic_cast<TPartyJoinEventInfo *>(  event->info );
@@ -6379,12 +5497,12 @@ void CHARACTER::PartyInvite(LPCHARACTER pchInvitee)
 {
 	if (GetParty() && GetParty()->GetLeaderPID() != GetPlayerID())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티원을 초대할 수 있는 권한이 없습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티원을 초대할 수 있는 권한이 없습니다."));
 		return;
 	}
 	else if (pchInvitee->IsBlockMode(BLOCK_PARTY_INVITE))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> %s 님이 파티 거부 상태입니다."), pchInvitee->GetName());
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> %s 님이 파티 거부 상태입니다."), pchInvitee->GetName());
 		return;
 	}
 
@@ -6396,45 +5514,41 @@ void CHARACTER::PartyInvite(LPCHARACTER pchInvitee)
 			break;
 
 		case PERR_SERVER:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 서버 문제로 파티 관련 처리를 할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 서버 문제로 파티 관련 처리를 할 수 없습니다."));
 			return;
 
 		case PERR_DIFFEMPIRE:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 다른 제국과 파티를 이룰 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 다른 제국과 파티를 이룰 수 없습니다."));
 			return;
 
 		case PERR_DUNGEON:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 던전 안에서는 파티 초대를 할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 던전 안에서는 파티 초대를 할 수 없습니다."));
 			return;
 
 		case PERR_OBSERVER:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 관전 모드에선 파티 초대를 할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 관전 모드에선 파티 초대를 할 수 없습니다."));
 			return;
 
 		case PERR_LVBOUNDARY:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> -30 ~ +30 레벨 이내의 상대방만 초대할 수 있습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> -30 ~ +30 레벨 이내의 상대방만 초대할 수 있습니다."));
 			return;
 
 		case PERR_LOWLEVEL:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티내 최고 레벨 보다 30레벨이 낮아 초대할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티내 최고 레벨 보다 30레벨이 낮아 초대할 수 없습니다."));
 			return;
 
 		case PERR_HILEVEL:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티내 최저 레벨 보다 30레벨이 높아 초대할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티내 최저 레벨 보다 30레벨이 높아 초대할 수 없습니다."));
 			return;
 
 		case PERR_ALREADYJOIN:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 이미 %s님은 파티에 속해 있습니다."), pchInvitee->GetName());
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 이미 %s님은 파티에 속해 있습니다."), pchInvitee->GetName());
 			return;
 
 		case PERR_PARTYISFULL:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 더 이상 파티원을 초대할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 더 이상 파티원을 초대할 수 없습니다."));
 			return;
-#ifdef ENABLE_DECORUM
-		case PERR_DECORUM_ARENA:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(), "<Group> You cannot invite a player in the party during an Decorum Arena."));
-			return;
-#endif
+
 		default:
 			sys_err("Do not process party join error(%d)", errcode);
 			return;
@@ -6443,9 +5557,6 @@ void CHARACTER::PartyInvite(LPCHARACTER pchInvitee)
 	if (m_PartyInviteEventMap.end() != m_PartyInviteEventMap.find(pchInvitee->GetPlayerID()))
 		return;
 
-	//
-	// EventMap 에 이벤트 추가
-	//
 	TPartyJoinEventInfo* info = AllocEventInfo<TPartyJoinEventInfo>();
 
 	info->dwGuestPID = pchInvitee->GetPlayerID();
@@ -6453,9 +5564,6 @@ void CHARACTER::PartyInvite(LPCHARACTER pchInvitee)
 
 	m_PartyInviteEventMap.insert(EventMap::value_type(pchInvitee->GetPlayerID(), event_create(party_invite_event, info, PASSES_PER_SEC(10))));
 
-	//
-	// 초대 받는 character 에게 초대 패킷 전송
-	//
 
 	TPacketGCPartyInvite p;
 	p.header = HEADER_GC_PARTY_INVITE;
@@ -6478,7 +5586,7 @@ void CHARACTER::PartyInviteAccept(LPCHARACTER pchInvitee)
 
 	if (GetParty() && GetParty()->GetLeaderPID() != GetPlayerID())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티원을 초대할 수 있는 권한이 없습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티원을 초대할 수 있는 권한이 없습니다."));
 		return;
 	}
 
@@ -6490,50 +5598,43 @@ void CHARACTER::PartyInviteAccept(LPCHARACTER pchInvitee)
 			break;
 
 		case PERR_SERVER:
-			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 서버 문제로 파티 관련 처리를 할 수 없습니다."));
+			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 서버 문제로 파티 관련 처리를 할 수 없습니다."));
 			return;
 
 		case PERR_DUNGEON:
-			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 던전 안에서는 파티 초대에 응할 수 없습니다."));
+			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 던전 안에서는 파티 초대에 응할 수 없습니다."));
 			return;
 
 		case PERR_OBSERVER:
-			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 관전 모드에선 파티 ?苛釉?할 수 없습니다."));
+			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 관전 모드에선 파티 초대를 할 수 없습니다."));
 			return;
 
 		case PERR_LVBOUNDARY:
-			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> -30 ~ +30 레벨 이내의 상대방만 초대할 수 있습니다."));
+			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> -30 ~ +30 레벨 이내의 상대방만 초대할 수 있습니다."));
 			return;
 
 		case PERR_LOWLEVEL:
-			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티내 최고 레벨 보다 30레벨이 낮아 초대할 수 없습니다."));
+			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티내 최고 레벨 보다 30레벨이 낮아 초대할 수 없습니다."));
 			return;
 
 		case PERR_HILEVEL:
-			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티내 최저 레벨 보다 30레벨이 높아 초대할 수 없습니다."));
+			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티내 최저 레벨 보다 30레벨이 높아 초대할 수 없습니다."));
 			return;
 
 		case PERR_ALREADYJOIN:
-			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티 초대에 응할 수 없습니다."));
+			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티 초대에 응할 수 없습니다."));
 			return;
 
 		case PERR_PARTYISFULL:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 더 이상 파티원을 초대할 수 없습니다."));
-			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> 파티의 인원제한이 초과하여 파티에 참가할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 더 이상 파티원을 초대할 수 없습니다."));
+			pchInvitee->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> 파티의 인원제한이 초과하여 파티에 참가할 수 없습니다."));
 			return;
-#ifdef ENABLE_DECORUM
-		case PERR_DECORUM_ARENA:
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(), "<Group> You cannot join a party during a Decorum Arena."));
-			return;
-#endif
+
 		default:
 			sys_err("ignore party join error(%d)", errcode);
 			return;
 	}
 
-	//
-	// 파티 가입 처리
-	//
 
 	if (GetParty())
 		pchInvitee->PartyJoin(this);
@@ -6562,13 +5663,13 @@ void CHARACTER::PartyInviteDeny(DWORD dwPID)
 
 	LPCHARACTER pchInvitee = CHARACTER_MANAGER::instance().FindByPID(dwPID);
 	if (pchInvitee)
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> %s님이 파티 초대를 거절하셨습니다."), pchInvitee->GetName());
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> %s님이 파티 초대를 거절하셨습니다."), pchInvitee->GetName());
 }
 
 void CHARACTER::PartyJoin(LPCHARACTER pLeader)
 {
-	pLeader->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> %s님이 파티에 참가하셨습니다."), GetName());
-	ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<파티> %s님의 파티에 참가하셨습니다."), pLeader->GetName());
+	pLeader->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> %s님이 파티에 참가하셨습니다."), GetName());
+	ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<파티> %s님의 파티에 참가하셨습니다."), pLeader->GetName());
 
 	pLeader->GetParty()->Join(GetPlayerID());
 	pLeader->GetParty()->Link(this);
@@ -6605,10 +5706,6 @@ CHARACTER::PartyJoinErrCode CHARACTER::IsPartyJoinableMutableCondition(const LPC
 	   	if (pchLeader->GetParty()->GetMemberCount() == PARTY_MAX_MEMBER)
 			return PERR_PARTYISFULL;
 	}
-#ifdef ENABLE_DECORUM
-	else if (pchLeader->GetDecorumArena() || pchGuest->GetDecorumArena())
-		return PERR_DECORUM_ARENA;
-#endif
 
 	return PERR_NONE;
 }
@@ -6737,81 +5834,66 @@ void CHARACTER::OnClick(LPCHARACTER pkChrCauser)
 	}
 
 	DWORD vid = GetVID();
-	//if (test_server)
-		sys_log(0, "OnClick %s[vnum %d ServerUniqueID %d, pid %d] by %s", GetName(), GetRaceNum(), vid, GetPlayerID(), pkChrCauser->GetName());
+	sys_log(0, "OnClick %s[vnum %d ServerUniqueID %d, pid %d] by %s", GetName(), GetRaceNum(), vid, GetPlayerID(), pkChrCauser->GetName());
 
-	// ??? ???? ???? ??? ? ??.
 	{
-		// ?, ??? ??? ??? ??? ? ??.
 		if (pkChrCauser->GetMyShop() && pkChrCauser != this)
 		{
-			if (test_server)
-				sys_err("OnClick Fail (%s->%s) - pc has shop", pkChrCauser->GetName(), GetName());
+			sys_err("OnClick Fail (%s->%s) - pc has shop", pkChrCauser->GetName(), GetName());
 			return;
 		}
 	}
 
-	// ????? ???? ??? ? ??.
 	{
 		if (pkChrCauser->GetExchange())
 		{
-			if (test_server)
-				sys_err("OnClick Fail (%s->%s) - pc is exchanging", pkChrCauser->GetName(), GetName());
+			sys_err("OnClick Fail (%s->%s) - pc is exchanging", pkChrCauser->GetName(), GetName());
 			return;
 		}
 	}
-	
+
 	if (IsPC())
 	{
 		if (!CTargetManager::instance().GetTargetInfo(pkChrCauser->GetPlayerID(), TARGET_TYPE_VID, GetVID()))
-
 		{
-			// 2005.03.17.myevan.?¸°??? ??´? °???´A °ł?I ≫oAˇ ?ł¸® ±a´E?≫ ??μ?˝??˛´?.
 			if (GetMyShop())
 			{
 				if (pkChrCauser->IsDead() == true) return;
 
 				//PREVENT_TRADE_WINDOW
-				if (pkChrCauser == this) // ?U±a´A °ˇ´E
+				if (pkChrCauser == this)
 				{
-#ifdef OFFLINE_SHOP
-					if (GetExchange() || IsOpenSafebox() || GetShopOwner() || IsCubeOpen() || GetOfflineShopOwner() || GetMailBox())
-#else
-					if (GetExchange() || IsOpenSafebox() || GetShopOwner() || IsCubeOpen()) || GetMailBox()
-#endif
+					if ((GetExchange() || IsOpenSafebox() || GetShopOwner()) || IsCubeOpen())
 					{
-						pkChrCauser->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"다른 거래중(창고,교환,상점)에는 개인상점을 사용할 수 없습니다."));
+						pkChrCauser->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("다른 거래중(창고,교환,상점)에는 개인상점을 사용할 수 없습니다."));
 						return;
 					}
 				}
-				else // ´?¸? ≫c¶÷?? ?￢¸?Cß?≫¶§
+				else
 				{
-					// ?￢¸?C? ≫c¶÷?? ±ł??/?˘°i/°ł?I≫oAˇ/≫oAˇ???eAß??¶o¸e ??°ˇ
-#ifdef OFFLINE_SHOP
-					if (pkChrCauser->GetExchange() || pkChrCauser->IsOpenSafebox() || pkChrCauser->GetMyShop() || pkChrCauser->GetShopOwner() || pkChrCauser->IsCubeOpen() || pkChrCauser->GetOfflineShopOwner() || pkChrCauser->GetMailBox())
-#else
-					if (pkChrCauser->GetExchange() || pkChrCauser->IsOpenSafebox() || pkChrCauser->GetMyShop() || pkChrCauser->GetShopOwner() || pkChrCauser->IsCubeOpen())
-#endif
+
+					if ((pkChrCauser->GetExchange() || pkChrCauser->IsOpenSafebox() || pkChrCauser->GetMyShop() || pkChrCauser->GetShopOwner()) || pkChrCauser->IsCubeOpen() )
 					{
-						//pkChrCauser->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"´?¸? °?·ˇAß(?˘°i,±ł??,≫oAˇ)?ˇ´A °ł?I≫oAˇ?≫ ≫c?eC? ?o ??˝?´?´?."));
+						pkChrCauser->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("다른 거래중(창고,교환,상점)에는 개인상점을 사용할 수 없습니다."));
 						return;
 					}
 
-					// ?￢¸?C? ´e≫o?? ±ł??/?˘°i/≫oAˇ???eAß??¶o¸e ??°ˇ
 					//if ((GetExchange() || IsOpenSafebox() || GetShopOwner()))
-#ifdef OFFLINE_SHOP
-					if (GetExchange() || IsOpenSafebox() || IsCubeOpen() || GetOfflineShopOwner() || GetMailBox())
-#else
-					if (GetExchange() || IsOpenSafebox() || IsCubeOpen())
-#endif
+					if ((GetExchange() || IsOpenSafebox() || IsCubeOpen()))
 					{
-						pkChrCauser->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"다른 거래중(창고,교환,상점)에는 개인상점을 사용할 수 없습니다."));
+						pkChrCauser->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 다른 거래를 하고 있는 중입니다."));
 						return;
 					}
 				}
 				//END_PREVENT_TRADE_WINDOW
-				GetMyShop()->AddGuest(pkChrCauser, GetVID(), false);
 
+				if (pkChrCauser->GetShop())
+				{
+					pkChrCauser->GetShop()->RemoveGuest(pkChrCauser);
+					pkChrCauser->SetShop(NULL);
+				}
+
+				GetMyShop()->AddGuest(pkChrCauser, GetVID(), false);
 				pkChrCauser->SetShopOwner(this);
 				return;
 			}
@@ -6823,14 +5905,21 @@ void CHARACTER::OnClick(LPCHARACTER pkChrCauser)
 		}
 	}
 
-#ifdef OFFLINE_SHOP
-	if (IsOfflineShopNPC() && !pkChrCauser->IsDead())
+	if (g_bChinaIntoxicationCheck)
 	{
-		pkChrCauser->SetOfflineShopOwner(this);
-		GetOfflineShop()->AddGuest(pkChrCauser, this);
-		return;
+		if (pkChrCauser->IsOverTime(OT_3HOUR))
+		{
+			sys_log(0, "Teen OverTime : name = %s, hour = %d)", pkChrCauser->GetName(), 3);
+			return;
+		}
+		else if (pkChrCauser->IsOverTime(OT_5HOUR))
+		{
+			sys_log(0, "Teen OverTime : name = %s, hour = %d)", pkChrCauser->GetName(), 5);
+			return;
+		}
 	}
-#endif
+
+
 	pkChrCauser->SetQuestNPCID(GetVID());
 
 	if (quest::CQuestManager::instance().Click(pkChrCauser->GetPlayerID(), this))
@@ -6839,11 +5928,14 @@ void CHARACTER::OnClick(LPCHARACTER pkChrCauser)
 	}
 
 
-	// NPC ?? ?? ?? : ?? ?? ?
 	if (!IsPC())
 	{
 		if (!m_triggerOnClick.pFunc)
 		{
+			//sys_err("%s.OnClickFailure(%s) : triggerOnClick.pFunc is EMPTY(pid=%d)",
+			//			pkChrCauser->GetName(),
+			//			GetName(),
+			//			pkChrCauser->GetPlayerID());
 			return;
 		}
 
@@ -6904,7 +5996,6 @@ void CHARACTER::ClearStone()
 {
 	if (!m_set_pkChrSpawnedBy.empty())
 	{
-		// 내가 스폰시킨 몬스터들을 모두 죽인다.
 		FuncDeadSpawnedByStone f;
 		std::for_each(m_set_pkChrSpawnedBy.begin(), m_set_pkChrSpawnedBy.end(), f);
 		m_set_pkChrSpawnedBy.clear();
@@ -6928,13 +6019,9 @@ void CHARACTER::ClearTarget()
 	TPacketGCTarget p;
 
 	p.header = HEADER_GC_TARGET;
-#if defined(__SHIP_DEFENSE__)
-	p.bAlliance = false;
-	p.iAllianceMinHP = 0;
-	p.iAllianceMaxHP = 0;
-#endif
 	p.dwVID = 0;
 	p.bHPPercent = 0;
+
 	CHARACTER_SET::iterator it = m_set_pkChrTargetedBy.begin();
 
 	while (it != m_set_pkChrTargetedBy.end())
@@ -6964,22 +6051,13 @@ void CHARACTER::SetTarget(LPCHARACTER pkChrTarget)
 		return;
 	// CASTLE
 
-	if(pkChrTarget)
-	{
-		if(pkChrTarget->IsMount())
-		{
-			LPCHARACTER owner = pkChrTarget->GetRider();
-			if(owner != this)
-				return;
-		}
-	}
-
 	if (m_pkChrTarget)
 		m_pkChrTarget->m_set_pkChrTargetedBy.erase(this);
 
 	m_pkChrTarget = pkChrTarget;
 
 	TPacketGCTarget p;
+
 	p.header = HEADER_GC_TARGET;
 
 	if (m_pkChrTarget)
@@ -6988,8 +6066,7 @@ void CHARACTER::SetTarget(LPCHARACTER pkChrTarget)
 
 		p.dwVID	= m_pkChrTarget->GetVID();
 
-		//if ((m_pkChrTarget->IsPC() && !m_pkChrTarget->IsPolymorphed()) || (m_pkChrTarget->GetMaxHP() <= 0))
-		if (m_pkChrTarget->GetMaxHP() <= 0)
+		if ((m_pkChrTarget->IsPC() && !m_pkChrTarget->IsPolymorphed()) || (m_pkChrTarget->GetMaxHP() <= 0))
 			p.bHPPercent = 0;
 		else
 		{
@@ -7033,67 +6110,6 @@ void CHARACTER::SetTarget(LPCHARACTER pkChrTarget)
 		p.bHPPercent = 0;
 	}
 
-#ifdef ELEMENT_TARGET
-	const int ELEMENT_BASE = 11;
-	DWORD curElementBase = ELEMENT_BASE;
-	DWORD raceFlag;
-	if (m_pkChrTarget && m_pkChrTarget->IsMonster() && (raceFlag = m_pkChrTarget->GetMobTable().dwRaceFlag) >= RACE_FLAG_ATT_ELEC)
-	{
-		/*
-		
-			RACE_FLAG_ATT_ELEC	= (1 << 15),
-	RACE_FLAG_ATT_FIRE	= (1 << 16),
-	RACE_FLAG_ATT_ICE	= (1 << 17),
-	RACE_FLAG_ATT_WIND	= (1 << 18),
-	RACE_FLAG_ATT_EARTH	= (1 << 19),
-	RACE_FLAG_ATT_DARK	= (1 << 20),
-	RACE_FLAG_ATT_ZODIAC	= (1 << 21),
-	RACE_FLAG_ATT_DESERT	= (1 << 22),
-	RACE_FLAG_ATT_INSECT	= (1 << 23),
-		*/
-
-		for (int i = RACE_FLAG_ATT_ELEC, k = 1; i <= RACE_FLAG_ATT_INSECT; i *= 2, k++)
-		{
-			if (raceFlag & i)
-			{
-				p.bElement = k;
-				break;
-			}
-		}
-		/*for (int i = RACE_FLAG_ATT_ELEC; i <= RACE_FLAG_ATT_DARK; i *= 2)
-		{
-			curElementBase++;
-			int diff = raceFlag - i;
-			if (abs(diff) <= 1024)
-				break;
-		}
-		p.bElement = curElementBase - ELEMENT_BASE;*/
-	}
-	else if(m_pkChrTarget && m_pkChrTarget->IsPC())
-	{
-		LPITEM pkElement = m_pkChrTarget->GetWear(WEAR_TALISMAN);
-		if (!pkElement) // NONE
-			p.bElement = 0;
-		else if (pkElement && (pkElement->GetVnum() >= 9600 && pkElement->GetVnum() <= 9800))	
-			p.bElement = 2;
-		else if (pkElement && (pkElement->GetVnum() >= 9830 && pkElement->GetVnum() <= 10030))	
-			p.bElement = 3;
-		else if (pkElement && (pkElement->GetVnum() >= 10060 && pkElement->GetVnum() <= 10260))
-			p.bElement = 5;
-		else if (pkElement && (pkElement->GetVnum() >= 10290 && pkElement->GetVnum() <= 10490))	
-			p.bElement = 6;
-		else if (pkElement && (pkElement->GetVnum() >= 10520 && pkElement->GetVnum() <= 10720))	
-			p.bElement = 4;
-		else if (pkElement && (pkElement->GetVnum() >= 10750 && pkElement->GetVnum() <= 10950))
-			p.bElement = 1;
-	}
-	else
-	{
-		p.bElement = 0;
-	}
-
-#endif
-
 	GetDesc()->Packet(&p, sizeof(TPacketGCTarget));
 }
 
@@ -7106,15 +6122,10 @@ void CHARACTER::BroadcastTargetPacket()
 
 	p.header = HEADER_GC_TARGET;
 	p.dwVID = GetVID();
-#if defined(__SHIP_DEFENSE__)
-	p.bAlliance = false;
-	p.iAllianceMinHP = 0;
-	p.iAllianceMaxHP = 0;
-#endif
 
-	//if (IsPC())
-	//	p.bHPPercent = 0;
-	if (GetMaxHP() <= 0) // @fixme136
+	if (IsPC())
+		p.bHPPercent = 0;
+	else if (GetMaxHP() <= 0) // @fixme136
 		p.bHPPercent = 0;
 	else
 		p.bHPPercent = MINMAX(0, (GetHP() * 100) / GetMaxHP(), 100);
@@ -7166,10 +6177,6 @@ void CHARACTER::ExitToSavedLocation()
 	m_lExitMapIndex = 0;
 }
 
-// fixme
-// 지금까진 privateMapIndex 가 현재 맵 인덱스와 같은지 체크 하는 것을 외부에서 하고,
-// 다르면 warpset을 불렀는데
-// 이를 warpset 안으로 넣자.
 bool CHARACTER::WarpSet(long x, long y, long lPrivateMapIndex)
 {
 	if (!IsPC())
@@ -7210,10 +6217,7 @@ bool CHARACTER::WarpSet(long x, long y, long lPrivateMapIndex)
 			sys_err("Invalid map index %d, must be child of %d", lPrivateMapIndex, lMapIndex);
 			return false;
 		}
-#ifdef ENABLE_DECORUM
-		if (CDecoredArenaManager::instance().IsArenaMap(lPrivateMapIndex))
-			SaveExitLocation();		
-#endif
+
 		lMapIndex = lPrivateMapIndex;
 	}
 
@@ -7240,7 +6244,14 @@ bool CHARACTER::WarpSet(long x, long y, long lPrivateMapIndex)
 	p.lX	= x;
 	p.lY	= y;
 	p.lAddr	= lAddr;
+#ifdef ENABLE_NEWSTUFF
+	if (!g_stProxyIP.empty())
+		p.lAddr = inet_addr(g_stProxyIP.c_str());
+#endif
 	p.wPort	= wPort;
+#ifdef ENABLE_ANTI_MULTIPLE_FARM
+	UpdateCharacterWarpCheck(true);
+#endif
 #ifdef ENABLE_SWITCHBOT
 	CSwitchbotManager::Instance().SetIsWarping(GetPlayerID(), true);
 
@@ -7248,9 +6259,6 @@ bool CHARACTER::WarpSet(long x, long y, long lPrivateMapIndex)
 	{
 		CSwitchbotManager::Instance().P2PSendSwitchbot(GetPlayerID(), p.wPort);
 	}
-#endif
-#ifdef ENABLE_ANTI_MULTIPLE_FARM
-	UpdateCharacterWarpCheck(true);
 #endif
 	GetDesc()->Packet(&p, sizeof(TPacketGCWarp));
 
@@ -7283,7 +6291,6 @@ void CHARACTER::WarpEnd()
 
 	if (!map_allow_find(index))
 	{
-		// 이 곳으로 워프할 수 없으므로 워프하기 전 좌표로 되돌리자.
 		sys_err("location %d %d not allowed to login this server", m_posWarp.x, m_posWarp.y);
 #ifdef ENABLE_GOHOME_IF_MAP_NOT_ALLOWED
 		GoHome();
@@ -7364,14 +6371,13 @@ bool CHARACTER::Follow(LPCHARACTER pkChr, float fMinDistance)
 	// TRENT_MONSTER
 	if (IS_SET(m_pointsInstant.dwAIFlag, AIFLAG_NOMOVE))
 	{
-		if (pkChr->IsPC()) // 쫓아가는 상대가 PC일 때
+		if (pkChr->IsPC())
 		{
 			// If i'm in a party. I must obey party leader's AI.
 			if (!GetParty() || !GetParty()->GetLeader() || GetParty()->GetLeader() == this)
 			{
-				if (get_dword_time() - m_pkMobInst->m_dwLastAttackedTime >= 15000) // 마지막으로 공격받은지 15초가 지났고
+				if (get_dword_time() - m_pkMobInst->m_dwLastAttackedTime >= 15000)
 				{
-					// 마지막 맞은 곳으로 부터 50미터 이상 차이나면 포기하고 돌아간다.
 					if (m_pkMobData->m_table.wAttackRange < DISTANCE_APPROX(pkChr->GetX() - GetX(), pkChr->GetY() - GetY()))
 						if (Return())
 							return true;
@@ -7385,14 +6391,13 @@ bool CHARACTER::Follow(LPCHARACTER pkChr, float fMinDistance)
 	long x = pkChr->GetX();
 	long y = pkChr->GetY();
 
-	if (pkChr->IsPC()) // 쫓아가는 상대가 PC일 때
+	if (pkChr->IsPC())
 	{
 		// If i'm in a party. I must obey party leader's AI.
 		if (!GetParty() || !GetParty()->GetLeader() || GetParty()->GetLeader() == this)
 		{
-			if (get_dword_time() - m_pkMobInst->m_dwLastAttackedTime >= 15000) // 마지막으로 공격받은지 15초가 지났고
+			if (get_dword_time() - m_pkMobInst->m_dwLastAttackedTime >= 15000)
 			{
-				// 마지막 맞은 곳으로 부터 50미터 이상 차이나면 포기하고 돌아간다.
 				if (5000 < DISTANCE_APPROX(m_pkMobInst->m_posLastAttacked.x - GetX(), m_pkMobInst->m_posLastAttacked.y - GetY()))
 					if (Return())
 						return true;
@@ -7406,6 +6411,7 @@ bool CHARACTER::Follow(LPCHARACTER pkChr, float fMinDistance)
 			if (Return())
 				return true;
 	}
+
 #ifdef NEW_PET_SYSTEM
 	if (pkChr->IsState(pkChr->m_stateMove) &&
 		GetMobBattleType() != BATTLE_TYPE_RANGE &&
@@ -7417,10 +6423,8 @@ bool CHARACTER::Follow(LPCHARACTER pkChr, float fMinDistance)
 		GetMobBattleType() != BATTLE_TYPE_MAGIC &&
 		false == IsPet())
 #endif
+
 	{
-		// 대상이 이동중이면 예측 이동을 한다
-		// 나와 상대방의 속도차와 거리로부터 만날 시간을 예상한 후
-		// 상대방이 그 시간까지 직선으로 이동한다고 가정하여 거기로 이동한다.
 		float rot = pkChr->GetRotation();
 		float rot_delta = GetDegreeDelta(rot, GetDegreeFromPositionXY(GetX(), GetY(), pkChr->GetX(), pkChr->GetY()));
 
@@ -7452,7 +6456,6 @@ bool CHARACTER::Follow(LPCHARACTER pkChr, float fMinDistance)
 		}
 	}
 
-	// 가려는 위치를 바라봐야 한다.
 	SetRotationToXY(x, y);
 
 	float fDist = DISTANCE_SQRT(x - GetX(), y - GetY());
@@ -7464,7 +6467,6 @@ bool CHARACTER::Follow(LPCHARACTER pkChr, float fMinDistance)
 
 	if (IsChangeAttackPosition(pkChr) && GetMobRank() < MOB_RANK_BOSS)
 	{
-		// 상대방 주변 랜덤한 곳으로 이동
 		SetChangeAttackPositionTime();
 
 		int retry = 16;
@@ -7490,23 +6492,19 @@ bool CHARACTER::Follow(LPCHARACTER pkChr, float fMinDistance)
 				break;
 		}
 
-		//sys_log(0, "근처 어딘가로 이동 %s retry %d", GetName(), retry);
 		if (!Goto(dx, dy))
 			return false;
 	}
 	else
 	{
-		// 직선 따라가기
 		float fDistToGo = fDist - fMinDistance;
 		GetDeltaByDegree(GetRotation(), fDistToGo, &fx, &fy);
 
-		//sys_log(0, "직선으로 이동 %s", GetName());
 		if (!Goto(GetX() + (int) fx, GetY() + (int) fy))
 			return false;
 	}
 
 	SendMovePacket(FUNC_WAIT, 0, 0, 0, 0);
-	//MonsterLog("쫓아가기; %s", pkChr->GetName());
 	return true;
 }
 
@@ -7529,12 +6527,12 @@ void CHARACTER::ReqSafeboxLoad(const char* pszPassword)
 {
 	if (!*pszPassword || strlen(pszPassword) > SAFEBOX_PASSWORD_MAX_LEN)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<창고> 잘못된 암호를 입력하셨습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<창고> 잘못된 암호를 입력하셨습니다."));
 		return;
 	}
 	else if (m_pkSafebox)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<창고> 창고가 이미 열려있습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<창고> 창고가 이미 열려있습니다."));
 		return;
 	}
 
@@ -7542,14 +6540,14 @@ void CHARACTER::ReqSafeboxLoad(const char* pszPassword)
 
 	if (iPulse - GetSafeboxLoadTime()  < PASSES_PER_SEC(10))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<창고> 창고를 닫은지 10초 안에는 열 수 없습니다."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<창고> 창고를 닫은지 10초 안에는 열 수 없습니다."));
 		return;
 	}
-//	else if (GetDistanceFromSafeboxOpen() > 1000)
-//	{
-//		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"<창고> 거리가 멀어서 창고를 열 수 없습니다."));
-//		return;
-//	}
+/* 	else if (GetDistanceFromSafeboxOpen() > 1000)
+	{
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<창고> 거리가 멀어서 창고를 열 수 없습니다."));
+		return;
+	} */
 	else if (m_bOpeningSafebox)
 	{
 		sys_log(0, "Overlapped safebox load request from %s", GetName());
@@ -7610,9 +6608,7 @@ void CHARACTER::LoadSafebox(int iSize, DWORD dwGold, int iItemCount, TPlayerItem
 			item->SetSkipSave(true);
 			item->SetSockets(pItems->alSockets);
 			item->SetAttributes(pItems->aAttr);
-#ifdef CHANGELOOK_SYSTEM
-			item->SetTransmutation(pItems->transmutation);
-#endif
+
 			if (!m_pkSafebox->Add(pItems->pos, item))
 			{
 				M2_DESTROY_ITEM(item);
@@ -7707,9 +6703,7 @@ void CHARACTER::LoadMall(int iItemCount, TPlayerItem * pItems)
 			item->SetSkipSave(true);
 			item->SetSockets(pItems->alSockets);
 			item->SetAttributes(pItems->aAttr);
-#ifdef CHANGELOOK_SYSTEM
-			item->SetTransmutation(pItems->transmutation);
-#endif
+
 			if (!m_pkMall->Add(pItems->pos, item))
 				M2_DESTROY_ITEM(item);
 			else
@@ -7744,10 +6738,6 @@ bool CHARACTER::BuildUpdatePartyPacket(TPacketGCPartyUpdate & out)
 		out.percent_hp	= 0;
 	else
 		out.percent_hp	= MINMAX(0, GetHP() * 100 / GetMaxHP(), 100);
-	if (GetMaxSP() <= 0)
-		out.percent_sp = 0;
-	else
-		out.percent_sp = MINMAX(0, GetSP() * 100 / GetMaxSP(), 100);
 	out.role		= GetParty()->GetRole(GetPlayerID());
 
 	sys_log(1, "PARTY %s role is %d", GetName(), out.role);
@@ -7903,7 +6893,6 @@ void CHARACTER::ResetPoint(int iLv)
 
 	ComputePoints();
 
-	// 회복
 	PointChange(POINT_HP, GetMaxHP() - GetHP());
 	PointChange(POINT_SP, GetMaxSP() - GetSP());
 
@@ -8075,23 +7064,35 @@ LPCHARACTER CHARACTER::GetQuestNPC() const
 
 void CHARACTER::SetQuestItemPtr(LPITEM item)
 {
-	//m_pQuestItem = item;
-	m_dwQuestItemVID = (item) ? item->GetVID() : 0; //FIX ITEM_DUPE_BUG
+	m_pQuestItem = item;
 }
 
 void CHARACTER::ClearQuestItemPtr()
 {
-	//m_pQuestItem = NULL;
-	m_dwQuestItemVID = 0; //FIX ITEM_DUPE_BUG
+	m_pQuestItem = NULL;
 }
 
 LPITEM CHARACTER::GetQuestItemPtr() const
 {
-	//return m_pQuestItem;
-	if (!m_dwQuestItemVID) //FIX ITEM_DUPE_BUG
-		return nullptr;
-	return ITEM_MANAGER::Instance().FindByVID(m_dwQuestItemVID);
+	return m_pQuestItem;
 }
+
+#ifdef ENABLE_QUEST_DND_EVENT
+void CHARACTER::SetQuestDNDItemPtr(LPITEM item)
+{
+	m_pQuestDNDItem = item;
+}
+
+void CHARACTER::ClearQuestDNDItemPtr()
+{
+	m_pQuestDNDItem = NULL;
+}
+
+LPITEM CHARACTER::GetQuestDNDItemPtr() const
+{
+	return m_pQuestDNDItem;
+}
+#endif
 
 LPDUNGEON CHARACTER::GetDungeonForce() const
 {
@@ -8175,55 +7176,35 @@ void CHARACTER::SetPolymorph(DWORD dwRaceNum, bool bMaintainStat)
 		PointChange(POINT_HT, 0);
 	}
 
-	// 폴리모프 상태에서 죽는 경우, 폴리모프가 풀리게 되는데
-	// 폴리 모프 전후로 valid combo interval이 다르기 때문에
-	// Combo 핵 또는 Hacker로 인식하는 경우가 있다.
-	// 따라서 폴리모프를 풀거나 폴리모프 하게 되면,
-	// valid combo interval을 reset한다.
 	SetValidComboInterval(0);
 	SetComboSequence(0);
 
 	ComputeBattlePoints();
 }
 
-int CHARACTER::GetQuestFlag(const std::string & flag) const
+int CHARACTER::GetQuestFlag(const std::string& flag) const
 {
-	if (!IsPC())
-		return 0;
-
-	DWORD pid = GetPlayerID();
-
 	quest::CQuestManager& q = quest::CQuestManager::instance();
-	quest::PC* pPC = q.GetPC(pid);
-
-	if (!pPC)
-		return 0;
-
+	quest::PC* pPC = q.GetPC(GetPlayerID());
 	return pPC->GetFlag(flag);
 }
 
-void CHARACTER::SetQuestFlag(const std::string & flag, int value)
+void CHARACTER::SetQuestFlag(const std::string& flag, int value)
 {
-	DWORD pid = GetPlayerID();
-
 	quest::CQuestManager& q = quest::CQuestManager::instance();
-	quest::PC* pPC = q.GetPC(pid);
-
-	if (!pPC)
-		return;
-
+	quest::PC* pPC = q.GetPC(GetPlayerID());
 	pPC->SetFlag(flag, value);
 }
 
 void CHARACTER::DetermineDropMetinStone()
 {
-// #ifdef ENABLE_NEWSTUFF
-	// if (g_NoDropMetinStone)
-	// {
-		// m_dwDropMetinStone = 0;
-		// return;
-	// }
-// #endif
+#ifdef ENABLE_NEWSTUFF
+	if (g_NoDropMetinStone)
+	{
+		m_dwDropMetinStone = 0;
+		return;
+	}
+#endif
 
 	static const DWORD c_adwMetin[] =
 	{
@@ -8272,7 +7253,7 @@ void CHARACTER::DetermineDropMetinStone()
 				else
 				{
 					iGradePct -= iLevelGradePortion;
-					m_dwDropMetinStone += 100; // 돌 +a -> +(a+1)이 될때마다 100씩 증가
+					m_dwDropMetinStone += 100;
 				}
 			}
 		}
@@ -8308,31 +7289,7 @@ bool CHARACTER::CanSummon(int iLeaderShip)
 	return ((iLeaderShip >= 20) || ((iLeaderShip >= 12) && ((m_dwLastDeadTime + 180) > get_dword_time())));
 }
 
-#ifdef ENABLE_BIOLOG_SYSTEM
-int CHARACTER::GetBiologState(const std::string& state) const
-{
-	quest::CQuestManager& q = quest::CQuestManager::instance();
-	quest::PC* pPC = q.GetPC(GetPlayerID());
-
-	/*if (!pPC)
-		return 0;*/
-
-	return pPC->GetFlag(state);
-}
-
-void CHARACTER::SetBiologState(const std::string& state, int szValue)
-{
-	quest::CQuestManager& q = quest::CQuestManager::instance();
-	quest::PC* pPC = q.GetPC(GetPlayerID());
-	
-
-	/*if (!pPC)
-		return;*/
-
-	pPC->SetFlag(state, szValue);
-}
-#endif
-
+// #define ENABLE_MOUNT_ENTITY_REFRESH
 void CHARACTER::MountVnum(DWORD vnum)
 {
 	if (m_dwMountVnum == vnum)
@@ -8346,16 +7303,11 @@ void CHARACTER::MountVnum(DWORD vnum)
 	if (m_bIsObserver)
 		return;
 
-#ifdef ENABLE_DECORUM
-	if (CDecoredArenaManager::instance().IsArenaMap(this->GetMapIndex()) == true)
-		return;
-#endif
-	//NOTE : Mount한다고 해서 Client Side의 객체를 삭제하진 않는다.
-	//그리고 서버Side에서 탔을때 위치 이동은 하지 않는다. 왜냐하면 Client Side에서 Coliision Adjust를 할수 있는데
-	//객체를 소멸시켰다가 서버위치로 이동시키면 이때 collision check를 하지는 않으므로 배경에 끼거나 뚫고 나가는 문제가 존재한다.
 	m_posDest.x = m_posStart.x = GetX();
 	m_posDest.y = m_posStart.y = GetY();
-	//EncodeRemovePacket(this);
+#ifdef ENABLE_MOUNT_ENTITY_REFRESH
+	// EncodeRemovePacket(this); // commented, otherwise it may warp you back
+#endif
 	EncodeInsertPacket(this);
 
 	ENTITY_MAP::iterator it = m_map_view.begin();
@@ -8364,13 +7316,21 @@ void CHARACTER::MountVnum(DWORD vnum)
 	{
 		LPENTITY entity = (it++)->first;
 
-		//Mount한다고 해서 Client Side의 객체를 삭제하진 않는다.
-		//EncodeRemovePacket(entity);
-		//if (!m_bIsObserver)
-		EncodeInsertPacket(entity);
+#ifdef ENABLE_MOUNT_ENTITY_REFRESH
+		if (entity->IsType(ENTITY_CHARACTER))
+		{
+			EncodeRemovePacket(entity);
+			if (!m_bIsObserver)
+				EncodeInsertPacket(entity);
 
-		//if (!entity->IsObserverMode())
-		//	entity->EncodeInsertPacket(this);
+			if (!entity->IsObserverMode())
+					entity->EncodeInsertPacket(this);
+		}
+		else
+			EncodeInsertPacket(entity);
+#else
+		EncodeInsertPacket(entity);
+#endif
 	}
 
 	SetValidComboInterval(0);
@@ -8598,47 +7558,43 @@ bool CHARACTER::WarpToPID(DWORD dwPID)
 			}
 			else
 			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"상대방이 있는 곳으로 워프할 수 없습니다."));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 있는 곳으로 워프할 수 없습니다."));
 				return false;
 			}
 		}
 		else
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"상대방이 있는 곳으로 워프할 수 없습니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 있는 곳으로 워프할 수 없습니다."));
 			return false;
 		}
 	}
 	else
 	{
-		// 다른 서버에 로그인된 사람이 있음 -> 메시지 보내 좌표를 받아오자
-		// 1. A.pid, B.pid 를 뿌림
-		// 2. B.pid를 가진 서버가 뿌린서버에게 A.pid, 좌표 를 보냄
-		// 3. 워프
 		CCI * pcci = P2P_MANAGER::instance().FindByPID(dwPID);
 
 		if (!pcci)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"상대방이 온라인 상태가 아닙니다."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 온라인 상태가 아닙니다."));
 			return false;
 		}
 
 		if (pcci->bChannel != g_bChannel)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"상대방이 %d 채널에 있습니다. (현재 채널 %d)"), pcci->bChannel, g_bChannel);
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 %d 채널에 있습니다. (현재 채널 %d)"), pcci->bChannel, g_bChannel);
 			return false;
 		}
-		// else if (false == IS_SUMMONABLE_ZONE(pcci->lMapIndex))
-		// {
-			// ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"상대방이 있는 곳으로 워프할 수 없습니다."));
-			// return false;
-		// }
+		else if (false == IS_SUMMONABLE_ZONE(pcci->lMapIndex))
+		{
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 있는 곳으로 워프할 수 없습니다."));
+			return false;
+		}
 		else
 		{
-			// if (!CAN_ENTER_ZONE(this, pcci->lMapIndex))
-			// {
-				// ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"상대방이 있는 곳으로 워프할 수 없습니다."));
-				// return false;
-			// }
+			if (!CAN_ENTER_ZONE(this, pcci->lMapIndex))
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상대방이 있는 곳으로 워프할 수 없습니다."));
+				return false;
+			}
 
 			TPacketGGFindPosition p;
 			p.header = HEADER_GG_FIND_POSITION;
@@ -8674,7 +7630,6 @@ int CHARACTER::ComputeRefineFee(int iCost, int iMultiply) const
 		if (pGuild == GetGuild())
 			return iCost * iMultiply * 9 / 10;
 
-		// 다른 제국 사람이 시도하는 경우 추가로 3배 더
 		LPCHARACTER chRefineNPC = CHARACTER_MANAGER::instance().Find(m_dwRefineNPCVID);
 		if (chRefineNPC && chRefineNPC->GetEmpire() != GetEmpire())
 			return iCost * iMultiply * 3;
@@ -8683,18 +7638,6 @@ int CHARACTER::ComputeRefineFee(int iCost, int iMultiply) const
 	}
 	else
 		return iCost;
-}
-
-void CHARACTER::LoadMarriageInfo(DWORD dwCount, TPacketMarriageElement * pElements)
-{
-	for (DWORD i = 0; i < dwCount; ++i, ++pElements)
-	{
-		// ChatPacket(CHAT_TYPE_INFO, "Marriage Status: %d", pElements->bIsMarriage);
-		// ChatPacket(CHAT_TYPE_INFO, "Marriage Pid: %d", pElements->dwPidMarriage);
-	
-		SetMarriageStatus(pElements->bIsMarriage);
-		SetPartnerPID(pElements->dwPidMarriage);		
-	}
 }
 
 void CHARACTER::PayRefineFee(int iTotalMoney)
@@ -8706,7 +7649,6 @@ void CHARACTER::PayRefineFee(int iTotalMoney)
 
 	if (pGuild)
 	{
-		// 자기 길드이면 iTotalMoney에 이미 10%가 제외되어있다
 		if (pGuild != GetGuild())
 		{
 			pGuild->RequestDepositMoney(this, iFee);
@@ -8718,7 +7660,6 @@ void CHARACTER::PayRefineFee(int iTotalMoney)
 }
 // END_OF_ADD_REFINE_BUILDING
 
-//Hack 방지를 위한 체크.
 bool CHARACTER::IsHack(bool bSendMsg, bool bCheckShopOwner, int limittime)
 {
 	const int iPulse = thecore_pulse();
@@ -8726,49 +7667,42 @@ bool CHARACTER::IsHack(bool bSendMsg, bool bCheckShopOwner, int limittime)
 	if (test_server)
 		bSendMsg = true;
 
-	//창고 연후 체크
 	if (iPulse - GetSafeboxLoadTime() < PASSES_PER_SEC(limittime))
 	{
 		if (bSendMsg)
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"창고를 연후 %d초 이내에는 다른곳으로 이동할수 없습니다."), limittime);
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("창고를 연후 %d초 이내에는 다른곳으로 이동할수 없습니다."), limittime);
 
 		if (test_server)
 			ChatPacket(CHAT_TYPE_INFO, "[TestOnly]Pulse %d LoadTime %d PASS %d", iPulse, GetSafeboxLoadTime(), PASSES_PER_SEC(limittime));
 		return true;
 	}
 
-	//거래관련 창 체크
 	if (bCheckShopOwner)
 	{
-#ifdef OFFLINE_SHOP
-		if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen() || GetOfflineShopOwner() || GetMailBox())
-#else
 		if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen())
-#endif
 		{
 			if (bSendMsg)
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"거래창,창고 등을 연 상태에서는 다른곳으로 이동,종료 할수 없습니다"));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("거래창,창고 등을 연 상태에서는 다른곳으로 이동,종료 할수 없습니다"));
 
 			return true;
 		}
 	}
 	else
 	{
-		if (GetExchange() || GetMyShop() || IsOpenSafebox() || IsCubeOpen() || GetMailBox())
+		if (GetExchange() || GetMyShop() || IsOpenSafebox() || IsCubeOpen())
 		{
 			if (bSendMsg)
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"거래창,창고 등을 연 상태에서는 다른곳으로 이동,종료 할수 없습니다"));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("거래창,창고 등을 연 상태에서는 다른곳으로 이동,종료 할수 없습니다"));
 
 			return true;
 		}
 	}
 
 	//PREVENT_PORTAL_AFTER_EXCHANGE
-	//교환 후 시간체크
 	if (iPulse - GetExchangeTime()  < PASSES_PER_SEC(limittime))
 	{
 		if (bSendMsg)
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"거래 후 %d초 이내에는 다른지역으로 이동 할 수 없습니다."), limittime );
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("거래 후 %d초 이내에는 다른지역으로 이동 할 수 없습니다."), limittime );
 		return true;
 	}
 	//END_PREVENT_PORTAL_AFTER_EXCHANGE
@@ -8777,33 +7711,16 @@ bool CHARACTER::IsHack(bool bSendMsg, bool bCheckShopOwner, int limittime)
 	if (iPulse - GetMyShopTime() < PASSES_PER_SEC(limittime))
 	{
 		if (bSendMsg)
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"거래 후 %d초 이내에는 다른지역으로 이동 할 수 없습니다."), limittime);
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("거래 후 %d초 이내에는 다른지역으로 이동 할 수 없습니다."), limittime);
 		return true;
 	}
-	
-#if defined(__BL_MAILBOX__)
-	if (iPulse - GetMyMailBoxTime() < PASSES_PER_SEC(limittime))
-	{
-		if (bSendMsg)
-			ChatPacket(CHAT_TYPE_INFO, "You cannot go elsewhere for %d seconds after mailbox.", limittime);
-		return true;
-	}
-#endif
 
 	if (iPulse - GetRefineTime() < PASSES_PER_SEC(limittime))
 	{
 		if (bSendMsg)
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"아이템 개량후 %d초 이내에는 귀환부,귀환기억부를 사용할 수 없습니다."), limittime);
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("아이템 개량후 %d초 이내에는 귀환부,귀환기억부를 사용할 수 없습니다."), limittime);
 		return true;
 	}
-#ifdef OFFLINE_SHOP
-	if (iPulse - GetMyOfflineShopTime() < PASSES_PER_SEC(limittime))
-	{
-		if (bSendMsg)
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Trebuie sa asteptati %d pentru a face asta."), limittime);
-		return true;
-	}
-#endif
 	//END_PREVENT_ITEM_COPY
 
 	return false;
@@ -8913,7 +7830,7 @@ bool CHARACTER::IsSiegeNPC() const
 //------------------------------------------------
 void CHARACTER::UpdateDepositPulse()
 {
-	m_deposit_pulse = thecore_pulse() + PASSES_PER_SEC(60*5);	// 5분
+	m_deposit_pulse = thecore_pulse() + PASSES_PER_SEC(60*5);
 }
 
 bool CHARACTER::CanDeposit() const
@@ -9120,7 +8037,7 @@ void CHARACTER::StartCheckSpeedHackEvent()
 
 	info->ch = this;
 
-	m_pkCheckSpeedHackEvent = event_create(check_speedhack_event, info, PASSES_PER_SEC(60));	// 1분
+	m_pkCheckSpeedHackEvent = event_create(check_speedhack_event, info, PASSES_PER_SEC(60));
 }
 
 void CHARACTER::GoHome()
@@ -9193,46 +8110,6 @@ void CHARACTER::StartDestroyWhenIdleEvent()
 
 	m_pkDestroyWhenIdleEvent = event_create(destroy_when_idle_event, info, PASSES_PER_SEC(300));
 }
-
-#ifdef ENABLE_DECORUM
-EVENTFUNC(destroy_event)
-{
-	char_event_info* info = dynamic_cast<char_event_info*>( event->info );
-	if ( info == NULL )
-	{
-		sys_err( "destroy_event> <Factor> Null pointer" );
-		return 0;
-	}
-
-	LPCHARACTER ch = info->ch;
-	if (ch == NULL) { // <Factor>
-		return 0;
-	}
-	sys_log(0, "DESTROY: %s", ch->GetName());
-	
-	if (ch->GetDungeon())
-	{
-		char szBuff[256];
-		sprintf(szBuff, LC_TEXT_LANGUAGE(ch->GetLanguage(), "%s is dead."), ch->GetName());
-		ch->GetDungeon()->Notice(LC_TEXT(szBuff));
-	}
-	
-	M2_DESTROY_CHARACTER(ch);
-	return 0;
-}
-void CHARACTER::StartDestroyEvent(DWORD dwSeconds)
-{
-	if (m_pkDestroyEvent)
-		event_cancel(&m_pkDestroyEvent);
-
-	//sys_log(0, "StartDestroyEvent(%d) for character %p", dwSeconds, this);
-	char_event_info* info = AllocEventInfo<char_event_info>();
-
-	info->ch = this;
-
-	m_pkDestroyEvent = event_create(destroy_event, info, PASSES_PER_SEC(dwSeconds));
-}
-#endif
 
 void CHARACTER::SetComboSequence(BYTE seq)
 {
@@ -9314,7 +8191,6 @@ BYTE CHARACTER::GetChatCounter() const
 	return m_bChatCounter;
 }
 
-// 말이나 다른것을 타고 있나?
 bool CHARACTER::IsRiding() const
 {
 	return IsHorseRiding() || GetMountVnum();
@@ -9351,25 +8227,19 @@ bool CHARACTER::CanWarp() const
 	if ((iPulse - GetMyShopTime()) < limit_time)
 		return false;
 
-#if defined(__BL_MAILBOX__)
-	if ((iPulse - GetMyMailBoxTime()) < limit_time)
-		return false;
-#endif
-
 	if ((iPulse - GetRefineTime()) < limit_time)
 		return false;
 
-#ifdef OFFLINE_SHOP
-	if ((iPulse - GetMyOfflineShopTime()) < limit_time)
-		return false;
-#endif
-
-#ifdef OFFLINE_SHOP
-	if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen() || GetOfflineShopOwner() || GetMailBox())
-#else
 	if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen())
-#endif
 		return false;
+	
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	if (GetOfflineShopGuest() || GetAuctionGuest())
+		return false;
+
+	if (iPulse - GetOfflineShopUseTime() < limit_time)
+		return false;
+#endif	
 
 	return true;
 }
@@ -9396,55 +8266,83 @@ DWORD CHARACTER::PetGetNextExp() const
 }
 #endif
 
+
 int	CHARACTER::GetSkillPowerByLevel(int level, bool bMob) const
 {
 	return CTableBySkill::instance().GetSkillPowerByLevelFromType(GetJob(), GetSkillGroup(), MINMAX(0, level, SKILL_MAX_LEVEL), bMob);
 }
 
-#if defined(__BL_MAILBOX__)
-void CHARACTER::SetMailBox(CMailBox* m)
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+void CHARACTER::SetShopSafebox(offlineshop::CShopSafebox* pk) 
 {
-	if (m_pkMailBox)
-		delete m_pkMailBox;
+	if(m_pkShopSafebox && pk==NULL)
+		m_pkShopSafebox->SetOwner(NULL);
 
-	m_pkMailBox = m;
+	else if(m_pkShopSafebox==NULL && pk)
+		pk->SetOwner(this);
+
+	m_pkShopSafebox  = pk;
 }
 #endif
 
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
+std::vector<LPITEM> CHARACTER::GetAcceMaterials()
+{
+	return std::vector<LPITEM>{ITEM_MANAGER::instance().Find(m_pointsInstant.pAcceMaterials[0].id), ITEM_MANAGER::instance().Find(m_pointsInstant.pAcceMaterials[1].id)};
+}
+
+const TItemPosEx* CHARACTER::GetAcceMaterialsInfo()
+{
+	return m_pointsInstant.pAcceMaterials;
+}
+
+void CHARACTER::SetAcceMaterial(int pos, LPITEM ptr)
+{
+	if (pos < 0 || pos >= ACCE_WINDOW_MAX_MATERIALS)
+		return;
+	if (!ptr)
+		m_pointsInstant.pAcceMaterials[pos] = {};
+	else
+	{
+		m_pointsInstant.pAcceMaterials[pos].id = ptr->GetID();
+		m_pointsInstant.pAcceMaterials[pos].pos.cell = ptr->GetCell();
+		m_pointsInstant.pAcceMaterials[pos].pos.window_type = ptr->GetWindow();
+	}
+}
+
 void CHARACTER::OpenAcce(bool bCombination)
 {
-	if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen() || GetOfflineShopOwner() || GetMailBox())
+	if (IsAcceOpened(bCombination))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"Before you may close the other windows."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("The acce window it's already opened."));
 		return;
 	}
-	if (isAcceOpened(bCombination))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"The acce window it's already opened."));
-		return;
-	}
+
 	if (bCombination)
 	{
 		if (m_bAcceAbsorption)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"Before you may close the acce absorption window."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Before you may close the acce absorption window."));
 			return;
 		}
+
 		m_bAcceCombination = true;
 	}
 	else
 	{
 		if (m_bAcceCombination)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"Before you may close the acce combine window."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Before you may close the acce combine window."));
 			return;
 		}
+
 		m_bAcceAbsorption = true;
 	}
+
 	TItemPos tPos;
 	tPos.window_type = INVENTORY;
 	tPos.cell = 0;
+
 	TPacketAcce sPacket;
 	sPacket.header = HEADER_GC_ACCE;
 	sPacket.subheader = ACCE_SUBHEADER_GC_OPEN;
@@ -9456,16 +8354,21 @@ void CHARACTER::OpenAcce(bool bCombination)
 	sPacket.dwMinAbs = 0;
 	sPacket.dwMaxAbs = 0;
 	GetDesc()->Packet(&sPacket, sizeof(TPacketAcce));
+
 	ClearAcceMaterials();
 }
+
 void CHARACTER::CloseAcce()
 {
 	if ((!m_bAcceCombination) && (!m_bAcceAbsorption))
 		return;
-	bool bWindow = (m_bAcceCombination == true ? true : false);
+
+	bool bWindow = m_bAcceCombination;
+
 	TItemPos tPos;
 	tPos.window_type = INVENTORY;
 	tPos.cell = 0;
+
 	TPacketAcce sPacket;
 	sPacket.header = HEADER_GC_ACCE;
 	sPacket.subheader = ACCE_SUBHEADER_GC_CLOSE;
@@ -9477,33 +8380,37 @@ void CHARACTER::CloseAcce()
 	sPacket.dwMinAbs = 0;
 	sPacket.dwMaxAbs = 0;
 	GetDesc()->Packet(&sPacket, sizeof(TPacketAcce));
+
 	if (bWindow)
 		m_bAcceCombination = false;
 	else
 		m_bAcceAbsorption = false;
+
 	ClearAcceMaterials();
 }
+
 void CHARACTER::ClearAcceMaterials()
 {
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetAcceMaterials();
+	auto pkItemMaterial = GetAcceMaterials();
 	for (int i = 0; i < ACCE_WINDOW_MAX_MATERIALS; ++i)
 	{
 		if (!pkItemMaterial[i])
 			continue;
+
 		pkItemMaterial[i]->Lock(false);
 		pkItemMaterial[i] = NULL;
+		SetAcceMaterial(i, nullptr);
 	}
 }
+
 bool CHARACTER::AcceIsSameGrade(long lGrade)
 {
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetAcceMaterials();
+	auto pkItemMaterial = GetAcceMaterials();
 	if (!pkItemMaterial[0])
 		return false;
-	bool bReturn = (pkItemMaterial[0]->GetValue(ACCE_GRADE_VALUE_FIELD) == lGrade ? true : false);
-	return bReturn;
+	return pkItemMaterial[0]->GetValue(ACCE_GRADE_VALUE_FIELD) == lGrade;
 }
+
 DWORD CHARACTER::GetAcceCombinePrice(long lGrade)
 {
 	DWORD dwPrice = 0;
@@ -9530,23 +8437,26 @@ DWORD CHARACTER::GetAcceCombinePrice(long lGrade)
 	}
 	break;
 	}
+
 	return dwPrice;
 }
+
 BYTE CHARACTER::CheckEmptyMaterialSlot()
 {
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetAcceMaterials();
+	auto pkItemMaterial = GetAcceMaterials();
 	for (int i = 0; i < ACCE_WINDOW_MAX_MATERIALS; ++i)
 	{
 		if (!pkItemMaterial[i])
 			return i;
 	}
+
 	return 255;
 }
+
 void CHARACTER::GetAcceCombineResult(DWORD & dwItemVnum, DWORD & dwMinAbs, DWORD & dwMaxAbs)
 {
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetAcceMaterials();
+	auto pkItemMaterial = GetAcceMaterials();
+
 	if (m_bAcceCombination)
 	{
 		if ((pkItemMaterial[0]) && (pkItemMaterial[1]))
@@ -9565,6 +8475,7 @@ void CHARACTER::GetAcceCombineResult(DWORD & dwItemVnum, DWORD & dwMinAbs, DWORD
 				TItemTable * pTable = ITEM_MANAGER::instance().GetTable(dwMaskVnum + 1);
 				if (pTable)
 					dwMaskVnum += 1;
+
 				dwItemVnum = dwMaskVnum;
 				switch (lVal)
 				{
@@ -9612,6 +8523,7 @@ void CHARACTER::GetAcceCombineResult(DWORD & dwItemVnum, DWORD & dwMinAbs, DWORD
 		}
 	}
 }
+
 void CHARACTER::AddAcceMaterial(TItemPos tPos, BYTE bPos)
 {
 	if (bPos >= ACCE_WINDOW_MAX_MATERIALS)
@@ -9625,6 +8537,7 @@ void CHARACTER::AddAcceMaterial(TItemPos tPos, BYTE bPos)
 		else
 			return;
 	}
+
 	LPITEM pkItem = GetItem(tPos);
 	if (!pkItem)
 		return;
@@ -9636,36 +8549,36 @@ void CHARACTER::AddAcceMaterial(TItemPos tPos, BYTE bPos)
 		return;
 	else if (pkItem->isLocked())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"You can't add locked items."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You can't add locked items."));
 		return;
 	}
 #ifdef __SOULBINDING_SYSTEM__
 	else if ((pkItem->IsBind()) || (pkItem->IsUntilBind()))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"You can't add binded items."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You can't add binded items."));
 		return;
 	}
 #endif
 	else if ((m_bAcceCombination) && (bPos == 1) && (!AcceIsSameGrade(pkItem->GetValue(ACCE_GRADE_VALUE_FIELD))))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"You can combine just accees of same grade."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You can combine just accees of same grade."));
 		return;
 	}
 	else if ((m_bAcceCombination) && (pkItem->GetSocket(ACCE_ABSORPTION_SOCKET) >= ACCE_GRADE_4_ABS_MAX))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"This acce got already maximum absorption chance."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("This acce got already maximum absorption chance."));
 		return;
 	}
 	else if ((bPos == 1) && (m_bAcceAbsorption))
 	{
 		if ((pkItem->GetType() != ITEM_WEAPON) && (pkItem->GetType() != ITEM_ARMOR))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"You can absorb just the bonuses from armors and weapons."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You can absorb just the bonuses from armors and weapons."));
 			return;
 		}
 		else if ((pkItem->GetType() == ITEM_ARMOR) && (pkItem->GetSubType() != ARMOR_BODY))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"You can absorb just the bonuses from armors and weapons."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You can absorb just the bonuses from armors and weapons."));
 			return;
 		}
 	}
@@ -9675,20 +8588,25 @@ void CHARACTER::AddAcceMaterial(TItemPos tPos, BYTE bPos)
 		return;
 	else if ((pkItem->GetSocket(ACCE_ABSORBED_SOCKET) > 0) && (bPos == 0) && (m_bAcceAbsorption))
 		return;
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetAcceMaterials();
+
+	auto pkItemMaterial = GetAcceMaterials();
 	if ((bPos == 1) && (!pkItemMaterial[0]))
 		return;
+
 	if (pkItemMaterial[bPos])
 		return;
+
+	SetAcceMaterial(bPos, pkItem);
 	pkItemMaterial[bPos] = pkItem;
 	pkItemMaterial[bPos]->Lock(true);
+
 	DWORD dwItemVnum, dwMinAbs, dwMaxAbs;
 	GetAcceCombineResult(dwItemVnum, dwMinAbs, dwMaxAbs);
+
 	TPacketAcce sPacket;
 	sPacket.header = HEADER_GC_ACCE;
 	sPacket.subheader = ACCE_SUBHEADER_GC_ADDED;
-	sPacket.bWindow = m_bAcceCombination == true ? true : false;
+	sPacket.bWindow = m_bAcceCombination;
 	sPacket.dwPrice = GetAcceCombinePrice(pkItem->GetValue(ACCE_GRADE_VALUE_FIELD));
 	sPacket.bPos = bPos;
 	sPacket.tPos = tPos;
@@ -9697,32 +8615,39 @@ void CHARACTER::AddAcceMaterial(TItemPos tPos, BYTE bPos)
 	sPacket.dwMaxAbs = dwMaxAbs;
 	GetDesc()->Packet(&sPacket, sizeof(TPacketAcce));
 }
+
 void CHARACTER::RemoveAcceMaterial(BYTE bPos)
 {
 	if (bPos >= ACCE_WINDOW_MAX_MATERIALS)
 		return;
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetAcceMaterials();
+
+	auto pkItemMaterial = GetAcceMaterials();
+
 	DWORD dwPrice = 0;
+
 	if (bPos == 1)
 	{
 		if (pkItemMaterial[bPos])
 		{
 			pkItemMaterial[bPos]->Lock(false);
 			pkItemMaterial[bPos] = NULL;
+			SetAcceMaterial(bPos, nullptr);
 		}
+
 		if (pkItemMaterial[0])
 			dwPrice = GetAcceCombinePrice(pkItemMaterial[0]->GetValue(ACCE_GRADE_VALUE_FIELD));
 	}
 	else
 		ClearAcceMaterials();
+
 	TItemPos tPos;
 	tPos.window_type = INVENTORY;
 	tPos.cell = 0;
+
 	TPacketAcce sPacket;
 	sPacket.header = HEADER_GC_ACCE;
 	sPacket.subheader = ACCE_SUBHEADER_GC_REMOVED;
-	sPacket.bWindow = m_bAcceCombination == true ? true : false;
+	sPacket.bWindow = m_bAcceCombination;
 	sPacket.dwPrice = dwPrice;
 	sPacket.bPos = bPos;
 	sPacket.tPos = tPos;
@@ -9731,13 +8656,62 @@ void CHARACTER::RemoveAcceMaterial(BYTE bPos)
 	sPacket.dwMaxAbs = 0;
 	GetDesc()->Packet(&sPacket, sizeof(TPacketAcce));
 }
+
 BYTE CHARACTER::CanRefineAcceMaterials()
 {
 	BYTE bReturn = 0;
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetAcceMaterials();
+	if (!GetDesc())
+		return bReturn;
+
+	if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen())
+		return bReturn;
+
+	auto materialInfo = GetAcceMaterialsInfo();
+	auto pkItemMaterial = GetAcceMaterials();
+	if (!pkItemMaterial[0] || !pkItemMaterial[1])
+	{
+		sys_err("CanRefineAcceMaterials: pkItemMaterial null");
+		return bReturn;
+	}
+	else if (pkItemMaterial[0]->GetOwner()!=this || pkItemMaterial[1]->GetOwner() != this)
+	{
+		sys_err("CanRefineAcceMaterials: pkItemMaterial different ownership");
+		return bReturn;
+	}
+	else if (pkItemMaterial[0]->IsEquipped() || pkItemMaterial[1]->IsEquipped())
+	{
+		sys_err("CanRefineAcceMaterials: pkItemMaterial equipped");
+		return bReturn;
+	}
+	else if (pkItemMaterial[0]->GetWindow() != INVENTORY || pkItemMaterial[1]->GetWindow() != INVENTORY)
+	{
+		sys_err("CanRefineAcceMaterials: pkItemMaterial not in INVENTORY");
+		return bReturn;
+	}
+	else if (!materialInfo[0].id || !materialInfo[1].id)
+	{
+		sys_err("CanRefineAcceMaterials: materialInfo id 0");
+		return bReturn;
+	}
+	else if (materialInfo[0].pos.cell != pkItemMaterial[0]->GetCell() || materialInfo[1].pos.cell != pkItemMaterial[1]->GetCell())
+	{
+		sys_err("CanRefineAcceMaterials: pkItemMaterial wrong cell");
+		return bReturn;
+	}
+	else if (materialInfo[0].pos.window_type != pkItemMaterial[0]->GetWindow() || materialInfo[1].pos.window_type != pkItemMaterial[1]->GetWindow())
+	{
+		sys_err("CanRefineAcceMaterials: pkItemMaterial wrong window_type");
+		return bReturn;
+	}
+
 	if (m_bAcceCombination)
 	{
+		if (!AcceIsSameGrade(pkItemMaterial[1]->GetValue(ACCE_GRADE_VALUE_FIELD)))
+		{
+			sys_err("CanRefineAcceMaterials: pkItemMaterial different acce grade");
+			return bReturn;
+		}
+
 		for (int i = 0; i < ACCE_WINDOW_MAX_MATERIALS; ++i)
 		{
 			if (pkItemMaterial[i])
@@ -9765,28 +8739,35 @@ BYTE CHARACTER::CanRefineAcceMaterials()
 				bReturn = 2;
 			else
 				bReturn = 0;
+
 			if ((pkItemMaterial[1]->GetType() == ITEM_WEAPON) || ((pkItemMaterial[1]->GetType() == ITEM_ARMOR) && (pkItemMaterial[1]->GetSubType() == ARMOR_BODY)))
 				bReturn = 2;
 			else
 				bReturn = 0;
+
 			if (pkItemMaterial[0]->GetSocket(ACCE_ABSORBED_SOCKET) > 0)
 				bReturn = 0;
 		}
 		else
 			bReturn = 0;
 	}
+
 	return bReturn;
 }
+
 void CHARACTER::RefineAcceMaterials()
 {
 	BYTE bCan = CanRefineAcceMaterials();
 	if (bCan == 0)
 		return;
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetAcceMaterials();
+
+	auto pkItemMaterial = GetAcceMaterials();
+
 	DWORD dwItemVnum, dwMinAbs, dwMaxAbs;
 	GetAcceCombineResult(dwItemVnum, dwMinAbs, dwMaxAbs);
-	DWORD dwPrice = GetAcceCombinePrice(pkItemMaterial[0]->GetValue(ACCE_GRADE_VALUE_FIELD));
+	//DWORD dwPrice = GetAcceCombinePrice(pkItemMaterial[0]->GetValue(ACCE_GRADE_VALUE_FIELD));
+	long long dwPrice = GetAcceCombinePrice(pkItemMaterial[0]->GetValue(ACCE_GRADE_VALUE_FIELD)); //ENABLE_LONG_LONG
+	
 	if (bCan == 1)
 	{
 		int iSuccessChance = 0;
@@ -9814,11 +8795,13 @@ void CHARACTER::RefineAcceMaterials()
 		}
 		break;
 		}
+
 		if (GetGold() < dwPrice)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"You don't have enough Yang."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You don't have enough Yang."));
 			return;
 		}
+
 		int iChance = number(1, 100);
 		bool bSucces = (iChance <= iSuccessChance ? true : false);
 		if (bSucces)
@@ -9829,46 +8812,59 @@ void CHARACTER::RefineAcceMaterials()
 				sys_err("%d can't be created.", dwItemVnum);
 				return;
 			}
+
 			ITEM_MANAGER::CopyAllAttrTo(pkItemMaterial[0], pkItem);
-			LogManager::instance().ItemLog(this, pkItem, "COMBINE SUCCESS", pkItem->GetName(GetLanguage()));
+			LogManager::instance().ItemLog(this, pkItem, "COMBINE SUCCESS", pkItem->GetName());
 			DWORD dwAbs = (dwMinAbs == dwMaxAbs ? dwMinAbs : number(dwMinAbs + 1, dwMaxAbs));
 			pkItem->SetSocket(ACCE_ABSORPTION_SOCKET, dwAbs);
 			pkItem->SetSocket(ACCE_ABSORBED_SOCKET, pkItemMaterial[0]->GetSocket(ACCE_ABSORBED_SOCKET));
+
 			PointChange(POINT_GOLD, -dwPrice);
 			DBManager::instance().SendMoneyLog(MONEY_LOG_REFINE, pkItemMaterial[0]->GetVnum(), -dwPrice);
+
 			WORD wCell = pkItemMaterial[0]->GetCell();
 			ITEM_MANAGER::instance().RemoveItem(pkItemMaterial[0], "COMBINE (REFINE SUCCESS)");
 			ITEM_MANAGER::instance().RemoveItem(pkItemMaterial[1], "COMBINE (REFINE SUCCESS)");
+
 			pkItem->AddToCharacter(this, TItemPos(INVENTORY, wCell));
 			ITEM_MANAGER::instance().FlushDelayedSave(pkItem);
 			pkItem->AttrLog();
+
 			if (lVal == 4)
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"New absorption rate: %d%"), dwAbs);
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("New absorption rate: %d%"), dwAbs);
 			else
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"Successo."));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Success."));
+
 			EffectPacket(SE_EFFECT_ACCE_SUCCEDED);
 			LogManager::instance().AcceLog(GetPlayerID(), GetX(), GetY(), dwItemVnum, pkItem->GetID(), 1, dwAbs, 1);
+
 			ClearAcceMaterials();
 		}
 		else
 		{
 			PointChange(POINT_GOLD, -dwPrice);
 			DBManager::instance().SendMoneyLog(MONEY_LOG_REFINE, pkItemMaterial[0]->GetVnum(), -dwPrice);
+
 			ITEM_MANAGER::instance().RemoveItem(pkItemMaterial[1], "COMBINE (REFINE FAIL)");
+
 			if (lVal == 4)
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"Nuova rata di assorbimento: %d%"), pkItemMaterial[0]->GetSocket(ACCE_ABSORPTION_SOCKET));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("New absorption rate: %d%"), pkItemMaterial[0]->GetSocket(ACCE_ABSORPTION_SOCKET));
 			else
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"Fallito."));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Failed."));
+
 			LogManager::instance().AcceLog(GetPlayerID(), GetX(), GetY(), dwItemVnum, 0, 0, 0, 0);
+
 			pkItemMaterial[1] = NULL;
 		}
+
 		TItemPos tPos;
 		tPos.window_type = INVENTORY;
 		tPos.cell = 0;
+
 		TPacketAcce sPacket;
 		sPacket.header = HEADER_GC_ACCE;
 		sPacket.subheader = ACCE_SUBHEADER_CG_REFINED;
-		sPacket.bWindow = m_bAcceCombination == true ? true : false;
+		sPacket.bWindow = m_bAcceCombination;
 		sPacket.dwPrice = dwPrice;
 		sPacket.bPos = 0;
 		sPacket.tPos = tPos;
@@ -9878,6 +8874,7 @@ void CHARACTER::RefineAcceMaterials()
 			sPacket.dwMaxAbs = 100;
 		else
 			sPacket.dwMaxAbs = 0;
+
 		GetDesc()->Packet(&sPacket, sizeof(TPacketAcce));
 	}
 	else
@@ -9885,23 +8882,31 @@ void CHARACTER::RefineAcceMaterials()
 		pkItemMaterial[1]->CopyAttributeTo(pkItemMaterial[0]);
 		LogManager::instance().ItemLog(this, pkItemMaterial[0], "ABSORB (REFINE SUCCESS)", pkItemMaterial[0]->GetName());
 		pkItemMaterial[0]->SetSocket(ACCE_ABSORBED_SOCKET, pkItemMaterial[1]->GetOriginalVnum());
+		#ifdef USE_ACCE_ABSORB_WITH_NO_NEGATIVE_BONUS
 		for (int i = 0; i < ITEM_ATTRIBUTE_MAX_NUM; ++i)
 		{
 			if (pkItemMaterial[0]->GetAttributeValue(i) < 0)
 				pkItemMaterial[0]->SetForceAttribute(i, pkItemMaterial[0]->GetAttributeType(i), 0);
 		}
+		#endif
 		ITEM_MANAGER::instance().RemoveItem(pkItemMaterial[1], "ABSORBED (REFINE SUCCESS)");
+
 		ITEM_MANAGER::instance().FlushDelayedSave(pkItemMaterial[0]);
 		pkItemMaterial[0]->AttrLog();
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"Success."));
+
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Success."));
+		EffectPacket(SE_EFFECT_ACCE_SUCCEDED);
+
 		ClearAcceMaterials();
+
 		TItemPos tPos;
 		tPos.window_type = INVENTORY;
 		tPos.cell = 0;
+
 		TPacketAcce sPacket;
 		sPacket.header = HEADER_GC_ACCE;
 		sPacket.subheader = ACCE_SUBHEADER_CG_REFINED;
-		sPacket.bWindow = m_bAcceCombination == true ? true : false;
+		sPacket.bWindow = m_bAcceCombination;
 		sPacket.dwPrice = dwPrice;
 		sPacket.bPos = 255;
 		sPacket.tPos = tPos;
@@ -9911,1260 +8916,113 @@ void CHARACTER::RefineAcceMaterials()
 		GetDesc()->Packet(&sPacket, sizeof(TPacketAcce));
 	}
 }
+
 bool CHARACTER::CleanAcceAttr(LPITEM pkItem, LPITEM pkTarget)
 {
 	if (!CanHandleItem())
+	{
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Close the other windows."));
 		return false;
+	}
 	else if ((!pkItem) || (!pkTarget))
+	{
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("pkItem or pkTarget nullptr."));
 		return false;
+	}
 	else if ((pkTarget->GetType() != ITEM_COSTUME) && (pkTarget->GetSubType() != COSTUME_ACCE))
+	{
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You can't use it on non-ACCE items."));
 		return false;
+	}
+
 	if (pkTarget->GetSocket(ACCE_ABSORBED_SOCKET) <= 0)
+	{
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("The ACCE item has no absorbed socket."));
 		return false;
+	}
+
 	pkTarget->SetSocket(ACCE_ABSORBED_SOCKET, 0);
 	for (int i = 0; i < ITEM_ATTRIBUTE_MAX_NUM; ++i)
-		pkTarget->SetForceAttributeAcce(i, 0, 0);
-	pkItem->SetCount(pkItem->GetCount() - 1);
+		pkTarget->SetForceAttribute(i, 0, 0);
+
 	LogManager::instance().ItemLog(this, pkTarget, "USE_DETACHMENT (CLEAN ATTR)", pkTarget->GetName());
 	return true;
 }
 #endif
 
-#ifdef ANTY_WAIT_HACK
-extern std::map<BYTE, std::string> AntyWHSums;
-extern std::map<BYTE, std::string> AntyWHRegex;
-EVENTFUNC(wh_check_event)
+bool CHARACTER::CanTakeInventoryItem(LPITEM item, TItemPos* cell)
 {
-	char_event_info* info = dynamic_cast<char_event_info*>(event->info);
-	if (info == NULL)
+	// DONT TOUCH MY iEmpty integer THANKS.
+	int iEmpty = -1;
+
+	if (item->IsDragonSoul())
 	{
-		sys_err("wh_check_event> <Factor> Null pointer");
-		return 0;
+		cell->window_type = DRAGON_SOUL_INVENTORY;
+		cell->cell = iEmpty = GetEmptyDragonSoulInventory(item);
 	}
 
-	LPCHARACTER	ch = info->ch;
-
-	if (NULL == ch || ch->IsNPC() || !ch->GetDesc() || AntyWHSums.find(ch->GetRealJob()) == AntyWHSums.end())
-		return 0;
-	if (quest::CQuestManager::Instance().GetEventFlag("wh_off") == 1)
-		return PASSES_PER_SEC(15);
-	if (!ch->GetWHPass())
+#ifdef ENABLE_EXTRA_INVENTORY
+	else if (item->IsExtraItem())
 	{
-		if (quest::CQuestManager::Instance().GetEventFlag("wh_dc") == 1)
-		{
-			ch->Say("Wykryli쐌y na twoim koncie nielegalne oprogramowanie WaitHack[ENTER]Wy낱cz je lub spatchuj klienta je쐋i go nie posiadasz![ENTER]Zostaniesz wyrzucony z serwera za 4 sekundy");
-			ch->GetDesc()->DelayedDisconnect(4);
-		}
-		LogManager::instance().Query("INSERT INTO wh_log SET pid = %d,time=NOW(),ip='%s',hash='%s',job=%d", ch->GetPlayerID(), inet_ntoa(ch->GetDesc()->GetAddr().sin_addr),ch->GetLastWHRegex(),ch->GetRealJob());
-		return 0;
+		cell->window_type = EXTRA_INVENTORY;
+		cell->cell = iEmpty = GetEmptyExtraInventory(item);
 	}
-	if (quest::CQuestManager::Instance().GetEventFlag("wh_loop") == 1)
-		ch->SendWaitHack();
-	return PASSES_PER_SEC(15); // 60 najlepiej
+#endif
+
+
+	else
+	{
+		cell->window_type = INVENTORY;
+		cell->cell = iEmpty = GetEmptyInventory(item->GetSize());
+	}
+
+	return iEmpty != -1;
 }
-void CHARACTER::SendWaitHack()
+
+#ifdef ENABLE_NEW_DETAILS_GUI
+void CHARACTER::SendKillLog()
 {
-	if (quest::CQuestManager::Instance().GetEventFlag("wh_off") == 1)
+	if(!GetDesc())
 		return;
-	SetWHPass(false);
-	TPacketGCAntyWH wh;
-	memset(&wh, 0, sizeof(TPacketGCAntyWH));
-	wh.bHeader = HEADER_GC_ANTY_WAIT_HACK;
-	strlcpy(wh.regex, AntyWHRegex[GetRealJob()].c_str(), 255);
-	//	ch->ChatPacket(1, wh.regex);
-	GetDesc()->Packet(&wh, sizeof(TPacketGCAntyWH));
-}
-void CHARACTER::StartCheckWH()
-{
-	if (m_pkCheckWH)
-		return;
-	SendWaitHack();
-	char_event_info* info = AllocEventInfo<char_event_info>();
-	info->ch = this;
-	m_pkCheckWH = event_create(wh_check_event, info, PASSES_PER_SEC(60)); // 120 najlepiej
-}
-BYTE CHARACTER::GetRealJob()
-{
-	return m_points.job;
+	TPacketGCKillLOG p;
+	p.header = HEADER_GC_KILL_LOG;
+	thecore_memcpy(p.kill_log, m_points.kill_log,sizeof(p.kill_log));
+	GetDesc()->Packet(&p,sizeof(TPacketGCKillLOG));
 }
 #endif
 
-#ifdef NEW_ADD_INVENTORY
-bool CHARACTER::Envanter_update()
+#if defined(__BL_OFFICIAL_LOOT_FILTER__)
+CLootFilter* CHARACTER::GetLootFilter()
 {
-// #define anahtar1 72319
-#define anahtar2 72320
-        for (int black = 0; black < 4; black++)
-        {
-            if (Black_Envanter() == black)
-            {
-                int lazim = 2;
-                if (CountSpecifyItem(anahtar2) >= lazim)
-                {
-                    RemoveSpecifyItem(anahtar2, lazim);
-                }
-                else
-                {
-                    ChatPacket(CHAT_TYPE_COMMAND, "update_envanter_lazim %d", lazim);
-                    return false;
-                }
-            }
-        }
-        for (int black2 = 4; black2 < 6; black2++)
-        {
-            if (Black_Envanter() == black2)
-            {
-                int lazim = 3;
-                if (CountSpecifyItem(anahtar2) >= lazim)
-                {
-                    RemoveSpecifyItem(anahtar2, lazim);
-                }
-                else
-                {
-                    ChatPacket(CHAT_TYPE_COMMAND, "update_envanter_lazim %d", lazim);
-                    return false;
-                }
-            }
-        }
-        for (int black31 = 6; black31 < 9; black31++)
-        {
-            if (Black_Envanter() == black31)
-            {
-                int lazim = 4;
-                if (CountSpecifyItem(anahtar2) >= lazim)
-                {
-                    RemoveSpecifyItem(anahtar2, lazim);
-                }
-                else
-                {
-                    ChatPacket(CHAT_TYPE_COMMAND, "update_envanter_lazim %d", lazim);
-                    return false;
-                }
-            }
-        }
-        for (int black3 = 9; black3 < 12; black3++)
-        {
-            if (Black_Envanter() == black3)
-            {
-                int lazim = 5;
-                if (CountSpecifyItem(anahtar2) >= lazim)
-                {
-                    RemoveSpecifyItem(anahtar2, lazim);
-                }
-                else
-                {
-                    ChatPacket(CHAT_TYPE_COMMAND, "update_envanter_lazim %d", lazim);
-                    return false;
-                }
-            }
-        }
-        for (int black4 = 12; black4 < 15; black4++)
-        {
-            if (Black_Envanter() == black4)
-            {
-                int lazim = 6;
-                if (CountSpecifyItem(anahtar2) >= lazim)
-                {
-                    RemoveSpecifyItem(anahtar2, lazim);
-                }
-                else
-                {
-                    ChatPacket(CHAT_TYPE_COMMAND, "update_envanter_lazim %d", lazim);
-                    return false;
-                }
-            }
-        }
-        for (int black5 = 15; black5 < 18; black5++)
-        {  
-            if (Black_Envanter() == black5)
-            {
-                int lazim = 7;
-                if (CountSpecifyItem(anahtar2) >= lazim)
-                {
-                    RemoveSpecifyItem(anahtar2, lazim);
-                }
-                else
-                {
-                    ChatPacket(CHAT_TYPE_COMMAND, "update_envanter_lazim %d", lazim);
-                    return false;
-                }
-            }
-        }
-    PointChange(POINT_BLACK, 1, false);
-    ChatPacket(CHAT_TYPE_COMMAND, "refreshinven");
-    UpdatePacket();    
-    return true;
-}
-#endif
-
-#ifdef __SPECIAL_STORAGE_SYSTEM__
-static bool SortMyItems(const LPITEM & s1, const LPITEM & s2) 
-{ 
-	// std::string name(s1->GetName());
-	// std::string name2(s2->GetName());
-
-	// return name < name2;
-
-	return s1->GetVnum() < s2->GetVnum();
+	return m_pLootFilter;
 }
 
-void CHARACTER::SortSpecialStorage(BYTE window_type, bool stack)
+void CHARACTER::SetLootFilter()
 {
-	if (IsObserverMode())
+	if (!GetDesc())
 		return;
-
-	if (IsDead() || IsStun())
-		return;
-
-	if (IsOwnerCreateShopOffline() || IsOwnerEditShopOffline())
-		return;
-
-	if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen() || GetOfflineShopOwner() || GetMailBox())
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"You can't sort the inventory with other window opened."));
-		return;
-	}
-
-	int lastSortSpecialStoragePulse = GetSortSpecialStoragePulse();
-
-	int currentPulse = thecore_pulse();
-
-	if (lastSortSpecialStoragePulse > currentPulse)
-	{
-		int deltaInSeconds = ((lastSortSpecialStoragePulse / PASSES_PER_SEC(1)) - (currentPulse / PASSES_PER_SEC(1)));
-		int minutes = deltaInSeconds / 60;
-		int seconds = (deltaInSeconds - (minutes * 60));
-
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"You can sort your special storage again in %d seconds."), seconds);
-
-		return;
-	}
-
-	if (stack)
-	{
-		ChatPacket(CHAT_TYPE_COMMAND, "auto_stack_storage");
-		return;
-	}
-
-	static std::vector<LPITEM> v;
-
-	LPITEM myitems;
-
-	v.clear();
-
-	for (int i = 0; i < SPECIAL_STORAGE_INVENTORY_MAX_NUM; ++i)
-	{
-		if (!(myitems = GetSpecialStorageItem(i, window_type)))
-			continue;
-
-		v.push_back(myitems);
-
-		// Is commented because you can't add items from special storage to quickslot.
-		// SyncQuickslot(QUICKSLOT_TYPE_ITEM, i, 255);
-
-		myitems->RemoveFromCharacter();
-	}
-
-	std::sort(v.begin(), v.end(), SortMyItems);
 	
-	itertype(v) it = v.begin();
-
-	while (it != v.end())
-	{
-		LPITEM item = *(it++);
-
-		if (item)
-		{
-			int cell = GetEmptySpecialStorageSlot(item);
-
-#ifdef __HIGHLIGHT_SYSTEM__
-			item->AddToCharacter(this, TItemPos(window_type, cell), false);
-#else
-			item->AddToCharacter(this, TItemPos(window_type, cell));
-#endif
-		}
-	}
-
-	// Pulse is set for 10 seconds.
-	SetNextSortSpecialStoragePulse(thecore_pulse() + PASSES_PER_SEC(10));
-}
-#endif
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM
-
-int CHARACTER::GetSlotsCostume(){
-	int slot_default = 1;
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_ACCE
-	slot_default += 1;
-#endif
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_WEAPON_COSTUME
-	slot_default += 1;
-#endif
-
-	return slot_default;
-}
-
-int CHARACTER::GetSlotDefault(int slot){
-	int slot_amor = 0;
-	int slot_hair = 1;
-	int slot_weapon = 2;
-	int slot_acce = 3;
-
-	if(slot == 0){return slot_amor;}
-	if(slot == 1){return slot_hair;}
-	if(slot == 2){return slot_weapon;}
-	if(slot == 3){return slot_acce;}
-
-	return 0;
-}
-
-void CHARACTER::FuncHideCostume(int slot)
-{
-
-	if (slot <0 || slot > GetSlotsCostume())
+	if (m_pLootFilter)
 		return;
 
-	// 0 = show, 1 = hide
-	int part_value = 0;
-	int part_acce = 0;
-	bool bAdd = false;
+	m_pLootFilter = new CLootFilter();
 
-	char costume_hide[1024];	
-	snprintf(costume_hide, sizeof(costume_hide), "hide_costume_w.hide_costume_%d", slot);
-
-	const CItem* pArmor;
-	const CItem * pWeapon;
-	LPITEM pkItem;
-
-
-	if(slot == GetSlotDefault(0))
-	{
-		pkItem = GetWear(WEAR_COSTUME_BODY);
-		if(!pkItem)
-			return;
-
-		if (GetQuestFlag(costume_hide) == 0) 
-		{
-			SetQuestFlag(costume_hide,1);
-			pArmor = GetWear(WEAR_BODY);
-		}
-		else{
-			SetQuestFlag(costume_hide,0);
-			pArmor = GetWear(WEAR_COSTUME_BODY);
-		}
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_TRANSMUTACION
-		if (NULL != pArmor){
-			if (pArmor->GetTransmutation() > 0)
-			{
-				part_value = pArmor->GetTransmutation();
-			}else{
-				part_value = pArmor->GetVnum();
-			}
-		}else{
-			part_value = GetOriginalPart(PART_MAIN);
-		}
-#else
-		part_value = (NULL != pArmor) ? pArmor->GetVnum() : GetOriginalPart(PART_MAIN);
-#endif
-
-		SetPart(PART_MAIN, part_value);
-	}
-
-	else if(slot == GetSlotDefault(1))
-	{
-
-		pkItem = GetWear(WEAR_COSTUME_HAIR);
-		if(!pkItem)
-			return;
-
-		if (GetQuestFlag(costume_hide) == 0) 
-		{
-			SetQuestFlag(costume_hide,1);
-			bAdd = false;
-		}
-		else{
-			SetQuestFlag(costume_hide,0);
-			bAdd = true;
-		}
-
-		LPITEM pkItem = GetWear(WEAR_COSTUME_HAIR);
-		if (pkItem){
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_TRANSMUTACION
-			if (pkItem->GetTransmutation() > 0){
-				TItemTable * pHair = ITEM_MANAGER::instance().GetTable(pkItem->GetTransmutation());
-				if (!pHair)
-				{
-					part_value = (true == bAdd) ? pkItem->GetValue(3) : 0;
-				}
-				else
-				{
-					part_value = (true == bAdd) ? pHair->alValues[3] : 0;
-				}
-			}else{
-				part_value = (true == bAdd) ? pkItem->GetValue(3) : 0;
-			}
-#else
-			part_value = (true == bAdd) ? pkItem->GetValue(3) : 0;
-#endif
-		}
-		else{
-			part_value = 0;
-		}
-
-		SetPart(PART_HAIR, part_value);
-	}
-
-	//Acce Slot 2
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_ACCE
-	else if(slot == GetSlotDefault(3))
-	{
-
-		pkItem = GetWear(WEAR_COSTUME_ACCE);
-		if(!pkItem)
-			return;
-
-		if (GetQuestFlag(costume_hide) == 0) 
-		{
-			SetQuestFlag(costume_hide,1);
-			bAdd = false;
-		}
-		else{
-			SetQuestFlag(costume_hide,0);
-			bAdd = true;
-		}
-
-		if (pkItem){
-			part_value = pkItem->GetVnum();			
-			part_value -= 85000;
-
-			if (pkItem->GetSocket(ACCE_ABSORPTION_SOCKET) >= ACCE_EFFECT_FROM_ABS)
-			{
-				part_value += 2000;
-			}
-
-			part_value = (bAdd == true) ? part_value : 0;
-		}
-
-		SetPart(PART_ACCE, part_value);
-	}
-#endif
-
-#ifdef	ENABLE_HIDE_COSTUME_SYSTEM_WEAPON_COSTUME
-	//Weapon Slot 3
-	else if(slot == GetSlotDefault(2))
-	{
-
-		pkItem = GetWear(WEAR_COSTUME_WEAPON);
-		if(!pkItem)
-			return;
-		
-		if (GetQuestFlag(costume_hide) == 0) 
-		{
-			SetQuestFlag(costume_hide,1);
-			pWeapon = GetWear(WEAR_WEAPON);
-		}
-		else{
-			SetQuestFlag(costume_hide,0);
-			pWeapon = GetWear(WEAR_COSTUME_WEAPON);
-		}
-
-		if (NULL != pWeapon){
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_TRANSMUTACION
-			if (pWeapon->GetTransmutation() > 0)
-			{
-				part_value = pWeapon->GetTransmutation();
-			}else{
-				part_value = pWeapon->GetVnum();
-			}
-#else
-			part_value = pWeapon->GetVnum();
-#endif
-		}else{
-			part_value = GetOriginalPart(PART_WEAPON);
-		}
-
-		SetPart(PART_WEAPON, part_value);
-	}
-#endif
-
-	FuncHideCostumeLoad();
-	UpdatePacket();
-	
+	TPacketGCLootFilter p;
+	p.header = HEADER_GC_LOOT_FILTER;
+	p.enable = true;
+	p.vid = 0;
+	GetDesc()->Packet(&p, sizeof(p));
 }
 
-void CHARACTER::FuncHideCostumeLoad()
+void CHARACTER::ClearLootFilter()
 {
-	char costume_hide[1024];
-	ChatPacket(CHAT_TYPE_COMMAND,"COSTUME_HIDE_CLEAR");
-
-	for (int i = 0; i < GetSlotsCostume()+1; ++i)
+	if (m_pLootFilter)
 	{
-		snprintf(costume_hide, sizeof(costume_hide), "hide_costume_w.hide_costume_%d", i);
-		ChatPacket(CHAT_TYPE_COMMAND,"COSTUME_HIDE_LIST %d %d",i,GetQuestFlag(costume_hide));
-	}
-	ChatPacket(CHAT_TYPE_COMMAND,"COSTUME_HIDE_LOAD");
-}
-
-void CHARACTER::SetHideCostumeUpdate()
-{
-	CItem* body_costume 	= GetWear(WEAR_COSTUME_BODY);
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_ACCE
-	CItem* acce_costume 	= GetWear(WEAR_COSTUME_ACCE);
-#endif
-	CItem* hair_costume 	= GetWear(WEAR_COSTUME_HAIR);
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_WEAPON_COSTUME
-	CItem* weapon_costume 	= GetWear(WEAR_COSTUME_WEAPON);
-#endif
-
-	if (GetHideCostume(GetSlotDefault(0)) == 1){
-		CItem* body_armor = GetWear(WEAR_BODY);
-
-		if (body_costume){
-			if (body_armor){
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_TRANSMUTACION
-				if (body_armor->GetTransmutation() > 0){
-					SetPart(PART_MAIN, body_armor->GetTransmutation());
-				}else{
-					SetPart(PART_MAIN, body_armor->GetVnum());
-				}
-#else
-				SetPart(PART_MAIN, body_armor->GetVnum());
-#endif
-			}
-			else
-			{
-				SetPart(PART_MAIN, GetOriginalPart(PART_MAIN));
-			}
-		}
-	}
-
-	if (GetHideCostume(GetSlotDefault(1)) == 1){
-		if (hair_costume){
-			SetPart(PART_HAIR, 0);
-		}
-	}
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_ACCE
-	if (GetHideCostume(GetSlotDefault(3)) == 1){
-		if (acce_costume){
-			SetPart(PART_ACCE, 0);
-		}
-	}
-#endif
-
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_WEAPON_COSTUME
-	if (GetHideCostume(GetSlotDefault(2)) == 1){
-		CItem* body_weapon = GetWear(WEAR_WEAPON);
-		if (weapon_costume){
-			if (body_weapon){
-#ifdef ENABLE_HIDE_COSTUME_SYSTEM_TRANSMUTACION
-				if (body_weapon->GetTransmutation() > 0){
-					SetPart(PART_WEAPON, body_weapon->GetTransmutation());
-				}else{
-					SetPart(PART_WEAPON, body_weapon->GetVnum());
-				}
-#else
-				SetPart(PART_WEAPON, body_weapon->GetVnum());
-#endif
-			}
-			else
-			{
-				SetPart(PART_WEAPON, GetOriginalPart(PART_WEAPON));
-			}
-		}
-	}
-#endif
-
-}
-
-int CHARACTER::GetHideCostume(int wear) const
-{
-	char costume_hide[1024];
-	snprintf(costume_hide, sizeof(costume_hide), "hide_costume_w.hide_costume_%d", wear);
-	return GetQuestFlag(costume_hide);
-}
-#endif
-
-#ifdef CHANGELOOK_SYSTEM
-void CHARACTER::ChangeLookWindow(bool bOpen, bool bRequest)
-{
-	if ((bOpen) && (isChangeLookOpened()))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Fereastra este deja deschisa."));
-		return;
-	}
-
-	if ((!bOpen) && (!isChangeLookOpened()))
-	{
-		if (!bRequest)
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Fereastra nu este deschisa."));
-
-		return;
-	}
-
-	TItemPos tPos;
-	tPos.window_type = INVENTORY;
-	tPos.cell = 0;
-
-	TPacketChangeLook sPacket;
-	sPacket.header = HEADER_GC_CL;
-	sPacket.subheader = CL_SUBHEADER_OPEN;
-	sPacket.subheader = bOpen == true ? CL_SUBHEADER_OPEN : CL_SUBHEADER_CLOSE;
-	sPacket.dwCost = bOpen == true ? CL_TRANSMUTATION_PRICE : 0;
-	sPacket.bPos = 0;
-	sPacket.tPos = tPos;
-	GetDesc()->Packet(&sPacket, sizeof(TPacketChangeLook));
-
-	m_bChangeLook = bOpen;
-	ClearClWindowMaterials();
-}
-
-void CHARACTER::ClearClWindowMaterials()
-{
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetClWindowMaterials();
-	for (int i = 0; i < CL_WINDOW_MAX_MATERIALS; ++i)
-	{
-		if (!pkItemMaterial[i])
-			continue;
-
-		pkItemMaterial[i]->Lock(false);
-		pkItemMaterial[i] = NULL;
-	}
-}
-
-BYTE CHARACTER::CheckClEmptyMaterialSlot()
-{
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetClWindowMaterials();
-	for (int i = 0; i < CL_WINDOW_MAX_MATERIALS; ++i)
-	{
-		if (!pkItemMaterial[i])
-			return i;
-	}
-
-	return 255;
-}
-
-void CHARACTER::AddClMaterial(TItemPos tPos, BYTE bPos)
-{
-	if (!isChangeLookOpened())
-		return;
-	else if (bPos >= CL_WINDOW_MAX_MATERIALS)
-	{
-		if (bPos != 255)
-			return;
-
-		bPos = CheckClEmptyMaterialSlot();
-		if (bPos >= CL_WINDOW_MAX_MATERIALS)
-			return;
-	}
-
-	LPITEM pkItem = GetItem(tPos);
-	if (!pkItem)
-		return;
-	if ((pkItem->GetCell() >= INVENTORY_MAX_NUM) || (tPos.IsBeltInventoryPosition()))
-		return;
-	if (pkItem->IsEquipped())
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Nu poti face asta cu un obiect echipat."));
-		return;
-	}
-	if ((bPos == 2 && pkItem->GetVnum() != CL_SCROLL_VNUM) || (bPos != 2 && pkItem->GetVnum() == CL_SCROLL_VNUM))
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
-		return;
-	}
-	if (pkItem->GetVnum() != CL_SCROLL_VNUM)
-	{
-		if ((pkItem->GetType() != ITEM_WEAPON) && (pkItem->GetType() != ITEM_ARMOR) && (pkItem->GetType() != ITEM_COSTUME))
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
-			return;
-		}
-		else if ((pkItem->GetType() == ITEM_WEAPON) && ((pkItem->GetSubType() == WEAPON_ARROW) || (pkItem->GetSubType() == WEAPON_MOUNT_SPEAR)))
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
-			return;
-		}
-		else if ((pkItem->GetType() == ITEM_ARMOR) && (pkItem->GetSubType() != ARMOR_BODY))
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
-			return;
-		}
-
-		else if ((pkItem->GetType() == ITEM_COSTUME) && (pkItem->GetSubType() != COSTUME_BODY) && (pkItem->GetSubType() != COSTUME_HAIR) && (pkItem->GetSubType() != COSTUME_WEAPON))
-
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Acest obiect nu poate fi proiectat."));
-			return;
-		}
-
-
-		else if (pkItem->isLocked())
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Nu puteti adauga elemente blocate."));
-			return;
-		}
-		else if (pkItem->GetTransmutation() != 0)
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Nu puteti utiliza elemente care au fost deja proiectate."));
-			return;
-		}
-	}
-
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetClWindowMaterials();
-	if ((bPos == 1) && (!pkItemMaterial[0]))
-		return;
-
-	if (pkItemMaterial[bPos])
-		return;
-
-	if (bPos == 1)
-	{
-		bool bStop = false;
-		if ((pkItem->GetType() == ITEM_COSTUME) && (pkItemMaterial[0]->GetType() == ITEM_COSTUME))
-		{
-			if ((pkItem->GetSubType() == COSTUME_HAIR) && (pkItemMaterial[0]->GetSubType() != COSTUME_HAIR))
-				bStop = true;
-			else if ((pkItem->GetSubType() == COSTUME_BODY) && (pkItemMaterial[0]->GetSubType() != COSTUME_BODY))
-				bStop = true;
-			else if ((pkItem->GetSubType() == COSTUME_WEAPON) && (pkItemMaterial[0]->GetSubType() != COSTUME_WEAPON))
-				bStop = true;
-		}
-		else if ((pkItem->GetType() == ITEM_COSTUME) && (pkItemMaterial[0]->GetType() == ITEM_WEAPON))
-		{
-			if ((pkItem->GetSubType() == COSTUME_WEAPON))
-			{
-				if ((pkItem->GetValue(3) != pkItemMaterial[0]->GetSubType()))
-					bStop = true;
-			}
-			else
-			{
-				bStop = true;
-			}
-		}
-		else if ((pkItem->GetType() == ITEM_COSTUME) && (pkItemMaterial[0]->GetType() == ITEM_ARMOR))
-		{
-			if ((pkItem->GetSubType() != COSTUME_BODY))
-				bStop = true;
-		}
-		else if ((pkItem->GetType() == ITEM_WEAPON) && (pkItemMaterial[0]->GetType() == ITEM_COSTUME))
-		{
-			if ((pkItemMaterial[0]->GetType() == ITEM_COSTUME))
-			{
-				if ((pkItemMaterial[0]->GetValue(3) != pkItem->GetSubType()))
-					bStop = true;
-			}
-			else
-			{
-				bStop = true;
-			}
-		}
-
-		if (pkItemMaterial[0]->GetOriginalVnum() == pkItem->GetOriginalVnum())
-			bStop = true;
-		else if (((IS_SET(pkItemMaterial[0]->GetAntiFlag(), ITEM_ANTIFLAG_FEMALE)) && (!IS_SET(pkItem->GetAntiFlag(), ITEM_ANTIFLAG_FEMALE))) || ((IS_SET(pkItemMaterial[0]->GetAntiFlag(), ITEM_ANTIFLAG_MALE)) && (!IS_SET(pkItem->GetAntiFlag(), ITEM_ANTIFLAG_MALE))))
-			bStop = true;
-		else if ((pkItem->GetAntiFlag() & ITEM_ANTIFLAG_WARRIOR) && (!IS_SET(pkItemMaterial[0]->GetAntiFlag(), ITEM_ANTIFLAG_WARRIOR)))
-			bStop = true;
-		else if ((pkItem->GetAntiFlag() & ITEM_ANTIFLAG_ASSASSIN) && (!IS_SET(pkItemMaterial[0]->GetAntiFlag(), ITEM_ANTIFLAG_ASSASSIN)))
-			bStop = true;
-		else if ((pkItem->GetAntiFlag() & ITEM_ANTIFLAG_SHAMAN) && (!IS_SET(pkItemMaterial[0]->GetAntiFlag(), ITEM_ANTIFLAG_SHAMAN)))
-			bStop = true;
-		else if ((pkItem->GetAntiFlag() & ITEM_ANTIFLAG_SURA) && (!IS_SET(pkItemMaterial[0]->GetAntiFlag(), ITEM_ANTIFLAG_SURA)))
-			bStop = true;
-
-
-		else if ((pkItem->GetType() == ITEM_COSTUME && pkItemMaterial[0]->GetType() == ITEM_COSTUME) && ((pkItem->GetType() == ITEM_COSTUME && pkItem->GetSubType() == COSTUME_WEAPON) && (pkItemMaterial[0]->GetType() == ITEM_COSTUME && pkItemMaterial[0]->GetSubType() == COSTUME_WEAPON)))
-			if (pkItem->GetValue(3) != pkItemMaterial[0]->GetValue(3))
-				bStop = true;
-
-
-		if (bStop)
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transmutare] Nu poti face asta cu acest item."));
-			return;
-		}
-	}
-
-	pkItemMaterial[bPos] = pkItem;
-	pkItemMaterial[bPos]->Lock(true);
-
-	TPacketChangeLook sPacket;
-	sPacket.header = HEADER_GC_CL;
-	sPacket.subheader = CL_SUBHEADER_ADD;
-	sPacket.dwCost = 0;
-	sPacket.bPos = bPos;
-	sPacket.tPos = tPos;
-	GetDesc()->Packet(&sPacket, sizeof(TPacketChangeLook));
-}
-
-void CHARACTER::RemoveClMaterial(BYTE bPos)
-{
-	if (bPos >= CL_WINDOW_MAX_MATERIALS)
-		return;
-
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetClWindowMaterials();
-
-	if (!pkItemMaterial[bPos])
-		return;
-
-	if (bPos == 1 || bPos == 2)
-	{
-		pkItemMaterial[bPos]->Lock(false);
-		pkItemMaterial[bPos] = NULL;
-	}
-	else
-		ClearClWindowMaterials();
-
-	TItemPos tPos;
-	tPos.window_type = INVENTORY;
-	tPos.cell = 0;
-
-	TPacketChangeLook sPacket;
-	sPacket.header = HEADER_GC_CL;
-	sPacket.subheader = CL_SUBHEADER_REMOVE;
-	sPacket.dwCost = 0;
-	sPacket.bPos = bPos;
-	sPacket.tPos = tPos;
-	GetDesc()->Packet(&sPacket, sizeof(TPacketChangeLook));
-}
-
-void CHARACTER::RefineClMaterials()
-{
-	LPITEM * pkItemMaterial;
-	pkItemMaterial = GetClWindowMaterials();
-	if (!pkItemMaterial[0])
-		return;
-	else if (!pkItemMaterial[1])
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Va rugam sa introduceti elementul de proiectat."));
-		return;
-	}
-
-	DWORD dwPrice = CL_TRANSMUTATION_PRICE;
-	bool isNeedGold = true;
-	if (pkItemMaterial[2] && pkItemMaterial[2]->GetVnum() == CL_SCROLL_VNUM)
-		isNeedGold = false;
-	if (isNeedGold == true)
-	{
-		if (GetGold() < dwPrice)
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[Transumtatie] Nu ai suficient Yang."));
-			return;
-		}
-	}
-
-	DWORD dwVnum = pkItemMaterial[1]->GetVnum();
-	if (isNeedGold == false)
-		ITEM_MANAGER::instance().RemoveItem(pkItemMaterial[2], "SPECIFY ITEM TRANSMUTED");
-	else
-		PointChange(POINT_GOLD, -dwPrice);
-	DBManager::instance().SendMoneyLog(MONEY_LOG_REFINE, pkItemMaterial[0]->GetVnum(), -dwPrice);
-	ITEM_MANAGER::instance().RemoveItem(pkItemMaterial[1], "TRANSMUTED (SUCCESSFULLY)");
-
-	pkItemMaterial[0]->SetTransmutation(dwVnum, true);
-	ClearClWindowMaterials();
-
-	TItemPos tPos;
-	tPos.window_type = INVENTORY;
-	tPos.cell = 0;
-
-	TPacketChangeLook sPacket;
-	sPacket.header = HEADER_GC_CL;
-	sPacket.subheader = CL_SUBHEADER_REFINE;
-	sPacket.dwCost = 0;
-	sPacket.bPos = 0;
-	sPacket.tPos = tPos;
-	GetDesc()->Packet(&sPacket, sizeof(TPacketChangeLook));
-}
-
-bool CHARACTER::CleanTransmutation(LPITEM pkItem, LPITEM pkTarget)
-{
-	if (!CanHandleItem())
-		return false;
-	else if ((!pkItem) || (!pkTarget))
-		return false;
-	else if ((pkTarget->GetType() != ITEM_WEAPON) && (pkTarget->GetType() != ITEM_ARMOR) && (pkTarget->GetType() != ITEM_COSTUME))
-		return false;
-
-
-
-	else if (pkTarget->isLocked())
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu poti sterge transmutarea deoarece este blocata."));
-		return false;
-	}
-
-	if (pkTarget->GetTransmutation() == 0)
-		return false;
-
-	pkTarget->SetTransmutation(0);
-	pkItem->SetCount(pkItem->GetCount() - 1);
-	LogManager::instance().ItemLog(this, pkTarget, "USE_DETACHMENT (CLEAN TRANSMUTED)", pkTarget->GetName());
-	return true;
-}
-#endif
-
-#ifdef WON_EXCHANGE
-void CHARACTER::WonExchange(BYTE bOption, WORD wValue)
-{
-	if (!CanWarp())
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti schmba Won in timp ce faceti altceva."));
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Inchideti fiecare fereastra, asteptati, iar mai apoi incercati iarasi."));
-		return;
-	}
-
-	float fMul = (bOption == WON_EXCHANGE_CG_SUBHEADER_BUY) ? 1.0f + (static_cast<float>(TAX_MUL) / 100.0f) : 1.0f;
-	WORD wVal = abs(wValue);
-	if (bOption == WON_EXCHANGE_CG_SUBHEADER_SELL)
-	{
-		if (GetCheque() < wVal)
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu ai suficient Won pentru a continua schimbul."));
-			return;
-		}
-		if (GetGold() + static_cast<long long>(wVal) * static_cast<long long>(CHEQUE_NAME_VALUE * fMul) > GOLD_MAX)
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu poti continua schimbul, deoarece yang-ul tau ar depasi limita."));
-			return;
-		}
-		
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Schimbul a avut succes."));
-		PointChange(POINT_GOLD, static_cast<long long>(wVal) * static_cast<long long>(CHEQUE_NAME_VALUE * fMul), true);
-		PointChange(POINT_CHEQUE, -wVal, true);
-	}
-	else if (bOption == WON_EXCHANGE_CG_SUBHEADER_BUY)
-	{
-		if (GetGold() < static_cast<long long>(wVal) * static_cast<long long>(CHEQUE_NAME_VALUE * fMul))
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu aveti suficient yang pentru a continua schimbul."));
-			return;
-		}
-		if (GetCheque() + wVal > CHEQUE_MAX)
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Nu puteti continua schimbul deoarece Won-ul tau ar depasi limita castigul."));
-			return;
-		}
-
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Schimbul a fost facut cu succes."));
-		PointChange(POINT_GOLD, -(static_cast<long long>(wVal) * static_cast<long long>(CHEQUE_NAME_VALUE * fMul)), true);
-		PointChange(POINT_CHEQUE, wVal, true);
-	}
-	else
-	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Ops. Ceva n-a mers bine, operatiune de schimb necunoscuta."));
+		delete m_pLootFilter;
+		m_pLootFilter = nullptr;
 	}
 }
 #endif
-
-#ifdef ENABLE_DECORUM
-void CHARACTER::GoHomeFromArena()
-{
-	WarpSet(ARENA_RETURN_POINT_X(GetEmpire()), ARENA_RETURN_POINT_Y(GetEmpire()));
-}
-#endif
-
-#ifdef ENABLE_RENEWAL_PVP
-bool CHARACTER::IsInFight()
-{
-	return CPVPManager::Instance().IsFighting(this);
-}
-bool CHARACTER::IsBlockPvP(DWORD itemVnum)
-{
-	if (itemVnum >= 53001 && itemVnum <= 53100 && pvpSettings[PVP_PET] == false)
-		return true;
-	else if (itemVnum >= 55700 && itemVnum <= 55750 && pvpSettings[PVP_NEW_PET] == false)
-		return true;
-
-	std::map<DWORD, DWORD> pvp_data = {
-		{72723,PVP_HP_ELIXIR},
-		{72724,PVP_HP_ELIXIR},
-		{72725,PVP_HP_ELIXIR},
-		{72726,PVP_HP_ELIXIR},
-		{50826,PVP_WHITE_DEW},
-		{50823,PVP_YELLOW_DEW},
-		{50822,PVP_ORANGE_DEW},
-
-		{50821,PVP_RED_DEW},
-		{50825,PVP_BLUE_DEW},
-		{50824,PVP_GREEN_DEW},
-
-		{39018,PVP_DRAGON_GOD_ATTACK},
-		{71028,PVP_DRAGON_GOD_ATTACK},
-
-		{39020,PVP_DRAGON_GOD_DEFENCE},
-		{71030,PVP_DRAGON_GOD_DEFENCE},
-
-		{39017,PVP_DRAGON_GOD_LIFE},
-		{71027,PVP_DRAGON_GOD_LIFE},
-
-		{39025,PVP_PIERCING_STRIKE},
-		{71045,PVP_PIERCING_STRIKE},
-
-		{39024,PVP_CRITICAL_STRIKE},
-		{71044,PVP_CRITICAL_STRIKE},
-
-		{50817,PVP_ZIN_WATER},
-		{50818,PVP_SAMBO_WATER},
-
-		{27868,PVP_ATTACKSPEED_FISH},
-		{51002,PVP_ENERGY},
-	};
-	auto it = pvp_data.find(itemVnum);
-	if (it != pvp_data.end())
-	{
-		if (pvpSettings[it->second] == false)
-			return true;
-	}
-	return false;
-}
-bool CHARACTER::CheckPvPSetting(BYTE settingIndex)
-{
-	if (!IsInFight())
-		return false;
-	return pvpSettings[settingIndex] == false;
-}
-bool CHARACTER::CheckPvPUse(DWORD itemVnum)
-{
-	if (!IsInFight())
-		return false;
-	return IsBlockPvP(itemVnum);
-}
-void CHARACTER::CheckPvPBonus(bool isAdd, bool* pvpSettingNew)
-{
-	//ChatPacket(1, "CheckPvPBonus %d",isAdd);
-	if (isAdd)
-	{
-		thecore_memcpy(&pvpSettings, pvpSettingNew, sizeof(pvpSettings));
-		//Close items
-		for (DWORD j = 0; j < INVENTORY_MAX_NUM; ++j)
-		{
-			LPITEM item = GetInventoryItem(j);
-			if (item != NULL)
-			{
-				if (item->GetSocket(0) != 1)
-					continue;
-				else if(IsBlockPvP(item->GetVnum()))
-					UseItem(TItemPos(INVENTORY, item->GetCell()));
-			}
-		}
-
-		LPITEM item = NULL;
-
-		// FOR EQUIP PET & NEW PET
-		/*
-		if (pvpSettings[PVP_NEW_PET] == false)
-		{
-			item = GetWear(WEAR_PET);
-			if (item != NULL)
-				UnequipItem(item);
-		}
-
-		if (pvpSettings[PVP_PET] == false)
-		{
-			item = GetWear(WEAR_COSTUME_PET);
-			if (item != NULL)
-				UnequipItem(item);
-		}
-		*/
-
-		if (pvpSettings[PVP_BUFFI_SKILLS] == false)
-		{
-			//ChatPacket(1, "PVP_BUFFI_SKILLS");
-			RemoveAffect(SKILL_PAERYONG);
-			RemoveAffect(SKILL_REFLECT);
-			RemoveAffect(SKILL_GICHEON);
-			RemoveAffect(SKILL_JEONGEOP);
-			RemoveAffect(SKILL_HOSIN);
-			RemoveAffect(SKILL_KWAESOK);
-			RemoveAffect(SKILL_JEUNGRYEOK);
-		}
-
-		CAffect* affect = NULL;
-
-		if (pvpSettings[PVP_POISONING] == false)
-		{
-			//ChatPacket(1, "PVP_POISONING");
-			affect = FindAffect(AFFECT_POISON);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_WHITE_DEW] == false)
-		{
-			//ChatPacket(1, "PVP_WHITE_DEW");
-			affect = FindAffect(AFFECT_BLEND, aApplyInfo[APPLY_DEF_GRADE_BONUS].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_YELLOW_DEW] == false)
-		{
-			//ChatPacket(1, "PVP_YELLOW_DEW");
-			affect = FindAffect(AFFECT_BLEND, aApplyInfo[APPLY_ATT_SPEED].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_ORANGE_DEW] == false)
-		{
-			//ChatPacket(1, "PVP_ORANGE_DEW");
-			affect = FindAffect(AFFECT_BLEND, aApplyInfo[APPLY_PENETRATE_PCT].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_RED_DEW] == false)
-		{
-			//ChatPacket(1, "PVP_RED_DEW");
-			affect = FindAffect(AFFECT_BLEND, aApplyInfo[APPLY_CRITICAL_PCT].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_BLUE_DEW] == false)
-		{
-			//ChatPacket(1, "PVP_BLUE_DEW");
-			affect = FindAffect(AFFECT_BLEND, aApplyInfo[APPLY_ATT_GRADE_BONUS].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_ATTACKSPEED_FISH] == false)
-		{
-			//ChatPacket(1, "PVP_ATTACKSPEED_FISH");
-			affect = FindAffect(AFFECT_EXP_BONUS_EURO_FREE, aApplyInfo[APPLY_ATT_SPEED].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-		
-		if (pvpSettings[PVP_GREEN_DEW] == false)
-		{
-			//ChatPacket(1, "PVP_GREEN_DEW");
-			affect = FindAffect(AFFECT_BLEND, aApplyInfo[APPLY_RESIST_MAGIC].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_ZIN_WATER] == false)
-		{
-			//ChatPacket(1, "PVP_ZIN_WATER");
-			affect = FindAffect(AFFECT_EXP_BONUS_EURO_FREE, aApplyInfo[APPLY_ATT_GRADE_BONUS].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_SAMBO_WATER] == false)
-		{
-			//ChatPacket(1, "PVP_SAMBO_WATER");
-			affect = FindAffect(AFFECT_EXP_BONUS_EURO_FREE, aApplyInfo[APPLY_DEF_GRADE_BONUS].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_ATTACKSPEED_FISH] == false)
-		{
-			//ChatPacket(1, "PVP_ATTACKSPEED_FISH");
-			affect = FindAffect(AFFECT_ATT_SPEED, aApplyInfo[APPLY_ATT_SPEED].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_ENERGY] == false)
-		{
-			//ChatPacket(1, "PVP_ENERGY");
-			affect = FindAffect(AFFECT_BLEND, aApplyInfo[APPLY_ENERGY].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_DRAGON_GOD_ATTACK] == false)
-		{
-			//ChatPacket(1, "PVP_DRAGON_GOD_ATTACK");
-			affect = FindAffect(510, aApplyInfo[86].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_DRAGON_GOD_DEFENCE] == false)
-		{
-			//ChatPacket(1, "PVP_DRAGON_GOD_DEFENCE");
-			affect = FindAffect(510, aApplyInfo[65].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_DRAGON_GOD_LIFE] == false)
-		{
-			//ChatPacket(1, "PVP_DRAGON_GOD_LIFE");
-			affect = FindAffect(510, aApplyInfo[69].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_PIERCING_STRIKE] == false)
-		{
-			//ChatPacket(1, "PVP_PIERCING_STRIKE");
-			affect = FindAffect(510, aApplyInfo[16].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_CRITICAL_STRIKE] == false)
-		{
-			//ChatPacket(1, "PVP_CRITICAL_STRIKE");
-			affect = FindAffect(510, aApplyInfo[15].bPointType);
-			if (affect != NULL)
-				RemoveAffect(affect);
-		}
-
-		if (pvpSettings[PVP_HALF_HUMAN] == true)
-		{
-			//ChatPacket(1, "PVP_HALF_HUMAN");
-			auto affect = FindAffect(AFFECT_PVP_SETTINGS);
-			if (affect)
-				RemoveAffect(affect);
-			AddAffect(AFFECT_PVP_SETTINGS, POINT_ATTBONUS_HUMAN, -50, AFF_NONE, INFINITE_AFFECT_DURATION, 0, true);
-		}
-	}
-	else
-	{
-		auto affect = FindAffect(AFFECT_PVP_SETTINGS);
-		if (affect)
-			RemoveAffect(affect);
-	}
-}
-#endif
-
-void CHARACTER::SetProtectTime(const std::string& flagname, int value)
-{
-	auto it = m_protection_Time.find(flagname);
-	if (it != m_protection_Time.end())
-		it->second = value;
-	else
-		m_protection_Time.insert(make_pair(flagname, value));
-}
-int CHARACTER::GetProtectTime(const std::string& flagname) const
-{
-	auto it = m_protection_Time.find(flagname);
-	if (it != m_protection_Time.end())
-		return it->second;
-	return 0;
-}
-
-
 
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 void CHARACTER::MountSummon(LPITEM mountItem)
@@ -11254,33 +9112,7 @@ bool CHARACTER::IsRidingMount()
 }
 #endif
 
-#ifdef RENEWAL_DEAD_PACKET
-#include "threeway_war.h"
-DWORD CHARACTER::CalculateDeadTime(BYTE type)
-{
-	//generated from do_restart(cmd_general.cpp)
-	if (!m_pkDeadEvent)
-		return 0;
-	int iTimeToDead = (event_time(m_pkDeadEvent) / passes_per_sec);
-	if (type == REVIVE_TYPE_AUTO_TOWN)
-		return GetWarMap()?0:iTimeToDead-7;
-	else if(type == REVIVE_TYPE_HERE)
-		return GetWarMap()?0:5;
-	/*
-	if (!test_server && type == REVIVE_TYPE_HERE && (!GetWarMap() || GetWarMap()->GetType() == GUILD_WAR_TYPE_FLAG)) {
-		if (IsHack(false) && !CThreeWayWar::instance().IsSungZiMapIndex(GetMapIndex()))
-			return iTimeToDead - (175 - g_nPortalLimitTime);
-		if (iTimeToDead > 170)
-			return iTimeToDead - 170;
-	}
-	if (IsHack(false) && ((!GetWarMap() || GetWarMap()->GetType() == GUILD_WAR_TYPE_FLAG) || !CThreeWayWar::instance().IsSungZiMapIndex(GetMapIndex())))
-		return iTimeToDead - (175 - g_nPortalLimitTime);
-	if (iTimeToDead > 175) 
-		return iTimeToDead - 175;
-	*/
-	return 0;
-}
-#endif
+
 
 #if defined(__DUNGEON_INFO_SYSTEM__)
 EVENTFUNC(ReloadDungeonInfoEventFunc)
@@ -11396,86 +9228,21 @@ bool CHARACTER::UpdateDungeonRanking(const std::string c_strQuestName)
 }
 #endif
 
-
- void CHARACTER::CheckSummonItems()
-{	
-	for(DWORD j=0;j<INVENTORY_MAX_NUM;++j)
-	{
-		LPITEM item = GetInventoryItem(j);
-		if(item != NULL)
-		{
-			if(item->GetSocket(1) == 1)
-			{
-				DWORD itemVnum = item->GetVnum();
-				if(itemVnum >= 55701 && itemVnum <= 55710)
-				{
-					CNewPetSystem* petSystem = GetNewPetSystem();
-					if(petSystem)
-					{
-						if(petSystem->CountSummoned() == 0)
-						{
-							std::map<DWORD, std::pair<DWORD, std::string>> m_newPetData = {
-								{ 55701,{34041,"'s Kleiner Affe"}},
-								{ 55702,{34045,"'s Kleine Spinne"}},
-								{ 55703,{34049,"'s Kleiner Razador"}},
-								{ 55704,{34053,"'s Kleiner Nemere"}},
-								{ 55705,{34008,"'s Mini Drago"}},
-								{ 55706,{34064,"'s Dragonite"}},
-							};
-							
-							auto it = m_newPetData.find(itemVnum);
-							if(it!=m_newPetData.end())
-								petSystem->Summon(it->second.first, item, it->second.second.c_str(), false);							
-						}
-					}
-				}
-				else if((itemVnum >= 53000 && itemVnum <= 53020) || itemVnum == 53231 || itemVnum == 53218 || itemVnum == 53220 || itemVnum == 53234)
-				{
-					CPetSystem* petSystem = GetPetSystem();
-					if(petSystem)
-					{
-						if(petSystem->CountSummoned() == 0)
-						{
-							std::map<DWORD, std::pair<DWORD, std::string>> m_PetData = {
-								{53011,{34007," - Khelos"}}, 
-								{53012,{34005," - Turtle"}}, 
-								{53013,{34006," - Bashidoo"}}, 
-								{53007,{34010," - Dryade"}}, 
-								{53014,{34013," - Miniboia"}}, 
-								{53001,{34016," - Fenice"}}, 
-								{53005,{34004," - Azrael"}}, 
-								{53231,{34035," - Folletto"}}, 
-								{53218,{34023," - Pantera"}}, 
-								{53220,{34024," - Leopardo"}}, 
-								{53234,{34056," - Drago"}}, 
-							};
-							auto it = m_PetData.find(itemVnum);
-							if(it!=m_PetData.end())
-								petSystem->Summon(it->second.first, item, it->second.second.c_str(), false);
-						}
-					}
-				}
-			}
-			
-		}
-	}
-}
-
-
-#ifdef __REMOVE_PARTY_IN_SPECIFIC_MAP
-bool CHARACTER::CanEnterParty()
+void CHARACTER::SetProtectTime(const std::string& flagname, int value)
 {
-	switch(GetMapIndex())
-	{
-		//MapIndex
-		case 1:
-			return false;
-		break;
-	}
-	return true;
+	auto it = m_protection_Time.find(flagname);
+	if (it != m_protection_Time.end())
+		it->second = value;
+	else
+		m_protection_Time.insert(make_pair(flagname, value));
 }
-#endif
-
+int CHARACTER::GetProtectTime(const std::string& flagname) const
+{
+	auto it = m_protection_Time.find(flagname);
+	if (it != m_protection_Time.end())
+		return it->second;
+	return 0;
+}
 
 #ifdef ENABLE_ANTI_EXP
 bool CHARACTER::GetAntiExp()
@@ -11491,82 +9258,6 @@ void CHARACTER::SetAntiExp(bool newStatus)
 }
 #endif
 
-
-#ifdef ENABLE_MELEY_LAIR_DUNGEON
-bool CHARACTER::IsMeley()
-{
-	switch(GetRaceNum())
-	{
-		case 6193:
-		case 9563:
-		case 6118:
-		case 6119:
-			return true;
-			break;
-	}
-	return false;
-}
-LPCHARACTER CHARACTER::GetQuestNPCAttack() const
-{
-	return CHARACTER_MANAGER::instance().Find(m_dwQuestNPCVIDAttack);
-}
-#endif
-
-#ifdef ENABLE_DEFENSAWE_SHIP
-bool CHARACTER::IsHydraMob() const
-{
-	switch(GetRaceNum())
-	{
-		case 6502:
-		case 6503:
-		case 6504:
-		case 6505:
-		case 6506:
-		case 6507:
-		case 6508:
-		case 6509:
-		case 6512:
-			return true;
-	}
-	return false;
-}
-bool CHARACTER::IsHydraMobLP(LPCHARACTER ch) const
-{
-	switch(ch->GetRaceNum())
-	{
-		case 6502:
-		case 6503:
-		case 6504:
-		case 6505:
-		case 6506:
-		case 6507:
-		case 6508:
-		case 6509:
-		case 6512:
-			return true;
-	}
-	return false;
-}
-bool CHARACTER::IsHydraNPC() const
-{
-	switch(GetRaceNum())
-	{
-		case 6501:
-			return true;
-	}
-	return false;
-}
-bool CHARACTER::IsHydra() const
-{
-	switch(GetRaceNum())
-	{
-		case 6512:
-			return true;
-	}
-	return false;
-}
-#endif
-
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 auto CHARACTER::HasBlockedDrops() -> bool
 {
@@ -11578,135 +9269,3 @@ auto CHARACTER::HasBlockedDrops() -> bool
 	return CAntiMultipleFarm::instance().GetPlayerDropState(sMAIf, GetPlayerID());
 }
 #endif
-
-#ifdef ENABLE_NEW_DETAILS_GUI
-void CHARACTER::SendKillLog()
-{
-	if(!GetDesc())
-		return;
-	TPacketGCKillLOG p;
-	p.header = HEADER_GC_KILL_LOG;
-	thecore_memcpy(p.kill_log, m_points.kill_log,sizeof(p.kill_log));
-	GetDesc()->Packet(&p,sizeof(TPacketGCKillLOG));
-}
-#endif
-
-#ifdef ENABLE_CSHIELD
-EVENTFUNC(cshield_event)
-{
-	char_event_info* info = dynamic_cast<char_event_info*>(event->info);
-	if (info == NULL)
-	{
-		sys_err("cshield_event> <Factor> Null pointer");
-		return 0;
-	}
-
-	LPCHARACTER	ch = info->ch;
-
-	if (NULL == ch || ch->IsNPC())
-		return 0;
-
-	DWORD cShield = ch->GetCShield()->VerifyCShield(ch->GetName());
-
-	if (cShield > 1)
-	{
-		LPDESC d = ch->GetDesc();
-		if (d)
-		{
-			if (d->DelayedDisconnect(3))
-			{
-				if (cShield == 2)
-					LogManager::instance().HackLog("CShield-ServerSide-ErrorCode: CShield Patched", ch);
-				else
-				{
-					LogManager::instance().HackLog("CShield-ServerSide-ErrorCode: CShield Async", ch);
-				}
-				
-#ifdef ENABLE_AUTOBAN
-				std::unique_ptr<SQLMsg> pMsg(DBManager::instance().DirectQuery("SELECT login FROM account.account WHERE id='%d' LIMIT 1", ch->GetAID()));
-				if (pMsg->Get()->uiNumRows == 0)
-					return 0;
-				MYSQL_ROW row = mysql_fetch_row(pMsg->Get()->pSQLResult);
-				
-				std::unique_ptr<SQLMsg> pMsg2(DBManager::instance().DirectQuery("SELECT count(*) FROM log.hack_log WHERE (why = 'CShield Async' OR why = 'CShield Patched') AND login = '%s' AND time BETWEEN DATE_ADD(NOW(), INTERVAL -20 MINUTE) AND NOW()", row[0]));
-				if (pMsg2->Get()->uiNumRows == 0)
-					return 0;
-
-				MYSQL_ROW row2 = mysql_fetch_row(pMsg2->Get()->pSQLResult);
-				if (atoi(row2[0]) >= 5)
-				{
-					DBManager::instance().DirectQuery("UPDATE account.account set status='BLOCK' where id='%d'", ch->GetAID());
-					LogManager::instance().HackLog("CShield-ServerSide-ErrorCode: CShield Autoban", ch);
-				}
-#endif
-			}
-		}
-	}
-
-	return PASSES_PER_SEC(20);
-}
-
-EVENTFUNC(cshield_data_event)
-{
-	char_event_info* info = dynamic_cast<char_event_info*>(event->info);
-	if (info == NULL)
-	{
-		sys_err("cshield_data_event> <Factor> Null pointer");
-		return 0;
-	}
-
-	LPCHARACTER	ch = info->ch;
-
-	if (NULL == ch || ch->IsNPC())
-		return 0;
-
-	if (!ch->GetCShield()->GetCShieldInit())
-	{
-		ch->GetCShield()->SetCShieldTime();
-		ch->SendCShieldPacket(true);
-		ch->GetCShield()->SetCShieldIinit();
-	}
-	else
-		ch->SendCShieldPacket(false);
-
-	return PASSES_PER_SEC(3);
-}
-
-void CHARACTER::StartCShieldEvent()
-{
-	if (m_pkCShieldEvent)
-		return;
-
-	char_event_info* info = AllocEventInfo<char_event_info>();
-
-	info->ch = this;
-
-	m_pkCShieldEvent = event_create(cshield_event, info, PASSES_PER_SEC(15));
-}
-
-void CHARACTER::StartCShieldDataEvent()
-{
-	if (m_pkCShieldDataEvent)
-		return;
-
-	char_event_info* info = AllocEventInfo<char_event_info>();
-
-	info->ch = this;
-
-	m_pkCShieldDataEvent = event_create(cshield_data_event, info, PASSES_PER_SEC(7));
-}
-
-void CHARACTER::SendCShieldPacket(bool start)
-{
-	LPDESC d = GetDesc();
-	if (!d)
-		return;
-
-	SPacketGCCShield packet;
-	packet.header = HEADER_GC_CSHIELD;
-	packet.start = start;
-	packet.num = GetCShield()->GetCShieldNumber();
-	d->Packet(&packet, sizeof(SPacketGCCShield));
-}
-#endif
-

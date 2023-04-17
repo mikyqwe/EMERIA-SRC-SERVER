@@ -75,3 +75,4 @@ bool LC_IsTaiwan();
 bool LC_IsWorldEdition();
 
 #endif
+//martysama0134's 2022

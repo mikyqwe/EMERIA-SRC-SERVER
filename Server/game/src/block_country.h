@@ -15,4 +15,4 @@ bool is_blocked_country_ip(const char *user_ip);
 bool is_block_exception(const char *login);
 
 #endif	// _block_country_h_
-
+//martysama0134's 2022

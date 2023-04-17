@@ -1,5 +1,5 @@
-#include "../../libgame/include/grid.h"
 #include "stdafx.h"
+#include "../../libgame/include/grid.h"
 #include "constants.h"
 #include "utils.h"
 #include "config.h"
@@ -25,7 +25,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include "shop_manager.h"
 #include <cctype>
-#include "../../common/CommonDefines.h"
 
 CShopManager::CShopManager()
 {
@@ -97,11 +96,9 @@ LPSHOP CShopManager::GetByNPCVnum(DWORD dwVnum)
 	return (it->second);
 }
 
-/*
- * 인터페이스 함수들
- */
 
-// 상점 거래를 시작
+
+
 bool CShopManager::StartShopping(LPCHARACTER pkChr, LPCHARACTER pkChrShopKeeper, int iShopVnum)
 {
 	if (pkChr->GetShopOwner() == pkChrShopKeeper)
@@ -111,14 +108,13 @@ bool CShopManager::StartShopping(LPCHARACTER pkChr, LPCHARACTER pkChrShopKeeper,
 		return false;
 
 	//PREVENT_TRADE_WINDOW
-	if (pkChr->IsOpenSafebox() || pkChr->GetExchange() || pkChr->GetMyShop() || pkChr->IsCubeOpen() || pkChr->GetMailBox())
+	if (pkChr->IsOpenSafebox() || pkChr->GetExchange() || pkChr->GetMyShop() || pkChr->IsCubeOpen())
 	{
-		pkChr->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(pkChr->GetLanguage(),"다른 거래창이 열린상태에서는 상점거래를 할수 가 없습니다."));
+		pkChr->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("다른 거래창이 열린상태에서는 상점거래를 할수 가 없습니다."));
 		return false;
 	}
 	//END_PREVENT_TRADE_WINDOW
 
-#if !defined(BL_REMOTE_SHOP)
 	long distance = DISTANCE_APPROX(pkChr->GetX() - pkChrShopKeeper->GetX(), pkChr->GetY() - pkChrShopKeeper->GetY());
 
 	if (distance >= SHOP_MAX_DISTANCE)
@@ -126,7 +122,6 @@ bool CShopManager::StartShopping(LPCHARACTER pkChr, LPCHARACTER pkChrShopKeeper,
 		sys_log(1, "SHOP: TOO_FAR: %s distance %d", pkChr->GetName(), distance);
 		return false;
 	}
-#endif
 
 	LPSHOP pkShop;
 
@@ -162,7 +157,7 @@ LPSHOP CShopManager::FindPCShop(DWORD dwVID)
 	return it->second;
 }
 
-LPSHOP CShopManager::CreatePCShop(LPCHARACTER ch, TShopItemTable * pTable, short bItemCount)
+LPSHOP CShopManager::CreatePCShop(LPCHARACTER ch, TShopItemTable * pTable, BYTE bItemCount)
 {
 	if (FindPCShop(ch->GetVID()))
 		return NULL;
@@ -174,8 +169,6 @@ LPSHOP CShopManager::CreatePCShop(LPCHARACTER ch, TShopItemTable * pTable, short
 	m_map_pkShopByPC.insert(TShopMap::value_type(ch->GetVID(), pkShop));
 	return pkShop;
 }
-
-#include <boost/algorithm/string/replace.hpp>
 
 void CShopManager::DestroyPCShop(LPCHARACTER ch)
 {
@@ -193,7 +186,6 @@ void CShopManager::DestroyPCShop(LPCHARACTER ch)
 }
 
 
-// 상점 거래를 종료
 void CShopManager::StopShopping(LPCHARACTER ch)
 {
 	LPSHOP shop;
@@ -209,7 +201,7 @@ void CShopManager::StopShopping(LPCHARACTER ch)
 	sys_log(0, "SHOP: END: %s", ch->GetName());
 }
 
-// 아이템 구입
+
 void CShopManager::Buy(LPCHARACTER ch, BYTE pos)
 {
 #ifdef ENABLE_NEWSTUFF
@@ -217,7 +209,7 @@ void CShopManager::Buy(LPCHARACTER ch, BYTE pos)
 	{
 		if (get_dword_time() < ch->GetLastBuySellTime()+g_BuySellTimeLimitValue)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"아직 골드를 버릴 수 없습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("아직 골드를 버릴 수 없습니다."));
 			return;
 		}
 	}
@@ -230,13 +222,11 @@ void CShopManager::Buy(LPCHARACTER ch, BYTE pos)
 	if (!ch->GetShopOwner())
 		return;
 
-#if !defined(BL_REMOTE_SHOP)
 	if (DISTANCE_APPROX(ch->GetX() - ch->GetShopOwner()->GetX(), ch->GetY() - ch->GetShopOwner()->GetY()) > 2000)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("≫уБ?°ъАЗ °Её®°? ?К№≪ ёЦ?о №°°ЗА≫ ≫м ?ц ?ш?А?П?Щ."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상점과의 거리가 너무 멀어 물건을 살 수 없습니다."));
 		return;
 	}
-#endif
 
 	CShop* pkShop = ch->GetShop();
 
@@ -263,7 +253,7 @@ void CShopManager::Buy(LPCHARACTER ch, BYTE pos)
 
 	int ret = pkShop->Buy(ch, pos);
 
-	if (SHOP_SUBHEADER_GC_OK != ret) // 문제가 있었으면 보낸다.
+	if (SHOP_SUBHEADER_GC_OK != ret)
 	{
 		TPacketGCShop pack;
 
@@ -276,9 +266,9 @@ void CShopManager::Buy(LPCHARACTER ch, BYTE pos)
 }
 
 #ifdef __SPECIAL_STORAGE_SYSTEM__
-void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, short bCount, BYTE bType)
+void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, WORD bCount, BYTE bType)
 #else
-void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount)
+void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, WORD bCount)
 #endif
 {
 #ifdef ENABLE_NEWSTUFF
@@ -286,7 +276,7 @@ void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount)
 	{
 		if (get_dword_time() < ch->GetLastBuySellTime()+g_BuySellTimeLimitValue)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"아직 골드를 버릴 수 없습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("아직 골드를 버릴 수 없습니다."));
 			return;
 		}
 	}
@@ -307,20 +297,22 @@ void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount)
 
 	if (DISTANCE_APPROX(ch->GetX()-ch->GetShopOwner()->GetX(), ch->GetY()-ch->GetShopOwner()->GetY())>2000)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"상점과의 거리가 너무 멀어 물건을 팔 수 없습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상점과의 거리가 너무 멀어 물건을 팔 수 없습니다."));
 		return;
 	}
+
 #ifdef __SPECIAL_STORAGE_SYSTEM__
 	LPITEM item = ch->GetItem(TItemPos(bType, bCell));
 #else
 	LPITEM item = ch->GetInventoryItem(bCell);
 #endif
+
 	if (!item)
 		return;
 
 	if (item->IsEquipped() == true)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"착용 중인 아이템은 판매할 수 없습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("착용 중인 아이템은 판매할 수 없습니다."));
 		return;
 	}
 
@@ -332,7 +324,11 @@ void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount)
 	if (IS_SET(item->GetAntiFlag(), ITEM_ANTIFLAG_SELL))
 		return;
 
+#ifdef ENABLE_LONG_LONG
+	long long dwPrice;
+#else
 	DWORD dwPrice;
+#endif
 
 	if (bCount == 0 || bCount > item->GetCount())
 		bCount = item->GetCount();
@@ -351,9 +347,9 @@ void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount)
 
 	dwPrice /= 5;
 
-	//세금 계산
+
 	DWORD dwTax = 0;
-	int iVal = 0;
+	int iVal = 3;
 
 	{
 		dwTax = dwPrice * iVal/100;
@@ -363,19 +359,24 @@ void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount)
 	if (test_server)
 		sys_log(0, "Sell Item price id %d %s itemid %d", ch->GetPlayerID(), ch->GetName(), item->GetID());
 
+#ifdef ENABLE_LONG_LONG
+	const long long nTotalMoney = static_cast<long long>(ch->GetGold()) + static_cast<long long>(dwPrice);
+#else
 	const int64_t nTotalMoney = static_cast<int64_t>(ch->GetGold()) + static_cast<int64_t>(dwPrice);
+#endif
 
 	if (GOLD_MAX <= nTotalMoney)
 	{
 		sys_err("[OVERFLOW_GOLD] id %u name %s gold %u", ch->GetPlayerID(), ch->GetName(), ch->GetGold());
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"20억냥이 초과하여 물품을 팔수 없습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("20억냥이 초과하여 물품을 팔수 없습니다."));
 		return;
 	}
 
-	// 20050802.myevan.상점 판매 로그에 아이템 ID 추가
-	sys_log(0, "SHOP: SELL: %s item name: %s(x%d):%u price: %u", ch->GetName(), item->GetName(ch->GetLanguage()), bCount, item->GetID(), dwPrice);
+
+	sys_log(0, "SHOP: SELL: %s item name: %s(x%d):%u price: %u", ch->GetName(), item->GetName(), bCount, item->GetID(), dwPrice);
+
 	if (iVal > 0)
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(ch->GetLanguage(),"판매금액의 %d %% 가 세금으로 나가게됩니다"), iVal);
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("판매금액의 %d %% 가 세금으로 나가게됩니다"), iVal);
 
 	DBManager::instance().SendMoneyLog(MONEY_LOG_SHOP, item->GetVnum(), dwPrice);
 
@@ -384,7 +385,7 @@ void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, BYTE bCount)
 	else
 		item->SetCount(item->GetCount() - bCount);
 
-	//군주 시스템 : 세금 징수
+
 	CMonarch::instance().SendtoDBAddMoney(dwTax, ch->GetEmpire(), ch);
 
 	ch->PointChange(POINT_GOLD, dwPrice, false);
@@ -496,7 +497,7 @@ bool ConvertToShopItemTable(IN CGroupNode* pNode, OUT TShopTableEx& shopTable)
 	CGrid grid = CGrid(5, 9);
 	int iPos;
 
-	memset(&shopTable.items[0], 0, sizeof(shopTable.items));
+	msl::refill(shopTable.items);
 
 	for (size_t i = 0; i < shopItems.size(); i++)
 	{
@@ -519,8 +520,8 @@ bool ConvertToShopItemTable(IN CGroupNode* pNode, OUT TShopTableEx& shopTable)
 
 bool CShopManager::ReadShopTableEx(const char* stFileName)
 {
-	// file 유무 체크.
-	// 없는 경우는 에러로 처리하지 않는다.
+
+
 	FILE* fp = fopen(stFileName, "rb");
 	if (NULL == fp)
 		return true;
@@ -618,3 +619,4 @@ bool CShopManager::ReadShopTableEx(const char* stFileName)
 
 	return true;
 }
+//martysama0134's 2022

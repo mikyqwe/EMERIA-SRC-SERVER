@@ -41,8 +41,8 @@ namespace building
 		long	lNPCX;
 		long	lNPCY;
 
-		DWORD	dwGroupVnum; // 같은 그룹은 하나만 건설가능
-		DWORD	dwDependOnGroupVnum; // 지어져 있어야하는 그룹
+		DWORD	dwGroupVnum;
+		DWORD	dwDependOnGroupVnum;
 	} TObjectProto;
 
 	typedef struct SObject
@@ -61,3 +61,4 @@ namespace building
 };
 
 #endif
+//martysama0134's 2022

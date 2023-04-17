@@ -3,6 +3,7 @@
 
 #include "../../libsql/AsyncSQL.h"
 #include "any_function.h"
+#include <memory>
 
 enum
 {
@@ -87,13 +88,17 @@ class DBManager : public singleton<DBManager>
 		bool			Connect(const char * host, const int port, const char * user, const char * pwd, const char * db);
 		void			Query(const char * c_pszFormat, ...);
 
-		SQLMsg *		DirectQuery(const char * c_pszFormat, ...);
+		std::unique_ptr<SQLMsg>		DirectQuery(const char * c_pszFormat, ...);
 		void			ReturnQuery(int iType, DWORD dwIdent, void* pvData, const char * c_pszFormat, ...);
 
 		void			Process();
 		void			AnalyzeReturnQuery(SQLMsg * pmsg);
 
+#ifdef ENABLE_LONG_LONG
+		void			SendMoneyLog(BYTE type, DWORD vnum, long long gold);
+#else
 		void			SendMoneyLog(BYTE type, DWORD vnum, int gold);
+#endif
 
 		void			LoginPrepare(BYTE bBillType, DWORD dwBillID, long lRemainSecs, LPDESC d, DWORD * pdwClientKey, int * paiPremiumTimes = NULL);
 		void			SendAuthLogin(LPDESC d);
@@ -107,7 +112,7 @@ class DBManager : public singleton<DBManager>
 		void			FlushBilling(bool bForce=false);
 		void			CheckBilling();
 
-		void			StopAllBilling(); // 20050503.ipkn.DB-AUTH 접속 종료시 빌링 테이블 모두 지우기 (재연결시 복구함)
+		void			StopAllBilling();
 
 		DWORD			CountQuery()		{ return m_sql.CountQuery(); }
 		DWORD			CountQueryResult()	{ return m_sql.CountResult(); }
@@ -121,8 +126,8 @@ class DBManager : public singleton<DBManager>
 		const std::string &	GetDBString(const std::string& key);
 		const std::vector<std::string> & GetGreetMessage();
 
-		template<class Functor> void FuncQuery(Functor f, const char * c_pszFormat, ...); // 결과를 f인자로 호출함 (SQLMsg *) 알아서 해제됨
-		template<class Functor> void FuncAfterQuery(Functor f, const char * c_pszFormat, ...); // 끝나고 나면 f가 호출됨 void			f(void) 형태
+		template<class Functor> void FuncQuery(Functor f, const char * c_pszFormat, ...);
+		template<class Functor> void FuncAfterQuery(Functor f, const char * c_pszFormat, ...);
 
 		size_t EscapeString(char* dst, size_t dstSize, const char *src, size_t srcSize);
 
@@ -197,7 +202,7 @@ class AccountDB : public singleton<AccountDB>
 		bool Connect(const char * host, const int port, const char * user, const char * pwd, const char * db);
 		bool ConnectAsync(const char * host, const int port, const char * user, const char * pwd, const char * db, const char * locale);
 
-		SQLMsg* DirectQuery(const char * query);
+		std::unique_ptr<SQLMsg> DirectQuery(const char * query);
 		void ReturnQuery(int iType, DWORD dwIdent, void * pvData, const char * c_pszFormat, ...);
 		void AsyncQuery(const char* query);
 
@@ -217,3 +222,4 @@ class AccountDB : public singleton<AccountDB>
 //END_ACCOUNT_DB
 
 #endif
+//martysama0134's 2022

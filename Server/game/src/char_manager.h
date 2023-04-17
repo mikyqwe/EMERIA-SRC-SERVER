@@ -7,7 +7,6 @@
 
 #include "../../common/stl.h"
 #include "../../common/length.h"
-#include "../../common/tables.h"
 
 #include "vid.h"
 
@@ -25,7 +24,7 @@ class CHARACTER_MANAGER : public singleton<CHARACTER_MANAGER>
 
 		void                    Destroy();
 
-		void			GracefulShutdown();	// 정상적 셧다운할 때 사용. PC를 모두 저장시키고 Destroy 한다.
+		void			GracefulShutdown();
 
 		DWORD			AllocVID();
 
@@ -36,18 +35,9 @@ class CHARACTER_MANAGER : public singleton<CHARACTER_MANAGER>
 		void DestroyCharacter(LPCHARACTER ch, const char* file, size_t line);
 #endif
 
-#ifdef ENABLE_SPECIAL_AFFECT
-		void HandleSpecialAffects(DWORD* aPids);
-		void AddSpecialAffect(LPCHARACTER ch);
-#endif
-
 		void			Update(int iPulse);
 
-#ifdef OFFLINE_SHOP
-		LPCHARACTER		SpawnMob(DWORD dwVnum, long lMapIndex, long x, long y, long z, bool bSpawnMotion = false, int iRot = -1, bool bShow = true, bool isOfflineShopNPC = false, DWORD real_owner = 0, DWORD real_owner_aid = 0);
-#else
 		LPCHARACTER		SpawnMob(DWORD dwVnum, long lMapIndex, long x, long y, long z, bool bSpawnMotion = false, int iRot = -1, bool bShow = true);
-#endif
 		LPCHARACTER		SpawnMobRange(DWORD dwVnum, long lMapIndex, int sx, int sy, int ex, int ey, bool bIsException=false, bool bSpawnMotion = false , bool bAggressive = false);
 		LPCHARACTER		SpawnGroup(DWORD dwVnum, long lMapIndex, int sx, int sy, int ex, int ey, LPREGEN pkRegen = NULL, bool bAggressive_ = false, LPDUNGEON pDungeon = NULL);
 		bool			SpawnGroupGroup(DWORD dwVnum, long lMapIndex, int sx, int sy, int ex, int ey, LPREGEN pkRegen = NULL, bool bAggressive_ = false, LPDUNGEON pDungeon = NULL);
@@ -66,11 +56,11 @@ class CHARACTER_MANAGER : public singleton<CHARACTER_MANAGER>
 		bool			AddToStateList(LPCHARACTER ch);
 		void			RemoveFromStateList(LPCHARACTER ch);
 
-		// DelayedSave: 어떠한 루틴 내에서 저장을 해야 할 짓을 많이 하면 저장
-		// 쿼리가 너무 많아지므로 "저장을 한다" 라고 표시만 해두고 잠깐
-		// (예: 1 frame) 후에 저장시킨다.
+
+
+
 		void                    DelayedSave(LPCHARACTER ch);
-		bool                    FlushDelayedSave(LPCHARACTER ch); // Delayed 리스트에 있다면 지우고 저장한다. 끊김 처리시 사용 됨.
+		bool                    FlushDelayedSave(LPCHARACTER ch);
 		void			ProcessDelayedSave();
 
 		template<class Func>	Func for_each_pc(Func f);
@@ -113,11 +103,6 @@ class CHARACTER_MANAGER : public singleton<CHARACTER_MANAGER>
 		bool			BeginPendingDestroy();
 		void			FlushPendingDestroy();
 
-#ifdef ENABLE_DECORUM
-		void			SetSeasonChampionDecorum(BYTE bIndex, DWORD dwPID);
-		int				IsSeasonChampionDecorum(DWORD dwPID);
-#endif
-
 	private:
 		int					m_iMobItemRate;
 		int					m_iMobDamageRate;
@@ -134,15 +119,12 @@ class CHARACTER_MANAGER : public singleton<CHARACTER_MANAGER>
 		int					m_iUserDamageRatePremium;
 		int					m_iVIDCount;
 
-#ifdef ENABLE_DECORUM		
-		DWORD				m_adwSeasonChampionDecorum[3];
-#endif
 		TR1_NS::unordered_map<DWORD, LPCHARACTER> m_map_pkChrByVID;
 		TR1_NS::unordered_map<DWORD, LPCHARACTER> m_map_pkChrByPID;
 		NAME_MAP			m_map_pkPCChr;
 
 		char				dummy1[1024];	// memory barrier
-		CHARACTER_SET		m_set_pkChrState;	// FSM이 돌아가고 있는 놈들
+		CHARACTER_SET		m_set_pkChrState;
 		CHARACTER_SET		m_set_pkChrForDelayedSave;
 		CHARACTER_SET		m_set_pkChrMonsterLog;
 
@@ -156,31 +138,8 @@ class CHARACTER_MANAGER : public singleton<CHARACTER_MANAGER>
 		bool				m_bUsePendingDestroy;
 		CHARACTER_SET		m_set_pkChrPendingDestroy;
 
-#ifdef ENABLE_SPECIAL_AFFECT
-		std::map<DWORD, DWORD>		m_map_pkSpecialAffectedChr;
-		
-		void AddSpecialAffect(DWORD pid, DWORD affect, DWORD aff);
-#endif
-
 #ifdef M2_USE_POOL
 		ObjectPool<CHARACTER> pool_;
-#endif
-#ifdef ENABLE_EVENT_MANAGER
-public:
-	void			ClearEventData();
-	void			SetEventData(BYTE dayIndex, const std::vector<TEventManagerData>& m_data);
-	void			SetEventStatus(const TEventManagerData& m_data, bool eventStatus);
-	void			SendDataPlayer(LPCHARACTER ch);
-	void			CheckBonusEvent(LPCHARACTER ch);
-	TEventManagerData* CheckEventIsActive(BYTE eventIndex);
-	void			CheckEventForDrop(LPCHARACTER pkChr, LPCHARACTER pkKiller, std::vector<LPITEM>& vec_item);
-protected:
-	std::map<BYTE, std::vector<TEventManagerData>>	m_eventData;
-#endif
-
-#ifdef SYSTEM_PDA
-	public:
-		const DWORD*		GetUsableSkillList(BYTE bJob, BYTE bSkillGroup) const;
 #endif
 
 };
@@ -215,3 +174,4 @@ class CharacterVectorInteractor : public CHARACTER_VECTOR
 #endif
 
 #endif
+//martysama0134's 2022

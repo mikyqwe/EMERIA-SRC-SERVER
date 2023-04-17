@@ -55,9 +55,9 @@ double CPoly::Eval()
 	int stNow;
 	double save[MAXSTACK],t;
 	int iSp=0;
-	if (ErrorOccur) 
+	if (ErrorOccur)
 	{
-		/*THROW(new CEvalException("Evaluate Error"));*/ 
+		/*THROW(new CEvalException("Evaluate Error"));*/
 		return 0;
 	}
 
@@ -77,7 +77,7 @@ double CPoly::Eval()
 				save[iSp++]=*posn++; break;
 			case ID:
 				save[iSp++]=
-					lSymbol[ *pos ]->dVal; 
+					lSymbol[ *pos ]->dVal;
 				pos++;
 				break;
 				//case '+':
@@ -95,7 +95,7 @@ double CPoly::Eval()
 				//case '%':
 			case MOD:
 				iSp--;
-				if (save[iSp]==0) 
+				if (save[iSp]==0)
 				{
 					//THROW(new CEvalException("Divide by 0"));
 					return 0;
@@ -104,7 +104,7 @@ double CPoly::Eval()
 				//case '/':
 			case DIV:
 				iSp--;
-				if (save[iSp]==0) 
+				if (save[iSp]==0)
 				{
 					//THROW(new CEvalException("Divide by 0"));
 					return 0;
@@ -115,7 +115,7 @@ double CPoly::Eval()
 				iSp--;
 				save[iSp-1]=pow(save[iSp-1],save[iSp]); break;
 			case ROOT:
-				if (save[iSp-1]<0) 
+				if (save[iSp-1]<0)
 				{
 					//THROW(new CEvalException("Negative in root"));
 					return 0;
@@ -131,54 +131,54 @@ double CPoly::Eval()
 				else save[iSp-1] = 1.0f;
 				break;
 			case TAN:
-				if (!(t=cos(save[iSp-1]))) 
+				if (!(t=cos(save[iSp-1])))
 				{
 					//THROW (new CEvalException("Divide by 0"));
 					return 0;
 				}
 				save[iSp-1]=tan(save[iSp-1]); break;
 			case CSC:
-				if (!(t=sin(save[iSp-1]))) 
+				if (!(t=sin(save[iSp-1])))
 				{
 					//THROW(new CEvalException("Divide by 0"));
 					return 0;
 				}
 				save[iSp-1]=1/t; break;
 			case SEC:
-				if (!(t=cos(save[iSp-1]))) 
+				if (!(t=cos(save[iSp-1])))
 				{
 					//THROW(new CEvalException("Divide by 0"));
 					return 0;
 				}
 				save[iSp-1]=1/t; break;
 			case COT:
-				if (!(t=sin(save[iSp-1]))) 
+				if (!(t=sin(save[iSp-1])))
 				{
 					//THROW(new CEvalException("Divide by 0"));
 					return 0;
 				}
 				save[iSp-1]=cos(save[iSp-1])/t; break;
 			case LN:
-				if (save[iSp-1]<=0) 
+				if (save[iSp-1]<=0)
 				{
 					//THROW( new CEvalException("Call Log with minus number"));
 					return 0;
 				}
 				save[iSp-1]=log(save[iSp-1]); break;
 			case LOG10:
-				if (save[iSp-1]<=0) 
+				if (save[iSp-1]<=0)
 				{
 					//THROW( new CEvalException("Call Log with minus number"));
 					return 0;
 				}
 				save[iSp-1]=log10(save[iSp-1]); break;
 			case LOG:
-				if (save[iSp-1]<=0) 
+				if (save[iSp-1]<=0)
 				{
 					//THROW( new CEvalException("Call Log with minus number"));
 					return 0;
 				}
-				if (save[iSp-2]<=0 || save[iSp-2]==1) 
+				if (save[iSp-2]<=0 || save[iSp-2]==1)
 				{
 					//THROW( new CEvalException("Call Log with minus number"));
 					return 0;
@@ -232,7 +232,7 @@ int CPoly::Analyze(const char * pszStr)
 
     expr();
 
-    if (tokenBase.empty()) 
+    if (tokenBase.empty())
     {
 	//THROW(new CParseException("No Data"));
 	return false;
@@ -260,7 +260,7 @@ void CPoly::Clear()
     STSize=0;
 }
 
-void CPoly::expr() 
+void CPoly::expr()
 {
     int t;
 
@@ -458,16 +458,16 @@ void CPoly::emit(int t, int tval)
 {
     switch (t)
     {
-	case '+': 
+	case '+':
 	    tokenBase.push_back(PLU);
 	    break;
-	case '-': 
+	case '-':
 	    tokenBase.push_back(MIN);
 	    break;
-	case '*': 
+	case '*':
 	    tokenBase.push_back(MUL);
 	    break;
-	case '/': 
+	case '/':
 	    tokenBase.push_back(DIV);
 	    break;
 	case '%':
@@ -500,7 +500,7 @@ void CPoly::emit(int t, int tval)
 	    tokenBase.push_back(t);
 	    numBase.push_back(iNumToken);
 	    break;
-	case ID:  
+	case ID:
 	    tokenBase.push_back(t);
 	    tokenBase.push_back(tval); break;
 	default:
@@ -657,8 +657,8 @@ else
    switch (stNow)
    {
    case NUM:
-//save[iSp++]=numBase.GetNext(posn); 
-mstr[cc]="0";bstr[cc].Format("%f",numBase.GetNext(posn)); 
+//save[iSp++]=numBase.GetNext(posn);
+mstr[cc]="0";bstr[cc].Format("%f",numBase.GetNext(posn));
 for (i=bstr[cc].GetLength()-1;i>=0;i--)
 if (bstr[cc][i] != '0')
 break;
@@ -677,7 +677,7 @@ case ID:
 //lSymbol.FindIndex(
 //(POSITION )tokenBase.GetNext(pos)
 //				)
-//)->dVal; 
+//)->dVal;
 bstr[cc] = lSymbol.GetAt(tokenBase.GetNext(pos))->strlex;
 if (bstr[cc] != "x") mstr[cc]="0";
 else  mstr[cc] = "1";
@@ -688,8 +688,8 @@ cc--;
 if (bstr[cc-1]=="0")
 {
 if (bstr[cc]=="0")
-bstr[cc-1]="0"; 
-else 
+bstr[cc-1]="0";
+else
 bstr[cc-1]="("+bstr[cc]+")";
 }
 else if (bstr[cc]=="0")
@@ -697,14 +697,14 @@ else if (bstr[cc]=="0")
 bstr[cc-1]="("+bstr[cc-1]+")";
 }
 else
-bstr[cc-1]="("+bstr[cc-1]+"+"+bstr[cc]+")"; 
+bstr[cc-1]="("+bstr[cc-1]+"+"+bstr[cc]+")";
 bstr[cc]="";
 
 if (mstr[cc-1]=="0")
 {
 if (mstr[cc]=="0")
-mstr[cc-1]="0"; 
-else 
+mstr[cc-1]="0";
+else
 mstr[cc-1]="("+mstr[cc]+")";
 }
 else if (mstr[cc]=="0")
@@ -712,7 +712,7 @@ else if (mstr[cc]=="0")
 mstr[cc-1]="("+mstr[cc-1]+")";
 }
 else
-mstr[cc-1]="("+mstr[cc-1]+"+"+mstr[cc]+")"; 
+mstr[cc-1]="("+mstr[cc-1]+"+"+mstr[cc]+")";
 mstr[cc]="";
 
 break;
@@ -721,8 +721,8 @@ cc--;
 if (bstr[cc-1]=="0")
 {
     if (bstr[cc]=="0")
-	bstr[cc-1]="0"; 
-    else 
+	bstr[cc-1]="0";
+    else
 	bstr[cc-1]="(-"+bstr[cc]+")";
 }
 else if (bstr[cc]=="0")
@@ -730,14 +730,14 @@ else if (bstr[cc]=="0")
     bstr[cc-1]="("+bstr[cc-1]+")";
 }
 else
-bstr[cc-1]="("+bstr[cc-1]+"-"+bstr[cc]+")"; 
+bstr[cc-1]="("+bstr[cc-1]+"-"+bstr[cc]+")";
 bstr[cc]="";
 
 if (mstr[cc-1]=="0")
 {
     if (mstr[cc]=="0")
-	mstr[cc-1]="0"; 
-    else 
+	mstr[cc-1]="0";
+    else
 	mstr[cc-1]="(-"+mstr[cc]+")";
 }
 else if (mstr[cc]=="0")
@@ -745,7 +745,7 @@ else if (mstr[cc]=="0")
     mstr[cc-1]="("+mstr[cc-1]+")";
 }
 else
-mstr[cc-1]="("+mstr[cc-1]+"-"+mstr[cc]+")"; 
+mstr[cc-1]="("+mstr[cc-1]+"-"+mstr[cc]+")";
 mstr[cc]="";
 
 break;
@@ -764,17 +764,17 @@ if (mstr[cc-1]=="0" || bstr[cc]=="0")
 }
 else if (mstr[cc]=="0" || bstr[cc-1]=="0")
 {
-    mstr[cc-1] = "("+mstr[cc-1] + "*" + bstr[cc] + ")"; 
+    mstr[cc-1] = "("+mstr[cc-1] + "*" + bstr[cc] + ")";
 }
 else
-mstr[cc-1] = "(("+mstr[cc-1] + "*" + bstr[cc] + ")+(" +mstr[cc] + "*" +bstr[cc-1] +"))"; 
+mstr[cc-1] = "(("+mstr[cc-1] + "*" + bstr[cc] + ")+(" +mstr[cc] + "*" +bstr[cc-1] +"))";
 
 if (bstr[cc-1]=="0" || bstr[cc]=="0")
 {
     bstr[cc-1]="0";
 }
 else
-bstr[cc-1]="("+bstr[cc-1]+"*"+bstr[cc]+")"; 
+bstr[cc-1]="("+bstr[cc-1]+"*"+bstr[cc]+")";
 mstr[cc]=""; bstr[cc]="";
 break;
 case '/':
@@ -850,7 +850,7 @@ bstr[cc]="";
 break;
 case ROOT:
 cc--;
-if (mstr[cc]=="0") 
+if (mstr[cc]=="0")
 mstr[cc]="0";
 else
 mstr[cc]="("+mstr[cc]+"/2/rt("+bstr[cc]+"))";
@@ -929,3 +929,4 @@ delete[] bstr;
   return tval;
   }
  */
+//martysama0134's 2022

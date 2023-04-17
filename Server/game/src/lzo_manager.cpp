@@ -43,4 +43,4 @@ size_t LZOManager::GetMaxCompressedSize(size_t original)
 {
 	return (original + (original >> 4) + 64 + 3);
 }
-
+//martysama0134's 2022

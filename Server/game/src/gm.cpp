@@ -58,7 +58,7 @@ BYTE gm_new_get_level( const char * name, const char * host, const char* account
 		return GM_PLAYER;
 
 	// GERMAN_GM_NOT_CHECK_HOST
-	// 독일 버전은 호스트 체크를 하지 않는다.
+
 #ifdef ENABLE_NEWSTUFF
 	if (!g_bGMHostCheck)
 #else
@@ -111,4 +111,4 @@ BYTE gm_get_level(const char * name, const char * host, const char* account)
 {
 	return gm_new_get_level( name, host, account );
 }
-
+//martysama0134's 2022

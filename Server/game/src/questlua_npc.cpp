@@ -8,24 +8,14 @@
 #include "char_manager.h"
 #include "shop_manager.h"
 #include "guild.h"
-#include "desc_client.h"
-#include "sectree_manager.h"
+#include "packet.h"
+#include "buffer_manager.h"
 
 namespace quest
 {
 	//
 	// "npc" lua functions
 	//
-	int npc_get_ip(lua_State* L)
-    {
-        LPCHARACTER npc = CQuestManager::instance().GetCurrentNPCCharacterPtr();
-        if (npc && npc->IsPC())
-            lua_pushstring(L, npc->GetDesc()->GetHostName());
-        else
-            lua_pushstring(L, "");
-        return 1;
-    }
-	
 	ALUA(npc_open_shop)
 	{
 		int iShopVnum = 0;
@@ -155,9 +145,7 @@ namespace quest
 
 		ch->SetQuestNPCID(0);
 		if (npc)
-		{
-			npc->Dead();
-		}
+			npc->DeadNoReward(); // @fixme188 from Dead()
 		return 0;
 	}
 
@@ -271,20 +259,13 @@ namespace quest
 
 		return 1;
 	}
-//MentaL_FIX
+
 	ALUA(npc_get_leader_vid)
 	{
 		CQuestManager& q = CQuestManager::instance();
 		LPCHARACTER npc = q.GetCurrentNPCCharacterPtr();
 
 		LPPARTY party = npc->GetParty();
-
-		if (!party)
-		{
-			sys_err("npc_get_leader_vid: Function triggered without party");
-			return 1;
-		}
-
 		LPCHARACTER leader = party->GetLeader();
 
 		if (leader)
@@ -295,7 +276,7 @@ namespace quest
 
 		return 1;
 	}
-//
+
 	ALUA(npc_get_vid)
 	{
 		CQuestManager& q = CQuestManager::instance();
@@ -405,6 +386,12 @@ namespace quest
 		return 1;
 	}
 
+	ALUA(npc_get_type0)
+	{
+		lua_pushnumber(L, CQuestManager::instance().GetCurrentNPCCharacterPtr()->GetMobTable().bType);
+		return 1;
+	}
+
 	ALUA(npc_is_available0)
 	{
 		CQuestManager& q = CQuestManager::instance();
@@ -414,377 +401,47 @@ namespace quest
 		return 1;
 	}
 
-#ifdef ENABLE_MELEY_LAIR_DUNGEON
-	int npc_get_protect_time(lua_State* L)
+	ALUA(npc_select_vid0)
 	{
-		CQuestManager& q = CQuestManager::Instance();
-		if (!lua_isnumber(L,1) || !lua_isstring(L,2))
-		{
-			sys_err("QUEST wrong get flag");
-			return 0;
-		}
-		else
-		{
-			LPCHARACTER ch = 0;
-			int a = lua_isnumber(L,1);
-			const char* sz = lua_tostring(L, 2);
-			if(a==1)
-			{
-				ch = q.GetCurrentNPCAttackCharacterPtr();
-			}
-			else if(a == 2)
-			{
-				ch = q.GetCurrentNPCCharacterPtr();
-			}
-			if(ch)
-				lua_pushnumber(L,ch->GetProtectTime(string(sz)));
-			else
-				lua_pushnumber(L,0);
-			return 1;
-		}
-		return 0;
-	}
-
-	int npc_set_protect_time(lua_State* L)
-	{
-		CQuestManager& q = CQuestManager::Instance();
-		if (!lua_isnumber(L,1) || !lua_isstring(L,2) || !lua_isnumber(L,3))
-		{
-			sys_err("QUEST wrong set flag");
-		}
-		else
-		{
-			LPCHARACTER ch = 0;
-			int a = lua_isnumber(L,1);
-			const char* sz = lua_tostring(L,2);
-			if(a==1)
-			{
-				ch = q.GetCurrentNPCAttackCharacterPtr();
-			}
-			else if(a==2)
-			{
-				ch = q.GetCurrentNPCCharacterPtr();
-			}
-			if(ch!=0)
-				ch->SetProtectTime(sz, int(rint(lua_tonumber(L,3))));
-		}
-		return 0;
-	}
-
-	int npc_set_statu_affect(lua_State* L)
-	{
-		CQuestManager& q = CQuestManager::Instance();
-		if (!lua_isnumber(L,1) || !lua_isnumber(L,2))
-		{
-			sys_err("QUEST wrong set flag");
-		}
-		else
-		{
-			LPCHARACTER ch = 0;
-			int a = lua_isnumber(L,1);
-			int sz = lua_tonumber(L,2);
-
-			if(a==1)
-			{
-				ch = q.GetCurrentNPCAttackCharacterPtr();
-			}
-			else if(a==2)
-			{
-				ch = q.GetCurrentNPCCharacterPtr();
-			}
-			if(ch==0)
-				return 0;
-
-			if(sz==1)
-			{
-				if(!ch->FindAffect(AFFECT_STATUE))
-					ch->AddAffect(AFFECT_STATUE, POINT_NONE, 0, AFF_STATUE1, 3600, 0, true);
-			}
-			else if(sz==2)
-			{
-				if(!ch->FindAffect(AFFECT_STATUE))
-					ch->AddAffect(AFFECT_STATUE, POINT_NONE, 0, AFF_STATUE2, 3600, 0, true);
-			}
-			else if(sz==3)
-			{
-				if(!ch->FindAffect(AFFECT_STATUE))
-					ch->AddAffect(AFFECT_STATUE, POINT_NONE, 0, AFF_STATUE3, 3600, 0, true);
-			}
-			else if(sz==4)
-			{
-				if(!ch->FindAffect(AFFECT_STATUE))
-					ch->AddAffect(AFFECT_STATUE, POINT_NONE, 0, AFF_STATUE4, 3600, 0, true);
-			}
-		}
-		return 0;
-	}
-
-	struct RemoveStatuEffect
-	{
-		RemoveStatuEffect() {};
-		void operator()(LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				if (ch->IsStone() || ch->IsMonster())
-				{
-					if(ch->FindAffect(AFFECT_STATUE))
-					{
-						ch->RemoveAffect(AFFECT_STATUE);
-					}
-				}
-			}
-		}
-	};
-
-	int npc_set_statu_affect_all(lua_State* L)
-	{
-		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(lua_tonumber(L,1));
-		if (NULL != pSecMap)
-		{
-			RemoveStatuEffect f;
-			pSecMap->for_each(f);
-		}
-		return 0;
-	}
-
-	struct MobDead
-	{
-		DWORD race;
-		MobDead(DWORD a)
-		{
-			race = a;
-		};
-		void operator()(LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				if (ch->GetRaceNum() == race)
-				{
-					ch->Dead();
-				}
-			}
-		}
-	};
-
-	int npc_dead_by_vnum(lua_State* L)
-	{
-		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(lua_tonumber(L,1));
-		if (NULL != pSecMap)
-		{
-			DWORD vnum = lua_tonumber(L,2);
-			MobDead f(vnum);
-			pSecMap->for_each(f);
-		}
-		return 0;
-	}
-
-	struct ShowStatuEffect
-	{
-		ShowStatuEffect() {};
-		void operator()(LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				if (ch->IsStone() || ch->IsMonster())
-				{
-					ch->Show(ch->GetMapIndex(), ch->GetX(), ch->GetY(), ch->GetZ(), true);
-				}
-			}
-		}
-	};
-
-	int npc_show_statu(lua_State * L)
-	{
-		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(lua_tonumber(L,1));
-		if (NULL != pSecMap)
-		{
-			ShowStatuEffect f;
-			pSecMap->for_each(f);
-		}
-		return 0;
-	}
-
-	struct SetMeleyHP
-	{
-		DWORD race;
-		long v;
-		SetMeleyHP(DWORD vnum, long value)
-		{
-			race = vnum;
-			v = value;
-		};
-		void operator()(LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				if (ch->GetRaceNum() == race)
-				{
-					ch->SetHP(v);
-				}
-			}
-		}
-	};
-
-	int npc_set_meley_hp(lua_State * L)
-	{
-		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(lua_tonumber(L,1));
-		DWORD vnum = lua_tonumber(L,2);
-		long value = lua_tonumber(L,3);
-		if (NULL != pSecMap)
-		{
-			SetMeleyHP f(vnum,value);
-			pSecMap->for_each(f);
-		}
-		return 0;
-	}
-	
-	struct ShowEndEffect
-	{
-		ShowEndEffect() {};
-		void operator()(LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				if (ch->IsStone() || ch->IsMonster())
-				{
-					if(ch->FindAffect(AFFECT_STATUE))
-					{
-						ch->RemoveAffect(AFFECT_STATUE);
-						ch->AddAffect(AFFECT_STATUE, POINT_NONE, 0, AFF_STATUE3, 3600, 0, true);
-					}
-					else
-					{
-						ch->AddAffect(AFFECT_STATUE, POINT_NONE, 0, AFF_STATUE3, 3600, 0, true);
-					}
-				}
-			}
-		}
-	};
-
-	int npc_show_end_statu(lua_State*L)
-	{
-		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(lua_tonumber(L,1));
-		if (NULL != pSecMap)
-		{
-			ShowEndEffect f;
-			pSecMap->for_each(f);
-		}
-		return 0;
-	}
-
-	struct SetProtectFlag
-	{
-		const char* flag;
-		int value;
-		SetProtectFlag(const char* a, int v)
-		{
-			flag = a;
-			value = v;
-		};
-		void operator()(LPENTITY ent)
-		{
-			if (ent->IsType(ENTITY_CHARACTER))
-			{
-				LPCHARACTER ch = (LPCHARACTER) ent;
-				if (ch->IsStone() || ch->IsMonster())
-				{
-					ch->SetProtectTime(flag,value);
-				}
-			}
-		}
-	};
-
-	int npc_set_protect_flag2(lua_State* L)
-	{
-		if (!lua_isnumber(L, 1) || !lua_isstring(L, 2) || !lua_isnumber(L, 3))
-		{
-			sys_err("Invalid Argument");
-			return 0;
-		}
-		LPSECTREE_MAP pSecMap = SECTREE_MANAGER::instance().GetMap(lua_tonumber(L,1));
-		const char* flag = lua_tostring(L, 2);
-		int value = lua_tonumber(L, 3);
-		if (pSecMap == NULL || !pSecMap)
-			return 0;
-		if (pSecMap)
-		{
-			SetProtectFlag f(flag,value);
-			pSecMap->for_each(f);
-		}
-
-		return 0;
-	}
-	
-	int npc_get_hp(lua_State* L)
-	{
-		CQuestManager& q = CQuestManager::instance();
-		DWORD vid=0;
-		LPCHARACTER targetChar=0;
-		int p = lua_tonumber(L, 1);
-		if(p==1)
-		{
-			targetChar = q.GetCurrentNPCAttackCharacterPtr();
-		}
-		else if(p==2)
-		{
-			vid = (DWORD) lua_tonumber(L, 2);
-			targetChar = CHARACTER_MANAGER::instance().Find(vid);
-		}
-
-		if(!targetChar || targetChar == NULL)
-			return 0;
-		if (targetChar)
-		{
-			lua_pushnumber(L, targetChar->GetHP());
-		}
-		else
-		{
-			lua_pushnumber(L, 0);
-		}
+		LPCHARACTER npc_old = CQuestManager::instance().GetCurrentNPCCharacterPtr();
+		LPCHARACTER npc_new = CHARACTER_MANAGER::instance().Find(lua_tonumber(L, 1));
+		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
+		if (npc_new)
+			ch->SetQuestNPCID(npc_new->GetVID());
+		lua_pushnumber(L, npc_old->GetVID());
 		return 1;
 	}
-	
-	int npc_set_hp(lua_State* L)
+
+	ALUA(npc_talk)
 	{
-		CQuestManager& q = CQuestManager::instance();
-		DWORD vid=0;
-		LPCHARACTER targetChar=0;
-
-		int p = lua_tonumber(L, 1);
-		int hp = lua_tonumber(L, 3);
-		if(p==1)
-		{
-			targetChar = q.GetCurrentNPCAttackCharacterPtr();
-		}
-		else if(p==2)
-		{
-			vid = (DWORD) lua_tonumber(L, 2);
-			targetChar = CHARACTER_MANAGER::instance().Find(vid);
-		}
-
-		if(!targetChar || targetChar == NULL)
+		LPCHARACTER npc = CQuestManager::instance().GetCurrentNPCCharacterPtr();
+		if (!npc)
 			return 0;
 
-		if (targetChar)
-		{
-			targetChar->SetHP(hp);
-		}
+		std::string text = lua_tostring(L, 1);
+		if (text.empty())
+			return 0;
+
+		struct packet_chat pack_chat{};
+		pack_chat.header	= HEADER_GC_CHAT;
+		pack_chat.size  = sizeof(struct packet_chat) + text.size() + 1;
+		pack_chat.type	  = CHAT_TYPE_TALKING;
+		pack_chat.id		= npc->GetVID();
+		pack_chat.bEmpire   = 0;
+
+		TEMP_BUFFER buf{};
+		buf.write(&pack_chat, sizeof(struct packet_chat));
+		buf.write(text.c_str(), text.size() + 1);
+
+		npc->PacketAround(buf.read_peek(), buf.size());
 		return 0;
 	}
 #endif
 
-#endif
 	void RegisterNPCFunctionTable()
 	{
 		luaL_reg npc_functions[] =
 		{
-			{ "get_ip",				npc_get_ip				},
 			{ "getrace",			npc_get_race			},
 			{ "get_race",			npc_get_race			},
 			{ "open_shop",			npc_open_shop			},
@@ -812,23 +469,20 @@ namespace quest
 			{ "dec_remain_hairdye_count",	npc_dec_remain_hairdye_count	},
 #ifdef ENABLE_NEWSTUFF
 			{ "get_level0",			npc_get_level0},	// [return lua number]
+			{ "get_level",			npc_get_level0},	// alias
 			{ "get_name0",			npc_get_name0},		// [return lua string]
+			{ "get_name",			npc_get_name0},		// alias
 			{ "get_pid0",			npc_get_pid0},		// [return lua number]
+			{ "get_pid",			npc_get_pid0},		// alias
 			{ "get_vnum0",			npc_get_vnum0},		// [return lua number]
+			{ "get_vnum",			npc_get_vnum0},		// alias
+			{ "get_type0",			npc_get_type0},		// [return lua number]
+			{ "get_type",			npc_get_type0},		// alias
 			{ "is_available0",		npc_is_available0},	// [return lua boolean]
-#endif
-#ifdef ENABLE_MELEY_LAIR_DUNGEON
-			{ "get_protect_time", npc_get_protect_time},
-			{ "set_protect_time", npc_set_protect_time},
-			{ "set_statu_affect", npc_set_statu_affect},
-			{ "set_statu_clear_aff", npc_set_statu_affect_all},
-			{ "show_statu", npc_show_statu},
-			{ "set_meley_hp", npc_set_meley_hp},
-			{ "show_end_statu", npc_show_end_statu},
-			{ "set_protect_flag2", npc_set_protect_flag2},
-			{ "dead_by_vnum", npc_dead_by_vnum},
-			{ "set_hp", npc_set_hp},
-			{ "get_hp", npc_get_hp},
+			{ "is_available",		npc_is_available0},	// alias
+			{ "select_vid0",		npc_select_vid0},	// [return lua number]
+			{ "select_vid",			npc_select_vid0},	// alias
+			{ "talk",				npc_talk},			// [return nothing]
 #endif
 			{ NULL,				NULL			    	}
 		};
@@ -836,3 +490,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("npc", npc_functions);
 	}
 };
+//martysama0134's 2022

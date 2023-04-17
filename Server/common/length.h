@@ -36,13 +36,11 @@ enum EMisc
 	SOCIAL_ID_MAX_LEN		= 18,
 
 	GUILD_NAME_MAX_LEN		= 12,
-#ifdef OFFLINE_SHOP
-	OFFLINE_SHOP_HOST_ITEM_MAX_NUM = 64,
-#endif
-	SHOP_HOST_ITEM_MAX_NUM	= 80,	/* ȣ��Ʈ�� �ִ� ������ ���� */
-	SHOP_GUEST_ITEM_MAX_NUM = 18,	/* �Խ�Ʈ�� �ִ� ������ ���� */
 
-	SHOP_PRICELIST_MAX_NUM	= 40,	///< ���λ��� �������� ����Ʈ���� ������ ���������� �ִ� ����
+	SHOP_HOST_ITEM_MAX_NUM	= 40,
+	SHOP_GUEST_ITEM_MAX_NUM = 18,
+
+	SHOP_PRICELIST_MAX_NUM	= 40,
 
 	CHAT_MAX_LEN			= 512,
 
@@ -56,22 +54,20 @@ enum EMisc
 
 	PLAYER_EXP_TABLE_MAX	= 120,
 	PLAYER_MAX_LEVEL_CONST	= 250,
-	
-	#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
+
+#ifdef ENABLE_MULTI_LANGUAGE_SYSTEM
 	LANGUAGE_MAX_LEN		= 2,
 	LANGUAGE_MAX_NUM		= 6,
-	#endif
+#endif
 
 	GUILD_MAX_LEVEL			= 20,
 	MOB_MAX_LEVEL			= 100,
-#if defined(__BL_SOUL_ROULETTE__)
-	ROULETTE_ITEM_MAX		= 20,
-#endif
+
 	ATTRIBUTE_MAX_VALUE		= 20,
 	CHARACTER_PATH_MAX_NUM	= 64,
 	SKILL_MAX_NUM			= 255,
 	SKILLBOOK_DELAY_MIN		= 64800,
-	SKILLBOOK_DELAY_MAX		= 108000, 
+	SKILLBOOK_DELAY_MAX		= 108000,
 	SKILL_MAX_LEVEL			= 40,
 
 	APPLY_NAME_MAX_LEN		= 32,
@@ -81,41 +77,31 @@ enum EMisc
 
     POINT_MAX_NUM = 255,
 	DRAGON_SOUL_BOX_SIZE = 32,
-#ifdef ENABLE_EXTENDED_DS_INVENTORY
-	DRAGON_SOUL_INVENTORY_PAGE_COUNT = 3,
-#endif
 	DRAGON_SOUL_BOX_COLUMN_NUM = 8,
 	DRAGON_SOUL_BOX_ROW_NUM = DRAGON_SOUL_BOX_SIZE / DRAGON_SOUL_BOX_COLUMN_NUM,
 	DRAGON_SOUL_REFINE_GRID_SIZE = 15,
 	MAX_AMOUNT_OF_MALL_BONUS	= 20,
 
-#if defined(ENABLE_NEW_TALISMAN_SLOTS_NEW) || defined(ENABLE_NEW_TALISMAN_SLOTS)
-	WEAR_MAX_NUM				= 60,
-#else
 	WEAR_MAX_NUM				= 32,
+
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	OFFLINE_SHOP_NAME_MAX_LEN			= 40 + CHARACTER_NAME_MAX_LEN +1,
+	OFFLINESHOP_DURATION_MAX_MINUTES	= 8* 24 * 60,
+	OFFLINESHOP_MAX_SEARCH_RESULT		= 250,
+	OFFLINESHOP_SECONDS_PER_SEARCH		= 15,
+	//*new check about auction offers
+	OFFLINESHOP_SECONDS_PER_OFFER		= 7,
 #endif
 
-#ifdef ENABLE_GEM_SYSTEM
-	GEM_SLOTS_MAX_NUM 			= 9,
-	GEM_REFRESH_ITEM_VNUM 		= 39063,
-	GEM_UNLOCK_ITEM_VNUM 		= 39064,
-	GEM_GLIMMERSTONE_VNUM		= 50926,
-	GEM_REFRESH_PULSE			= 5, //hours
-	GEM_MAX 					= 1000000,
+#ifdef ENABLE_LONG_LONG
+	GOLD_MAX = 1000000000000001LL,
+#else
+	// LIMIT_GOLD
+	GOLD_MAX = 2000000000,
 #endif
 
-	//LIMIT_GOLD
-	//GOLD_MAX = 2000000000,
-	GOLD_MAX = 2100000000,
-#ifdef ENABLE_CHEQUE_SYSTEM
-	CHEQUE_MAX = 999,
-#endif
 	MAX_PASSPOD = 8 ,
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	c_skillbook_slot_max = 10,
-	GOLD_COMB_SKILLBOOK = 100000,
-	BONUS_67_SLOT_MAX = 1,
-#endif
+
 
 	//END_LIMIT_GOLD
 
@@ -136,41 +122,12 @@ enum EMisc
 	SPECIAL_STORAGE_INVENTORY_PAGE_COUNT	= 4, // 4 (default)
 	SPECIAL_STORAGE_INVENTORY_MAX_NUM		= 180,
 #endif
-#ifdef ENABLE_OVER_KILL	
-	OVER_KILL_MAX_NUM = 5,//max num of effect (double kill , triple kill ecc.)
-#endif
-#ifdef WON_EXCHANGE
-	//CHEQUE_MAX = 999,
-	TAX_MUL = 3,
-	CHEQUE_NAME_VALUE = 100000000,
-#endif
-#ifdef ENABLE_DECORUM
-	DECORUM_WEEKLY_KILLS		= 7,
-#endif
-
-/**
-	 **** ������� �Ҵ� �� ������ ���� ���� (DB�� Item Position) ****
-	+------------------------------------------------------+ 0
-	| ĳ���� �⺻ �κ��丮 (45ĭ * 2������) 90ĭ           |
-	+------------------------------------------------------+ 90 = INVENTORY_MAX_NUM(90)
-	| ĳ���� ��� â (�������� ������) 32ĭ                |
-	+------------------------------------------------------+ 122 = INVENTORY_MAX_NUM(90) + WEAR_MAX_NUM(32)
-	| ��ȥ�� ��� â (�������� ��ȥ��) 12ĭ                |
-	+------------------------------------------------------+ 134 = 122 + DS_SLOT_MAX(6) * DRAGON_SOUL_DECK_MAX_NUM(2)
-	| ��ȥ�� ��� â ���� (���� �̻��) 18ĭ               |
-	+------------------------------------------------------+ 152 = 134 + DS_SLOT_MAX(6) * DRAGON_SOUL_DECK_RESERVED_MAX_NUM(3)
-	| ��Ʈ �κ��丮 (��Ʈ ����ÿ��� ��Ʈ ������ ���� Ȱ��)|
-	+------------------------------------------------------+ 168 = 152 + BELT_INVENTORY_SLOT_COUNT(16) = INVENTORY_AND_EQUIP_CELL_MAX
-	| �̻��                                               |
-	+------------------------------------------------------+ ??
-*/
 };
 
 #ifdef ENABLE_SWITCHBOT
-
 enum SwitchbotValues
 {
-	SWITCHBOT_SLOT_COUNT = 3,
+	SWITCHBOT_SLOT_COUNT = 5,
 	SWITCHBOT_ALTERNATIVE_COUNT = 2,
 	//1 = Switching Item
 	//2 = Yang
@@ -186,60 +143,18 @@ const DWORD c_arSwitchingItems[2] =
 };
 #endif
 
-#ifdef ENABLE_NEW_DETAILS_GUI
-enum
-{
-	KILL_SHINSO,
-	KILL_JINNO,
-	KILL_CHUNJO,
-	KILL_ALLPLAYER,
-	KILL_DUELWON,
-	KILL_DUELLOST,
-	KILL_MONSTERS,
-	KILL_METINSTONE,
-	KILL_BOSSES,
-	KILL_MAX_NUM,
-};
-#endif
-
-enum EMatrixCard
-{
-	MATRIX_CODE_MAX_LEN		= 192,
-	MATRIX_ANSWER_MAX_LEN	= 8,
-};
-
-const int SPECIALSTAT_SKILLBOOK_TIME_SKIP = 58999;
-const int SPECIALSTAT_SKILLBOOK_TIME_SKIP_PROB = 70;
-const int SPECIALSTAT_SKILLBOOK_PROB = 48;
-const int SPECIALSTAT_SKILLBOOK_START = 59000;
-const int SPECIALSTAT_AFFECT_START = 550;
-const BYTE SPECIALSTAT_MAX_LEVEL = 15;
-
-enum SPECIALSTAT_BOOK {
-	SPECIALSTAT1,
-	SPECIALSTAT2,
-	SPECIALSTAT3,
-	SPECIALSTAT4,
-	SPECIALSTAT5,
-	SPECIALSTAT6,
-	SPECIALSTATS_MAX,
-};
-
 enum FROZEN_SYSTEM_BONUS {
 	FROZEN_ITEM_VNUM = 58500,
 	UNFROZEN_ITEM_VNUM,
 	UNFROZEN_ITEM_VNUM_2,
 };
 
-#ifdef CHANGELOOK_SYSTEM
-enum EChangeLookInfo
+
+enum EMatrixCard
 {
-	CL_WINDOW_MAX_MATERIALS = 3,
-	CL_CLEAN_ATTR_VALUE0 = 8,
-	CL_TRANSMUTATION_PRICE = 50000000,
-	CL_SCROLL_VNUM = 72325,
+	MATRIX_CODE_MAX_LEN		= 192,
+	MATRIX_ANSWER_MAX_LEN	= 8,
 };
-#endif
 
 enum EWearPositions
 {
@@ -265,57 +180,23 @@ enum EWearPositions
 	WEAR_COSTUME_BODY,	// 19
 	WEAR_COSTUME_HAIR,	// 20
 
+	WEAR_RING1,
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
-	WEAR_COSTUME_MOUNT,
-#else
-	WEAR_RING1,			// 21	: �ű� ��������1 (����)
-#endif
-#ifdef ENABLE_ACCE_COSTUME_SYSTEM
-	WEAR_COSTUME_ACCE,
-#else
-	WEAR_RING2,			// 22	: �ű� ��������2 (������)
+	WEAR_COSTUME_MOUNT = WEAR_RING1, // costume_mount == ring1
 #endif
 
-	WEAR_BELT,			// 23	: �ű� ��Ʈ����
+	WEAR_RING2,
+#ifdef ENABLE_ACCE_COSTUME_SYSTEM
+	WEAR_COSTUME_ACCE = WEAR_RING2, // costume_acce == ring2
+#endif
+
+	WEAR_BELT,
 
 #ifdef ENABLE_WEAPON_COSTUME_SYSTEM
-	WEAR_COSTUME_WEAPON, //24
-#endif
-#ifdef ENABLE_NEW_TALISMAN_GF
-	WEAR_TALISMAN,		//25
-#endif
-#if defined(ENABLE_NEW_TALISMAN_SLOTS_NEW) || defined(ENABLE_NEW_TALISMAN_SLOTS)
-	WEAR_TALISMAN_2,		//26
-	WEAR_TALISMAN_3,		//27
-	WEAR_TALISMAN_4,		//28
-	WEAR_TALISMAN_5,		//29
-	WEAR_TALISMAN_6,		//30
-#endif
-#ifdef ENABLE_AURA_SYSTEM
-	WEAR_COSTUME_AURA,		//31
-#endif
-#ifdef ENABLE_EFFECT_COSTUME_SYSTEM
-	WEAR_COSTUME_EFFECT, //32
-#endif
-#ifdef NEW_RING_SLOT
-	WEAR_RING_NEW,	//33
+	WEAR_COSTUME_WEAPON,
 #endif
 
-#ifdef ENABLE_SYSTEM_RUNE
-	WEAR_RUNE,
-	WEAR_RUNE_RED,
-	WEAR_RUNE_BLUE,
-	WEAR_RUNE_GREEN,
-	WEAR_RUNE_YELLOW,
-	WEAR_RUNE_BLACK,
-#endif
-
-#if defined(ENABLE_NEW_TALISMAN_SLOTS_NEW) || defined(ENABLE_NEW_TALISMAN_SLOTS)
-	WEAR_MAX = 60
-#else
 	WEAR_MAX = 32	//
-#endif
-
 };
 
 enum EDragonSoulDeckType
@@ -324,7 +205,7 @@ enum EDragonSoulDeckType
 	DRAGON_SOUL_DECK_1,
 	DRAGON_SOUL_DECK_MAX_NUM = 2,
 
-	DRAGON_SOUL_DECK_RESERVED_MAX_NUM = 3,	// NOTE: �߿�! ���� ��������� ������, 3������ �з��� ���� �� ��. DS DECK�� �ø� ��� �ݵ�� �� ����ŭ RESERVED���� �����ؾ� ��!
+	DRAGON_SOUL_DECK_RESERVED_MAX_NUM = 3,
 };
 
 enum ESex
@@ -346,7 +227,7 @@ enum EDirection
 	DIR_MAX_NUM
 };
 
-#define ABILITY_MAX_LEVEL	10  /* ��� �ִ� ���� */
+#define ABILITY_MAX_LEVEL	10
 
 enum EAbilityDifficulty
 {
@@ -359,9 +240,9 @@ enum EAbilityDifficulty
 
 enum EAbilityCategory
 {
-	CATEGORY_PHYSICAL,	/* ��ü�� �����Ƽ */
-	CATEGORY_MENTAL,	/* ������ �����Ƽ */
-	CATEGORY_ATTRIBUTE,	/* �ɷ� �����Ƽ */
+	CATEGORY_PHYSICAL,
+	CATEGORY_MENTAL,
+	CATEGORY_ATTRIBUTE,
 	CATEGORY_NUM_TYPES
 };
 
@@ -372,7 +253,7 @@ enum EJobs
 	JOB_SURA,
 	JOB_SHAMAN,
 #ifdef ENABLE_WOLFMAN_CHARACTER
-	JOB_WOLFMAN,		// ������. �����ڵ���� WOLFMAN. (��ȹ�ڰ� ���߾�. ���߿� WOLF GIRL ���ܵ� ������ �Ӷ����������Ф�)
+	JOB_WOLFMAN,
 #endif
 	JOB_MAX_NUM
 };
@@ -395,27 +276,12 @@ enum ERaceFlags
 	RACE_FLAG_ICE		= (1 << 8),
 	RACE_FLAG_DESERT	= (1 << 9),
 	RACE_FLAG_TREE		= (1 << 10),
-#ifdef ENABLE_NEW_TALISMAN_GF
-	RACE_FLAG_ELEC		= (1 << 11),
-	RACE_FLAG_WIND		= (1 << 12),
-	RACE_FLAG_EARTH		= (1 << 13),
-	RACE_FLAG_DARK		= (1 << 14),
-	RACE_FLAG_ATT_ELEC	= (1 << 15),
-	RACE_FLAG_ATT_FIRE	= (1 << 16),
-	RACE_FLAG_ATT_ICE	= (1 << 17),
-	RACE_FLAG_ATT_WIND	= (1 << 18),
-	RACE_FLAG_ATT_EARTH	= (1 << 19),
-	RACE_FLAG_ATT_DARK	= (1 << 20),
-	RACE_FLAG_ATT_ZODIAC	= (1 << 21),
-	RACE_FLAG_ATT_DESERT	= (1 << 22),
-	RACE_FLAG_ATT_INSECT	= (1 << 23),
-#endif
-};
-
-enum EGuildWarFlags
-{
-	GWAR_FLAG_DUMMY			= (1 << 0),
-	GWAR_FLAG_CAN_OBSERVER	= (1 << 1),
+	RACE_FLAG_ATT_ELEC	= (1 << 11),
+	RACE_FLAG_ATT_FIRE	= (1 << 12),
+	RACE_FLAG_ATT_ICE	= (1 << 13),
+	RACE_FLAG_ATT_WIND	= (1 << 14),
+	RACE_FLAG_ATT_EARTH	= (1 << 15),
+	RACE_FLAG_ATT_DARK	= (1 << 16),
 };
 
 enum ELoads
@@ -445,41 +311,25 @@ enum EParts
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	PART_ACCE,
 #endif
-#ifdef __NEW_ARROW_SYSTEM__
-	PART_ARROW_TYPE,
-#endif
-#ifdef ENABLE_AURA_SYSTEM
-	PART_AURA,
-#endif
-#ifdef ENABLE_EFFECT_COSTUME_SYSTEM
-	PART_EFFECT,
-#endif
 	PART_MAX_NUM,
 	PART_WEAPON_SUB,
 };
 
 enum EChatType
 {
-	CHAT_TYPE_TALKING,	/* �׳� ä�� */
-	CHAT_TYPE_INFO,	/* ���� (�������� ������, ����ġ�� �����. ��) */
-	CHAT_TYPE_NOTICE,	/* �������� */
-	CHAT_TYPE_PARTY,	/* ��Ƽ�� */
-	CHAT_TYPE_GUILD,	/* ��帻 */
-	CHAT_TYPE_COMMAND,	/* �Ϲ� ���� */
-	CHAT_TYPE_SHOUT,	/* ��ġ�� */
+	CHAT_TYPE_TALKING,
+	CHAT_TYPE_INFO,
+	CHAT_TYPE_NOTICE,
+	CHAT_TYPE_PARTY,
+	CHAT_TYPE_GUILD,
+	CHAT_TYPE_COMMAND,
+	CHAT_TYPE_SHOUT,
 	CHAT_TYPE_WHISPER,
 	CHAT_TYPE_BIG_NOTICE,
 	CHAT_TYPE_MONARCH_NOTICE,
-	// CHAT_TYPE_UNK_10,
 #ifdef ENABLE_DICE_SYSTEM
 	CHAT_TYPE_DICE_INFO, //11
 #endif
-#if defined(__CHATTING_WINDOW_RENEWAL__)
-	CHAT_TYPE_EXP_INFO,
-	CHAT_TYPE_ITEM_INFO,
-	CHAT_TYPE_MONEY_INFO,
-#endif
-	CHAT_TYPE_MISSION,
 	CHAT_TYPE_MAX_NUM
 };
 
@@ -538,8 +388,7 @@ enum ECharType
 	CHAR_TYPE_PC,
 	CHAR_TYPE_POLYMORPH_PC,
 	CHAR_TYPE_HORSE,
-	CHAR_TYPE_GOTO,
-	CHAR_TYPE_PET
+	CHAR_TYPE_GOTO
 };
 
 enum EBattleType
@@ -621,45 +470,45 @@ enum EApplyTypes
 	APPLY_ATTBONUS_SURA,	// 61
 	APPLY_ATTBONUS_SHAMAN,	// 62
 	APPLY_ATTBONUS_MONSTER,	// 63
-	APPLY_MALL_ATTBONUS,			// 64 ���ݷ� +x%
-	APPLY_MALL_DEFBONUS,			// 65 ���� +x%
-	APPLY_MALL_EXPBONUS,			// 66 ����ġ +x%
-	APPLY_MALL_ITEMBONUS,			// 67 ������ ����� x/10��
-	APPLY_MALL_GOLDBONUS,			// 68 �� ����� x/10��
-	APPLY_MAX_HP_PCT,				// 69 �ִ� ������ +x%
-	APPLY_MAX_SP_PCT,				// 70 �ִ� ���ŷ� +x%
-	APPLY_SKILL_DAMAGE_BONUS,		// 71 ��ų ������ * (100+x)%
-	APPLY_NORMAL_HIT_DAMAGE_BONUS,	// 72 ��Ÿ ������ * (100+x)%
-	APPLY_SKILL_DEFEND_BONUS,		// 73 ��ų ������ ��� * (100-x)%
-	APPLY_NORMAL_HIT_DEFEND_BONUS,	// 74 ��Ÿ ������ ��� * (100-x)%
-	APPLY_PC_BANG_EXP_BONUS,		// 75 PC�� ������ EXP ���ʽ�
-	APPLY_PC_BANG_DROP_BONUS,		// 76 PC�� ������ ����� ���ʽ�
+	APPLY_MALL_ATTBONUS,
+	APPLY_MALL_DEFBONUS,
+	APPLY_MALL_EXPBONUS,
+	APPLY_MALL_ITEMBONUS,
+	APPLY_MALL_GOLDBONUS,
+	APPLY_MAX_HP_PCT,
+	APPLY_MAX_SP_PCT,
+	APPLY_SKILL_DAMAGE_BONUS,
+	APPLY_NORMAL_HIT_DAMAGE_BONUS,
+	APPLY_SKILL_DEFEND_BONUS,
+	APPLY_NORMAL_HIT_DEFEND_BONUS,
+	APPLY_PC_BANG_EXP_BONUS,
+	APPLY_PC_BANG_DROP_BONUS,
 
-	APPLY_EXTRACT_HP_PCT,			// 77 ���� HP �Ҹ�
+	APPLY_EXTRACT_HP_PCT,
 
-	APPLY_RESIST_WARRIOR,			// 78 ���翡�� ����
-	APPLY_RESIST_ASSASSIN,			// 79 �ڰ����� ����
-	APPLY_RESIST_SURA,				// 80 ���󿡰� ����
-	APPLY_RESIST_SHAMAN,			// 81 ���翡�� ����
-	APPLY_ENERGY,					// 82 ���
-	APPLY_DEF_GRADE,				// 83 ����. DEF_GRADE_BONUS�� Ŭ�󿡼� �ι�� �������� �ǵ��� ����(...)�� �ִ�.
-	APPLY_COSTUME_ATTR_BONUS,		// 84 �ڽ�Ƭ �����ۿ� ���� �Ӽ�ġ ���ʽ�
-	APPLY_MAGIC_ATTBONUS_PER,		// 85 ���� ���ݷ� +x%
-	APPLY_MELEE_MAGIC_ATTBONUS_PER,			// 86 ���� + �и� ���ݷ� +x%
+	APPLY_RESIST_WARRIOR,
+	APPLY_RESIST_ASSASSIN,
+	APPLY_RESIST_SURA,
+	APPLY_RESIST_SHAMAN,
+	APPLY_ENERGY,
+	APPLY_DEF_GRADE,
+	APPLY_COSTUME_ATTR_BONUS,
+	APPLY_MAGIC_ATTBONUS_PER,
+	APPLY_MELEE_MAGIC_ATTBONUS_PER,
 
-	APPLY_RESIST_ICE,		// 87 �ñ� ����
-	APPLY_RESIST_EARTH,		// 88 ���� ����
-	APPLY_RESIST_DARK,		// 89 ��� ����
+	APPLY_RESIST_ICE,
+	APPLY_RESIST_EARTH,
+	APPLY_RESIST_DARK,
 
-	APPLY_ANTI_CRITICAL_PCT,	//90 ũ��Ƽ�� ����
-	APPLY_ANTI_PENETRATE_PCT,	//91 ����Ÿ�� ����
+	APPLY_ANTI_CRITICAL_PCT,
+	APPLY_ANTI_PENETRATE_PCT,
 
 #ifdef ENABLE_WOLFMAN_CHARACTER
 	APPLY_BLEEDING_REDUCE			= 92,		//92
 	APPLY_BLEEDING_PCT				= 93,		//93
-	APPLY_ATTBONUS_WOLFMAN			= 94,		//94 ���������� ����
-	APPLY_RESIST_WOLFMAN			= 95,		//95 ���������� ����
-	APPLY_RESIST_CLAW				= 96,		//96 CLAW���⿡ ����
+	APPLY_ATTBONUS_WOLFMAN			= 94,
+	APPLY_RESIST_WOLFMAN			= 95,
+	APPLY_RESIST_CLAW				= 96,
 #endif
 
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
@@ -669,36 +518,8 @@ enum EApplyTypes
 #ifdef ENABLE_MAGIC_REDUCTION_SYSTEM
 	APPLY_RESIST_MAGIC_REDUCTION	= 98,	//98
 #endif
-#ifdef ENABLE_NEW_TALISMAN_GF
-	APPLY_ATTBONUS_ELEC 	= 99, 	// 99
-	APPLY_ATTBONUS_FIRE		= 100, 	// 100
-	APPLY_ATTBONUS_ICE		= 101, 	// 101
-	APPLY_ATTBONUS_WIND		= 102, 	// 102
-	APPLY_ATTBONUS_EARTH	= 103, 	// 103
-	APPLY_ATTBONUS_DARK		= 104, 	// 104
-	APPLY_RESIST_HUMAN, // 105
 
-	APPLY_RESIST_SWORD_REDUCTION, //106		
-	APPLY_RESIST_TWOHAND_REDUCTION, //107
-	APPLY_RESIST_DAGGER_REDUCTION,	//108
-	APPLY_RESIST_BELL_REDUCTION, //109		
-	APPLY_RESIST_FAN_REDUCTION, //110		
-	APPLY_RESIST_BOW_REDUCTION, //111
-
-	APPLY_ATTBONUS_ZODIAC, //112
-	APPLY_ATTBONUS_DESERT, //113
-	APPLY_ATTBONUS_INSECT, //114	
-#ifdef ENABLE_WOLFMAN_CHARACTER
-	APPLY_RESIST_CLAW_REDUCTION, //115
-#endif
-#endif
-#ifdef ENABLE_BONUS_BOSS
-	APPLY_ATTBONUS_BOSS,
-#endif
-#ifdef ENABLE_BONUS_METIN
-	APPLY_ATTBONUS_METIN,
-#endif
-	MAX_APPLY_NUM,
+	MAX_APPLY_NUM					= 99,
 };
 
 enum EOnClickEvents
@@ -734,16 +555,15 @@ enum EWindows
 #ifdef ENABLE_SWITCHBOT
 	SWITCHBOT,
 #endif
-#ifdef __AUCTION__
-	AUCTION,
-#endif
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	BONUS_NEW_67,
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	NEW_OFFSHOP,
+	SHOP_SAFEBOX,
 #endif
 #ifdef FAST_EQUIP_WORLDARD
 	CHANGE_EQUIP,
 #endif
-	GROUND
+	GROUND,
+	WINDOW_TYPE_MAX,
 };
 
 enum EMobSizes
@@ -871,15 +691,9 @@ enum EGuildWarState
 	GUILD_WAR_OVER,
 	GUILD_WAR_RESERVE,
 
-	GUILD_WAR_DURATION = 30*60, // 1�ð�
+	GUILD_WAR_DURATION = 30*60,
 	GUILD_WAR_WIN_POINT = 1000,
 	GUILD_WAR_LADDER_HALF_PENALTY_TIME = 12*60*60,
-};
-
-enum EChannel
-{
-    GUILD_WARP_WAR_CHANNEL = 98,
-    CHANNEL_SINGLE_MAPS = 99
 };
 
 enum EAttributeSet
@@ -892,15 +706,12 @@ enum EAttributeSet
 	ATTRIBUTE_SET_HEAD,
 	ATTRIBUTE_SET_SHIELD,
 	ATTRIBUTE_SET_EAR,
-#ifdef ENABLE_NEW_TALISMAN_GF
-	ATTRIBUTE_SET_TALISMAN,
+#ifdef ENABLE_ITEM_ATTR_COSTUME
+	ATTRIBUTE_SET_COSTUME_BODY,
+	ATTRIBUTE_SET_COSTUME_HAIR,
+#if defined(ENABLE_ITEM_ATTR_COSTUME) && defined(ENABLE_WEAPON_COSTUME_SYSTEM)
+	ATTRIBUTE_SET_COSTUME_WEAPON,
 #endif
-#if defined(ENABLE_NEW_TALISMAN_SLOTS_NEW) || defined(ENABLE_NEW_TALISMAN_SLOTS)
-	ATTRIBUTE_SET_TALISMAN_2,
-	ATTRIBUTE_SET_TALISMAN_3,
-	ATTRIBUTE_SET_TALISMAN_4,
-	ATTRIBUTE_SET_TALISMAN_5,
-	ATTRIBUTE_SET_TALISMAN_6,
 #endif
 	ATTRIBUTE_SET_MAX_NUM
 };
@@ -912,9 +723,6 @@ enum EPrivType
 	PRIV_GOLD_DROP,
 	PRIV_GOLD10_DROP,
 	PRIV_EXP_PCT,
-#ifdef ENABLE_DECORUM
-	PRIV_DECORUM_GAIN,
-#endif	
 	MAX_PRIV_NUM,
 };
 
@@ -934,13 +742,13 @@ enum EMoneyLogType
 
 enum EPremiumTypes
 {
-	PREMIUM_EXP,		// ����ġ�� 1.2��
-	PREMIUM_ITEM,		// ������ ������� 2��
-	PREMIUM_SAFEBOX,		// â���� 1ĭ���� 3ĭ
-	PREMIUM_AUTOLOOT,		// �� �ڵ� �ݱ�
-	PREMIUM_FISH_MIND,		// ���� ������ ���� Ȯ�� ���
-	PREMIUM_MARRIAGE_FAST,	// �ݽ� ���� ���� �������մϴ�.
-	PREMIUM_GOLD,		// �� ������� 1.5��
+	PREMIUM_EXP,
+	PREMIUM_ITEM,
+	PREMIUM_SAFEBOX,
+	PREMIUM_AUTOLOOT,
+	PREMIUM_FISH_MIND,
+	PREMIUM_MARRIAGE_FAST,
+	PREMIUM_GOLD,
 	PREMIUM_MAX_NUM = 9
 };
 
@@ -1040,45 +848,17 @@ enum SPECIAL_EFFECT
 	SE_AUTO_HPUP,
 	SE_AUTO_SPUP,
 
-	SE_EQUIP_RAMADAN_RING,		// �󸶴� �ʽ´��� ����(71135) ������ �� ����Ʈ (�ߵ�����Ʈ��, ��������Ʈ �ƴ�)
-	SE_EQUIP_HALLOWEEN_CANDY,		// �ҷ��� ������ ����(-_-;)�� ������ �ߵ��ϴ� ����Ʈ
-	SE_EQUIP_HAPPINESS_RING,		// ũ�������� �ູ�� ����(71143) ������ �� ����Ʈ (�ߵ�����Ʈ��, ��������Ʈ �ƴ�)
-	SE_EQUIP_LOVE_PENDANT,		// �߷�Ÿ�� ����� �Ҵ�Ʈ(71145) ������ �� ����Ʈ (�ߵ�����Ʈ��, ��������Ʈ �ƴ�)
-#ifdef ENABLE_DUEL_EFFECT
-	SE_PVP_WIN,
-	SE_PVP_OPEN1,
-	SE_PVP_OPEN2,
-	SE_PVP_BEGIN1,
-	SE_PVP_BEGIN2,
-#endif
-#ifdef ENABLE_AGGREGATE_MONSTER_EFFECT
-	SE_AGGREGATE_MONSTER_EFFECT,
-#endif
+	SE_EQUIP_RAMADAN_RING,
+	SE_EQUIP_HALLOWEEN_CANDY,
+	SE_EQUIP_HAPPINESS_RING,
+	SE_EQUIP_LOVE_PENDANT,
 
 #ifdef ENABLE_ACCE_COSTUME_SYSTEM
 	SE_EFFECT_ACCE_SUCCEDED,
 	SE_EFFECT_ACCE_EQUIP,
 #endif
-
-#ifdef ENABLE_OVER_KILL
-	SE_OVER_KILL_START,
-	SE_OVER_KILL_END = SE_OVER_KILL_START + (OVER_KILL_MAX_NUM -1), //-1 because SE_OVER_KILL_START is first 
-#endif
-#ifdef ENABLE_TALISMAN_EFFECT
-	SE_EFFECT_TALISMAN_EQUIP_FIRE,
-	SE_EFFECT_TALISMAN_EQUIP_ICE,
-	SE_EFFECT_TALISMAN_EQUIP_WIND,
-	SE_EFFECT_TALISMAN_EQUIP_EARTH,
-	SE_EFFECT_TALISMAN_EQUIP_DARK,
-	SE_EFFECT_TALISMAN_EQUIP_ELEC,
-#endif
-#ifdef ENABLE_SYSTEM_RUNE
-	SE_RUNA_WHITE_EFFECT,
-	SE_RUNA_RED_EFFECT,
-	SE_RUNA_BLUE_EFFECT,
-	SE_RUNA_YELLOW_EFFECT,
-	SE_RUNA_BLACK_EFFECT,
-	SE_RUNA_GREEN_EFFECT,
+#ifdef ENABLE_AGGREGATE_MONSTER_EFFECT
+	SE_AGGREGATE_MONSTER_EFFECT,
 #endif
 };
 
@@ -1094,10 +874,10 @@ enum ETeenFlags
 
 #include "item_length.h"
 
-// inventory�� position�� ��Ÿ���� ����ü
-// int���� �Ͻ��� ����ȯ�� �ִ� ������,
-// �κ� ���õ� ��� �Լ��� window_type�� ���� �ʰ�, cell �ϳ��� �޾ұ� ������,(�������� �κ��� �ϳ� ���̾ inventory type�̶��� �ʿ������ ������,)
-// �κ� ���� ��� �Լ� ȣ��κ��� �����ϴ� ���� �����ϱ� �����̴�.
+
+
+
+
 
 enum EDragonSoulRefineWindowSize
 {
@@ -1153,6 +933,7 @@ static const DWORD EWearCheckPositions[]=
 };
 #endif
 
+
 #pragma pack(push, 1)
 
 typedef struct SItemPos
@@ -1190,15 +971,10 @@ typedef struct SItemPos
 			case GENERAL_INVENTORY:
 				return cell < (SPECIAL_STORAGE_INVENTORY_MAX_NUM);
 #endif
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-			case BONUS_NEW_67:
-				return cell < BONUS_67_SLOT_MAX;
-#endif
 #ifdef FAST_EQUIP_WORLDARD
 		case CHANGE_EQUIP:
 			return cell < CHANGE_EQUIP_SLOT_COUNT;
 #endif
-		// �������� ũ�Ⱑ �������� window�� valid üũ�� �� ���� ����.
 		case SAFEBOX:
 		case MALL:
 			return false;
@@ -1220,7 +996,7 @@ typedef struct SItemPos
 
 	bool IsDragonSoulEquipPosition() const
 	{
-		return (window_type == INVENTORY) && (DRAGON_SOUL_EQUIP_SLOT_START <= cell) && (DRAGON_SOUL_EQUIP_SLOT_END > cell);
+		return (window_type == INVENTORY) && (DRAGON_SOUL_EQUIP_SLOT_START <= cell) && (DRAGON_SOUL_EQUIP_SLOT_END > cell); // @fixme184
 	}
 
 	bool IsBeltInventoryPosition() const
@@ -1259,6 +1035,12 @@ typedef struct SItemPos
 
 const TItemPos NPOS (RESERVED_WINDOW, WORD_MAX);
 
+typedef struct SItemPosEx
+{
+	TItemPos pos;
+	int id{ 0 };
+} TItemPosEx;
+
 typedef enum
 {
 	SHOP_COIN_TYPE_GOLD, // DEFAULT VALUE
@@ -1273,6 +1055,23 @@ enum EAntiMultipleFarmConfigs
 };
 #endif
 
+#ifdef ENABLE_NEW_DETAILS_GUI
+enum
+{
+	KILL_SHINSO,
+	KILL_JINNO,
+	KILL_CHUNJO,
+	KILL_ALLPLAYER,
+	KILL_DUELWON,
+	KILL_DUELLOST,
+	KILL_MONSTER,
+	KILL_METINSTONE,
+	KILL_BOSSES,
+	KILL_MAX_NUM,
+};
+#endif
+
 #pragma pack(pop)
 
 #endif
+//martysama0134's 2022

@@ -7,9 +7,6 @@
 #include "desc_manager.h"
 #include "item_manager.h"
 #include "char.h"
-#if defined(__BL_SOUL_ROULETTE__)
-#include "SoulRoulette.h"
-#endif
 #include "char_manager.h"
 #include "mob_manager.h"
 #include "motion.h"
@@ -51,9 +48,6 @@
 #include "castle.h"
 #include "passpod.h"
 #include "ani.h"
-#ifdef ENABLE_CSHIELD
-#include "cshieldLib.h"
-#endif
 #include "BattleArena.h"
 #include "over9refine.h"
 #include "horsename_manager.h"
@@ -72,49 +66,29 @@
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 #include "HAntiMultipleFarm.h"
 #endif
-#ifdef __WORLD_BOSS_YUMA__
-#include "worldboss.h"
-#endif
-#if defined(__DUNGEON_INFO_SYSTEM__)
-#	include "dungeon_info.h"
-#endif
-#ifdef ENABLE_BIOLOG_SYSTEM	
-	#include "biolog.h"
-#endif
-#ifdef OFFLINE_SHOP
-#include "offlineshop_manager.h"
-#endif
-#include <boost/bind.hpp>
-#include <dlfcn.h>
 #ifdef NEW_PET_SYSTEM
 #include "fstream"
 #endif
 #ifdef ENABLE_SWITCHBOT
 #include "switchbot.h"
 #endif
-#ifdef ENABLE_DECORUM
-#include "decorum_manager.h"
-#include "decorum_arena.h"
+#if defined(__DUNGEON_INFO_SYSTEM__)
+#	include "dungeon_info.h"
 #endif
-
-#if defined(__SHIP_DEFENSE__)
-#	include "ShipDefense.h"
-#endif
-#ifdef __NEW_EVENT_HANDLER__
-	#include "EventFunctionHandler.h"
-#endif
+#include <boost/bind.hpp>
 #ifndef __WIN32__
 	#include "limit_time.h"
+#endif
+
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+#include "new_offlineshop.h"
+#include "new_offlineshop_manager.h"
 #endif
 
 //#define __FILEMONITOR__
 
 #if defined (__FreeBSD__) && defined(__FILEMONITOR__)
 	#include "FileMonitor_FreeBSD.h"
-#endif
-
-#ifdef __AUCTION__
-#include "auction_manager.h"
 #endif
 
 #ifdef ENABLE_GOOGLE_TEST
@@ -127,14 +101,6 @@
 #include <execinfo.h>
 #endif
 
-//// 윈도우에서 테스트할 때는 항상 서버키 체크
-#ifdef _WIN32
-	#define _USE_SERVER_KEY_
-#endif
-#include "check_server.h"
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-#include "67bonusnew.h"
-#endif
 extern void WriteVersion();
 //extern const char * _malloc_options;
 #if defined(__FreeBSD__) && defined(DEBUG_ALLOC)
@@ -151,11 +117,11 @@ void WriteMallocMessage(const char* p1, const char* p2, const char* p3, const ch
 #endif
 
 // TRAFFIC_PROFILER
-static const DWORD	TRAFFIC_PROFILE_FLUSH_CYCLE = 3600;	///< TrafficProfiler 의 Flush cycle. 1시간 간격
+static const DWORD	TRAFFIC_PROFILE_FLUSH_CYCLE = 3600;
 // END_OF_TRAFFIC_PROFILER
 
-// 게임과 연결되는 소켓
-volatile int	num_events_called = 0;
+
+int             num_events_called = 0;
 int             max_bytes_written = 0;
 int             current_bytes_written = 0;
 int             total_bytes_written = 0;
@@ -286,7 +252,7 @@ void heartbeat(LPHEART ht, int pulse)
 
 	t = get_dword_time();
 
-	// 1초마다
+
 	if (!(pulse % ht->passes_per_sec))
 	{
 #ifdef ENABLE_LIMIT_TIME
@@ -351,14 +317,13 @@ void heartbeat(LPHEART ht, int pulse)
 	}
 
 	//
-	// 25 PPS(Pulse per second) 라고 가정할 때
 	//
 
-	// 약 1.16초마다
+
 	if (!(pulse % (passes_per_sec + 4)))
 		CHARACTER_MANAGER::instance().ProcessDelayedSave();
 
-	//4초 마다
+
 #if defined (__FreeBSD__) && defined(__FILEMONITOR__)
 	if (!(pulse % (passes_per_sec * 5)))
 	{
@@ -366,7 +331,7 @@ void heartbeat(LPHEART ht, int pulse)
 	}
 #endif
 
-	// 약 5.08초마다
+
 	if (!(pulse % (passes_per_sec * 5 + 2)))
 	{
 		ITEM_MANAGER::instance().Update();
@@ -428,15 +393,9 @@ int main(int argc, char **argv)
 	WriteVersion();
 
 	SECTREE_MANAGER	sectree_manager;
-#ifdef ENABLE_BIOLOG_SYSTEM	
-	BiologManager biolog;
-#endif	
 	CHARACTER_MANAGER	char_manager;
 	ITEM_MANAGER	item_manager;
 	CShopManager	shop_manager;
-#ifdef OFFLINE_SHOP
-	COfflineShopManager offlineshop_manager;
-#endif	
 	CMobManager		mob_manager;
 	CMotionManager	motion_manager;
 	CPartyManager	party_manager;
@@ -445,6 +404,7 @@ int main(int argc, char **argv)
 	LZOManager		lzo_manager;
 	DBManager		db_manager;
 	AccountDB 		account_db;
+
 	LogManager		log_manager;
 	MessengerManager	messenger_manager;
 	P2P_MANAGER		p2p_manager;
@@ -478,32 +438,17 @@ int main(int argc, char **argv)
 	SpamManager		spam_mgr;
 	CThreeWayWar	threeway_war;
 	CDragonLairManager	dl_manager;
-#if defined(__SHIP_DEFENSE__)
-	CShipDefenseManager ShipDefenseManager;
-#endif
+
 	CHackShieldManager	HSManager;
 	CXTrapManager		XTManager;
-#ifdef ENABLE_6_7_BONUS_NEW_SYSTEM
-	C67BonusNew bonusnew67;
-#endif
+
 	CSpeedServerManager SSManager;
 	DSManager dsManager;
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 	CAntiMultipleFarm c_anti_multiple_farm;
-#endif
+#endif	
 #ifdef ENABLE_SWITCHBOT
 	CSwitchbotManager switchbot;
-#endif
-	CCheckServer checkServer;
-#ifdef ENABLE_DECORUM
-	CDecorumManager 			decorum_manager;
-	CDecoredArenaManager 	decorum_arena;
-#endif
-#ifdef __AUCTION__
-	AuctionManager auctionManager;
-#endif
-#ifdef __WORLD_BOSS_YUMA__
-	CWorldBossManager WorldBoss_manager;
 #endif
 
 	if (!start(argc, argv)) {
@@ -511,7 +456,11 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+	offlineshop::CShopManager offshopManager;
+#endif
 	quest::CQuestManager quest_manager;
+
 	if (!quest_manager.Initialize()) {
 		CleanUpForEarlyExit();
 		return 0;
@@ -521,15 +470,6 @@ int main(int argc, char **argv)
 	CGuildManager::instance().Initialize();
 	fishing::Initialize();
 	OXEvent_manager.Initialize();
-#ifdef __WORLD_BOSS_YUMA__
-	WorldBoss_manager.Initialize();
-#endif
-#ifdef ENABLE_CSHIELD
-	if (!g_bAuthServer)
-	{
-		InitCShield();
-	}
-#endif
 	if (speed_server)
 		CSpeedServerManager::instance().Initialize();
 
@@ -537,17 +477,10 @@ int main(int argc, char **argv)
 	Blend_Item_init();
 	ani_init();
 	PanamaLoad();
-#if defined(__DUNGEON_INFO_SYSTEM__)
-	CDungeonInfoManager DungeonInfoManager;
-#endif
-#if defined(__BL_SOUL_ROULETTE__)
-	CSoulRoulette::ReadRouletteData();
-	CSoulRoulette::StateError(CSoulRoulette::Error::LOAD, NULL);
-#endif
 	
 #ifdef NEW_PET_SYSTEM
     std::string temp_exp_line;
-	std::ifstream exppet_table_open("/home/srv1/share/locale/germany/exppettable.txt");
+	std::ifstream exppet_table_open("/home/main/srv1/share/locale/germany/exppettable.txt");
 	/*if (!exp_table_open.is_open())
 	return 0;*/
 
@@ -566,8 +499,11 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
-#endif	
-
+#endif		
+	
+#if defined(__DUNGEON_INFO_SYSTEM__)
+	CDungeonInfoManager DungeonInfoManager;
+#endif
 	if ( g_bTrafficProfileOn )
 		TrafficProfiler::instance().Initialize( TRAFFIC_PROFILE_FLUSH_CYCLE, "ProfileLog" );
 #if defined(__DUNGEON_INFO_SYSTEM__)
@@ -577,16 +513,6 @@ int main(int argc, char **argv)
 	//if game server
 	if (!g_bAuthServer)
 	{
-		if (!CCheckServer::Instance().CheckIP(g_szPublicIP)) {
-			char pszRevision[128] = "I don't care";
-#ifdef _WIN32
-			fprintf(stderr, "[main] Check IP failed\n");
-#else
-			strncpy (pszRevision,  "[main] Check IP failed\n", sizeof(pszRevision));
-#endif
-			LogManager::Instance().InvalidServerLog(LC_GetLocalType(), g_szPublicIP, pszRevision);
-		}
-
 		//hackshield
 		if (isHackShieldEnable)
 		{
@@ -617,10 +543,6 @@ int main(int argc, char **argv)
 			FileMonitorFreeBSD::Instance().AddWatch( strMap2Name, pNotifyFunc );
 #endif
 		}
-#ifdef ENABLE_DECORUM
-		CDecorumManager::instance().Initialize();
-		CDecoredArenaManager::instance().Initialize();
-#endif		
 	}
 
 	// Client PackageCrypt
@@ -637,17 +559,9 @@ int main(int argc, char **argv)
 	//FileMonitorFreeBSD::Instance().AddWatch( strPackageCryptInfoName, pPackageNotifyFunc );
 #endif
 
-	#ifdef __NEW_EVENT_HANDLER__
-		CEventFunctionHandler EventFunctionHandler;
-	#endif
-	
 	while (idle());
 
 	sys_log(0, "<shutdown> Starting...");
-#if defined(__BL_SOUL_ROULETTE__)
-	CSoulRoulette::ReadRouletteData(true);
-	CSoulRoulette::StateError(CSoulRoulette::Error::SHUTDOWN, NULL);
-#endif	
 	g_bShutdown = true;
 	g_bNoMoreClient = true;
 
@@ -673,26 +587,12 @@ int main(int argc, char **argv)
 					break;
 		} while (1);
 	}
-	
-#ifdef __NEW_EVENT_HANDLER__
-	sys_log(0, "<shutdown> Destroying CEventFunctionHandler...");
-	CEventFunctionHandler::instance().Destroy();
-#endif
 
 	sys_log(0, "<shutdown> Destroying CArenaManager...");
 	arena_manager.Destroy();
-
-#ifdef ENABLE_DECORUM
-	sys_log(0, "<shutdown> Destroying DECORUM_ARENA...");
-	decorum_arena.Destroy();
-#endif
-
 	sys_log(0, "<shutdown> Destroying COXEventManager...");
 	OXEvent_manager.Destroy();
-#ifdef __WORLD_BOSS_YUMA__
-	sys_log(0, "<shutdown> Destroying CWorldBossManager...");
-	WorldBoss_manager.Destroy();
-#endif
+
 	sys_log(0, "<shutdown> Disabling signal timer...");
 	signal_timer_disable();
 
@@ -721,10 +621,6 @@ int main(int argc, char **argv)
 
 	if (!g_bAuthServer)
 	{
-#if defined(__SHIP_DEFENSE__)
-		sys_log(0, "<shutdown> Destroying ShipDefenseManager.");
-		ShipDefenseManager.Destroy();
-#endif
 		if (isHackShieldEnable)
 		{
 			sys_log(0, "<shutdown> Releasing HackShield manager...");
@@ -768,7 +664,6 @@ void usage()
 
 int start(int argc, char **argv)
 {
-	//dlopen("/usr/libsvside.so", RTLD_NOW | RTLD_GLOBAL);
 	std::string st_localeServiceName;
 
 	bool bVerbose = false;
@@ -1022,9 +917,6 @@ int idle()
 
 	t = get_dword_time();
 	CHARACTER_MANAGER::instance().Update(thecore_heart->pulse);
-#ifdef __WORLD_BOSS_YUMA__
-	CWorldBossManager::instance().Idle(thecore_heart->pulse);
-#endif
 	db_clientdesc->Update(t);
 	s_dwProfiler[PROF_CHR_UPDATE] += (get_dword_time() - t);
 
@@ -1074,10 +966,6 @@ int idle()
 	}
 #endif
 
-#ifdef __NEW_EVENT_HANDLER__
-	CEventFunctionHandler::instance().Process();
-#endif
-	
 	return 1;
 }
 
@@ -1086,7 +974,7 @@ int io_loop(LPFDWATCH fdw)
 	LPDESC	d;
 	int		num_events, event_idx;
 
-	DESC_MANAGER::instance().DestroyClosed(); // PHASE_CLOSE인 접속들을 끊어준다.
+	DESC_MANAGER::instance().DestroyClosed();
 	DESC_MANAGER::instance().TryConnect();
 
 	if ((num_events = fdwatch(fdw, 0)) < 0)
@@ -1208,4 +1096,4 @@ int io_loop(LPFDWATCH fdw)
 
 	return 1;
 }
-
+//martysama0134's 2022

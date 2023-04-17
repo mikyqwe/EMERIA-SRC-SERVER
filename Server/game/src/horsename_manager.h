@@ -1,4 +1,3 @@
-
 class CHorseNameManager : public singleton<CHorseNameManager>
 {
 	private :
@@ -15,4 +14,4 @@ class CHorseNameManager : public singleton<CHorseNameManager>
 
 		void Validate(LPCHARACTER pChar);
 };
-
+//martysama0134's 2022

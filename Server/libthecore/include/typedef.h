@@ -25,7 +25,7 @@ typedef int			socket_t;
 
 #else
 
-struct timezone 
+struct timezone
 {
     int     tz_minuteswest; /* minutes west of Greenwich */
     int     tz_dsttime;     /* type of dst correction */
@@ -60,3 +60,4 @@ typedef unsigned int uint;
 #endif
 
 #endif // __INC_LIBTHECORE_TYPEDEF_H__
+//martysama0134's 2022

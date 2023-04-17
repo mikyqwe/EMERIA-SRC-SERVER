@@ -7,3 +7,4 @@ const char * GetTablePostfix();
 const char * GetPlayerDBName();
 
 #endif
+//martysama0134's 2022

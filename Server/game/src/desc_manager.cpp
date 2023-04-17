@@ -13,13 +13,6 @@
 #include "ip_ban.h"
 #include "dev_log.h"
 #include "ClientPackageCryptInfo.h"
-#ifdef OFFLINE_SHOP
-#include "questmanager.h"
-#endif
-#include "EventFunctionHandler.h"
-#include "event.h"
-
-#include <boost/container/map.hpp>
 
 struct valid_ip
 {
@@ -59,150 +52,10 @@ int IsValidIP(struct valid_ip* ip_table, const char *host)
 	return FALSE;
 }
 
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-/*
-* Title: Improved Handshake Process
-* Description: An Anti-spam solution that limits the amount
-*              of handshakes per second and per attempts.
-* Date: YMD.2021.09.07
-* Author: Owsap, OSP (Owsap Server Protection)
-*
-* Copyright 2021 Owsap Productions
-*/
-void DESC_MANAGER::AcceptHandshake(const char* c_szHost, DWORD dwHandshakeTime)
-{
-	// Find if the host is in the AcceptHostHandshakeVector
-	AcceptHostHandshakeVector::iterator it = std::find_if(m_vecAcceptHostHandshake.begin(), m_vecAcceptHostHandshake.end(),
-		[&c_szHost](const PairedStringDWORD& element)
-		{ return (element.first == c_szHost); }
-	);
-	// Check if host already exists in the AcceptHostHandshakeVector
-	if (it != m_vecAcceptHostHandshake.end())
-	{
-		// Check if the cores pulse is greater than the last handshake time set @ DESC::Setup
-		if (thecore_pulse() > it->second)
-			m_vecAcceptHostHandshake.erase(it);
-	}
-	else // Set host handshake time
-		m_vecAcceptHostHandshake.emplace_back(std::make_pair(c_szHost, dwHandshakeTime));
-}
-
-bool DESC_MANAGER::IsIntrusiveHandshake(const char* c_szHost)
-{
-	if (!m_vecAcceptHostHandshake.empty())
-	{
-		// Find if the host is in the AcceptHostHandshakeVector and if the cores
-		// pulse is greater than the last handshake time set @ DESC::Setup
-		AcceptHostHandshakeVector::iterator it = std::find_if(m_vecAcceptHostHandshake.begin(), m_vecAcceptHostHandshake.end(),
-			[&c_szHost](const PairedStringDWORD& element)
-			{ return (element.first == c_szHost && element.second > thecore_pulse()); }
-		);
-		if (it != m_vecAcceptHostHandshake.end())
-			return true;
-	}
-	return false;
-}
-
-void DESC_MANAGER::SetIntrusiveCount(const char* c_szHost, bool bReset)
-{
-	// Find if the host is in the IntrusiveHostCountVector
-	IntrusiveHostCountVector::iterator it = std::find_if(m_vecIntrusiveHostCount.begin(), m_vecIntrusiveHostCount.end(),
-		[&c_szHost](const PairedStringDWORD& element)
-		{ return (element.first == c_szHost); }
-	);
-	// Set intrusive host count if exists in the IntrusiveHostCountVector
-	if (it != m_vecIntrusiveHostCount.end())
-	{
-		if (bReset)
-			it->second = 0;
-		else
-			it->second = it->second + 1;
-	}
-	else
-		// Emplace the host into the IntrusiveHostCountVector with count set to 1
-		m_vecIntrusiveHostCount.emplace_back(std::make_pair(c_szHost, 1));
-}
-
-int DESC_MANAGER::GetIntrusiveCount(const char* c_szHost)
-{
-	if (!m_vecIntrusiveHostCount.empty())
-	{
-		// Find if the host is in the IntrusiveHostCountVector
-		IntrusiveHostCountVector::iterator it = std::find_if(m_vecIntrusiveHostCount.begin(), m_vecIntrusiveHostCount.end(),
-			[&c_szHost](const PairedStringDWORD& element)
-			{ return (element.first == c_szHost); }
-		);
-		// Return the intrusive host count
-		if (it != m_vecIntrusiveHostCount.end())
-			return it->second;
-	}
-	return 0;
-}
-
-void DESC_MANAGER::SetIntruder(const char* c_szHost, DWORD dwDelayHandshakeTime)
-{
-	// Reset intrusive host count
-	SetIntrusiveCount(c_szHost, true /* reset */);
-
-	// Find if the host is in the IntruderHostVector
-	IntruderHostVector::iterator it = std::find_if(m_vecIntruderHost.begin(), m_vecIntruderHost.end(),
-		[&c_szHost](const PairedStringDWORD& element)
-		{ return (element.first == c_szHost); }
-	);
-	// Set intruder host with the next (delayed) handshake time
-	if (it != m_vecIntruderHost.end())
-		it->second = dwDelayHandshakeTime;
-	else
-		// Emplace the host into the IntruderHostVector with the next (delayed) handshake time
-		m_vecIntruderHost.emplace_back(std::make_pair(c_szHost, dwDelayHandshakeTime));
-}
-
-bool DESC_MANAGER::IsIntruder(const char* c_szHost)
-{
-	if (!m_vecIntruderHost.empty())
-	{
-		// Find if the host is in the IntruderHostVector and if the cores pulse
-		// is less than the next (delayed) handshake time
-		IntruderHostVector::iterator it = std::find_if(m_vecIntruderHost.begin(), m_vecIntruderHost.end(),
-			[&c_szHost](const PairedStringDWORD& element)
-			{ return (element.first == c_szHost && element.second > thecore_pulse()); }
-		);
-		if (it != m_vecIntruderHost.end())
-			return true;
-	}
-	return false;
-}
-
-void DESC_MANAGER::AllowHandshake(const char* c_szHost)
-{
-	// Clear the intrusive host count
-	if (!m_vecIntrusiveHostCount.empty())
-	{
-		IntrusiveHostCountVector::iterator it = std::find_if(m_vecIntrusiveHostCount.begin(), m_vecIntrusiveHostCount.end(),
-			[&c_szHost](const PairedStringDWORD& element)
-			{ return (element.first == c_szHost); }
-		);
-		if (it != m_vecIntrusiveHostCount.end())
-			m_vecIntrusiveHostCount.erase(it);
-	}
-
-	// Clear the intruder host
-	if (!m_vecIntruderHost.empty())
-	{
-		IntruderHostVector::iterator it = std::find_if(m_vecIntruderHost.begin(), m_vecIntruderHost.end(),
-			[&c_szHost](const PairedStringDWORD& element)
-			{ return (element.first == c_szHost); }
-		);
-		if (it != m_vecIntruderHost.end())
-			m_vecIntruderHost.erase(it);
-	}
-}
-#endif
-
 DESC_MANAGER::DESC_MANAGER() : m_bDestroyed(false)
 {
 	Initialize();
-	//NOTE : Destroy 끝에서 Initialize 를 부르는건 또 무슨 짓이냐..-_-; 정말
+
 
 	m_pPackageCrypt = new CClientPackageCryptInfo;
 }
@@ -220,11 +73,6 @@ void DESC_MANAGER::Initialize()
 	m_iLocalUserCount = 0;
 	memset(m_aiEmpireUserCount, 0, sizeof(m_aiEmpireUserCount));
 	m_bDisconnectInvalidCRC = false;
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-	m_vecAcceptHostHandshake.clear();
-	m_vecIntrusiveHostCount.clear();
-	m_vecIntruderHost.clear();
-#endif
 }
 
 void DESC_MANAGER::Destroy()
@@ -320,7 +168,7 @@ LPDESC DESC_MANAGER::AcceptDesc(LPFDWATCH fdw, socket_t s)
 		}
 	}
 
-	if (!IsValidIP(admin_ip, host)) // admin_ip 에 등록된 IP 는 최대 사용자 수에 구애받지 않는다.
+	if (!IsValidIP(admin_ip, host))
 	{
 		if (m_iSocketsConnected >= MAX_ALLOW_USER)
 		{
@@ -330,81 +178,7 @@ LPDESC DESC_MANAGER::AcceptDesc(LPFDWATCH fdw, socket_t s)
 		}
 	}
 
-
-#ifdef HANDSHAKE_FIX
-	// If it's not an auth server - check for validation first
-	if (!g_bAuthServer)
-	{
-		if (!IsOnHandshakeWhitelist(peer))
-		{
-			// sys_log(0, "Host %s has not validated through login!", host);
-			socket_close(desc);
-			return NULL;
-		}
-	}
-
-	// Let's check if a handshake from this host is already ongoing
-	if (GetHostHandshake(peer))
-	{
-		sys_log(0, "Handshake from %s is not permitted!", host);
-		socket_close(desc);
-		return NULL;
-	}
-
-
-	static const int HOST_CONNECTION_LIMIT = 3;
-	// In case if host completed handshake process let's check if it doesn't reach the limit
-	if (GetHostConnectionCount(peer) >= HOST_CONNECTION_LIMIT)
-	{
-		sys_log(0, "Host %s connection limit has been reached!", host);
-		socket_close(desc);
-		return NULL;
-	}
-
-	// And block intrusive connections as well
-	if (IsIntrusiveConnection(host))
-	{
-		sys_log(0, "Host %s is intrusive!", host);
-		socket_close(desc);
-		return NULL;
-	}
-#endif
-
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-	// Check if the host is an intruder
-	if (IsIntruder(host))
-	{
-		if (INTRUSIVE_HANDSHAKE_LOG)
-			sys_log(0, "intrusive connection from %s was blocked temporarily.", host);
-		socket_close(desc);
-		return NULL;
-	}
-
-	// Check if the handshake is intrusive
-	if (IsIntrusiveHandshake(host))
-	{
-		// Get the intrusive count
-		int iIntrusiveCount = GetIntrusiveCount(host);
-		if (iIntrusiveCount >= INTRUSIVE_HANDSHAKE_LIMIT)
-		{
-			// Set intruder with the next (delayed) handshake time
-			SetIntruder(host, thecore_pulse() + PASSES_PER_SEC(INTRUSIVE_HANDSHAKE_NEXT_PULSE));
-			socket_close(desc);
-			return NULL;
-		}
-
-		// Set intrusive count
-		if (INTRUSIVE_HANDSHAKE_LOG)
-			sys_log(0, "intrusive connection from %s. %d/%d", host, iIntrusiveCount, INTRUSIVE_HANDSHAKE_LIMIT);
-		SetIntrusiveCount(host, false /* reset */);
-	}
-	else
-		// Allow handshake and clear previous intrusive tracking
-		AllowHandshake(host);
-#endif
-
 	newd = M2_NEW DESC;
-
 	crc_t handshake = CreateHandshake();
 
 	if (!newd->Setup(fdw, desc, peer, ++m_iHandleCount, handshake))
@@ -767,7 +541,7 @@ void DESC_MANAGER::SendClientPackageCryptKey( LPDESC desc )
 	{
 		if (test_server)
 		{
-			// keys를 string으로 남기는 건 문제가 있음. 중간에 NULL 있으면 잘릴테니.. 그래도 혹시 모르니 남김.
+
 			sys_log(0, "[PackageCryptInfo] send to %s. (keys: %s, len: %d)", desc->GetAccountTable().login, std::string((char*)packet.pDataKeyStream).c_str(), packet.KeyStreamLen);
 		}
 		desc->Packet( packet.GetStreamData(), packet.GetStreamSize() );
@@ -795,128 +569,4 @@ void DESC_MANAGER::SendClientPackageSDBToLoadMap( LPDESC desc, const char* pMapN
 		desc->Packet( packet.GetStreamData(), packet.GetStreamSize());
 	}
 }
-
-#ifdef OFFLINE_SHOP
-struct online_count_packet_func
-{
-	const DWORD dwOnlinePlayers;
-	const DWORD dwOnlineShops;
-
-	online_count_packet_func(const DWORD dwOnlinePlayers, const DWORD dwOnlineShops) : dwOnlinePlayers(dwOnlinePlayers), dwOnlineShops(dwOnlineShops) {}
-
-	void operator () (LPDESC d)
-	{
-		if (!d->GetCharacter())
-			return;
-/* 
-		d->GetCharacter()->ChatPacket(CHAT_TYPE_COMMAND, "CurrentPlayerOnline %d",
-			dwOnlinePlayers + quest::CQuestManager::instance().GetEventFlag("online_count"));
-
-		d->GetCharacter()->ChatPacket(CHAT_TYPE_COMMAND, "CurrentShopOnline %d",
-			dwOnlineShops + quest::CQuestManager::instance().GetEventFlag("shop_count")); */
-	}
-};
-
-void DESC_MANAGER::BroadcastOnlineCount(DWORD dwOnlinePlayers, DWORD dwOnlineShops)
-{
-	const DESC_SET & c_ref_set = GetClientSet();
-	std::for_each(c_ref_set.begin(), c_ref_set.end(), online_count_packet_func(dwOnlinePlayers, dwOnlineShops));
-}
-#endif
-
-#ifdef HANDSHAKE_FIX
-EVENTINFO(desc_manager_garbage_collector_info)
-{
-};
-
-EVENTFUNC(desc_manager_garbage_collector_event)
-{
-	DESC_MANAGER::instance().ConnectionCollector();
-	return PASSES_PER_SEC(1);
-}
-
-
-bool DESC_MANAGER::GetHostHandshake(const struct sockaddr_in & c_rSockAddr)
-{
-	for (const auto & rRec : m_map_handshake)
-	{
-		if (rRec.second->GetHostName() == inet_ntoa(c_rSockAddr.sin_addr))
-		{
-			if (rRec.second->IsPhase(PHASE_HANDSHAKE))
-				return true;
-		}
-	}
-
-	return false;
-}
-
-int DESC_MANAGER::GetHostConnectionCount(const struct sockaddr_in & c_rSockAddr)
-{
-	int iCount = 0;
-	for (const auto & rRec : m_set_pkDesc)
-	{
-		if (rRec->GetHostName() == inet_ntoa(c_rSockAddr.sin_addr))
-			iCount++;
-	}
-
-	return iCount;
-}
-
-void DESC_MANAGER::RegisterInstrusiveConnection(const std::string & sHost)
-{
-	static const int MAXIMUM_HANDSHAKE_LIMIT = 3;
-	static const DWORD HANDSHAKE_DELAY = 1500;
-
-	auto fIt = m_connection_mapper.find(sHost);
-	if (fIt == m_connection_mapper.end())
-		fIt = m_connection_mapper.emplace(std::piecewise_construct, std::forward_as_tuple(sHost), std::forward_as_tuple(0, 0, false)).first;
-
-	std::get<1>(fIt->second)++;
-	if (std::get<0>(fIt->second) >= get_dword_time())
-	{
-		if (std::get<1>(fIt->second) >= MAXIMUM_HANDSHAKE_LIMIT)
-			std::get<2>(fIt->second) = true;
-	}
-	else
-	{
-		std::get<0>(fIt->second) = get_dword_time()+HANDSHAKE_DELAY;
-		std::get<1>(fIt->second) = 0;
-	}
-}
-
-bool DESC_MANAGER::IsIntrusiveConnection(const std::string & sHost)
-{
-	auto fIt = m_connection_mapper.find(sHost);
-	if (fIt == m_connection_mapper.end())
-		return false;
-
-	return std::get<2>(fIt->second);
-}
-
-void DESC_MANAGER::AddToHandshakeWhiteList(const TPacketGGHandshakeValidate * pack)
-{
-	if (g_bAuthServer)
-		return;
-
-	s_handshake_whitelist.insert(pack->sUserIP);
-}
-
-bool DESC_MANAGER::IsOnHandshakeWhitelist(const struct sockaddr_in & c_rSockAddr)
-{
-	return (s_handshake_whitelist.find(inet_ntoa(c_rSockAddr.sin_addr)) != s_handshake_whitelist.end());
-}
-
-void DESC_MANAGER::ConnectionCollector()
-{
-	static const DWORD HANDSHAKE_ELAPSE_TIME = 5;
-
-	std::unordered_set<LPDESC> s_garbage;
-	for (const auto & rRec : m_map_handshake)
-	{
-		if (rRec.second->IsPhase(PHASE_HANDSHAKE) && rRec.second->GetCreationTime()+HANDSHAKE_ELAPSE_TIME < get_global_time())
-			s_garbage.insert(rRec.second);
-	}
-
-	std::for_each(s_garbage.begin(), s_garbage.end(), [this](const LPDESC & rDesc) { DestroyDesc(rDesc, true); });
-}
-#endif
+//martysama0134's 2022

@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include "HackShield.h"
@@ -51,4 +50,4 @@ bool CHackShieldManager::VerifyAck(LPCHARACTER ch, const void* buf)
 
 	return impl_->VerifyAck(ch, p);
 }
-
+//martysama0134's 2022

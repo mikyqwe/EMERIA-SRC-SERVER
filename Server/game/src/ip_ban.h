@@ -3,7 +3,6 @@
 
 extern bool LoadBanIP(const char * filename);
 extern bool IsBanIP(struct in_addr in);
-#if defined(__IMPROVED_HANDSHAKE_PROCESS__)
-extern bool BanIP(struct in_addr in, const char* c_szIP);
+
 #endif
-#endif
+//martysama0134's 2022

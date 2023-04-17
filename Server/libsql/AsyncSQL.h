@@ -11,6 +11,7 @@
 #include <mysql/mysql.h>
 #include <mysql/errmsg.h>
 #include <mysql/mysqld_error.h>
+#include <memory>
 
 #include "Semaphore.h"
 
@@ -99,8 +100,8 @@ typedef struct _SQLMsg
 	int				iID;
 	std::string			stQuery;
 
-	std::vector<SQLResult *>	vec_pkResult;	// result 벡터
-	unsigned int		uiResultPos;	// 현재 result 위치
+	std::vector<SQLResult *>	vec_pkResult;
+	unsigned int		uiResultPos;
 
 	void *			pvUserData;
 	bool			bReturn;
@@ -116,7 +117,7 @@ class CAsyncSQL
 
 		void		Quit();
 
-		bool   		Setup(const char * c_pszHost, const char * c_pszUser, const char * c_pszPassword, const char * c_pszDB, const char * c_pszLocale, 
+		bool   		Setup(const char * c_pszHost, const char * c_pszUser, const char * c_pszPassword, const char * c_pszDB, const char * c_pszLocale,
 			bool bNoThread = false, int iPort = 0);
 		bool		Setup(CAsyncSQL * sql, bool bNoThread = false);
 
@@ -126,7 +127,7 @@ class CAsyncSQL
 
 		void		AsyncQuery(const char * c_pszQuery);
 		void		ReturnQuery(const char * c_pszQuery, void * pvUserData);
-		SQLMsg *	DirectQuery(const char * c_pszQuery);
+		std::unique_ptr<SQLMsg>	DirectQuery(const char * c_pszQuery);
 
 		DWORD		CountQuery();
 		DWORD		CountResult();
@@ -184,12 +185,12 @@ class CAsyncSQL
 
 #ifndef __WIN32__
 		pthread_t m_hThread;
-		pthread_mutex_t	* m_mtxQuery;
-		pthread_mutex_t	* m_mtxResult;
+		std::unique_ptr<pthread_mutex_t> m_mtxQuery;
+		std::unique_ptr<pthread_mutex_t> m_mtxResult;
 #else
 		HANDLE m_hThread;
-		CRITICAL_SECTION* m_mtxQuery;
-		CRITICAL_SECTION* m_mtxResult;
+		std::unique_ptr<CRITICAL_SECTION> m_mtxQuery;
+		std::unique_ptr<CRITICAL_SECTION> m_mtxResult;
 #endif
 
 		CSemaphore m_sem;
@@ -208,3 +209,4 @@ class CAsyncSQL2 : public CAsyncSQL
 };
 
 #endif
+//martysama0134's 2022

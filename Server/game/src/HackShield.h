@@ -1,4 +1,3 @@
-
 #ifndef HACK_SHIELD_MANAGER_H_
 #define HACK_SHIELD_MANAGER_H_
 
@@ -21,4 +20,4 @@ class CHackShieldManager : public singleton<CHackShieldManager>
 };
 
 #endif /* HACK_SHIELD_MANAGER_H_ */
-
+//martysama0134's 2022

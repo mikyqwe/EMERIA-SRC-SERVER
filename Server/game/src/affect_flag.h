@@ -67,3 +67,4 @@ inline bool operator != (const TAffectFlag& lhs, const TAffectFlag& rhs)
 }
 
 #endif
+//martysama0134's 2022

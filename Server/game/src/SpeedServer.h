@@ -4,11 +4,11 @@
 #include "../../common/length.h"
 #include <list>
 
-// castle.cpp 에 있는 것을 복붙 하였다
-#define EMPIRE_NONE		0	// 아무국가 아님
-#define EMPIRE_RED		1	// 신수
-#define EMPIRE_YELLOW	2	// 천조
-#define EMPIRE_BLUE		3	// 진노
+
+#define EMPIRE_NONE		0
+#define EMPIRE_RED		1
+#define EMPIRE_YELLOW	2
+#define EMPIRE_BLUE		3
 
 class HME
 {
@@ -127,3 +127,4 @@ class CSpeedServerManager : public singleton<CSpeedServerManager>
 };
 
 #endif
+//martysama0134's 2022

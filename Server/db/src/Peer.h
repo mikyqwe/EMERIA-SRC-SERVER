@@ -67,9 +67,9 @@ class CPeer : public CPeerBase
 	BYTE	m_bChannel;
 	DWORD	m_dwHandle;
 	DWORD	m_dwUserCount;
-	WORD	m_wListenPort;	// 게임서버가 클라이언트를 위해 listen 하는 포트
-	WORD	m_wP2PPort;	// 게임서버가 게임서버 P2P 접속을 위해 listen 하는 포트
-	long	m_alMaps[MAP_ALLOW_LIMIT];	// 어떤 맵을 관장하고 있는가?
+	WORD	m_wListenPort;
+	WORD	m_wP2PPort;
+	long	m_alMaps[MAP_ALLOW_LIMIT];
 
 	TItemIDRangeTable m_itemRange;
 	TItemIDRangeTable m_itemSpareRange;
@@ -78,3 +78,4 @@ class CPeer : public CPeerBase
 };
 
 #endif
+//martysama0134's 2022

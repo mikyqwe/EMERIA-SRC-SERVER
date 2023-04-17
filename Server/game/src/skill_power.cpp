@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include "../../common/length.h"
@@ -41,7 +40,6 @@ int CTableBySkill::GetSkillPowerByLevelFromType(int job, int skillgroup, int ski
 
 	int idx = (job * 2) + (skillgroup - 1);
 
-	
 	return m_aiSkillPowerByLevelFromType[idx][skilllevel];
 }
 
@@ -91,4 +89,4 @@ void CTableBySkill::DeleteSkillDamageByLevelTable()
 		m_aiSkillDamageByLevel = NULL;
 	}
 }
-
+//martysama0134's 2022

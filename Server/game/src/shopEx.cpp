@@ -69,7 +69,7 @@ bool CShopEx::AddGuest(LPCHARACTER ch,DWORD owner_vid, bool bOtherEmpire)
 
 	pack2.owner_vid = owner_vid;
 	pack2.shop_tab_count = m_vec_shopTabs.size();
-	char temp[8096]; // ÃÖ´ë 1728 * 3
+	char temp[8096];
 	char* buf = &temp[0];
 	size_t size = 0;
 	for (itertype(m_vec_shopTabs) it = m_vec_shopTabs.begin(); it != m_vec_shopTabs.end(); it++)
@@ -91,31 +91,16 @@ bool CShopEx::AddGuest(LPCHARACTER ch,DWORD owner_vid, bool bOtherEmpire)
 #else
 				if (bOtherEmpire) // no empire price penalty for pc shop
 #endif
-#ifdef ENABLE_CHEQUE_SYSTEM
-					pack_tab.items[i].price.dwPrice = shop_tab.items[i].price * 3;
-#else
 					pack_tab.items[i].price = shop_tab.items[i].price * 3;
-#endif
 				else
-#ifdef ENABLE_CHEQUE_SYSTEM
-					pack_tab.items[i].price.dwPrice = shop_tab.items[i].price;
-#else
 					pack_tab.items[i].price = shop_tab.items[i].price;
-#endif
 				break;
 			case SHOP_COIN_TYPE_SECONDARY_COIN:
-#ifdef ENABLE_CHEQUE_SYSTEM
-				pack_tab.items[i].price.dwPrice = shop_tab.items[i].price;
-#else
 				pack_tab.items[i].price = shop_tab.items[i].price;
-#endif
 				break;
 			}
 			memset(pack_tab.items[i].aAttr, 0, sizeof(pack_tab.items[i].aAttr));
 			memset(pack_tab.items[i].alSockets, 0, sizeof(pack_tab.items[i].alSockets));
-#ifdef CHANGELOOK_SYSTEM
-			pack_tab.items[i].transmutation = 0;
-#endif
 		}
 
 		memcpy(buf, &pack_tab, sizeof(pack_tab));
@@ -132,7 +117,11 @@ bool CShopEx::AddGuest(LPCHARACTER ch,DWORD owner_vid, bool bOtherEmpire)
 	return true;
 }
 
+#ifdef ENABLE_LONG_LONG
+long long CShopEx::Buy(LPCHARACTER ch, BYTE pos)
+#else
 int CShopEx::Buy(LPCHARACTER ch, BYTE pos)
+#endif
 {
 	BYTE tabIdx = pos / SHOP_HOST_ITEM_MAX_NUM;
 	BYTE slotPos = pos % SHOP_HOST_ITEM_MAX_NUM;
@@ -158,19 +147,31 @@ int CShopEx::Buy(LPCHARACTER ch, BYTE pos)
 		return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
 	}
 
+#ifdef ENABLE_LONG_LONG
+	long long dwPrice = r_item.price;
+#else
 	DWORD dwPrice = r_item.price;
+#endif
 
 	switch (shopTab.coinType)
 	{
 	case SHOP_COIN_TYPE_GOLD:
 		if (it->second)	// if other empire, price is triple
-			dwPrice *= 1;
+			dwPrice *= 3;
 
+#ifdef ENABLE_LONG_LONG
+		if (ch->GetGold() < (long long)dwPrice)
+		{
+			sys_log(1, "ShopEx::Buy : Not enough money : %s has %lld, price %lld", ch->GetName(), ch->GetGold(), dwPrice);
+			return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
+		}
+#else
 		if (ch->GetGold() < (int) dwPrice)
 		{
 			sys_log(1, "ShopEx::Buy : Not enough money : %s has %d, price %d", ch->GetName(), ch->GetGold(), dwPrice);
 			return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
 		}
+#endif
 		break;
 	case SHOP_COIN_TYPE_SECONDARY_COIN:
 		{
@@ -233,7 +234,7 @@ int CShopEx::Buy(LPCHARACTER ch, BYTE pos)
 		item->AddToCharacter(ch, TItemPos(INVENTORY, iEmptyPos));
 
 	ITEM_MANAGER::instance().FlushDelayedSave(item);
-	LogManager::instance().ItemLog(ch, item, "BUY", item->GetName(ch->GetLanguage()));
+	LogManager::instance().ItemLog(ch, item, "BUY", item->GetName());
 
 	if (item->GetVnum() >= 80003 && item->GetVnum() <= 80007)
 	{
@@ -243,7 +244,7 @@ int CShopEx::Buy(LPCHARACTER ch, BYTE pos)
 	DBManager::instance().SendMoneyLog(MONEY_LOG_SHOP, item->GetVnum(), -dwPrice);
 
 	if (item)
-		sys_log(0, "ShopEx: BUY: name %s %s(x %d):%u price %u", ch->GetName(), item->GetName(ch->GetLanguage()), item->GetCount(), item->GetID(), dwPrice);
+		sys_log(0, "ShopEx: BUY: name %s %s(x %d):%u price %u", ch->GetName(), item->GetName(), item->GetCount(), item->GetID(), dwPrice);
 
 #ifdef ENABLE_FLUSH_CACHE_FEATURE // @warme006
 	{
@@ -260,4 +261,4 @@ int CShopEx::Buy(LPCHARACTER ch, BYTE pos)
 
     return (SHOP_SUBHEADER_GC_OK);
 }
-
+//martysama0134's 2022

@@ -35,4 +35,4 @@ void TEMP_BUFFER::reset()
 {
 	buffer_reset(buf);
 }
-
+//martysama0134's 2022

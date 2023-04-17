@@ -5,7 +5,7 @@
 
 enum // unit : minute
 {
-	PARTY_ENOUGH_MINUTE_FOR_EXP_BONUS = 60, // 파티 결성 후 60분 후 부터 추가 경험치 보너스
+	PARTY_ENOUGH_MINUTE_FOR_EXP_BONUS = 60,
 	PARTY_HEAL_COOLTIME_LONG = 60,
 	PARTY_HEAL_COOLTIME_SHORT = 30,
 	PARTY_MAX_MEMBER = 8,
@@ -69,12 +69,12 @@ class CPartyManager : public singleton<CPartyManager>
 		void		P2PQuitParty(DWORD pid);
 
 	private:
-		TPartyMap	m_map_pkParty;		// PID로 어느 파티에 있나 검색하기 위한 컨테이너
-		TPartyMap	m_map_pkMobParty;	// Mob 파티는 PID 대신 VID 로 따로 관리한다.
+		TPartyMap	m_map_pkParty;
+		TPartyMap	m_map_pkMobParty;
 
-		TPCPartySet	m_set_pkPCParty;	// 사람들의 파티 전체 집합
+		TPCPartySet	m_set_pkPCParty;
 
-		bool		m_bEnablePCParty;	// 디비가 켜져있지 않으면 사람들의 파티 상태가 변경불가
+		bool		m_bEnablePCParty;
 };
 
 enum EPartyMessages
@@ -143,9 +143,7 @@ class CParty
 		void		SendPartyLinkOneToAll(LPCHARACTER ch);
 		void		SendPartyLinkAllToOne(LPCHARACTER ch);
 		void		SendPartyUnlinkOneToAll(LPCHARACTER ch);
-#if defined(__BL_PARTY_POSITION__)
-		void		SendPositionInfo() const;
-#endif
+
 		int		GetPartyBonusExpPercent()	{ return m_iExpBonus; }
 		int		GetPartyBonusAttackGrade()	{ return m_iAttBonus; }
 		int		GetPartyBonusDefenseGrade()	{ return m_iDefBonus; }
@@ -218,9 +216,7 @@ class CParty
 		LPCHARACTER	m_pkChrLeader;
 
 		LPEVENT		m_eventUpdate;
-#if defined(__BL_PARTY_POSITION__)
-		LPEVENT		m_PositionInfoEvent;
-#endif
+
 		TMemberMap::iterator m_itNextOwner;
 
 	private:
@@ -252,9 +248,9 @@ class CParty
 		TFlagMap	m_map_iFlag;
 
 		LPDUNGEON	m_pkDungeon;
-		// 아귀 동굴용 dungeon 멤버 변수.
-		// 정말 이렇게까지 하고 싶진 않았는데, 던전에서 party 관리가 정말로 개판이라
-		// 그거 고치기 전까지는 이렇게 임시로 해놓는다.
+
+
+
 		LPDUNGEON	m_pkDungeon_for_Only_party;
 	public:
 		void SetDungeon_for_Only_party(LPDUNGEON pDungeon);
@@ -387,13 +383,13 @@ struct FPartyDropDiceRoll
 		if ((!mobVictim || (mobVictim->GetMobRank() >= MOB_RANK_BOSS && mobVictim->GetMobRank() <= MOB_RANK_KING)) && m_itemOwner->GetParty() && m_itemOwner->GetParty()->GetNearMemberCount() > 1)
 		{
 			LPPARTY pParty = m_itemOwner->GetParty();
-			pParty->ChatPacketToAllMember(CHAT_TYPE_DICE_INFO, LC_TEXT("*** Sorteggio per i seguenti oggetti: %16s ***"), m_itemDrop->GetName());
+			pParty->ChatPacketToAllMember(CHAT_TYPE_DICE_INFO, LC_TEXT("*** Rolling for the following item: %16s ***"), m_itemDrop->GetName());
 
 			pParty->ForEachNearMember(*this);
 			if (m_itemOwner)
 			{
 				m_itemDrop->SetOwnership(m_itemOwner);
-				pParty->ChatPacketToAllMember(CHAT_TYPE_DICE_INFO, LC_TEXT("*** Sorteggio per %s: %16s ***"), m_itemDrop->GetName(), m_itemOwner->GetName());
+				pParty->ChatPacketToAllMember(CHAT_TYPE_DICE_INFO, LC_TEXT("*** Rolling of %s: %16s ***"), m_itemDrop->GetName(), m_itemOwner->GetName());
 			}
 		}
 		else
@@ -431,7 +427,7 @@ struct FPartyDropDiceRoll
 			else // if (pickedNumber < m_lastNumber)
 			{
 			}
-			pParty->ChatPacketToAllMember(CHAT_TYPE_DICE_INFO, LC_TEXT("*** -> %16s - Punteggio: %05d ***"), ch->GetName(), pickedNumber);
+			pParty->ChatPacketToAllMember(CHAT_TYPE_DICE_INFO, LC_TEXT("*** -> %16s - Dice score: %05d ***"), ch->GetName(), pickedNumber);
 			break;
 		}
 	}
@@ -439,3 +435,4 @@ struct FPartyDropDiceRoll
 #endif
 
 #endif
+//martysama0134's 2022

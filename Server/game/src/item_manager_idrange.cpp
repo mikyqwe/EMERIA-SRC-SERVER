@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "desc_client.h"
 #include "item_manager.h"
@@ -82,4 +81,4 @@ bool ITEM_MANAGER::SetMaxSpareItemID(TItemIDRangeTable range)
 
 	return true;
 }
-
+//martysama0134's 2022

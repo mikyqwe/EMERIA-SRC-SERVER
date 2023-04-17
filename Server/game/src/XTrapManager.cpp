@@ -150,7 +150,7 @@ bool CXTrapManager::LoadXTrapModule()
 	//start server module
 	m_pImpl->XTrap_S_Start( 600, CSFILE_NUM, g_XTrap_ClientMap, NULL );
 
-	//NOTE : 일단 XProtect모듈에 버그가 있어서 코드영역 체크를 끈다.
+
 	m_pImpl->XTrap_S_SetActiveCode( XTRAP_ACTIVE_CODE_THEMIDA );
 
 	//setup signal
@@ -349,4 +349,4 @@ void CXTrapManager::Verify_CSStep3( LPCHARACTER lpCharSession, BYTE* pBufData )
 	//	sys_error(0, "XTrap: client session is already destroyed");
 	//}
 }
-
+//martysama0134's 2022

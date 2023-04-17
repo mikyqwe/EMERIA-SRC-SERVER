@@ -142,4 +142,4 @@ class CArenaManager : public singleton<CArenaManager>
 };
 
 #endif /*__CLASS_ARENA_MANAGER__*/
-
+//martysama0134's 2022

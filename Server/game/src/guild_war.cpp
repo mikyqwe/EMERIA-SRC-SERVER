@@ -25,11 +25,7 @@ enum
 //
 // Packet
 //
-void CGuild::GuildWarPacket(DWORD dwOppGID, BYTE bWarType, BYTE bWarState
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-)
+void CGuild::GuildWarPacket(DWORD dwOppGID, BYTE bWarType, BYTE bWarState)
 {
 	TPacketGCGuild pack;
 	TPacketGCGuildWar pack2;
@@ -41,43 +37,13 @@ void CGuild::GuildWarPacket(DWORD dwOppGID, BYTE bWarType, BYTE bWarState
 	pack2.dwGuildOpp	= dwOppGID;
 	pack2.bWarState	= bWarState;
 	pack2.bType		= bWarType;
-#ifdef __IMPROVED_GUILD_WAR__
-	pack2.iMaxPlayer = iMaxPlayer;
-	pack2.iMaxScore = iMaxScore;
-	pack2.flags = flags;
-	pack2.custom_map_index = custom_map_index;
-#endif
-
-#ifdef ENABLE_GENERAL_IN_GUILD
-	LPCHARACTER leader = GetMasterCharacter();
-#endif
 
 	for (itertype(m_memberOnline) it = m_memberOnline.begin(); it != m_memberOnline.end(); ++it)
 	{
 		LPCHARACTER ch = *it;
-#ifdef ENABLE_GENERAL_IN_GUILD
-		//ch->ChatPacket(CHAT_TYPE_INFO, "type: %d state: %d",bWarType,bWarState);
-		if(bWarType == 1 && bWarState == 3)
-		{
-			if(leader != NULL)
-			{
-				if(leader != ch)
-					continue;
-			}
-			else
-			{
-				LPCHARACTER general = CHARACTER_MANAGER::Instance().FindByPID(GetGeneralMember());
-				if(general != NULL)
-					if(general != ch)
-						continue;
-				if(leader)
-					continue;
-			}
-		}
-#endif
 
 		if (bWarState == GUILD_WAR_ON_WAR)
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<Breasla> Nu primesti puncte de experienta in timpul razboiului dintre bresle."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("<길드> 길드전중에는 사냥에 따른 이익이 없습니다."));
 
 		LPDESC d = ch->GetDesc();
 
@@ -179,15 +145,11 @@ bool CGuild::CanStartWar(BYTE bGuildWarType)
 	if (bGuildWarType >= GUILD_WAR_TYPE_MAX_NUM)
 		return false;
 
-#ifdef GUILD_RANK_EFFECT
-	if (test_server || quest::CQuestManager::instance().GetEventFlag("guild_war_test") != 0)
-		return true;
-	return GetMemberCount() >= GUILD_WAR_MIN_MEMBER_COUNT;
-#else
+
 	if (test_server || quest::CQuestManager::instance().GetEventFlag("guild_war_test") != 0)
 		return GetLadderPoint() > 0;
+
 	return GetLadderPoint() > 0 && GetMemberCount() >= GUILD_WAR_MIN_MEMBER_COUNT;
-#endif
 }
 
 bool CGuild::UnderWar(DWORD dwOppGID)
@@ -326,30 +288,17 @@ void CGuild::NotifyGuildMaster(const char* msg)
 //           -> B Declare -> WaitStart -> Fail
 //                                     -> StartWar -> EndWar
 //
-void CGuild::RequestDeclareWar(DWORD dwOppGID, BYTE type
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-)
+void CGuild::RequestDeclareWar(DWORD dwOppGID, BYTE type)
 {
-	
 	if (dwOppGID == GetID())
 	{
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_log(0, "GuildWar.DeclareWar.DECLARE_WAR_SELF id(%d -> %d), type(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, type, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 		sys_log(0, "GuildWar.DeclareWar.DECLARE_WAR_SELF id(%d -> %d), type(%d)", GetID(), dwOppGID, type);
-#endif
 		return;
 	}
 
 	if (type >= GUILD_WAR_TYPE_MAX_NUM)
 	{
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_log(0, "GuildWar.DeclareWar.UNKNOWN_WAR_TYPE id(%d -> %d), type(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, type, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 		sys_log(0, "GuildWar.DeclareWar.UNKNOWN_WAR_TYPE id(%d -> %d), type(%d)", GetID(), dwOppGID, type);
-#endif
 		return;
 	}
 
@@ -358,37 +307,21 @@ void CGuild::RequestDeclareWar(DWORD dwOppGID, BYTE type
 	{
 		if (!GuildWar_IsWarMap(type))
 		{
-#ifdef __IMPROVED_GUILD_WAR__
-			sys_err("GuildWar.DeclareWar.NOT_EXIST_MAP id(%d -> %d), type(%d), map(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)",
-				GetID(), dwOppGID, type, GuildWar_GetTypeMapIndex(type), iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 			sys_err("GuildWar.DeclareWar.NOT_EXIST_MAP id(%d -> %d), type(%d), map(%d)",
 					GetID(), dwOppGID, type, GuildWar_GetTypeMapIndex(type));
-#endif
 
 			map_allow_log();
 			NotifyGuildMaster(LC_TEXT("전쟁 서버가 열려있지 않아 길드전을 시작할 수 없습니다."));
 			return;
 		}
 
-		// 패킷 보내기 to another server
 		TPacketGuildWar p;
 		p.bType = type;
 		p.bWar = GUILD_WAR_SEND_DECLARE;
 		p.dwGuildFrom = GetID();
 		p.dwGuildTo = dwOppGID;
-#ifdef __IMPROVED_GUILD_WAR__
-		p.iMaxPlayer = iMaxPlayer; 
-		p.iMaxScore = iMaxScore; 
-		p.flags = flags; 
-		p.custom_map_index = custom_map_index; 
-#endif
 		db_clientdesc->DBPacket(HEADER_GD_GUILD_WAR, 0, &p, sizeof(p));
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_log(0, "GuildWar.DeclareWar id(%d -> %d), type(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, type, iMaxPlayer, iMaxScore, flags, custom_map_index); 
-#else
 		sys_log(0, "GuildWar.DeclareWar id(%d -> %d), type(%d)", GetID(), dwOppGID, type);
-#endif
 		return;
 	}
 
@@ -396,98 +329,30 @@ void CGuild::RequestDeclareWar(DWORD dwOppGID, BYTE type
 	{
 		case GUILD_WAR_RECV_DECLARE:
 			{
-				BYTE saved_type = it->second.type;
-#ifdef __IMPROVED_GUILD_WAR__
-				int saved_maxplayer = it->second.max_player;
-				int saved_maxscore = it->second.max_score;
-				int saved_flags = it->second.flags;
-				int saved_cmapidx = it->second.custom_map_index;
-
-				sys_log(0, "GuildWar.AcceptWar id(%d -> %d) type(%d) saved_type(%d) max_player(%d) saved_max_player(%d) max_score(%d) saved_max_score(%d) flags(%ld) saved_flags(%ld) cmapidx(%d) saved_cmapidx(%d)",
-					GetID(), dwOppGID, type, saved_type, iMaxPlayer, saved_maxplayer, iMaxScore, saved_maxscore, flags, saved_flags, custom_map_index, saved_cmapidx);
-#endif
+				const unsigned saved_type = it->second.type;
 
 				if (saved_type == GUILD_WAR_TYPE_FIELD)
 				{
-					// 선전포고 한것을 받아들였다.
+
 					TPacketGuildWar p;
 					p.bType = saved_type;
 					p.bWar = GUILD_WAR_ON_WAR;
 					p.dwGuildFrom = GetID();
 					p.dwGuildTo = dwOppGID;
-#ifdef __IMPROVED_GUILD_WAR__
-					p.iMaxPlayer = saved_maxplayer; 
-					p.iMaxScore = saved_maxscore;
-					p.flags = saved_flags; 
-					p.custom_map_index = saved_cmapidx; 
-#endif
 					db_clientdesc->DBPacket(HEADER_GD_GUILD_WAR, 0, &p, sizeof(p));
-#ifdef __IMPROVED_GUILD_WAR__
-					sys_log(0, "GuildWar.AcceptWar id(%d -> %d), type(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, saved_type, saved_maxplayer, saved_maxscore, flags, custom_map_index);
-#else
 					sys_log(0, "GuildWar.AcceptWar id(%d -> %d), type(%d)", GetID(), dwOppGID, saved_type);
-#endif
 					return;
 				}
-
-#ifdef __IMPROVED_GUILD_WAR__
-				if (saved_type != type)
-				{
-					// sys_err("GuildWar.AcceptWar.NOT_SAME_TYPE id(%d -> %d), type(%d), saved_type(%d)",
-						// GetID(), dwOppGID, type, saved_type);
-					NotifyGuildMaster("Liderul a schimbat locul de bataie");
-					RefuseWar(0,0,0,0,0);
-					return;
-				}
-				if (saved_maxplayer != iMaxPlayer)
-				{
-					// sys_err("GuildWar.AcceptWar.NOT_SAME_MAXPLAYER id(%d -> %d), type(%d), map(%d) max_player(%d) target_max_player(%d)",
-						// GetID(), dwOppGID, type, GuildWar_GetTypeMapIndex(type), iMaxPlayer, saved_maxplayer);
-					NotifyGuildMaster("Liderul a modificat numarul maxim de playeri");
-					RefuseWar(0,0,0,0,0);
-					return;
-				}
-				if (saved_maxscore != iMaxScore)
-				{
-					// sys_err("GuildWar.AcceptWar.NOT_SAME_MAXSCORE id(%d -> %d), type(%d), map(%d) max_score(%d) target_max_score(%d)",
-						// GetID(), dwOppGID, type, GuildWar_GetTypeMapIndex(type), iMaxScore, saved_maxscore);
-					NotifyGuildMaster("Liderul a modificat numarul maxim de puncte");
-					RefuseWar(0,0,0,0,0);
-					return;
-				}
-				if (saved_flags != flags)
-				{
-					// sys_err("GuildWar.AcceptWar.NOT_SAME_FLAGS id(%d -> %d), type(%d), map(%d) flags(%d) target_flags(%d)",
-						// GetID(), dwOppGID, type, GuildWar_GetTypeMapIndex(type), flags, saved_flags);
-					NotifyGuildMaster("Liderul a modificat modul observator");
-					RefuseWar(0,0,0,0,0);
-					return;
-				}
-				if (saved_cmapidx != custom_map_index)
-				{
-					// sys_err("GuildWar.AcceptWar.NOT_SAME_MAPINDEX id(%d -> %d), type(%d), map(%d) cmap_idx(%d) target_cmapidx(%d)",
-						// GetID(), dwOppGID, type, GuildWar_GetTypeMapIndex(type), custom_map_index, saved_cmapidx);
-					NotifyGuildMaster("Liderul a modificat index-ul mapei");
-					RefuseWar(0,0,0,0,0);
-					return;
-				}
-#endif
 
 				if (!GuildWar_IsWarMap(saved_type))
 				{
-#ifdef __IMPROVED_GUILD_WAR__
-					sys_err("GuildWar.AcceptWar.NOT_EXIST_MAP id(%d -> %d), type(%d), map(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)",
-						GetID(), dwOppGID, type, GuildWar_GetTypeMapIndex(type), saved_maxplayer, saved_maxscore, saved_flags, saved_cmapidx);
-#else
 					sys_err("GuildWar.AcceptWar.NOT_EXIST_MAP id(%d -> %d), type(%d), map(%d)",
 							GetID(), dwOppGID, type, GuildWar_GetTypeMapIndex(type));
-#endif
 
 					map_allow_log();
 					NotifyGuildMaster(LC_TEXT("전쟁 서버가 열려있지 않아 길드전을 시작할 수 없습니다."));
 					return;
 				}
-
 
 				const TGuildWarInfo& guildWarInfo = GuildWar_GetTypeInfo(saved_type);
 
@@ -498,24 +363,15 @@ void CGuild::RequestDeclareWar(DWORD dwOppGID, BYTE type
 				p.dwGuildTo = dwOppGID;
 				p.lWarPrice = guildWarInfo.iWarPrice;
 				p.lInitialScore = guildWarInfo.iInitialScore;
-#ifdef __IMPROVED_GUILD_WAR__
-				p.iMaxPlayer = saved_maxplayer;
-				p.iMaxScore = saved_maxscore;
-				p.flags = saved_flags; 
-				p.custom_map_index = saved_cmapidx; 
-#endif
+
 				if (test_server)
 					p.lInitialScore /= 10;
 
 				db_clientdesc->DBPacket(HEADER_GD_GUILD_WAR, 0, &p, sizeof(p));
 
-#ifdef __IMPROVED_GUILD_WAR__
-				sys_log(0, "GuildWar.WaitStartSendToDB id(%d vs %d), type(%d), bet(%d), map_index(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)",
-					GetID(), dwOppGID, saved_type, guildWarInfo.iWarPrice, guildWarInfo.lMapIndex, saved_maxplayer, saved_maxscore, saved_flags, saved_cmapidx);
-#else
 				sys_log(0, "GuildWar.WaitStartSendToDB id(%d vs %d), type(%d), bet(%d), map_index(%d)",
 						GetID(), dwOppGID, saved_type, guildWarInfo.iWarPrice, guildWarInfo.lMapIndex);
-#endif
+
 			}
 			break;
 		case GUILD_WAR_SEND_DECLARE:
@@ -524,41 +380,23 @@ void CGuild::RequestDeclareWar(DWORD dwOppGID, BYTE type
 			}
 			break;
 		default:
-#ifdef __IMPROVED_GUILD_WAR__
-			sys_err("GuildWar.DeclareWar.UNKNOWN_STATE[%d]: id(%d vs %d), type(%d), guild(%s:%u) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)",
-				it->second.state, GetID(), dwOppGID, type, GetName(), GetID(), iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 			sys_err("GuildWar.DeclareWar.UNKNOWN_STATE[%d]: id(%d vs %d), type(%d), guild(%s:%u)",
 					it->second.state, GetID(), dwOppGID, type, GetName(), GetID());
-#endif
 			break;
 	}
 }
 
-bool CGuild::DeclareWar(DWORD dwOppGID, BYTE type, BYTE state
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-)
+bool CGuild::DeclareWar(DWORD dwOppGID, BYTE type, BYTE state)
 {
 	if (m_EnemyGuild.find(dwOppGID) != m_EnemyGuild.end())
 		return false;
 
 	TGuildWar gw(type);
 	gw.state = state;
-#ifdef __IMPROVED_GUILD_WAR__
-	gw.max_player = iMaxPlayer;
-	gw.max_score = iMaxScore; 
-	gw.flags = flags;
-	gw.custom_map_index = custom_map_index; 
-#endif
+
 	m_EnemyGuild.insert(std::make_pair(dwOppGID, gw));
 
-	GuildWarPacket(dwOppGID, type, state
-#ifdef __IMPROVED_GUILD_WAR__
-		, iMaxPlayer, iMaxScore, flags, custom_map_index
-#endif
-	);
+	GuildWarPacket(dwOppGID, type, state);
 	return true;
 }
 
@@ -577,12 +415,7 @@ bool CGuild::CheckStartWar(DWORD dwOppGID)
 	return true;
 }
 
-void CGuild::StartWar(DWORD dwOppGID
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-)
-
+void CGuild::StartWar(DWORD dwOppGID)
 {
 	itertype(m_EnemyGuild) it = m_EnemyGuild.find(dwOppGID);
 
@@ -597,118 +430,68 @@ void CGuild::StartWar(DWORD dwOppGID
 	gw.state = GUILD_WAR_ON_WAR;
 	gw.war_start_time = get_global_time();
 
-#ifdef __IMPROVED_GUILD_WAR__
-	gw.max_player = iMaxPlayer;
-	gw.max_score = iMaxScore;
-	gw.flags = flags;
-	gw.custom_map_index = custom_map_index;
-
-	GuildWarPacket(dwOppGID, gw.type, GUILD_WAR_ON_WAR, gw.max_player, gw.max_score, gw.flags, gw.custom_map_index);
-#else
 	GuildWarPacket(dwOppGID, gw.type, GUILD_WAR_ON_WAR);
-#endif
 
 	if (gw.type != GUILD_WAR_TYPE_FIELD)
 		GuildWarEntryAsk(dwOppGID);
 }
 
-bool CGuild::WaitStartWar(DWORD dwOppGID
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-#ifdef GUILD_WAR_COUNTER
-	, DWORD warID
-#endif
-)
+bool CGuild::WaitStartWar(DWORD dwOppGID)
 {
-	//자기자신이면
+
 	if (dwOppGID == GetID())
 	{
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_log(0, "GuildWar.WaitStartWar.DECLARE_WAR_SELF id(%u -> %u) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 		sys_log(0 ,"GuildWar.WaitStartWar.DECLARE_WAR_SELF id(%u -> %u)", GetID(), dwOppGID);
-#endif
 		return false;
 	}
 
-	//상대방 길드 TGuildWar 를 얻어온다.
+
 	itertype(m_EnemyGuild) it = m_EnemyGuild.find(dwOppGID);
 	if (it == m_EnemyGuild.end())
 	{
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_log(0, "GuildWar.WaitStartWar.UNKNOWN_ENEMY id(%u -> %u) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 		sys_log(0 ,"GuildWar.WaitStartWar.UNKNOWN_ENEMY id(%u -> %u)", GetID(), dwOppGID);
-#endif
 		return false;
 	}
 
-	//레퍼런스에 등록하고
+
 	TGuildWar & gw(it->second);
 
 	if (gw.state == GUILD_WAR_WAIT_START)
 	{
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_log(0, "GuildWar.WaitStartWar.UNKNOWN_STATE id(%u -> %u), state(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, gw.state, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 		sys_log(0 ,"GuildWar.WaitStartWar.UNKNOWN_STATE id(%u -> %u), state(%d)", GetID(), dwOppGID, gw.state);
-#endif
 		return false;
 	}
 
-	//상태를 저장한다.
+
 	gw.state = GUILD_WAR_WAIT_START;
 
-	//상대편의 길드 클래스 포인터를 얻어오고
+
 	CGuild* g = CGuildManager::instance().FindGuild(dwOppGID);
 	if (!g)
 	{
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_log(0, "GuildWar.WaitStartWar.NOT_EXIST_GUILD id(%u -> %u) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 		sys_log(0 ,"GuildWar.WaitStartWar.NOT_EXIST_GUILD id(%u -> %u)", GetID(), dwOppGID);
-#endif
 		return false;
 	}
 
 	// GUILDWAR_INFO
 	const TGuildWarInfo& rkGuildWarInfo = GuildWar_GetTypeInfo(gw.type);
 	// END_OF_GUILDWAR_INFO
-#ifdef __IMPROVED_GUILD_WAR__
-	gw.max_score = iMaxScore;
-	gw.max_player = iMaxPlayer;
-	gw.flags = flags;
-	gw.custom_map_index = custom_map_index;
-#endif
 
-	// 필드형이면 맵생성 안함
+
+
 	if (gw.type == GUILD_WAR_TYPE_FIELD)
 	{
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_log(0, "GuildWar.WaitStartWar.FIELD_TYPE id(%u -> %u) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 		sys_log(0 ,"GuildWar.WaitStartWar.FIELD_TYPE id(%u -> %u)", GetID(), dwOppGID);
-#endif
 		return true;
 	}
 
-	// 전쟁 서버 인지 확인
-#ifdef __IMPROVED_GUILD_WAR__
-	sys_log(0, "GuildWar.WaitStartWar.CheckWarServer id(%u -> %u), type(%d), map(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)",
-		GetID(), dwOppGID, gw.type, rkGuildWarInfo.lMapIndex, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
+
 	sys_log(0 ,"GuildWar.WaitStartWar.CheckWarServer id(%u -> %u), type(%d), map(%d)",
 			GetID(), dwOppGID, gw.type, rkGuildWarInfo.lMapIndex);
-#endif
 
 	if (!map_allow_find(rkGuildWarInfo.lMapIndex))
 	{
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_log(0, "GuildWar.WaitStartWar.SKIP_WAR_MAP id(%u -> %u) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", GetID(), dwOppGID, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 		sys_log(0 ,"GuildWar.WaitStartWar.SKIP_WAR_MAP id(%u -> %u)", GetID(), dwOppGID);
-#endif
 		return true;
 	}
 
@@ -719,37 +502,21 @@ bool CGuild::WaitStartWar(DWORD dwOppGID
 	if (id1 > id2)
 		std::swap(id1, id2);
 
-	//워프 맵을 생성
-#ifdef __IMPROVED_GUILD_WAR__
-	DWORD lMapIndex = CWarMapManager::instance().CreateWarMap(rkGuildWarInfo, id1, id2, iMaxPlayer, iMaxScore, flags, custom_map_index
-#ifdef GUILD_WAR_COUNTER
-	, warID
-#endif
-	);
-#else
+
 	DWORD lMapIndex = CWarMapManager::instance().CreateWarMap(rkGuildWarInfo, id1, id2);
-#endif
 	if (!lMapIndex)
 	{
-#ifdef __IMPROVED_GUILD_WAR__
-		sys_err("GuildWar.WaitStartWar.CREATE_WARMAP_ERROR id(%u vs %u), type(%u), map(%d) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", id1, id2, gw.type, rkGuildWarInfo.lMapIndex, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 		sys_err("GuildWar.WaitStartWar.CREATE_WARMAP_ERROR id(%u vs %u), type(%u), map(%d)", id1, id2, gw.type, rkGuildWarInfo.lMapIndex);
-#endif
 		CGuildManager::instance().RequestEndWar(GetID(), dwOppGID);
 		return false;
 	}
 
-#ifdef __IMPROVED_GUILD_WAR__
-	sys_log(0, "GuildWar.WaitStartWar.CreateMap id(%u vs %u), type(%u), map(%d) -> map_inst(%u) max_player(%d) max_score(%d) flags(%ld) cmapidx(%d)", id1, id2, gw.type, rkGuildWarInfo.lMapIndex, lMapIndex, iMaxPlayer, iMaxScore, flags, custom_map_index);
-#else
 	sys_log(0, "GuildWar.WaitStartWar.CreateMap id(%u vs %u), type(%u), map(%d) -> map_inst(%u)", id1, id2, gw.type, rkGuildWarInfo.lMapIndex, lMapIndex);
-#endif
 
-	//길드전 정보에 맵인덱스를 세팅
+
 	gw.map_index = lMapIndex;
 
-	//양쪽에 등록(?)
+
 	SetGuildWarMapIndex(dwOppGID, lMapIndex);
 	g->SetGuildWarMapIndex(GetID(), lMapIndex);
 
@@ -767,13 +534,8 @@ bool CGuild::WaitStartWar(DWORD dwOppGID
 	return true;
 }
 
-void CGuild::RequestRefuseWar(DWORD dwOppGID
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-)
+void CGuild::RequestRefuseWar(DWORD dwOppGID)
 {
-	
 	if (dwOppGID == GetID())
 		return;
 
@@ -781,26 +543,17 @@ void CGuild::RequestRefuseWar(DWORD dwOppGID
 
 	if (it != m_EnemyGuild.end() && it->second.state == GUILD_WAR_RECV_DECLARE)
 	{
-		// 선전포고를 거절했다.
+
 		TPacketGuildWar p;
 		p.bWar = GUILD_WAR_REFUSE;
 		p.dwGuildFrom = GetID();
 		p.dwGuildTo = dwOppGID;
-#ifdef __IMPROVED_GUILD_WAR__
-		p.iMaxPlayer = iMaxPlayer;
-		p.iMaxScore = iMaxScore;
-		p.flags = flags;
-		p.custom_map_index = custom_map_index;
-#endif
+
 		db_clientdesc->DBPacket(HEADER_GD_GUILD_WAR, 0, &p, sizeof(p));
 	}
 }
 
-void CGuild::RefuseWar(DWORD dwOppGID
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-)
+void CGuild::RefuseWar(DWORD dwOppGID)
 {
 	if (dwOppGID == GetID())
 		return;
@@ -812,19 +565,11 @@ void CGuild::RefuseWar(DWORD dwOppGID
 		BYTE type = it->second.type;
 		m_EnemyGuild.erase(dwOppGID);
 
-		GuildWarPacket(dwOppGID, type, GUILD_WAR_END
-#ifdef __IMPROVED_GUILD_WAR__
-			, iMaxPlayer, iMaxScore, flags, custom_map_index
-#endif
-		);
+		GuildWarPacket(dwOppGID, type, GUILD_WAR_END);
 	}
 }
 
-void CGuild::ReserveWar(DWORD dwOppGID, BYTE type
-#ifdef __IMPROVED_GUILD_WAR__
-	, int iMaxPlayer, int iMaxScore, DWORD flags, int custom_map_index
-#endif
-)
+void CGuild::ReserveWar(DWORD dwOppGID, BYTE type)
 {
 	if (dwOppGID == GetID())
 		return;
@@ -835,12 +580,6 @@ void CGuild::ReserveWar(DWORD dwOppGID, BYTE type
 	{
 		TGuildWar gw(type);
 		gw.state = GUILD_WAR_RESERVE;
-#ifdef __IMPROVED_GUILD_WAR__
-		gw.max_player = iMaxPlayer;
-		gw.max_score = iMaxScore;
-		gw.flags = flags;
-		gw.custom_map_index = custom_map_index;	
-#endif
 		m_EnemyGuild.insert(std::make_pair(dwOppGID, gw));
 	}
 	else
@@ -863,11 +602,7 @@ void CGuild::EndWar(DWORD dwOppGID)
 		if (pMap)
 			pMap->SetEnded();
 
-		GuildWarPacket(dwOppGID, it->second.type, GUILD_WAR_END
-#ifdef __IMPROVED_GUILD_WAR__
-			, it->second.max_player, it->second.max_score, it->second.flags, it->second.custom_map_index
-#endif
-		);
+		GuildWarPacket(dwOppGID, it->second.type, GUILD_WAR_END);
 		m_EnemyGuild.erase(it);
 
 		if (!UnderAnyWar())
@@ -997,7 +732,7 @@ void CGuild::SetLadderPoint(int point)
 	if (m_data.ladder_point != point)
 	{
 		char buf[256];
-		snprintf(buf, sizeof(buf), LC_TEXT("Leaderboard actualizat: %d - succes in continuare!"), point);
+		snprintf(buf, sizeof(buf), LC_TEXT("<길드> 래더 점수가 %d 점이 되었습니다"), point);
 		for (itertype(m_memberOnline) it = m_memberOnline.begin(); it!=m_memberOnline.end();++it)
 		{
 			LPCHARACTER ch = (*it);
@@ -1014,3 +749,4 @@ void CGuild::ChangeLadderPoint(int iChange)
 	p.lChange = iChange;
 	db_clientdesc->DBPacket(HEADER_GD_GUILD_CHANGE_LADDER_POINT, 0, &p, sizeof(p));
 }
+//martysama0134's 2022

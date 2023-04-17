@@ -1,10 +1,4 @@
 #include "stdafx.h"
-#ifdef ENABLE_BIOLOG_SYSTEM
-	#include "../../common/service.h"
-#endif
-#ifdef __clang__
-#include <float.h>
-#endif
 
 #ifdef ENABLE_UNLIMITED_ARGUMENT
 #include <boost/algorithm/string/classification.hpp> // Include boost::for is_any_of
@@ -15,6 +9,7 @@ void split_argument(const char *argument, std::vector<std::string> & vecArgs)
 	boost::split(vecArgs, arg, boost::is_any_of(" "), boost::token_compress_on);
 }
 #endif
+
 static int global_time_gap = 0;
 
 time_t get_global_time()
@@ -32,23 +27,26 @@ void set_global_time(time_t t)
 	sys_log(0, "GLOBAL_TIME: %s time_gap %d", time_str_buf, global_time_gap);
 }
 
-#ifdef ENABLE_BIOLOG_SYSTEM
-time_t init_biologTime()
-{
-	return time(0) + global_time_gap;
-}
-#endif
-
+#ifndef __WIN32__
 #include <mysql/mysql.h>
 #ifndef SHA1_HASH_SIZE
 #define SHA1_HASH_SIZE 20
 #endif
+#ifdef WIN32
+extern "C" void my_make_scrambled_password(char *to, const char *password, size_t pass_len);
+#endif
 std::string mysql_hash_password(const char* tmp_pwd)
 {
 	char hash_buf[2*SHA1_HASH_SIZE + 2] = "";
+#ifdef WIN32
+	my_make_scrambled_password(hash_buf, tmp_pwd, strlen(tmp_pwd));
+#else
 	make_scrambled_password(hash_buf, tmp_pwd);
+	//ma_make_scrambled_password(hash_buf, tmp_pwd); //MariaDB Fix
+#endif
 	return hash_buf;
 }
+#endif
 
 int dice(int number, int size)
 {
@@ -80,12 +78,12 @@ size_t str_lower(const char * src, char * dest, size_t dest_size)
 		return len;
 	}
 
-	// \0 자리 확보
+
 	--dest_size;
 
 	while (*src && len < dest_size)
 	{
-		*dest = LOWER(*src); // LOWER 매크로에서 ++나 --하면 안됨!!
+		*dest = LOWER(*src);
 
 		++src;
 		++dest;
@@ -113,7 +111,7 @@ const char *one_argument(const char *argument, char *first_arg, size_t first_siz
 		return NULL;
 	}
 
-	// \0 자리 확보
+
 	--first_size;
 
 	skip_spaces(&argument);
@@ -145,6 +143,7 @@ const char *two_arguments(const char *argument, char *first_arg, size_t first_si
 {
 	return (one_argument(one_argument(argument, first_arg, first_size), second_arg, second_size));
 }
+
 const char * three_arguments(const char * argument, char * first_arg, size_t first_size, char * second_arg, size_t second_size, char * third_arg, size_t third_size)
 {
        return (one_argument(one_argument(one_argument(argument, first_arg, first_size), second_arg, second_size), third_arg, third_size));
@@ -154,12 +153,13 @@ const char* four_arguments(const char* argument, char* first_arg, size_t first_s
 	return (one_argument(one_argument(one_argument(one_argument(argument, first_arg, first_size), second_arg, second_size), third_arg, third_size), four_arg, four_size));
 }
 
+
 const char *first_cmd(const char *argument, char *first_arg, size_t first_arg_size, size_t *first_arg_len_result)
 {
 	size_t cur_len = 0;
 	skip_spaces(&argument);
 
-	// \0 자리 확보
+
 	first_arg_size -= 1;
 
 	while (*argument && !isnhspace(*argument) && cur_len < first_arg_size)
@@ -319,17 +319,4 @@ bool WildCaseCmp(const char *w, const char *s)
 
 	return false;
 }
-
-int is_leap(int year)
-{
-    return (year%4==0 && year%100!=0) || year%400==0;
-}
-
-int days_in_month(int year, int month)
-{
-    static int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-    return month==2 && is_leap(year)
-             ? 29
-             : days[month];
-}
+//martysama0134's 2022

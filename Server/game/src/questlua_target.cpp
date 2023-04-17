@@ -69,7 +69,7 @@ namespace quest
 		return 0;
 	}
 
-	// 현재 퀘스트에 등록된 타겟을 삭제 한다.
+
 	ALUA(target_delete)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
@@ -86,7 +86,7 @@ namespace quest
 		return 0;
 	}
 
-	// 현재 퀘스트 인덱스로 되어있는 타겟을 모두 삭제한다.
+
 	ALUA(target_clear)
 	{
 		LPCHARACTER ch = CQuestManager::instance().GetCurrentCharacterPtr();
@@ -150,4 +150,4 @@ namespace quest
 		CQuestManager::instance().AddLuaFunctionTable("target", target_functions);
 	}
 };
-
+//martysama0134's 2022

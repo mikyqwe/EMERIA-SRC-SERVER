@@ -17,8 +17,8 @@ EVENTINFO(TargetInfo)
 	DWORD       dwPID;
 	DWORD       dwQuestIndex;
 
-	char        szTargetName[32+1]; // 퀘스트에서 사용하는 이름
-	char        szTargetDesc[32+1]; // 실제 클라이언트에 전송되는 이름
+	char        szTargetName[32+1];
+	char        szTargetDesc[32+1];
 
 	int         iType;
 	int         iArg1;
@@ -68,3 +68,4 @@ class CTargetManager : public singleton<CTargetManager>
 };
 
 #endif
+//martysama0134's 2022

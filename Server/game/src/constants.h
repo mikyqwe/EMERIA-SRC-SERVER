@@ -13,7 +13,7 @@ enum EMonsterChatState
 
 typedef struct SMobRankStat
 {
-	int iGoldPercent;   // µ·ÀÌ ³ª¿Ã È®·ü
+	int iGoldPercent;
 } TMobRankStat;
 
 typedef struct SMobStat
@@ -129,7 +129,7 @@ extern const int		aiMobResistsApplyIdx[MOB_RESISTS_MAX_NUM];
 
 extern const int		aSkillAttackAffectProbByRank[MOB_RANK_MAX_NUM];
 
-extern const int aiItemMagicAttributePercentHigh[ITEM_ATTRIBUTE_MAX_LEVEL]; // 1°³±îÁö
+extern const int aiItemMagicAttributePercentHigh[ITEM_ATTRIBUTE_MAX_LEVEL];
 extern const int aiItemMagicAttributePercentLow[ITEM_ATTRIBUTE_MAX_LEVEL];
 
 extern const int aiItemAttributeAddPercent[ITEM_ATTRIBUTE_MAX_NUM];
@@ -182,15 +182,8 @@ extern const DWORD THuntingRandomItem_81_90[12][2];
 #endif
 
 
-#ifdef M2S_BIO_SYSTEM
-extern const std::vector<TBioTable> BioMissions;
-#endif
-
 typedef std::map<DWORD, TItemAttrTable> TItemAttrMap;
 extern TItemAttrMap g_map_itemAttr;
-#ifdef ENABLE_USE_DIFFERENT_TABLE_FOR_COSTUME_ATTRIBUTE
-extern TItemAttrMap g_map_itemCostumeAttr;
-#endif
 extern TItemAttrMap g_map_itemRare;
 
 extern const int * aiChainLightningCountBySkillLevel;
@@ -199,6 +192,10 @@ extern const int aiChainLightningCountBySkillLevel_euckr[SKILL_MAX_LEVEL + 1];
 extern const char * c_apszEmpireNames[EMPIRE_MAX_NUM];
 extern const char * c_apszPrivNames[MAX_PRIV_NUM];
 extern const SStoneDropInfo aStoneDrop[STONE_INFO_MAX_NUM];
+
+#ifdef M2S_BIO_SYSTEM
+extern const std::vector<TBioTable> BioMissions;
+#endif
 
 typedef struct
 {
@@ -227,7 +224,5 @@ long FN_get_apply_type(const char *apply_type_string);
 // END_OF_ACCESSORY_REFINE
 
 long FN_get_apply_type(const char *apply_type_string);
-
 #endif
-
-
+//martysama0134's 2022

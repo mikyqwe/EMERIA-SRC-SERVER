@@ -7,7 +7,6 @@
 #include "char.h"
 #include "../../common/CommonDefines.h"
 
-#define DISABLE_ERROR_LOG_ANIMATION
 // POLYMORPH_BUG_FIX
 static float MSA_GetNormalAttackDuration(const char* msaPath)
 {
@@ -97,9 +96,7 @@ static const char* GetMotionFileName(TMobTable* mobTable, EPublicMotion motion)
 
 			default:
 				fclose(fp);
-				#ifndef DISABLE_ERROR_LOG_ANIMATION
 				sys_err("Motion: no process for this motion(%d) vnum(%d)", motion, mobTable->dwVnum);
-				#endif
 				return NULL;
 		}
 
@@ -128,11 +125,7 @@ static const char* GetMotionFileName(TMobTable* mobTable, EPublicMotion motion)
 	}
 	else
 	{
-		#ifndef DISABLE_ERROR_LOG_ANIMATION
 		sys_err("Motion: %s have not motlist.txt vnum(%d) folder(%s)", folder, mobTable->dwVnum, mobTable->szFolder);
-		#else
-		return NULL;
-		#endif
 	}
 
 	return NULL;
@@ -151,20 +144,16 @@ static void LoadMotion(CMotionSet* pMotionSet, TMobTable* mob_table, EPublicMoti
 
 	if (pMotion->LoadFromFile(cpFileName) == true)
 	{
-		#ifndef DISABLE_ERROR_LOG_ANIMATION
 		if (motion == MOTION_RUN)
 			if (0.0f == pMotion->GetAccumVector().y)
 				sys_err("cannot find accumulation data in file '%s'", cpFileName);
-		#endif
-		
+
 		pMotionSet->Insert(MAKE_MOTION_KEY(MOTION_MODE_GENERAL, motion), pMotion);
 	}
 	else
 	{
 		M2_DELETE(pMotion);
-		#ifndef DISABLE_ERROR_LOG_ANIMATION
 		sys_err("Motion: Load failed vnum(%d) motion(%d) file(%s)", mob_table->dwVnum, motion, cpFileName);
-		#endif
 	}
 }
 
@@ -497,7 +486,7 @@ bool CMotion::LoadMobSkillFromFile(const char * c_pszFileName, CMob* pMob, int i
 						continue;
 
 					case MOTION_EVENT_TYPE_SPECIAL_ATTACKING:
-						// 구 데이터는 하나 라고 가정
+
 						if (!rkTextFileLoader.SetChildNode("spheredata", 0))
 						{
 							sys_err("Motion: no sphere data %s", c_pszFileName);
@@ -581,4 +570,4 @@ bool CMotion::IsEmpty()
 {
 	return m_isEmpty;
 }
-
+//martysama0134's 2022

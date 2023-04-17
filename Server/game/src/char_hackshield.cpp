@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 
 #include "char.h"
@@ -90,4 +89,4 @@ void CHARACTER::StopHackShieldCheckCycle()
 		sys_log(0, "HShield: StopHackShieldCheckCycle");
 	}
 }
-
+//martysama0134's 2022

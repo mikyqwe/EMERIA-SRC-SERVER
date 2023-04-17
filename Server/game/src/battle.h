@@ -3,7 +3,7 @@
 
 #include "char.h"
 
-enum EBattleTypes       // 상대방 기준
+enum EBattleTypes
 {
 	BATTLE_NONE,
 	BATTLE_DAMAGE,
@@ -31,7 +31,6 @@ extern int	battle_count_attackers(LPCHARACTER ch);
 
 extern void	NormalAttackAffect(LPCHARACTER pkAttacker, LPCHARACTER pkVictim);
 
-// 특성 공격
 inline void AttackAffect(LPCHARACTER pkAttacker,
 		LPCHARACTER pkVictim,
 		BYTE att_point,
@@ -101,3 +100,4 @@ void	SET_ATTACKED_TIME(LPCHARACTER ch, LPCHARACTER victim, DWORD current_time);
 bool	IS_SPEED_HACK(LPCHARACTER ch, LPCHARACTER victim, DWORD current_time);
 
 #endif
+//martysama0134's 2022

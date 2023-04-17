@@ -9,7 +9,7 @@ void WriteVersion()
 	if (NULL != fp)
 	{
 		fprintf(fp, "__DB_VERSION__: %s\n", __DB_VERSION__);
-		fprintf(fp, "%s@%s:%s\n", __USER__, __HOSTNAME__, __PWD__);
+		fprintf(fp, "%s@%s:%s\n", "bW9ycGhldXM=", __HOSTNAME__, __PWD__);
 		fclose(fp);
 	}
 	else
@@ -19,4 +19,4 @@ void WriteVersion()
 	}
 #endif
 }
-
+//martysama0134's 2022

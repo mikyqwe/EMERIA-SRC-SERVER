@@ -6,9 +6,9 @@ class CGrid;
 enum EExchangeValues
 {
 #ifdef __NEW_EXCHANGE_WINDOW__
-	EXCHANGE_ITEM_MAX_NUM	= 24,
+	EXCHANGE_ITEM_MAX_NUM = 24,
 #else
-	EXCHANGE_ITEM_MAX_NUM	= 12,
+	EXCHANGE_ITEM_MAX_NUM = 12,
 #endif
 	EXCHANGE_MAX_DISTANCE	= 1000
 };
@@ -22,9 +22,10 @@ class CExchange
 		bool		Accept(bool bIsAccept = true);
 		void		Cancel();
 
+#ifdef ENABLE_LONG_LONG
+		bool		AddGold(long long lGold);
+#else
 		bool		AddGold(long lGold);
-#ifdef ENABLE_CHEQUE_SYSTEM
-		bool		AddCheque(int bCheque);
 #endif
 		bool		AddItem(TItemPos item_pos, BYTE display_pos);
 		bool		RemoveItem(BYTE pos);
@@ -42,7 +43,7 @@ class CExchange
 		bool		CheckSpace();
 
 	private:
-		CExchange *	m_pCompany;	// 상대방의 CExchange 포인터
+		CExchange *	m_pCompany;
 
 		LPCHARACTER	m_pOwner;
 
@@ -51,12 +52,15 @@ class CExchange
 		BYTE		m_abItemDisplayPos[EXCHANGE_ITEM_MAX_NUM];
 
 		bool 		m_bAccept;
+#ifdef ENABLE_LONG_LONG
+		long long		m_lGold;
+#else
 		long		m_lGold;
-#ifdef ENABLE_CHEQUE_SYSTEM
-		int		m_bCheque;
 #endif
+
 		CGrid *		m_pGrid;
 
 };
 
 #endif
+//martysama0134's 2022

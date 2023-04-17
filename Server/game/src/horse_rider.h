@@ -3,19 +3,20 @@
 
 #include "constants.h"
 #include "cmd.h"
-// #ifdef ENABLE_NEWSTUFF
-// #include <lua.h>
-// #include "stdafx.h"
-// #endif
+
+#ifdef ENABLE_NEWSTUFF
+#include "lua_incl.h"
+namespace quest { extern ALUA(horse_set_stat0); }
+#endif
 
 const int HORSE_MAX_LEVEL = 30;
 
 struct THorseStat
 {
-	int iMinLevel;      // 탑승할 수 있는 최소 레벨
+	int iMinLevel;
 	int iNPCRace;
-	int iMaxHealth;     // 말의 최대 체력
-	int iMaxStamina;    // 말의 최대 스테미너
+	int iMaxHealth;
+	int iMaxStamina;
 	int iST;
 	int iDX;
 	int iHT;
@@ -28,6 +29,7 @@ struct THorseStat
 
 extern THorseStat c_aHorseStat[HORSE_MAX_LEVEL+1];
 
+// #define ENABLE_INFINITE_HORSE_HEALTH_STAMINA
 class CHorseRider
 {
 	public:
@@ -36,10 +38,15 @@ class CHorseRider
 
 		BYTE		GetHorseLevel() const { return m_Horse.bLevel; }
 		BYTE		GetHorseGrade();
+		short		GetHorseMaxHealth() const;
+		short		GetHorseMaxStamina() const;
+#ifdef ENABLE_INFINITE_HORSE_HEALTH_STAMINA
+		short		GetHorseHealth() const	{ return GetHorseMaxHealth(); }
+		short		GetHorseStamina() const	{ return GetHorseMaxStamina(); }
+#else
 		short		GetHorseHealth() const	{ return m_Horse.sHealth; }
 		short		GetHorseStamina() const	{ return m_Horse.sStamina; }
-		short		GetHorseMaxHealth();
-		short		GetHorseMaxStamina();
+#endif
 
 		int		GetHorseST()		{ return c_aHorseStat[GetHorseLevel()].iST; }
 		int		GetHorseDX()		{ return c_aHorseStat[GetHorseLevel()].iDX; }
@@ -95,9 +102,10 @@ class CHorseRider
 		friend EVENTFUNC(horse_stamina_regen_event);
 		friend EVENTFUNC(horse_stamina_consume_event);
 		friend ACMD(do_horse_set_stat);
-// #ifdef ENABLE_NEWSTUFF
-		// friend int horse_set_stat0(lua_State* L);
-// #endif
+#ifdef ENABLE_NEWSTUFF
+		friend ALUA(quest::horse_set_stat0);
+#endif
 };
 
 #endif
+//martysama0134's 2022
