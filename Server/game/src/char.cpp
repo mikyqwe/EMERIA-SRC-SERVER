@@ -7198,13 +7198,13 @@ void CHARACTER::SetQuestFlag(const std::string& flag, int value)
 
 void CHARACTER::DetermineDropMetinStone()
 {
-#ifdef ENABLE_NEWSTUFF
-	if (g_NoDropMetinStone)
-	{
-		m_dwDropMetinStone = 0;
-		return;
-	}
-#endif
+// #ifdef ENABLE_NEWSTUFF
+	// if (g_NoDropMetinStone)
+	// {
+		// m_dwDropMetinStone = 0;
+		// return;
+	// }
+// #endif
 
 	static const DWORD c_adwMetin[] =
 	{
