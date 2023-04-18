@@ -1292,7 +1292,7 @@ typedef struct packet_item_set
 	BYTE	header;
 	TItemPos Cell;
 	DWORD	vnum;
-	WORD	count;
+	DWORD	count;
 	DWORD	flags;
 	DWORD	anti_flags;
 	bool	highlight;
