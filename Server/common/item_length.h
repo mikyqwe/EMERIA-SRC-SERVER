@@ -97,6 +97,8 @@ enum EItemTypes
 	ITEM_SECONDARY_COIN,
 	ITEM_RING,
 	ITEM_BELT,
+	ITEM_TOGGLE,
+	ITEM_PET,
 };
 
 enum EMetinSubTypes

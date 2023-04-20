@@ -18,8 +18,6 @@
 #include <unordered_map>
 #include <chrono>
 
-#define ENABLE_PROTO_FROM_DB
-
 class CPlayerTableCache;
 class CItemCache;
 class CItemPriceListTableCache;

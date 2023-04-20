@@ -67,7 +67,7 @@ endif
 # PROJECT_OBJ_FILES END
 
 # Target Paths
-MAIN_TARGET = $(BINDIR)/db_r$(DB_VERSION)
+MAIN_TARGET = $(BINDIR)/db
 
 default: $(MAIN_TARGET)
 
