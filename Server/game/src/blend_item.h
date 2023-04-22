@@ -17,4 +17,4 @@ bool	Blend_Item_set_value(LPITEM item);
 bool	Blend_Item_find(DWORD item_vnum);
 
 #endif	/* _blend_item_h_ */
-//martysama0134's 2022
+

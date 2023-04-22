@@ -71,3 +71,14 @@ enum eCommonDefines {
 
 #endif
 //martysama0134's 2022
+
+
+//Robert
+#define __ITEM_SOCKET5__
+#define __EXTENDED_BLEND__
+#define __NEW_BLEND_AFFECT__ // New blend affect
+#ifdef __NEW_BLEND_AFFECT__
+#define __EXTENDED_BLEND_AFFECT__ // Extended blend affect
+#endif
+//Robert
+

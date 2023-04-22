@@ -26,15 +26,15 @@ struct SCubeMaterialInfo
 		bHaveComplicateMaterial = false;
 	};
 
-	CUBE_RENEWAL_VALUE			reward;							// º¸»ó?? ¹¹³?
-	TCubeValueVector	material;						// ?ç·áµé?º ¹¹³?
-	DWORD				gold;							// µ·?º ¾ó¸¶µå³?
+	CUBE_RENEWAL_VALUE			reward;
+	TCubeValueVector	material;
+	DWORD				gold;
 	int 				percent;
 	std::string		category;
-	TCubeValueVector	complicateMaterial;				// º¹?â??-_- ?ç·áµé
+	TCubeValueVector	complicateMaterial;
 
-	std::string			infoText;		
-	bool				bHaveComplicateMaterial;		//
+	std::string			infoText;
+	bool				bHaveComplicateMaterial;
 };
 
 struct SItemNameAndLevel
@@ -46,8 +46,8 @@ struct SItemNameAndLevel
 };
 
 
-typedef std::vector<SCubeMaterialInfo>								TCubeResultList;
-typedef boost::unordered_map<DWORD, TCubeResultList>				TCubeMapByNPC;				// °¢°¢?? NPCº°·? ¾î¶² °? ¸¸µé ¼ö ??°í ?ç·á°¡ ¹º?ö...
+typedef std::vector<SCubeMaterialInfo>	TCubeResultList;
+typedef boost::unordered_map<DWORD, TCubeResultList>	TCubeMapByNPC;
 
 TCubeMapByNPC cube_info_map;
 
@@ -173,7 +173,7 @@ bool Cube_load (const char *file)
 		// set value1, value2
 		if ((v = strtok(NULL, delim)))
 			str_to_number(value1, v);
-		    value_string = v;
+		value_string = v;
 
 		if ((v = strtok(NULL, delim)))
 			str_to_number(value2, v);
@@ -213,7 +213,6 @@ bool Cube_load (const char *file)
 
 		else TOKEN("gold")
 		{
-			// ?¦?¶¿¡ ??¿ä?? ±?¾?
 			cube_data->gold = value1;
 		}
 		else TOKEN("end")
@@ -345,7 +344,6 @@ void Cube_open (LPCHARACTER ch)
 	SendDateCubeRenewalPackets(ch,CUBE_RENEWAL_SUB_HEADER_OPEN_RECEIVE);
 
 	ch->SetCubeNpc(npc);
-	
 }
 
 void Cube_close(LPCHARACTER ch)
@@ -602,7 +600,8 @@ void SendDateCubeRenewalPackets(LPCHARACTER ch, BYTE subheader, DWORD npcVNUM)
 			d->Packet(&pack, sizeof(pack));
 		}
 	}
-	else{
+	else
+	{
 
 		LPDESC d = ch->GetDesc();
 

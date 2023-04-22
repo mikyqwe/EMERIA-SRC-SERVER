@@ -14,6 +14,10 @@ typedef struct SItemAward
     DWORD	dwSocket0;
     DWORD	dwSocket1;
     DWORD	dwSocket2;
+    DWORD	dwSocket3;
+    DWORD	dwSocket4;
+    DWORD	dwSocket5;
+    DWORD	dwSocket6;
     char	szWhy[ITEM_AWARD_WHY_MAX_LEN+1];
     bool	bTaken;
     bool	bMall;

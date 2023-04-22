@@ -117,6 +117,8 @@ CNewPetActor::CNewPetActor(LPCHARACTER owner, DWORD vnum, DWORD options)
 	m_dwskillslot[0] = -1;
 	m_dwskillslot[0] = -1;
 	m_dwskillslot[0] = -1;
+	
+	
 
 	for (int x = 0; x < 3; ++x) //Inizializzazione bonus del pet
 	{

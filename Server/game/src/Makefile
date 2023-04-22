@@ -1,4 +1,4 @@
-CXX = g++10
+CXX = ccache g++10
 
 GAME_VERSION := $(shell cat ../../__REVISION__)
 
@@ -166,7 +166,7 @@ endif
 # PROJECT_OBJ_FILES END
 
 # Target Paths
-MAIN_TARGET = $(BINDIR)/game_r$(GAME_VERSION)
+MAIN_TARGET = $(BINDIR)/game
 
 default: $(MAIN_TARGET)
 test: $(TEST_TARGET)

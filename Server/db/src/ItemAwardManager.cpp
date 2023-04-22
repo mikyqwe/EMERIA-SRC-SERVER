@@ -20,7 +20,7 @@ ItemAwardManager::~ItemAwardManager()
 void ItemAwardManager::RequestLoad()
 {
 	char szQuery[QUERY_MAX_LEN];
-	snprintf(szQuery, sizeof(szQuery), "SELECT id,login,vnum,count,socket0,socket1,socket2,mall,why FROM item_award WHERE taken_time IS NULL and id > %d", g_dwLastCachedItemAwardID);
+	snprintf(szQuery, sizeof(szQuery), "SELECT id,login,vnum,count,socket0,socket1,socket2,socket3, socket4, socket5, socket6, mall,why FROM item_award WHERE taken_time IS NULL and id > %d", g_dwLastCachedItemAwardID);
 	CDBManager::instance().ReturnQuery(szQuery, QID_ITEM_AWARD_LOAD, 0, NULL);
 }
 
@@ -49,6 +49,10 @@ void ItemAwardManager::Load(SQLMsg * pMsg)
 		str_to_number(kData->dwSocket0, row[col++]);
 		str_to_number(kData->dwSocket1, row[col++]);
 		str_to_number(kData->dwSocket2, row[col++]);
+		str_to_number(kData->dwSocket3, row[col++]);
+		str_to_number(kData->dwSocket4, row[col++]);
+		str_to_number(kData->dwSocket5, row[col++]);
+		str_to_number(kData->dwSocket6, row[col++]);
 		str_to_number(kData->bMall, row[col++]);
 
 		if (row[col])

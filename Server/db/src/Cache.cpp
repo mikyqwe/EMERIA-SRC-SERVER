@@ -78,9 +78,9 @@ void CItemCache::OnFlush()
 		if (memcmp(aAttr, p->aAttr, sizeof(TPlayerItemAttribute) * ITEM_ATTRIBUTE_MAX_NUM))
 			isAttr = true;
 
-		char szColumns[QUERY_MAX_LEN];
-		char szValues[QUERY_MAX_LEN];
-		char szUpdate[QUERY_MAX_LEN];
+		char szColumns[QUERY_MAX_LEN + QUERY_MAX_LEN];
+		char szValues[QUERY_MAX_LEN + QUERY_MAX_LEN];
+		char szUpdate[QUERY_MAX_LEN + QUERY_MAX_LEN];
 
 		int iLen = snprintf(szColumns, sizeof(szColumns), "id, owner_id, `window`, pos, count, vnum");
 
@@ -92,11 +92,11 @@ void CItemCache::OnFlush()
 
 		if (isSocket)
 		{
-			iLen += snprintf(szColumns + iLen, sizeof(szColumns) - iLen, ", socket0, socket1, socket2");
+			iLen += snprintf(szColumns + iLen, sizeof(szColumns) - iLen, ", socket0, socket1, socket2, socket3, socket4, socket5, socket6");
 			iValueLen += snprintf(szValues + iValueLen, sizeof(szValues) - iValueLen,
-					", %lu, %lu, %lu", p->alSockets[0], p->alSockets[1], p->alSockets[2]);
+				", %lu, %lu, %lu, %lu, %lu, %lu, %lu", p->alSockets[0], p->alSockets[1], p->alSockets[2], p->alSockets[3], p->alSockets[4], p->alSockets[5], p->alSockets[6]);
 			iUpdateLen += snprintf(szUpdate + iUpdateLen, sizeof(szUpdate) - iUpdateLen,
-					", socket0=%lu, socket1=%lu, socket2=%lu", p->alSockets[0], p->alSockets[1], p->alSockets[2]);
+				", socket0=%lu, socket1=%lu, socket2=%lu, socket3=%lu, socket4=%lu, socket5=%lu, socket6=%lu", p->alSockets[0], p->alSockets[1], p->alSockets[2], p->alSockets[3], p->alSockets[4], p->alSockets[5], p->alSockets[6]);
 		}
 
 		if (isAttr)

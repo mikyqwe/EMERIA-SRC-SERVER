@@ -2524,6 +2524,11 @@ protected:
 		bool		bAFisWarping;
 #endif
 
+#ifdef __EXTENDED_BLEND_AFFECT__
+	bool			UseExtendedBlendAffect(LPITEM item, int affect_type, int apply_type, int apply_value, int apply_duration);
+	bool			SetBlendAffect(LPITEM item);
+#endif
+
 };
 
 ESex GET_SEX(LPCHARACTER ch);

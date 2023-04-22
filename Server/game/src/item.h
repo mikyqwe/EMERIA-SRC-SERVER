@@ -368,6 +368,17 @@ class CItem : public CEntity
 			return (int32_t)ret;
 		}
 #endif
+
+#ifdef __EXTENDED_BLEND__
+public:
+	bool IsBlendItem() { return GetType() == ITEM_BLEND; }
+	void StartBlendExpireEvent();
+	void StopBlendExpireEvent();
+	void ResetBlendExpireEvent() { m_pkBlendUseEvent = nullptr; }
+private:
+	LPEVENT m_pkBlendUseEvent;
+#endif
+
 };
 
 EVENTINFO(item_event_info)

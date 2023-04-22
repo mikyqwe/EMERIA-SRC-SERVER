@@ -58,6 +58,12 @@ bool CreateItemTableFromRes(MYSQL_RES * res, std::vector<TPlayerItem> * pVec, DW
 		str_to_number(item.alSockets[1], row[cur++]);
 		str_to_number(item.alSockets[2], row[cur++]);
 
+		str_to_number(item.alSockets[3], row[cur++]);
+		str_to_number(item.alSockets[4], row[cur++]);
+		str_to_number(item.alSockets[5], row[cur++]);
+
+		str_to_number(item.alSockets[6], row[cur++]);
+
 		for (int j = 0; j < ITEM_ATTRIBUTE_MAX_NUM; j++)
 		{
 #ifndef __FROZENBONUS_SYSTEM__
@@ -346,7 +352,7 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 		else
 		{
 			snprintf(szQuery, sizeof(szQuery),
-					"SELECT id,`window`+0,pos,count,vnum,socket0,socket1,socket2,attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
+					"SELECT id,`window`+0,pos,count,vnum,socket0,socket1,socket2,socket3,socket4,socket5,socket6,attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
 					"FROM item%s WHERE owner_id=%d AND (`window` in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY','SWITCHBOT','CHANGE_EQUIP','GROUND'))",
 					GetTablePostfix(), pTab->id);
 
@@ -406,7 +412,7 @@ void CClientManager::QUERY_PLAYER_LOAD(CPeer * peer, DWORD dwHandle, TPlayerLoad
 
 		//--------------------------------------------------------------
 		snprintf(queryStr, sizeof(queryStr),
-				"SELECT id,`window`+0,pos,count,vnum,socket0,socket1,socket2,attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
+				"SELECT id,`window`+0,pos,count,vnum,socket0,socket1,socket2,socket3,socket4,socket5,socket6,attrtype0,attrvalue0,attrfrozen0,attrtype1,attrvalue1,attrfrozen1,attrtype2,attrvalue2,attrfrozen2,attrtype3,attrvalue3,attrfrozen3,attrtype4,attrvalue4,attrfrozen4,attrtype5,attrvalue5,attrfrozen5,attrtype6,attrvalue6,attrfrozen6 "
 				"FROM item%s WHERE owner_id=%d AND (`window` in ('INVENTORY','EQUIPMENT','DRAGON_SOUL_INVENTORY','SKILLBOOK_INVENTORY','UPPITEM_INVENTORY','GHOSTSTONE_INVENTORY','GENERAL_INVENTORY','BELT_INVENTORY','SWITCHBOT','CHANGE_EQUIP','GROUND'))",
 				GetTablePostfix(), packet->player_id);
 		CDBManager::instance().ReturnQuery(queryStr, QID_ITEM, peer->GetHandle(), new ClientHandleInfo(dwHandle, packet->player_id));

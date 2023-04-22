@@ -6390,34 +6390,98 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 			}
 			break;
 
-		case ITEM_BLEND:
+	case ITEM_BLEND:
+		sys_log(0, "ITEM_BLEND!!");
 
-			sys_log(0,"ITEM_BLEND!!");
-			if (Blend_Item_find(item->GetVnum()))
+		if (Blend_Item_find(item->GetVnum()))
+		{
+			int affect_type = AFFECT_BLEND;
+			int apply_type = aApplyInfo[item->GetSocket(0)].bPointType;
+			int apply_value = item->GetSocket(1);
+			int apply_duration = item->GetSocket(2);
+
+#if defined(__EXTENDED_BLEND__) && defined(__ITEM_SOCKET5__)
+			if (CItemVnumHelper::IsExtendedBlend(item->GetVnum()) == true)
 			{
-				int		affect_type		= AFFECT_BLEND;
-				int		apply_type		= aApplyInfo[item->GetSocket(0)].bPointType;
-				int		apply_value		= item->GetSocket(1);
-				int		apply_duration	= item->GetSocket(2);
-
-				if (FindAffect(affect_type, apply_type))
+				if ((apply_duration != 0) && UseExtendedBlendAffect(item, affect_type, apply_type, apply_value, apply_duration))
 				{
-					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("이미 효과가 걸려 있습니다."));
+					item->Lock(true);
+					item->SetSocket(3, true);
+					item->StartBlendExpireEvent();
 				}
 				else
 				{
-					if (FindAffect(AFFECT_EXP_BONUS_EURO_FREE, POINT_RESIST_MAGIC))
-					{
-						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("이미 효과가 걸려 있습니다."));
-					}
-					else
+					item->Lock(false);
+					item->SetSocket(3, false);
+					item->StopBlendExpireEvent();
+				}
+			}
+			else
+			{
+
+				if (item->GetSocket(0) >= _countof(aApplyInfo))
+				{
+					sys_err("INVALID BLEND ITEM(id : %d, vnum : %d). APPLY TYPE IS %d.", item->GetID(), item->GetVnum(), item->GetSocket(0));
+					return false;
+				}
+
+				if (FindAffect(affect_type, apply_type))
+				{
+					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				}
+				else
+				{
+#ifdef __NEW_BLEND_AFFECT__
+					if (SetBlendAffect(item))
 					{
 						AddAffect(affect_type, apply_type, apply_value, 0, apply_duration, 0, false);
 						item->SetCount(item->GetCount() - 1);
 					}
+					else
+						return false;
+#else
+					AddAffect(affect_type, apply_type, apply_value, 0, apply_duration, 0, false);
+					item->SetCount(item->GetCount() - 1);
+#endif
 				}
 			}
-			break;
+#else
+			if (item->GetSocket(0) >= _countof(aApplyInfo))
+			{
+				sys_err("INVALID BLEND ITEM(id : %d, vnum : %d). APPLY TYPE IS %d.", item->GetID(), item->GetVnum(), item->GetSocket(0));
+				return false;
+			}
+
+			if (FindAffect(affect_type, apply_type))
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+			}
+			else
+			{
+				if (FindAffect(AFFECT_EXP_BONUS_EURO_FREE, POINT_RESIST_MAGIC))
+				{
+					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				}
+				else
+				{
+#ifdef __NEW_BLEND_AFFECT__
+					if (SetBlendAffect(item))
+					{
+						AddAffect(affect_type, apply_type, apply_value, 0, apply_duration, 0, false);
+						item->SetCount(item->GetCount() - 1);
+					}
+					else
+						return false;
+#else
+					AddAffect(affect_type, apply_type, apply_value, 0, apply_duration, 0, false);
+					item->SetCount(item->GetCount() - 1);
+#endif
+				}
+			}
+#endif
+		}
+		break;
+		
 		case ITEM_EXTRACT:
 			{
 				LPITEM pDestItem = GetItem(DestCell);
@@ -7674,6 +7738,13 @@ bool CHARACTER::MoveItem(TItemPos Cell, TItemPos DestCell, WORD count)
 #endif
 
 		LPITEM item2;
+
+		if ((item2 = GetItem(DestCell)) && item->GetVnum() == item2->GetVnum() && item->GetType() == ITEM_BLEND && item2->GetType() == ITEM_BLEND && item != item2 && item->GetSocket(1) == item2->GetSocket(1)) // Blend Robert
+		{
+			item2->SetSocket(2, item2->GetSocket(2) + item->GetSocket(2));
+			ITEM_MANAGER::instance().RemoveItem(item, "REMOVE (BLEND MOVE SUCCESS)");
+			return true;
+		}
 
 		if ((item2 = GetItem(DestCell)) && item != item2 && item2->IsStackable() &&
 				!IS_SET(item2->GetAntiFlag(), ITEM_ANTIFLAG_STACK) &&
@@ -10173,4 +10244,668 @@ bool CHARACTER::CanUnequipNow(const LPITEM item, const TItemPos& srcCell, const 
 
 	return true;
 }
+
+#ifdef __EXTENDED_BLEND__
+bool CHARACTER::UseExtendedBlendAffect(LPITEM item, int affect_type, int apply_type, int apply_value, int apply_duration)
+{
+	apply_duration = apply_duration <= 0 ? INFINITE_AFFECT_DURATION : apply_duration;
+	bool bStatus = item->GetSocket(3);
+
+	switch (item->GetVnum())
+	{
+	// DEWS
+	case 50821:
+	case 950821:
+	{
+		if (FindAffect(AFFECT_BLEND_POTION_1))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_BLEND_POTION_1);
+			return false;
+		}
+		AddAffect(AFFECT_BLEND_POTION_1, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 50822:
+	case 950822:
+	{
+		if (FindAffect(AFFECT_BLEND_POTION_2))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_BLEND_POTION_2);
+			return false;
+		}
+		AddAffect(AFFECT_BLEND_POTION_2, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 50823:
+	case 950823:
+	{
+		if (FindAffect(AFFECT_BLEND_POTION_3))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_BLEND_POTION_3);
+			return false;
+		}
+		AddAffect(AFFECT_BLEND_POTION_3, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 50824:
+	case 950824:
+	{
+		if (FindAffect(AFFECT_BLEND_POTION_4))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_BLEND_POTION_4);
+			return false;
+		}
+		if (FindAffect(AFFECT_EXP_BONUS_EURO_FREE, POINT_RESIST_MAGIC))
+		{
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+			return false;
+		}
+
+		AddAffect(AFFECT_BLEND_POTION_4, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 50825:
+	case 950825:
+	{
+		if (FindAffect(AFFECT_BLEND_POTION_5))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_BLEND_POTION_5);
+			return false;
+		}
+		AddAffect(AFFECT_BLEND_POTION_5, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 50826:
+	case 950826:
+	{
+		if (FindAffect(AFFECT_BLEND_POTION_6))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_BLEND_POTION_6);
+			return false;
+		}
+		AddAffect(AFFECT_BLEND_POTION_6, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	// END_OF_DEWS
+
+	// ENERGY_CRISTAL
+	case 51002:
+	case 951002:
+	{
+		if (FindAffect(AFFECT_ENERGY))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_ENERGY);
+			return false;
+		}
+		AddAffect(AFFECT_ENERGY, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	// END_OF_ENERGY_CRISTAL
+
+	// DRAGON_GOD_MEDALS
+	case 939017:
+	{
+		if (FindAffect(AFFECT_DRAGON_GOD_1))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_DRAGON_GOD_1);
+			return false;
+		}
+		AddAffect(AFFECT_DRAGON_GOD_1, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 939018:
+	{
+		if (FindAffect(AFFECT_DRAGON_GOD_2))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_DRAGON_GOD_2);
+			return false;
+		}
+		AddAffect(AFFECT_DRAGON_GOD_2, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 939019:
+	{
+		if (FindAffect(AFFECT_DRAGON_GOD_3))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_DRAGON_GOD_3);
+			return false;
+		}
+		AddAffect(AFFECT_DRAGON_GOD_3, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 939020:
+	{
+		if (FindAffect(AFFECT_DRAGON_GOD_4))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_DRAGON_GOD_4);
+			return false;
+		}
+		AddAffect(AFFECT_DRAGON_GOD_4, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	// END_OF_DRAGON_GOD_MEDALS
+
+	// CRITICAL_AND_PENETRATION
+	case 939024:
+	{
+		if (FindAffect(AFFECT_CRITICAL))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_CRITICAL);
+			return false;
+		}
+		AddAffect(AFFECT_CRITICAL, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 939025:
+	{
+		if (FindAffect(AFFECT_PENETRATE))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_PENETRATE);
+			return false;
+		}
+		AddAffect(AFFECT_PENETRATE, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	// END_OF_CRITICAL_AND_PENETRATION
+
+	// ATTACK_AND_MOVE_SPEED
+	case 927209:
+	{
+		if (FindAffect(AFFECT_ATTACK_SPEED))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_ATTACK_SPEED);
+			return false;
+		}
+		AddAffect(AFFECT_ATTACK_SPEED, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+	case 927212:
+	{
+		if (FindAffect(AFFECT_MOVE_SPEED))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_MOVE_SPEED);
+			return false;
+		}
+		AddAffect(AFFECT_MOVE_SPEED, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27863:
+	{
+		if (FindAffect(AFFECT_FISH_1))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_1);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_1, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27864:
+	{
+		if (FindAffect(AFFECT_FISH_2))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_2);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_2, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27865:
+	{
+		if (FindAffect(AFFECT_FISH_3))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_3);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_3, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27866:
+	{
+		if (FindAffect(AFFECT_FISH_4))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_4);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_4, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27867:
+	{
+		if (FindAffect(AFFECT_FISH_5))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_5);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_5, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27868:
+	{
+		if (FindAffect(AFFECT_FISH_6))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_6);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_6, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27869:
+	{
+		if (FindAffect(AFFECT_FISH_7))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_7);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_7, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27870:
+	{
+		if (FindAffect(AFFECT_FISH_8))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_8);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_8, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27871:
+	{
+		if (FindAffect(AFFECT_FISH_9))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_9);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_9, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27872:
+	{
+		if (FindAffect(AFFECT_FISH_10))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_10);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_10, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27873:
+	{
+		if (FindAffect(AFFECT_FISH_11))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_11);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_11, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27874:
+	{
+		if (FindAffect(AFFECT_FISH_12))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_12);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_12, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27875:
+	{
+		if (FindAffect(AFFECT_FISH_13))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_13);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_13, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27876:
+	{
+		if (FindAffect(AFFECT_FISH_14))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_14);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_14, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27877:
+	{
+		if (FindAffect(AFFECT_FISH_15))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_15);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_15, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+	case 27878:
+	{
+		if (FindAffect(AFFECT_FISH_16))
+		{
+			if (!bStatus)
+			{
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("Acest item este deja activ."));
+				return false;
+			}
+			RemoveAffect(AFFECT_FISH_16);
+			return false;
+		}
+		AddAffect(AFFECT_FISH_16, apply_type, apply_value, 0, apply_duration, 0, true);
+	}
+	break;
+
+
+
+
+	// END_OF_ATTACK_AND_MOVE_SPEED
+	}
+
+	return true;
+}
+#endif
+
+#ifdef __NEW_BLEND_AFFECT__
+bool CHARACTER::SetBlendAffect(LPITEM item)
+{
+	switch (item->GetVnum())
+	{
+	// Fishes
+	case 27863:
+		AddAffect(AFFECT_FISH_1, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27864:
+		AddAffect(AFFECT_FISH_2, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27865:
+		AddAffect(AFFECT_FISH_3, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27866:
+		AddAffect(AFFECT_FISH_4, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27867:
+		AddAffect(AFFECT_FISH_5, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27868:
+		AddAffect(AFFECT_FISH_6, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27869:
+		AddAffect(AFFECT_FISH_7, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27870:
+		AddAffect(AFFECT_FISH_8, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27871:
+		AddAffect(AFFECT_FISH_9, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27872:
+		AddAffect(AFFECT_FISH_10, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27873:
+		AddAffect(AFFECT_FISH_11, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27874:
+		AddAffect(AFFECT_FISH_12, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27875:
+		AddAffect(AFFECT_FISH_13, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27876:
+		AddAffect(AFFECT_FISH_14, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27877:
+		AddAffect(AFFECT_FISH_15, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 27878:
+		AddAffect(AFFECT_FISH_16, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+
+
+
+	// DEWS
+	case 50821:
+	case 950821:
+		AddAffect(AFFECT_BLEND_POTION_1, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+
+	case 50822:
+	case 950822:
+		AddAffect(AFFECT_BLEND_POTION_2, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+
+	case 50823:
+	case 950823:
+		AddAffect(AFFECT_BLEND_POTION_3, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+
+	case 50824:
+	case 950824:
+		AddAffect(AFFECT_BLEND_POTION_4, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+
+	case 50825:
+	case 950825:
+		AddAffect(AFFECT_BLEND_POTION_3, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+
+	case 50826:
+	case 950826:
+		AddAffect(AFFECT_BLEND_POTION_6, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	// END_OF_DEWS
+
+	// ENERGY_CRISTAL
+	case 51002:
+	case 951002:
+		AddAffect(AFFECT_ENERGY, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	// END_OF_ENERGY_CRISTAL
+
+	// DRAGON_GOD_MEDALS
+	case 939017:
+		AddAffect(AFFECT_DRAGON_GOD_1, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 939018:
+		AddAffect(AFFECT_DRAGON_GOD_2, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 939019:
+		AddAffect(AFFECT_DRAGON_GOD_3, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 939020:
+		AddAffect(AFFECT_DRAGON_GOD_4, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	// END_OF_DRAGON_GOD_MEDALS
+
+	// CRITICAL_AND_PENETRATION
+	case 939024:
+		AddAffect(AFFECT_CRITICAL, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 939025:
+		AddAffect(AFFECT_PENETRATE, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	// END_OF_CRITICAL_AND_PENETRATION
+
+	// ATTACK_AND_MOVE_SPEED
+	case 927209:
+		AddAffect(AFFECT_ATTACK_SPEED, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	case 927212:
+		AddAffect(AFFECT_MOVE_SPEED, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
+		break;
+	// END_OF_ATTACK_AND_MOVE_SPEED
+
+	default:
+		return false;
+	}
+
+	return true;
+}
+#endif
+
 //martysama0134's 2022

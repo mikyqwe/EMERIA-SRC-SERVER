@@ -31,6 +31,9 @@ CItem::CItem(DWORD dwVnum)
 	m_pkTimerBasedOnWearExpireEvent(NULL), m_pkRealTimeExpireEvent(NULL),
    	m_pkAccessorySocketExpireEvent(NULL), m_pkOwnershipEvent(NULL), m_dwOwnershipPID(0), m_bSkipSave(false), m_isLocked(false),
 	m_dwMaskVnum(0), m_dwSIGVnum (0)
+#ifdef __EXTENDED_BLEND__
+	, m_pkBlendUseEvent(NULL)
+#endif	
 {
 	memset( &m_alSockets, 0, sizeof(m_alSockets) );
 	memset( &m_aAttr, 0, sizeof(m_aAttr) );
@@ -64,6 +67,10 @@ void CItem::Initialize()
 
 	m_pkAccessorySocketExpireEvent = NULL;
 
+#ifdef __EXTENDED_BLEND__
+	m_pkBlendUseEvent = NULL;
+#endif
+
 	m_bSkipSave = false;
 	m_dwLastOwnerPID = 0;
 }
@@ -76,7 +83,9 @@ void CItem::Destroy()
 	event_cancel(&m_pkTimerBasedOnWearExpireEvent);
 	event_cancel(&m_pkRealTimeExpireEvent);
 	event_cancel(&m_pkAccessorySocketExpireEvent);
-
+#ifdef __EXTENDED_BLEND__
+	event_cancel(&m_pkBlendUseEvent);
+#endif
 	CEntity::Destroy();
 
 	if (GetSectree())
@@ -2373,6 +2382,17 @@ bool CItem::OnAfterCreatedItem()
 		}
 	}
 
+#if defined(__EXTENDED_BLEND__)
+	if (IsBlendItem())
+	{
+		if (GetSocket(3) > 0)
+		{
+			Lock(true);
+			StartBlendExpireEvent();
+		}
+	}
+#endif
+
 	return true;
 }
 
@@ -2398,53 +2418,7 @@ bool CItem::IsSkillBookItem()
 
 bool CItem::IsUpgradeItem()
 {
-	switch(GetVnum())
-	{
-		// Allowed Vnums:
-		case 27799: case 27987: case 27990: case 27992: case 27993:
-		case 27994: case 30003: case 30004: case 30005: case 30006:
-		case 30007: case 30008: case 30009: case 30010: case 30011:
-		case 30014: case 30015: case 30016: case 30017: case 30018:
-		case 30019: case 30021: case 30022: case 30023: case 30025:
-		case 30026: case 30029:
-		case 30027: case 30028: case 30030: case 30031: case 30032:
-		case 30033: case 30034: case 30035: case 30037: case 30038:
-		case 30039: case 30040: case 30041: case 30042: case 30045:
-		case 30046: case 30047: case 30048: case 30049: case 30050:
-		case 30051: case 30052: case 30053: case 30055: case 30056:
-		case 30057: case 30058: case 30059: case 30060: case 30061:
-		case 30067: case 30069: case 30070: case 30071: case 30072:
-		case 30073: case 30074: case 30075: case 30076: case 30077:
-		case 30078: case 30079: case 30080: case 30081: case 30082:
-		case 30083: case 30084: case 30085: case 30086: case 30087:
-		case 30088: case 30089: case 30090: case 30091: case 30092:
-		case 30192: case 30193: case 30194: case 30195: case 30196:
-		case 30197: case 30165: case 30199: case 30500: case 30501:
-		case 30502: case 30503: case 30504: case 30505: case 30506:
-		case 30507: case 30508: case 30509: case 30510: case 30511:
-		case 30512: case 30513: case 30514: case 30515: case 30516:
-		case 30517: case 30518: case 30519: case 30520: case 30521:
-		case 30522: case 30523: case 30524: case 30525: case 30550:
-		case 30600: case 30601: case 30602: case 30603: case 30604:
-		case 30605: case 30606: case 30607: case 30608: case 30609:
-		case 30610: case 30611: case 30612: case 30614: case 30615:
-		case 30616: case 30617: case 30618: case 30619: case 30620:
-		case 30621: case 30622: case 30623: case 30624: case 30625:
-		case 30626: case 30627: case 30628: case 30629: case 30630:
-		case 33029: case 33030: case 33031: case 51001: case 71123:
-		case 49990:	case 70027: case 30166: case 30168: case 30251:
-		case 71129: case 80019: case 500000: case 500001: case 500002:
-		case 30252: case 30137: case 70031: case 30167: case 30182:
-		case 30183: case 30188: case 72322: case 31036: case 39063: case 70102:
-		case 39064: case 39065: case 39066: case 39067: case 39068: case 39069:
-		case 70022: case 50121: case 39070: case 39071: case 39072: case 39073:
-		case 39074: case 39075: case 39076: case 39077: case 39078: case 39079: case 39080:
-		case 72064: case 72065: case 72066: case 72067: case 55001: case 50513: case 100300:
-		case 100400: case 100500: case 28527: case 31009: case 31002: case 50054:
-			return true;
-	}
-
-	return false;
+	return GetType() == ITEM_MATERIAL;
 }
 
 bool CItem::IsGhostStoneItem()
@@ -2464,7 +2438,10 @@ bool CItem::IsGeneralItem()
 		return false;
 	
 	if (GetVnum() == 71151)
-		return false;	
+		return false;
+	
+	if (GetType() == ITEM_GIFTBOX)
+		return true;
 
 	return ((GetType() == ITEM_USE && GetSubType() == USE_CHANGE_ATTRIBUTE) ||
 			(GetType() == ITEM_USE && GetSubType() == USE_ADD_ATTRIBUTE) ||
@@ -2647,4 +2624,69 @@ const char * CItem::GetName()
 	return szItemName;
 }
 #endif
+
+
+#ifdef __EXTENDED_BLEND__
+EVENTFUNC(blend_use_expire_event)
+{
+	item_event_info* info = dynamic_cast<item_event_info*>(event->info);
+
+	if (info == NULL)
+	{
+		sys_err("expire_event <Factor> Null pointer");
+		return 0;
+	}
+
+	LPITEM pkItem = info->item;
+	int remain_time = pkItem->GetSocket(2) - processing_time/passes_per_sec;
+	if (remain_time <= 0)
+	{
+		pkItem->SetSocket(2, 0);
+		pkItem->SetSocket(3, false);
+		pkItem->Lock(false);
+		pkItem->ResetBlendExpireEvent();
+		ITEM_MANAGER::instance().RemoveItem(pkItem, "BLEND_USE_EXPIRE");
+		return 0;
+	}
+
+	pkItem->SetSocket(2, remain_time);
+	return PASSES_PER_SEC (MIN (1, remain_time));
+}
+
+void CItem::StartBlendExpireEvent()
+{
+	if (m_pkBlendUseEvent)
+		return;
+
+	if (IsRealTimeItem())
+		return;
+
+	if (!IsBlendItem())
+		return;
+
+	int iSec = GetSocket(2);
+
+	if (iSec >= 8640000)
+		return;
+
+	item_event_info* info = AllocEventInfo<item_event_info>();
+	info->item = this;
+
+	m_pkBlendUseEvent = event_create(blend_use_expire_event, info, PASSES_PER_SEC(1));
+}
+
+void CItem::StopBlendExpireEvent()
+{
+	if (!m_pkBlendUseEvent)
+		return;
+
+	const int remain_time = GetSocket(2) - event_processing_time(m_pkBlendUseEvent) / passes_per_sec;
+
+	SetSocket(2, remain_time);
+	event_cancel(&m_pkBlendUseEvent);
+}
+#endif
+
 //martysama0134's 2022
+
+

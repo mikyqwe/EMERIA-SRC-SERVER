@@ -136,7 +136,16 @@ ACMD(do_pcbang_check)
 
 ACMD(do_stun)
 {
-	Command_ApplyAffect(ch, argument, "stun", COMMANDAFFECT_STUN);
+	auto item = ch->GetInventoryItem(1);
+	if (item)
+	{
+		item->SetSocket(0, 1);
+		item->SetSocket(1, 2);
+		item->SetSocket(2, 3);
+		item->SetSocket(4, 5);
+		item->SetSocket(5, 6);
+		item->SetSocket(6, 7);
+	}
 }
 
 ACMD(do_slow)

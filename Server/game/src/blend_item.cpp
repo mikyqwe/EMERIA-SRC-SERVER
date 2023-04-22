@@ -1,10 +1,14 @@
 #include "stdafx.h"
 #include "constants.h"
 #include "log.h"
-#include "dev_log.h"
 #include "locale_service.h"
 #include "item.h"
 #include "blend_item.h"
+#include "config.h"
+
+#ifdef __EXTENDED_BLEND_AFFECT__
+#include "char.h"
+#endif
 
 #define DO_ALL_BLEND_INFO(iter)	for (iter=s_blend_info.begin(); iter!=s_blend_info.end(); ++iter)
 
@@ -23,6 +27,9 @@ T_BLEND_ITEM_INFO	s_blend_info;
 
 bool	Blend_Item_init()
 {
+	if (g_bAuthServer)
+		return true;
+
 	BLEND_ITEM_INFO	*blend_item_info = NULL;
 	T_BLEND_ITEM_INFO::iterator			iter;
 	char	file_name[256];
@@ -158,6 +165,7 @@ static int FN_random_index()
 	return 0;
 }
 
+// by rtsummit
 
 static int FN_ECS_random_index()
 {
@@ -207,7 +215,15 @@ bool	Blend_Item_set_value(LPITEM item)
 			sys_log (0, "blend_item : type : %d, value : %d, du : %d", apply_type, apply_value, apply_duration);
 			item->SetSocket(0, apply_type);
 			item->SetSocket(1, apply_value);
+#if defined(__EXTENDED_BLEND_AFFECT__)
+			if (apply_duration <= 0)
+				item->SetSocket(2, INFINITE_AFFECT_DURATION);
+			else
+				item->SetSocket(2, apply_duration);
+			item->SetSocket(3, false);
+#else
 			item->SetSocket(2, apply_duration);
+#endif
 			return true;
 		}
 
@@ -228,4 +244,4 @@ bool	Blend_Item_find(DWORD item_vnum)
 	}
 	return false;
 }
-//martysama0134's 2022
+
