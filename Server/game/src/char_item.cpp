@@ -3107,18 +3107,6 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 		case ITEM_GIFTBOX:
 			{
-#ifdef ENABLE_NEWSTUFF
-				if (0 != g_BoxUseTimeLimitValue)
-				{
-					if (get_dword_time() < m_dwLastBoxUseTime+g_BoxUseTimeLimitValue)
-					{
-						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("아직 골드를 버릴 수 없습니다."));
-						return false;
-					}
-				}
-
-				m_dwLastBoxUseTime = get_dword_time();
-#endif
 				DWORD dwBoxVnum = item->GetVnum();
 				std::vector <DWORD> dwVnums;
 				std::vector <DWORD> dwCounts;
