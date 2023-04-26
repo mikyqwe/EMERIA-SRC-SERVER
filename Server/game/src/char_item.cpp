@@ -7739,7 +7739,10 @@ bool CHARACTER::MoveItem(TItemPos Cell, TItemPos DestCell, WORD count)
 
 		LPITEM item2;
 
-		if ((item2 = GetItem(DestCell)) && item->GetVnum() == item2->GetVnum() && item->GetType() == ITEM_BLEND && item2->GetType() == ITEM_BLEND && item != item2 && item->GetSocket(1) == item2->GetSocket(1)) // Blend Robert
+		std::vector<DWORD> permanentBlend = {950821, 950822};
+		bool isPermamentBlend = std::find(permanentBlend.begin(), permanentBlend.end(), item->GetVnum()) != permanentBlend.end();
+
+		if ((item2 = GetItem(DestCell)) && item->GetVnum() == item2->GetVnum() && item->GetType() == ITEM_BLEND && item2->GetType() == ITEM_BLEND && item != item2 && item->GetSocket(1) == item2->GetSocket(1) && !isPermamentBlend);
 		{
 			item2->SetSocket(2, item2->GetSocket(2) + item->GetSocket(2));
 			ITEM_MANAGER::instance().RemoveItem(item, "REMOVE (BLEND MOVE SUCCESS)");
