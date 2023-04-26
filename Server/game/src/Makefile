@@ -166,7 +166,7 @@ endif
 # PROJECT_OBJ_FILES END
 
 # Target Paths
-MAIN_TARGET = $(BINDIR)/game
+MAIN_TARGET = $(BINDIR)/game_release
 
 default: $(MAIN_TARGET)
 test: $(TEST_TARGET)
