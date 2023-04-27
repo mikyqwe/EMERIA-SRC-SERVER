@@ -56,7 +56,7 @@ CPPFILE = Config.cpp NetBase.cpp Peer.cpp PeerBase.cpp Main.cpp Lock.cpp DBManag
 		  ClientManagerBoot.cpp ClientManagerParty.cpp ClientManagerGuild.cpp GuildManager.cpp HB.cpp \
 		  PrivManager.cpp MoneyLog.cpp ItemAwardManager.cpp ClientManagerEventFlag.cpp Marriage.cpp \
 		  Monarch.cpp BlockCountry.cpp ItemIDRangeManager.cpp ClientManagerHorseName.cpp version.cpp \
-		  ProtoReader.cpp CsvReader.cpp ClientManagerOfflineShop.cpp OfflineshopCache.cpp
+		  ProtoReader.cpp CsvReader.cpp ClientManagerOfflineshop.cpp OfflineshopCache.cpp
 # PROJECT_SRC_FILES END
 
 # PROJECT_OBJ_FILES BEGIN

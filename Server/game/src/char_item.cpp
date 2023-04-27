@@ -7727,7 +7727,7 @@ bool CHARACTER::MoveItem(TItemPos Cell, TItemPos DestCell, WORD count)
 
 		LPITEM item2;
 
-		std::vector<DWORD> permanentBlend = {950821, 950822};
+		std::vector<DWORD> permanentBlend = {950821, 950822, 950823, 950824, 950825, 950826,951002, 939017, 939018, 939019, 939020, 939024, 939025, 927209, 927212};
 		bool isPermamentBlend = std::find(permanentBlend.begin(), permanentBlend.end(), item->GetVnum()) != permanentBlend.end();
 
 		if ((item2 = GetItem(DestCell)) && item->GetVnum() == item2->GetVnum() && item->GetType() == ITEM_BLEND && item2->GetType() == ITEM_BLEND && item != item2 && item->GetSocket(1) == item2->GetSocket(1) && !isPermamentBlend);
