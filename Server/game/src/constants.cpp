@@ -775,31 +775,12 @@ const TApplyInfo aApplyInfo[MAX_APPLY_NUM] =
 	{ POINT_RESIST_CRITICAL,		},   // APPLY_ANTI_CRITICAL_PCT,	90
 	{ POINT_RESIST_PENETRATE,		},   // APPLY_ANTI_PENETRATE_PCT,	91
 
-#ifdef ENABLE_WOLFMAN_CHARACTER
-	{ POINT_BLEEDING_REDUCE,		},	// APPLY_BLEEDING_REDUCE, 		92
-	{ POINT_BLEEDING_PCT,			},	// APPLY_BLEEDING_PCT, 			93
-	{ POINT_ATTBONUS_WOLFMAN,		},
-	{ POINT_RESIST_WOLFMAN,			},
-	{ POINT_RESIST_CLAW,			},
-#else
-	{ POINT_NONE,					},	// APPLY_BLEEDING_REDUCE, 		92
-	{ POINT_NONE,					},	// APPLY_BLEEDING_PCT, 			93
-	{ POINT_NONE,					},
-	{ POINT_NONE,					},
-	{ POINT_NONE,					},
-#endif
+	{ POINT_MONSTER_RESISTANCE,},
+	{ POINT_DEMI_HUMAN_RESISTANCE,},
 
-#ifdef ENABLE_ACCE_COSTUME_SYSTEM
-	{ POINT_ACCEDRAIN_RATE,			},	// APPLY_ACCEDRAIN_RATE,		97
-#else
-	{ POINT_NONE,			},	// APPLY_ACCEDRAIN_RATE,		97
-#endif
+	{ POINT_ATTBONUS_BOSS,},
+	{ POINT_ATTBONUS_METIN,},
 
-#ifdef ENABLE_MAGIC_REDUCTION_SYSTEM
-	{ POINT_RESIST_MAGIC_REDUCTION,	},	// APPLY_RESIST_MAGIC_REDUCTION,98
-#else
-	{ POINT_NONE,					},	// APPLY_RESIST_MAGIC_REDUCTION,98
-#endif
 };
 
 const int aiItemMagicAttributePercentHigh[ITEM_ATTRIBUTE_MAX_LEVEL] =
@@ -975,19 +956,19 @@ const SStoneDropInfo aStoneDrop[STONE_INFO_MAX_NUM] =
 
 const char * c_apszEmpireNames[EMPIRE_MAX_NUM] =
 {
-	"ÀüÁ¦±¹",
-	"½Å¼ö±¹",
-	"ÃµÁ¶±¹",
-	"Áø³ë±¹"
+	"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+	"ï¿½Å¼ï¿½ï¿½ï¿½",
+	"Ãµï¿½ï¿½ï¿½ï¿½",
+	"ï¿½ï¿½ï¿½ë±¹"
 };
 
 const char * c_apszPrivNames[MAX_PRIV_NUM] =
 {
 	"",
-	"¾ÆÀÌÅÛÀÌ ³ª¿Ã È®·ü",
-	"µ·ÀÌ ³ª¿Ã È®·ü",
-	"µ· ´ë¹ÚÀÌ ³ª¿Ã È®·ü",
-	"°æÇèÄ¡ ¹èÀ²",
+	"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½",
+	"ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½",
+	"ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½",
+	"ï¿½ï¿½ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½",
 };
 
 const int aiPolymorphPowerByLevel[SKILL_MAX_LEVEL + 1] =
