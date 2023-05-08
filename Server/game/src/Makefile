@@ -30,7 +30,7 @@ endif
 LIBS = -lm -lmd
 
 # Project Flags
-CFLAGS  = -m32 -g3 -Wall -O0 -pipe -fexceptions -fno-strict-aliasing -pthread -D_THREAD_SAFE
+CFLAGS  = -m32 -g3 -Wall -O0 -pipe -fexceptions -fno-strict-aliasing -pthread -D_THREAD_SAFE -DNDEBUG
 CFLAGS += -Wno-deprecated-declarations -Wno-nonnull-compare -Wno-deprecated-declarations -Wno-array-bounds -Wno-address
 CFLAGS += -Wno-int-in-bool-context -Wno-format-truncation -Wno-stringop-truncation -Wno-sign-compare
 CXXFLAGS = -std=c++20 -Wl,-rpath=/usr/local/lib/gcc10
