@@ -6351,7 +6351,6 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 						else
 						{
 							ChatPacket(CHAT_TYPE_INFO, LC_TEXT("메틴석 부착에 실패하였습니다."));
-							item2->SetSocket(i, ITEM_BROKEN_METIN_VNUM);
 						}
 
 						LogManager::instance().ItemLog(this, item2, "SOCKET", item->GetName());
