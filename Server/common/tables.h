@@ -387,9 +387,6 @@ typedef struct TPlayerItemAttribute
 {
 	BYTE	bType;
 	short	sValue;
-#ifdef __FROZENBONUS_SYSTEM__
-	bool isFrozen;
-#endif
 } TPlayerItemAttribute;
 
 #ifdef M2S_BIO_SYSTEM

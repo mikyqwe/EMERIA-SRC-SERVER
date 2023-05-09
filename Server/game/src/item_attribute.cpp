@@ -270,15 +270,8 @@ void CItem::ClearAttribute()
 {
 	for (int i = 0; i < MAX_NORM_ATTR_NUM; ++i)
 	{
-#ifndef __FROZENBONUS_SYSTEM__
 		m_aAttr[i].bType = 0;
 		m_aAttr[i].sValue = 0;
-#else
-		if (!m_aAttr[i].isFrozen) {
-			m_aAttr[i].bType = 0;
-			m_aAttr[i].sValue = 0;
-		}
-#endif
 	}
 }
 
@@ -323,10 +316,6 @@ bool CItem::RemoveAttributeAt(int index)
 bool CItem::RemoveAttributeType(BYTE bType)
 {
 	int index = FindAttribute(bType);
-#ifdef __FROZENBONUS_SYSTEM__
-	if (index != -1 && m_aAttr[index].isFrozen)
-		return false;
-#endif // __FROZENBONUS_SYSTEM__	
 	
 	return index != -1 && RemoveAttributeType(index);
 }
@@ -341,10 +330,6 @@ void CItem::SetAttribute(int i, BYTE bType, short sValue)
 {
 	assert(i < MAX_NORM_ATTR_NUM);
 
-#ifdef __FROZENBONUS_SYSTEM__
-	if (m_aAttr[i].isFrozen)
-		return;
-#endif
 
 	m_aAttr[i].bType = bType;
 	m_aAttr[i].sValue = sValue;
@@ -365,11 +350,6 @@ void CItem::SetAttribute(int i, BYTE bType, short sValue)
 void CItem::SetForceAttribute(int i, BYTE bType, short sValue)
 {
 	assert(i < ITEM_ATTRIBUTE_MAX_NUM);
-
-#ifdef __FROZENBONUS_SYSTEM__
-	if (m_aAttr[i].isFrozen)
-		return;
-#endif
 
 	m_aAttr[i].bType = bType;
 	m_aAttr[i].sValue = sValue;

@@ -50,7 +50,6 @@
 #define ENABLE_NEW_DETAILS_GUI
 #define _QR_MS_
 #define __NEW_EXCHANGE_WINDOW__
-//#define __FROZENBONUS_SYSTEM__
 #define UNFROZEN_SASHES
 #define __DUNGEON_INFO_SYSTEM__
 #define ENABLE_UNLIMITED_ARGUMENT  // for cmd argument unlimited

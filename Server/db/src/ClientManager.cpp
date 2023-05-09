@@ -696,7 +696,6 @@ void CClientManager::RESULT_SAFEBOX_LOAD(CPeer * pkPeer, SQLMsg * msg)
 		pi->pSafebox = pSafebox;
 
 		char szQuery[512];
-#ifndef __FROZENBONUS_SYSTEM__
 		snprintf(szQuery, sizeof(szQuery),
 				"SELECT id, window+0, pos, count, vnum, socket0, socket1, socket2, socket3, "
 
@@ -709,23 +708,6 @@ void CClientManager::RESULT_SAFEBOX_LOAD(CPeer * pkPeer, SQLMsg * msg)
 				"attrtype6, attrvalue6 "
 				"FROM item%s WHERE owner_id=%d AND window='%s'",
 				GetTablePostfix(), pi->account_id, pi->ip[0] == 0 ? "SAFEBOX" : "MALL");
-
-#else
-
-		snprintf(szQuery, sizeof(szQuery),
-			"SELECT id, window+0, pos, count, vnum, socket0, socket1, socket2, "
-
-			"attrtype0, attrvalue0, attrfrozen0, "
-			"attrtype1, attrvalue1, attrfrozen1, "
-			"attrtype2, attrvalue2, attrfrozen2, "
-			"attrtype3, attrvalue3, attrfrozen3, "
-			"attrtype4, attrvalue4, attrfrozen4, "
-			"attrtype5, attrvalue5, attrfrozen5, "
-			"attrtype6, attrvalue6, attrfrozen6 "
-			"FROM item%s WHERE owner_id=%d AND window='%s'",
-			GetTablePostfix(), pi->account_id, pi->ip[0] == 0 ? "SAFEBOX" : "MALL");
-
-#endif // !__FROZENBONUS_SYSTEM__
 
 		pi->account_index = 1;
 

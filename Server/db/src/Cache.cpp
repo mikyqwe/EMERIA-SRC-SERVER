@@ -101,8 +101,6 @@ void CItemCache::OnFlush()
 
 		if (isAttr)
 		{
-
-#ifndef __FROZENBONUS_SYSTEM__
 			iLen += snprintf(szColumns + iLen, sizeof(szColumns) - iLen,
 					", attrtype0, attrvalue0, attrtype1, attrvalue1, attrtype2, attrvalue2, attrtype3, attrvalue3"
 					", attrtype4, attrvalue4, attrtype5, attrvalue5, attrtype6, attrvalue6");
@@ -132,40 +130,6 @@ void CItemCache::OnFlush()
 					p->aAttr[4].bType, p->aAttr[4].sValue,
 					p->aAttr[5].bType, p->aAttr[5].sValue,
 					p->aAttr[6].bType, p->aAttr[6].sValue);
-
-#else
-
-			iLen += snprintf(szColumns + iLen, sizeof(szColumns) - iLen,
-				", attrtype0, attrvalue0, attrfrozen0, attrtype1, attrvalue1, attrfrozen1, attrtype2, attrvalue2, attrfrozen2, attrtype3, attrvalue3, attrfrozen3"
-				", attrtype4, attrvalue4, attrfrozen4, attrtype5, attrvalue5, attrfrozen5, attrtype6, attrvalue6, attrfrozen6");
-
-			iValueLen += snprintf(szValues + iValueLen, sizeof(szValues) - iValueLen,
-				", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",
-				p->aAttr[0].bType, p->aAttr[0].sValue, p->aAttr[0].isFrozen,
-				p->aAttr[1].bType, p->aAttr[1].sValue, p->aAttr[1].isFrozen,
-				p->aAttr[2].bType, p->aAttr[2].sValue, p->aAttr[2].isFrozen,
-				p->aAttr[3].bType, p->aAttr[3].sValue, p->aAttr[3].isFrozen,
-				p->aAttr[4].bType, p->aAttr[4].sValue, p->aAttr[4].isFrozen,
-				p->aAttr[5].bType, p->aAttr[5].sValue, p->aAttr[5].isFrozen,
-				p->aAttr[6].bType, p->aAttr[6].sValue, p->aAttr[6].isFrozen);
-
-			iUpdateLen += snprintf(szUpdate + iUpdateLen, sizeof(szUpdate) - iUpdateLen,
-				", attrtype0=%d, attrvalue0=%d, attrfrozen0=%d"
-				", attrtype1=%d, attrvalue1=%d, attrfrozen1=%d"
-				", attrtype2=%d, attrvalue2=%d, attrfrozen2=%d"
-				", attrtype3=%d, attrvalue3=%d, attrfrozen3=%d"
-				", attrtype4=%d, attrvalue4=%d, attrfrozen4=%d"
-				", attrtype5=%d, attrvalue5=%d, attrfrozen5=%d"
-				", attrtype6=%d, attrvalue6=%d, attrfrozen6=%d",
-				p->aAttr[0].bType, p->aAttr[0].sValue, p->aAttr[0].isFrozen,
-				p->aAttr[1].bType, p->aAttr[1].sValue, p->aAttr[1].isFrozen,
-				p->aAttr[2].bType, p->aAttr[2].sValue, p->aAttr[2].isFrozen,
-				p->aAttr[3].bType, p->aAttr[3].sValue, p->aAttr[3].isFrozen,
-				p->aAttr[4].bType, p->aAttr[4].sValue, p->aAttr[4].isFrozen,
-				p->aAttr[5].bType, p->aAttr[5].sValue, p->aAttr[5].isFrozen,
-				p->aAttr[6].bType, p->aAttr[6].sValue, p->aAttr[6].isFrozen);
-
-#endif
 		}
 
 		char szItemQuery[QUERY_MAX_LEN + QUERY_MAX_LEN];
