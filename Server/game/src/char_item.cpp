@@ -1664,7 +1664,7 @@ bool CHARACTER::DoRefine(LPITEM item, bool bMoneyOnly)
 				{
 					ChatPacket(CHAT_TYPE_INFO, "Find %d, count %d, require %d", prt->materials[i].vnum, CountSpecifyItem(prt->materials[i].vnum), prt->materials[i].count);
 				}
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �ϱ� ���� ��ᰡ �����մϴ�."));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �ϱ� ���� ���? �����մϴ�."));
 				return false;
 			}
 		}
@@ -1846,7 +1846,7 @@ bool CHARACTER::DoRefineWithScroll(LPITEM item)
 			{
 				ChatPacket(CHAT_TYPE_INFO, "Find %d, count %d, require %d", prt->materials[i].vnum, CountSpecifyItem(prt->materials[i].vnum), prt->materials[i].count);
 			}
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �ϱ� ���� ��ᰡ �����մϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �ϱ� ���� ���? �����մϴ�."));
 			return false;
 		}
 	}
@@ -2008,7 +2008,7 @@ bool CHARACTER::RefineInformation(BYTE bCell, BYTE bType, int iAdditionalCell)
 	// REFINE_COST
 	if (bType == REFINE_TYPE_MONEY_ONLY && !GetQuestFlag("deviltower_zone.can_refine"))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� Ÿ�� �Ϸ� ������ �ѹ����� ��밡���մϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? Ÿ�� �Ϸ� ������ �ѹ����� ��밡���մϴ�?."));
 		return false;
 	}
 	// END_OF_REFINE_COST
@@ -2032,7 +2032,7 @@ bool CHARACTER::RefineInformation(BYTE bCell, BYTE bType, int iAdditionalCell)
 	{
 		if (bType == 0)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� �������� �� ������δ� ������ �� �����ϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� �������� �� ������δ�? ������ �� �����ϴ�."));
 			return false;
 		}
 		else
@@ -2207,7 +2207,7 @@ bool CHARACTER::GiveRecallItem(LPITEM item)
 
 	if (iEmpireByMapIndex && GetEmpire() != iEmpireByMapIndex)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����� �� �� ���� ��ġ �Դϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�����? �� �� ���� ��ġ �Դϴ�."));
 		return false;
 	}
 
@@ -2406,7 +2406,7 @@ int CalculateConsume(LPCHARACTER ch)
 		const int needLife = ch->GetMaxHP() * needPercent / 100;
 		if (curLife < needLife)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ���� ���ڶ� ����� �� �����ϴ�."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ���� ���ڶ� �����? �� �����ϴ�."));
 			return -1;
 		}
 
@@ -2435,7 +2435,7 @@ int CalculateConsumeSP(LPCHARACTER lpChar)
 
 	if (curSP < needSP)
 	{
-		lpChar->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ���ŷ� ���� ���ڶ� ����� �� �����ϴ�."));
+		lpChar->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ���ŷ� ���� ���ڶ� �����? �� �����ϴ�."));
 		return -1;
 	}
 
@@ -2482,13 +2482,13 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 	if ( CArenaManager::instance().IsLimitedItem( GetMapIndex(), item->GetVnum() ) == true )
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 		return false;
 	}
 #ifdef ENABLE_NEWSTUFF
 	else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && IsLimitedPotionOnPVP(item->GetVnum()))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 		return false;
 	}
 #endif
@@ -2686,7 +2686,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 #endif
 		if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen())
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"�ŷ�â,â�� ���� �� ���¿����� ��ȯ��,��ȯ���� �� ����Ҽ� �����ϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT_LANGUAGE(GetLanguage(),"�ŷ�â,â�� ���� �� ���¿����� ��ȯ��,��ȯ���� �� ����Ҽ�? �����ϴ�."));
 			return false;
 		}
 
@@ -2801,7 +2801,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 			{
 				if (item->GetVnum() == 50051 || item->GetVnum() == 50052 || item->GetVnum() == 50053)
 				{
-					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 					return false;
 				}
 			}
@@ -2828,13 +2828,13 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 				if (!tree)
 				{
-					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��ں��� �ǿ� �� ���� �����Դϴ�."));
+					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��ں���? �ǿ� �� ���� �����Դϴ�."));
 					return false;
 				}
 
 				if (tree->IsAttr((long)(GetX()+fx), (long)(GetY()+fy), ATTR_WATER))
 				{
-					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� �ӿ� ��ں��� �ǿ� �� �����ϴ�."));
+					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� �ӿ� ��ں���? �ǿ� �� �����ϴ�."));
 					return false;
 				}
 
@@ -2996,13 +2996,13 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 			{
 				if (CArenaManager::instance().IsArenaMap(GetMapIndex()) == true)
 				{
-					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 					return false;
 				}
 #ifdef ENABLE_NEWSTUFF
 				else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && !IsAllowedPotionOnPVP(item->GetVnum()))
 				{
-					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+					ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 					return false;
 				}
 #endif
@@ -3031,7 +3031,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 				if (item2->GetType() != ITEM_TREASURE_BOX)
 				{
-					ChatPacket(CHAT_TYPE_TALKING, LC_TEXT("����� ���� ������ �ƴѰ� ����."));
+					ChatPacket(CHAT_TYPE_TALKING, LC_TEXT("�����? ���� ������ �ƴѰ� ����."));
 					return false;
 				}
 
@@ -3069,11 +3069,11 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڰ� ���ڱ� �����Ͽ����ϴ�! �������� �����߽��ϴ�."));
 									break;
 								case CSpecialItemGroup::POISON:
-									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ��� ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
+									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ���? ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
 									break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
 								case CSpecialItemGroup::BLEEDING:
-									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ��� ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
+									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ���? ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
 									break;
 #endif
 								case CSpecialItemGroup::MOB_GROUP:
@@ -3146,11 +3146,11 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 							ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڰ� ���ڱ� �����Ͽ����ϴ�! �������� �����߽��ϴ�."));
 							break;
 						case CSpecialItemGroup::POISON:
-							ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ��� ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
+							ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ���? ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
 							break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
 						case CSpecialItemGroup::BLEEDING:
-							ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ��� ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
+							ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ���? ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
 							break;
 #endif
 						case CSpecialItemGroup::MOB_GROUP:
@@ -3309,7 +3309,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									if (CPCBangManager::instance().IsPCBangIP(GetDesc()->GetHostName()) == false)
 									{
 
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� �������� PC�濡���� ����� �� �ֽ��ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� �������� PC�濡���� �����? �� �ֽ��ϴ�."));
 										return false;
 									}
 								}
@@ -3327,7 +3327,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 							{
 								if (quest::CQuestManager::instance().GetEventFlag("arena_potion_limit") > 0)
 								{
-									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡�� ����Ͻ� �� �����ϴ�."));
+									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡��? ����Ͻ�? �� �����ϴ�."));
 									return false;
 								}
 
@@ -3341,14 +3341,14 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 										{
 											if (m_nPotionLimit <= 0)
 											{
-												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� ���ѷ��� �ʰ��Ͽ����ϴ�."));
+												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? ���ѷ��� �ʰ��Ͽ����ϴ�."));
 												return false;
 											}
 										}
 										break;
 
 									default :
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡�� ����Ͻ� �� �����ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡��? ����Ͻ�? �� �����ϴ�."));
 										return false;
 										break;
 								}
@@ -3356,7 +3356,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 #ifdef ENABLE_NEWSTUFF
 							else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && !IsAllowedPotionOnPVP(item->GetVnum()))
 							{
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 								return false;
 							}
 #endif
@@ -3408,7 +3408,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 								if (item->GetVnum() == 50085 || item->GetVnum() == 50086)
 								{
 									if (test_server)
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �Ǵ� ���� �� ����Ͽ����ϴ�"));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �Ǵ� ���� �� ����Ͽ����ϴ�?"));
 									SetUseSeedOrMoonBottleTime();
 								}
 								if (GetDungeon())
@@ -3435,13 +3435,13 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 				{
 					if (CArenaManager::instance().IsArenaMap(GetMapIndex()) == true)
 					{
-						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 						return false;
 					}
 #ifdef ENABLE_NEWSTUFF
 					else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && !IsAllowedPotionOnPVP(item->GetVnum()))
 					{
-						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 						return false;
 					}
 #endif
@@ -3595,7 +3595,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 										{
 											if (CArenaManager::instance().IsArenaMap(pMarriage->ch1->GetMapIndex()) == true)
 											{
-												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 												break;
 											}
 										}
@@ -3604,7 +3604,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 										{
 											if (CArenaManager::instance().IsArenaMap(pMarriage->ch2->GetMapIndex()) == true)
 											{
-												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 												break;
 											}
 										}
@@ -3619,7 +3619,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 										WarpToPID(pMarriage->GetOther(GetPlayerID()));
 									}
 									else
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��ȥ ���°� �ƴϸ� ��ȥ������ ����� �� �����ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��ȥ ���°� �ƴϸ� ��ȥ������ �����? �� �����ϴ�."));
 								}
 								break;
 
@@ -3762,7 +3762,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									if (distance < 1000.0f)
 									{
 
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̺�Ʈ�� �����Ⱑ �ź�ο� ���� ���� ������ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̺�Ʈ�� �����Ⱑ �ź�ο�? ���� ���� ������ϴ�?."));
 
 
 										struct TEventStoneInfo
@@ -3913,7 +3913,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									const int STONE_DETECT_MAX_TRY = 10;
 									if (item->GetSocket(0) >= STONE_DETECT_MAX_TRY)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̺�Ʈ�� �����Ⱑ ������ ���� ������ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̺�Ʈ�� �����Ⱑ ������ ���� ������ϴ�?."));
 										ITEM_MANAGER::instance().RemoveItem(item, "REMOVE (DETECT_EVENT_STONE) 0");
 										AutoGiveItem(27002);
 										return true;
@@ -4043,7 +4043,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 										if (r <= prob_table[0])
 										{
-											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ ������ ���� ������ϴ�."));
+											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ ������ ���� ������ϴ�?."));
 										}
 										else if (r <= prob_table[1])
 										{
@@ -4123,7 +4123,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 									if (lv < item->GetValue(0))
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� å�� �ʹ� ����� �����ϱⰡ ����ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� å�� �ʹ� �����? �����ϱⰡ ����ϴ�?."));
 										return false;
 									}
 
@@ -4208,7 +4208,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									int iPct = MINMAX(0, item->GetValue(1), 100);
 									if (GetSkillLevel(dwSkillVnum)>=20 || dwSkillVnum-SKILL_LANGUAGE1+1 == GetEmpire())
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̹� �Ϻ��ϰ� �˾Ƶ��� �� �ִ� ����̴�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̹� �Ϻ��ϰ� �˾Ƶ��� �� �ִ� ����̴�?."));
 										return false;
 									}
 
@@ -4312,7 +4312,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 									if (GetSkillLevel(dwSkillVnum) < iSkillLevelLowLimit)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� å�� �ʹ� ����� �����ϱⰡ ����ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� å�� �ʹ� �����? �����ϱⰡ ����ϴ�?."));
 										return false;
 									}
 
@@ -4462,7 +4462,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 									if (number(1, 100) <= iPct)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�¸� ���ü��� �о� �¸� ��ų ����Ʈ�� ������ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�¸� ���ü��� �о� �¸� ��ų ����Ʈ�� ������ϴ�?."));
 										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ����Ʈ�δ� �¸� ��ų�� ������ �ø� �� �ֽ��ϴ�."));
 										PointChange(POINT_HORSE_SKILL, 1);
 
@@ -4519,12 +4519,12 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									{
 										if (test_server == false)
 										{
-											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ����� �� �����ϴ�."));
+											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �����? �� �����ϴ�."));
 											return false;
 										}
 										else
 										{
-											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�׽�Ʈ ���� �ð����� ���"));
+											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�׽�Ʈ ���� �ð����� ���?"));
 										}
 									}
 
@@ -4636,7 +4636,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									// NEW_HAIR_STYLE_ADD
 									if (GetPart(PART_HAIR) >= 1001)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ��Ÿ�Ͽ����� ������ Ż���� �Ұ����մϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ��Ÿ�Ͽ�����? ������ Ż���� �Ұ����մϴ�."));
 									}
 									// END_NEW_HAIR_STYLE_ADD
 									else
@@ -4664,7 +4664,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 											}
 											else
 											{
-												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d ������ �Ǿ�� �ٽ� �����Ͻ� �� �ֽ��ϴ�."), last_dye_level+3);
+												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%d ������ �Ǿ��? �ٽ� �����Ͻ� �� �ֽ��ϴ�."), last_dye_level+3);
 											}
 										}
 									}
@@ -4783,11 +4783,11 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 												break;
 
 											case CSpecialItemGroup::POISON:
-												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ��� ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
+												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ���? ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
 												break;
 #ifdef ENABLE_WOLFMAN_CHARACTER
 											case CSpecialItemGroup::BLEEDING:
-												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ��� ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
+												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ڿ��� ���� ���? ���⸦ ���̸����� ���� �¸����� �����ϴ�!"));
 												break;
 #endif
 											case CSpecialItemGroup::MOB_GROUP:
@@ -4826,13 +4826,13 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 								{
 									if (CArenaManager::instance().IsArenaMap(GetMapIndex()) == true)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 										return false;
 									}
 #ifdef ENABLE_NEWSTUFF
 									else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && !IsAllowedPotionOnPVP(item->GetVnum()))
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 										return false;
 									}
 #endif
@@ -4850,13 +4850,13 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 								{
 									if (CArenaManager::instance().IsArenaMap(GetMapIndex()) == true)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 										return false;
 									}
 #ifdef ENABLE_NEWSTUFF
 									else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && !IsAllowedPotionOnPVP(item->GetVnum()))
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 										return false;
 									}
 #endif
@@ -4909,10 +4909,10 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									if (CMonarch::instance().HealMyEmpire(this, HealPrice))
 									{
 										char szNotice[256];
-										snprintf(szNotice, sizeof(szNotice), LC_TEXT("������ �ູ���� ������ %s ������ HP,SP�� ��� ä�����ϴ�."), EMPIRE_NAME(GetEmpire()));
+										snprintf(szNotice, sizeof(szNotice), LC_TEXT("������ �ູ���� ������ %s ������ HP,SP�� ���? ä�����ϴ�."), EMPIRE_NAME(GetEmpire()));
 										SendNoticeMap(szNotice, GetMapIndex(), false);
 
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �ູ�� ����Ͽ����ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �ູ�� ����Ͽ����ϴ�?."));
 									}
 								}
 								break;
@@ -5058,13 +5058,13 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 								{
 									if (CArenaManager::instance().IsArenaMap(GetMapIndex()) == true)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡�� ����Ͻ� �� �����ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡��? ����Ͻ�? �� �����ϴ�."));
 										return false;
 									}
 #ifdef ENABLE_NEWSTUFF
 									else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && !IsAllowedPotionOnPVP(item->GetVnum()))
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 										return false;
 									}
 #endif
@@ -5229,7 +5229,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 									if (get_global_time() - last_use_time < 10*60)
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ����� �� �����ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �����? �� �����ϴ�."));
 										return false;
 									}
 
@@ -5248,7 +5248,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 							{
 								if (quest::CQuestManager::instance().GetEventFlag("arena_potion_limit") > 0)
 								{
-									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡�� ����Ͻ� �� �����ϴ�."));
+									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡��? ����Ͻ�? �� �����ϴ�."));
 									return false;
 								}
 
@@ -5262,21 +5262,21 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 										{
 											if (m_nPotionLimit <= 0)
 											{
-												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� ���ѷ��� �ʰ��Ͽ����ϴ�."));
+												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? ���ѷ��� �ʰ��Ͽ����ϴ�."));
 												return false;
 											}
 										}
 										break;
 
 									default :
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡�� ����Ͻ� �� �����ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡��? ����Ͻ�? �� �����ϴ�."));
 										return false;
 								}
 							}
 #ifdef ENABLE_NEWSTUFF
 							else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && !IsAllowedPotionOnPVP(item->GetVnum()))
 							{
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 								return false;
 							}
 #endif
@@ -5328,7 +5328,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 								if (item->GetVnum() == 50085 || item->GetVnum() == 50086)
 								{
 									if (test_server)
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �Ǵ� ���� �� ����Ͽ����ϴ�"));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �Ǵ� ���� �� ����Ͽ����ϴ�?"));
 									SetUseSeedOrMoonBottleTime();
 								}
 								if (GetDungeon())
@@ -5351,7 +5351,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 						{
 							if (quest::CQuestManager::instance().GetEventFlag("arena_potion_limit") > 0)
 							{
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡�� ����Ͻ� �� �����ϴ�."));
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡��? ����Ͻ�? �� �����ϴ�."));
 								return false;
 							}
 
@@ -5367,21 +5367,21 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									{
 										if (m_nPotionLimit <= 0)
 										{
-											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� ���ѷ��� �ʰ��Ͽ����ϴ�."));
+											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? ���ѷ��� �ʰ��Ͽ����ϴ�."));
 											return false;
 										}
 									}
 									break;
 
 								default :
-									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡�� ����Ͻ� �� �����ϴ�."));
+									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����忡��? ����Ͻ�? �� �����ϴ�."));
 									return false;
 							}
 						}
 #ifdef ENABLE_NEWSTUFF
 						else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && !IsAllowedPotionOnPVP(item->GetVnum()))
 						{
-							ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+							ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 							return false;
 						}
 #endif
@@ -5511,26 +5511,26 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 							if (GetMapIndex() == 200 || GetMapIndex() == 113)
 							{
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ��ġ���� ����� �� �����ϴ�."));
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ��ġ���� �����? �� �����ϴ�."));
 								return false;
 							}
 
 							if (CArenaManager::instance().IsArenaMap(GetMapIndex()) == true)
 							{
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 								return false;
 							}
 #ifdef ENABLE_NEWSTUFF
 							else if (g_NoPotionsOnPVP && CPVPManager::instance().IsFighting(GetPlayerID()) && !IsAllowedPotionOnPVP(item->GetVnum()))
 							{
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��� �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���? �߿��� �̿��� �� ���� ��ǰ�Դϴ�."));
 								return false;
 							}
 #endif
 
 							if (m_pkWarpEvent)
 							{
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̵��� �غ� �Ǿ��������� ��ȯ�θ� ����Ҽ� �����ϴ�"));
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̵��� �غ� �Ǿ��������� ��ȯ�θ� ����Ҽ�? �����ϴ�"));
 								return false;
 							}
 
@@ -5578,7 +5578,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 								{
 									if (GetDungeon())
 									{
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �ȿ����� %s%s ����� �� �����ϴ�."),
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �ȿ����� %s%s �����? �� �����ϴ�."),
 												item->GetName(),
 												"");
 										return false;
@@ -5869,13 +5869,13 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 												}
 												if (false == bCanUse)
 												{
-													ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �������� ���� ����� �Ұ����մϴ�."));
+													ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �������� ���� �����? �Ұ����մϴ�."));
 													break;
 												}
 											}
 											else
 											{
-												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����� ���ʿ��� ��� �����մϴ�."));
+												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�����? ���ʿ��� ���? �����մϴ�."));
 												break;
 											}
 										}
@@ -5919,13 +5919,13 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 												}
 												if (false == bCanUse)
 												{
-													ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �������� ���� ����� �Ұ����մϴ�."));
+													ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �������� ���� �����? �Ұ����մϴ�."));
 													break;
 												}
 											}
 											else
 											{
-												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����� ���ʿ��� ��� �����մϴ�."));
+												ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�����? ���ʿ��� ���? �����մϴ�."));
 												break;
 											}
 										}
@@ -6121,11 +6121,11 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 
 							if (weapon->GetSocket(2))
 							{
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̹� �����ִ� �̳��� ���� %s�� ����ϴ�."), item->GetName());
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̹� �����ִ� �̳��� ���� %s�� ����ϴ�?."), item->GetName());
 							}
 							else
 							{
-								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ô뿡 %s�� �̳��� ����ϴ�."), item->GetName());
+								ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ô뿡 %s�� �̳��� ����ϴ�?."), item->GetName());
 							}
 
 							weapon->SetSocket(2, item->GetValue(0));
@@ -6190,7 +6190,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 									if (CPCBangManager::instance().IsPCBangIP(GetDesc()->GetHostName()) == false)
 									{
 
-										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� �������� PC�濡���� ����� �� �ֽ��ϴ�."));
+										ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� �������� PC�濡���� �����? �� �ֽ��ϴ�."));
 										return false;
 									}
 								}
@@ -6220,7 +6220,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 							{
 								if (pSource1 == NULL)
 								{
-									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ���� ��ᰡ �����մϴ�."));
+									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ���� ���? �����մϴ�."));
 									return false;
 								}
 							}
@@ -6229,7 +6229,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 							{
 								if (pSource2 == NULL)
 								{
-									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ���� ��ᰡ �����մϴ�."));
+									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ���� ���? �����մϴ�."));
 									return false;
 								}
 							}
@@ -6238,7 +6238,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 							{
 								if (pSource1->GetCount() < dwSourceCount1)
 								{
-									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���(%s)�� �����մϴ�."), pSource1->GetName());
+									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���?(%s)�� �����մϴ�."), pSource1->GetName());
 									return false;
 								}
 
@@ -6249,7 +6249,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 							{
 								if (pSource2->GetCount() < dwSourceCount2)
 								{
-									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���(%s)�� �����մϴ�."), pSource2->GetName());
+									ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���?(%s)�� �����մϴ�."), pSource2->GetName());
 									return false;
 								}
 
@@ -6317,7 +6317,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 				{
 					if (!IS_SET(item->GetWearFlag(), WEARABLE_BODY) || !IS_SET(item2->GetWearFlag(), WEARABLE_BODY))
 					{
-						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� ��ƾ���� ��� ������ �� �����ϴ�."));
+						ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�� ��ƾ���� ���? ������ �� �����ϴ�."));
 						return false;
 					}
 				}
@@ -6553,7 +6553,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 
 	if (!item->CanUsedBy(this))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �����ʾ� �� �������� ����� �� �����ϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �����ʾ� �� �������� �����? �� �����ϴ�."));
 		return false;
 	}
 
@@ -6562,7 +6562,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 
 	if (false == FN_check_item_sex(this, item))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �����ʾ� �� �������� ����� �� �����ϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �����ʾ� �� �������� �����? �� �����ϴ�."));
 		return false;
 	}
 	
@@ -6587,7 +6587,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 	{
 		if (false == IS_SUMMONABLE_ZONE(GetMapIndex()))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����Ҽ� �����ϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("����Ҽ�? �����ϴ�."));
 			return false;
 		}
 
@@ -6596,7 +6596,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 
 		if (CThreeWayWar::instance().IsThreeWayWarMapIndex(GetMapIndex()))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��Ÿ� ���� �����߿��� ��ȯ��,��ȯ���θ� ����Ҽ� �����ϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��Ÿ�? ���� �����߿��� ��ȯ��,��ȯ���θ� ����Ҽ�? �����ϴ�."));
 			return false;
 		}
 		int iPulse = thecore_pulse();
@@ -6604,7 +6604,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 
 		if (iPulse - GetSafeboxLoadTime() < PASSES_PER_SEC(g_nPortalLimitTime))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("â���� ���� %d�� �̳����� ��ȯ��,��ȯ���θ� ����� �� �����ϴ�."), g_nPortalLimitTime);
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("â���� ���� %d�� �̳����� ��ȯ��,��ȯ���θ� �����? �� �����ϴ�."), g_nPortalLimitTime);
 
 			if (test_server)
 				ChatPacket(CHAT_TYPE_INFO, "[TestOnly]Pulse %d LoadTime %d PASS %d", iPulse, GetSafeboxLoadTime(), PASSES_PER_SEC(g_nPortalLimitTime));
@@ -6614,7 +6614,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 
 		if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen())
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�ŷ�â,â�� ���� �� ���¿����� ��ȯ��,��ȯ���� �� ����Ҽ� �����ϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�ŷ�â,â�� ���� �� ���¿����� ��ȯ��,��ȯ���� �� ����Ҽ�? �����ϴ�."));
 			return false;
 		}
 
@@ -6623,7 +6623,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 		{
 			if (iPulse - GetRefineTime() < PASSES_PER_SEC(g_nPortalLimitTime))
 			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ ������ %d�� �̳����� ��ȯ��,��ȯ���θ� ����� �� �����ϴ�."), g_nPortalLimitTime);
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ ������ %d�� �̳����� ��ȯ��,��ȯ���θ� �����? �� �����ϴ�."), g_nPortalLimitTime);
 				return false;
 			}
 		}
@@ -6634,7 +6634,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 		{
 			if (iPulse - GetMyShopTime() < PASSES_PER_SEC(g_nPortalLimitTime))
 			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���λ��� ����� %d�� �̳����� ��ȯ��,��ȯ���θ� ����� �� �����ϴ�."), g_nPortalLimitTime);
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���λ��� �����? %d�� �̳����� ��ȯ��,��ȯ���θ� �����? �� �����ϴ�."), g_nPortalLimitTime);
 				return false;
 			}
 
@@ -6679,7 +6679,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 
 			if (nDistant > nDist)
 			{
-				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̵� �Ǿ��� ��ġ�� �ʹ� ����� ��ȯ�θ� ����Ҽ� �����ϴ�."));
+				ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̵� �Ǿ��� ��ġ�� �ʹ� �����? ��ȯ�θ� ����Ҽ�? �����ϴ�."));
 				if (test_server)
 					ChatPacket(CHAT_TYPE_INFO, "PossibleDistant %f nNowDist %f", nDistant,nDist);
 				return false;
@@ -6690,7 +6690,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 
 		if (iPulse - GetExchangeTime()  < PASSES_PER_SEC(g_nPortalLimitTime))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�ŷ� �� %d�� �̳����� ��ȯ��,��ȯ���ε��� ����� �� �����ϴ�."), g_nPortalLimitTime);
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�ŷ� �� %d�� �̳����� ��ȯ��,��ȯ���ε��� �����? �� �����ϴ�."), g_nPortalLimitTime);
 			return false;
 		}
 		//END_PREVENT_PORTAL_AFTER_EXCHANGE
@@ -6706,7 +6706,7 @@ bool CHARACTER::UseItem(TItemPos Cell, TItemPos DestCell)
 	{
 		if (GetExchange() || GetMyShop() || GetShopOwner() || IsOpenSafebox() || IsCubeOpen())
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�ŷ�â,â�� ���� �� ���¿����� ������,��ܺ������� ����Ҽ� �����ϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�ŷ�â,â�� ���� �� ���¿����� ������,��ܺ�������? ����Ҽ�? �����ϴ�."));
 			return false;
 		}
 
@@ -7120,7 +7120,7 @@ bool CHARACTER::DropItem(TItemPos Cell, WORD bCount)
 	{
 		if (get_dword_time() < m_dwLastItemDropTime+g_ItemDropTimeLimitValue)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ��带 ���� �� �����ϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ���? ���� �� �����ϴ�."));
 			return false;
 		}
 	}
@@ -7186,7 +7186,7 @@ bool CHARACTER::DropItem(TItemPos Cell, WORD bCount)
 
 	if (pkItemToDrop->AddToGround(GetMapIndex(), pxPos))
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �������� 3�� �� ������ϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �������� 3�� �� ������ϴ�?."));
 #ifdef ENABLE_NEWSTUFF
 		pkItemToDrop->StartDestroyEvent(g_aiItemDestroyTime[ITEM_DESTROY_TIME_DROPITEM]);
 #else
@@ -7282,7 +7282,7 @@ bool CHARACTER::DropGold(int gold)
 	{
 		if (get_dword_time() < m_dwLastGoldDropTime+g_GoldDropTimeLimitValue)
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ��带 ���� �� �����ϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ���? ���� �� �����ϴ�."));
 			return false;
 		}
 	}
@@ -7308,7 +7308,7 @@ bool CHARACTER::DropGold(int gold)
 #else
 			item->StartDestroyEvent();
 #endif
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �������� %d�� �� ������ϴ�."), 150/60);
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �������� %d�� �� ������ϴ�?."), 150/60);
 		}
 
 		Save();
@@ -7657,7 +7657,7 @@ bool CHARACTER::MoveItem(TItemPos Cell, TItemPos DestCell, WORD count)
 	{
 		if (GetItem(DestCell))
 		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̹� ��� �����ϰ� �ֽ��ϴ�."));
+			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�̹� ���? �����ϰ� �ֽ��ϴ�."));
 
 			return false;
 		}
@@ -8448,13 +8448,13 @@ bool CHARACTER::EquipItem(LPITEM item, int iCandidateCell)
 
 	if (iWearCell != WEAR_ARROW && IsPolymorphed())
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�а� �߿��� �������� ��� ������ �� �����ϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�а� �߿��� �������� ���? ������ �� �����ϴ�."));
 		return false;
 	}
 
 	if (FN_check_item_sex(this, item) == false)
 	{
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �����ʾ� �� �������� ����� �� �����ϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ �����ʾ� �� �������� �����? �� �����ϴ�."));
 		return false;
 	}
 
@@ -8989,7 +8989,7 @@ void CHARACTER::RemoveSpecifyTypeItem(BYTE type, DWORD count)
 			if (item->GetType() != type)
 				continue;
 
-			//�����ϩ�AI ��ioA�ˢ��?�ˢ� ��ii����I��iE ��o��������CAI�ˡ�e �ϩ�N��ui������I�ˡ�U. (�����ϩ�AI ��ioA�ˢ��?�ˢ硧u���� ����C�ˡ�A��iE��O���� AI ����I��������A�ˡ�����I ��ie��ui��?A �����Ϣ���?i ��o��cA|!)
+			//�����ϩ�AI ��ioA��?��?��?�? ��ii����I��iE ��o��������CAI�ˡ�e �ϩ�N��ui������I�ˡ�U. (�����ϩ�AI ��ioA��?��?�ˢ硧u���� ����C�ˡ�A��iE��O���� AI ����I��������A�ˡ�����I ��ie��ui��?A ������?���??i ��o��cA|!)
 			if(m_pkMyShop)
 			{
 				bool isItemSelling = m_pkMyShop->IsSellingItem(item->GetID());
@@ -9389,7 +9389,7 @@ bool CHARACTER::CanReceiveItem(LPCHARACTER from, LPITEM item) const
 			{
 				if (IsDead())
 				{
-					from->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ��Ḧ ���� �� �����ϴ�."));
+					from->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ���? ���� �� �����ϴ�."));
 					return false;
 				}
 				return true;
@@ -9416,7 +9416,7 @@ bool CHARACTER::CanReceiveItem(LPCHARACTER from, LPITEM item) const
 			{
 				if (IsDead())
 				{
-					from->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ��Ḧ ���� �� �����ϴ�."));
+					from->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ���? ���� �� �����ϴ�."));
 					return false;
 				}
 				return true;
@@ -9443,7 +9443,7 @@ bool CHARACTER::CanReceiveItem(LPCHARACTER from, LPITEM item) const
 			{
 				if (IsDead())
 				{
-					from->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ��Ḧ ���� �� �����ϴ�."));
+					from->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ���? ���� �� �����ϴ�."));
 					return false;
 				}
 				return true;
@@ -9536,7 +9536,7 @@ void CHARACTER::ReceiveItem(LPCHARACTER from, LPITEM item)
 					item->GetVnum() == ITEM_HORSE_FOOD_3)
 			{
 				from->FeedHorse();
-				from->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ ��Ḧ �־����ϴ�."));
+				from->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ ���? �־����ϴ�."));
 				item->SetCount(item->GetCount()-1);
 				EffectPacket(SE_HPUP_RED);
 			}
@@ -9754,7 +9754,7 @@ bool CHARACTER::ItemProcess_Hair(LPITEM item, int iDestCell)
 	if (item->CheckItemUseLevel(GetLevel()) == false)
 	{
 
-		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �� �Ӹ��� ����� �� ���� �����Դϴ�."));
+		ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� �� �Ӹ��� �����? �� ���� �����Դϴ�."));
 		return false;
 	}
 

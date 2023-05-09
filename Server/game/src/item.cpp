@@ -597,6 +597,11 @@ bool CItem::CanUsedBy(LPCHARACTER ch)
 
 int CItem::FindEquipCell(LPCHARACTER ch, int iCandidateCell)
 {
+
+	const std::vector<DWORD> pendant = {71135};
+	const std::vector<DWORD> marriageItems = {71070, 71071};
+	const std::vector<DWORD> itemeOs = {72706, 72709};
+
 	if ((0 == GetWearFlag() || ITEM_TOTEM == GetType()) && ITEM_COSTUME != GetType() && ITEM_DS != GetType() && ITEM_SPECIAL_DS != GetType() && ITEM_RING != GetType() && ITEM_BELT != GetType())
 		return -1;
 
@@ -618,6 +623,26 @@ int CItem::FindEquipCell(LPCHARACTER ch, int iCandidateCell)
 			return -1;
 		}
 	}
+
+	if (std::find(pendant.begin(), pendant.end(), GetVnum()) != pendant.end())
+		return WEAR_SPECIAL_1;
+
+	if (std::find(marriageItems.begin(), marriageItems.end(), GetVnum()) != marriageItems.end())
+	{
+		if (ch->GetWear(WEAR_SPECIAL_2))
+			return WEAR_SPECIAL_3;
+		else
+			return WEAR_SPECIAL_2;
+	}
+
+	if (std::find(itemeOs.begin(), itemeOs.end(), GetVnum()) != itemeOs.end())
+	{
+		if (ch->GetWear(WEAR_SPECIAL_4))
+			return WEAR_SPECIAL_5;
+		else
+			return WEAR_SPECIAL_4;
+	}
+
 	else if (GetType() == ITEM_COSTUME)
 	{
 		if (GetSubType() == COSTUME_BODY)
@@ -1964,7 +1989,7 @@ void CItem::SetAccessorySocketDownGradeTime(DWORD time)
 	SetSocket(2, time);
 
 	if (test_server && GetOwner())
-		GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%s¿¡¼­ ¼ÒÄÏ ºüÁú¶§±îÁö ³²Àº ½Ã°£ %d"), GetName(), time);
+		GetOwner()->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%sï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ %d"), GetName(), time);
 }
 
 EVENTFUNC(accessory_socket_expire_event)
@@ -2123,7 +2148,7 @@ void CItem::AccessorySocketDegrade()
 
 		if (ch)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%s¿¡ ¹ÚÇôÀÖ´ø º¸¼®ÀÌ »ç¶óÁý´Ï´Ù."), GetName());
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("%sï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½."), GetName());
 		}
 
 		ModifyPoints(false);
