@@ -10198,14 +10198,6 @@ bool CHARACTER::CanEquipNow(const LPITEM item, const TItemPos& srcCell, const TI
 			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���� ������ ����ũ ������ �� ���� ���ÿ� ������ �� �����ϴ�."));
 			return false;
 		}
-
-		if (marriage::CManager::instance().IsMarriageUniqueItem(item->GetVnum()) &&
-			!marriage::CManager::instance().IsMarried(GetPlayerID()))
-		{
-			ChatPacket(CHAT_TYPE_INFO, LC_TEXT("��ȥ���� ���� ���¿��� ������ ������ �� �����ϴ�."));
-			return false;
-		}
-
 	}
 
 	return true;
