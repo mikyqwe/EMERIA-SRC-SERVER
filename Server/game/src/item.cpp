@@ -2432,7 +2432,7 @@ bool CItem::IsSkillBookItem()
 	switch(GetVnum())
 	{
 		// Inserisci qui i value:
-		case 50124: case 50125: case 50127: case 50128: case 50301: case 50302: case 50303:
+		case 71094: case 71001: case 39008: case 50513: case 30097: case 39048: case 39049: case 39050: case 39051: case 50301: case 50302: case 50303:
 		case 50304: case 50305: case 50306: case 55015: case 55016: case 55017: case 55018:
 		case 55019: case 55020: case 55021: case 55022: case 55023: case 55024: case 55025: case 55026: case 55027:
 		case 55010: case 55011: case 55012: case 55013:
@@ -2443,6 +2443,12 @@ bool CItem::IsSkillBookItem()
 
 bool CItem::IsUpgradeItem()
 {
+	switch(GetVnum())
+	{
+		// Inserisci qui i value:
+		case 27992: case 27993: case 27994: case 55009:
+			return true;
+	}
 	return GetType() == ITEM_MATERIAL;
 }
 
@@ -2459,21 +2465,23 @@ bool CItem::IsGhostStoneItem()
 
 bool CItem::IsGeneralItem()
 {
-	if (GetVnum() == 71085)
-		return false;
+	// if (GetVnum() == 71085 || GetVnum() == 25041 || GetVnum() == 76016 || GetType() == ITEM_GIFTBOX)
+		// return false;
 	
-	if (GetVnum() == 71151)
-		return false;
-	
-	if (GetType() == ITEM_GIFTBOX)
-		return true;
 
-	return ((GetType() == ITEM_USE && GetSubType() == USE_CHANGE_ATTRIBUTE) ||
-			(GetType() == ITEM_USE && GetSubType() == USE_ADD_ATTRIBUTE) ||
-			(GetType() == ITEM_USE && GetSubType() == USE_ADD_ATTRIBUTE2) ||
-			(GetType() == ITEM_USE && GetSubType() == USE_CHANGE_COSTUME_ATTR) ||
-			(GetType() == ITEM_USE && GetSubType() == USE_RESET_COSTUME_ATTR) ||
-			(GetType() == ITEM_USE && GetSubType() == USE_TUNING));
+	// switch(GetVnum())
+	// {
+		// // Inserisci qui i value:
+		// case 71094: case 39008:
+			// return true;
+	// }
+
+	return ((GetType() == ITEM_USE && GetSubType() == USE_CHANGE_ATTRIBUTE) );//||
+			// (GetType() == ITEM_USE && GetSubType() == USE_ADD_ATTRIBUTE) ||
+			// (GetType() == ITEM_USE && GetSubType() == USE_ADD_ATTRIBUTE2) ||
+			// (GetType() == ITEM_USE && GetSubType() == USE_CHANGE_COSTUME_ATTR) ||
+			// (GetType() == ITEM_USE && GetSubType() == USE_RESET_COSTUME_ATTR) ||
+			// (GetType() == ITEM_USE && GetSubType() == USE_TUNING));
 }
 
 bool CItem::IsSpecialStorageItem()
