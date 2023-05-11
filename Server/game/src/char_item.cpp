@@ -10240,6 +10240,7 @@ bool CHARACTER::UseExtendedBlendAffect(LPITEM item, int affect_type, int apply_t
 	{
 	// DEWS
 	case 50821:
+	case 850821:
 	case 950821:
 	{
 		if (FindAffect(AFFECT_BLEND_POTION_1))
@@ -10256,6 +10257,7 @@ bool CHARACTER::UseExtendedBlendAffect(LPITEM item, int affect_type, int apply_t
 	}
 	break;
 	case 50822:
+	case 850822:
 	case 950822:
 	{
 		if (FindAffect(AFFECT_BLEND_POTION_2))
@@ -10272,6 +10274,7 @@ bool CHARACTER::UseExtendedBlendAffect(LPITEM item, int affect_type, int apply_t
 	}
 	break;
 	case 50823:
+	case 850823:
 	case 950823:
 	{
 		if (FindAffect(AFFECT_BLEND_POTION_3))
@@ -10288,6 +10291,7 @@ bool CHARACTER::UseExtendedBlendAffect(LPITEM item, int affect_type, int apply_t
 	}
 	break;
 	case 50824:
+	case 850824:
 	case 950824:
 	{
 		if (FindAffect(AFFECT_BLEND_POTION_4))
@@ -10310,6 +10314,7 @@ bool CHARACTER::UseExtendedBlendAffect(LPITEM item, int affect_type, int apply_t
 	}
 	break;
 	case 50825:
+	case 850825:
 	case 950825:
 	{
 		if (FindAffect(AFFECT_BLEND_POTION_5))
@@ -10815,26 +10820,31 @@ bool CHARACTER::SetBlendAffect(LPITEM item)
 
 	// DEWS
 	case 50821:
+	case 850821:
 	case 950821:
 		AddAffect(AFFECT_BLEND_POTION_1, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
 		break;
 
 	case 50822:
+	case 850822:
 	case 950822:
 		AddAffect(AFFECT_BLEND_POTION_2, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
 		break;
 
 	case 50823:
+	case 850823:
 	case 950823:
 		AddAffect(AFFECT_BLEND_POTION_3, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
 		break;
 
 	case 50824:
+	case 850824:
 	case 950824:
 		AddAffect(AFFECT_BLEND_POTION_4, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
 		break;
 
 	case 50825:
+	case 850825:
 	case 950825:
 		AddAffect(AFFECT_BLEND_POTION_3, APPLY_NONE, 0, AFF_NONE, item->GetSocket(2), 0, false, false);
 		break;

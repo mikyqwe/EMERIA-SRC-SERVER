@@ -40,7 +40,14 @@ public:
 			case 50826:
 			case 51002: // Energy Cristal
 			// END_OF_NORMAL_DEWS
-			
+
+			// temp_DEWS
+			case 850821:
+			case 850822:
+			case 850823:
+			case 850824:
+			case 850825:
+
 			case 27863:
 			case 27864:
 			case 27865:
