@@ -2265,16 +2265,16 @@ void CHARACTER::addbonus(LPCHARACTER ch)
 	case JOB_SHAMAN:
 		{
 			//  -- bonus de casco
-			item = ch->GetWear(WEAR_HEAD);
-			if (item != NULL)
-			{
-				item->ClearAttribute();
-				item->SetForceAttribute( 0, APPLY_ATTBONUS_UNDEAD, 20);
-				item->SetForceAttribute( 1, APPLY_ATTBONUS_ANIMAL, 20);
-				item->SetForceAttribute( 2, APPLY_ATTBONUS_ORC, 20);
-				item->SetForceAttribute( 3, APPLY_ATTBONUS_MILGYO, 20);
-				item->SetForceAttribute( 4, APPLY_ATTBONUS_DEVIL, 20);
-			}
+			// item = ch->GetWear(WEAR_HEAD);
+			// if (item != NULL)
+			// {
+				// item->ClearAttribute();
+				// item->SetForceAttribute( 0, APPLY_ATTBONUS_UNDEAD, 20);
+				// item->SetForceAttribute( 1, APPLY_ATTBONUS_ANIMAL, 20);
+				// item->SetForceAttribute( 2, APPLY_ATTBONUS_ORC, 20);
+				// item->SetForceAttribute( 3, APPLY_ATTBONUS_MILGYO, 20);
+				// item->SetForceAttribute( 4, APPLY_ATTBONUS_DEVIL, 20);
+			// }
 			// -- bonus de arma
 			item = ch->GetWear(WEAR_WEAPON);
 			if (item != NULL)
@@ -2287,16 +2287,16 @@ void CHARACTER::addbonus(LPCHARACTER ch)
 				item->SetForceAttribute( 4, APPLY_ATTBONUS_ORC, 20);
 			}
 			// -- bonus de escudo
-			item = ch->GetWear(WEAR_SHIELD);
-			if (item != NULL)
-			{
-				item->ClearAttribute();
-				item->SetForceAttribute( 0, APPLY_STR, 12);
-				item->SetForceAttribute( 1, APPLY_IMMUNE_STUN, 1);
-				item->SetForceAttribute( 2, APPLY_BLOCK, 15);
-				item->SetForceAttribute( 3, APPLY_GOLD_DOUBLE_BONUS, 20);
-				item->SetForceAttribute( 4, APPLY_EXP_DOUBLE_BONUS, 20);
-			}
+			// item = ch->GetWear(WEAR_SHIELD);
+			// if (item != NULL)
+			// {
+				// item->ClearAttribute();
+				// item->SetForceAttribute( 0, APPLY_STR, 12);
+				// item->SetForceAttribute( 1, APPLY_IMMUNE_STUN, 1);
+				// item->SetForceAttribute( 2, APPLY_BLOCK, 15);
+				// item->SetForceAttribute( 3, APPLY_GOLD_DOUBLE_BONUS, 20);
+				// item->SetForceAttribute( 4, APPLY_EXP_DOUBLE_BONUS, 20);
+			// }
 			//  -- bonus de armadura
 			item = ch->GetWear(WEAR_BODY);
 			if (item != NULL)
@@ -2309,49 +2309,49 @@ void CHARACTER::addbonus(LPCHARACTER ch)
 				item->SetForceAttribute( 4, APPLY_ATT_GRADE_BONUS, 50);
 			}
 			//  -- bonus de zapato
-			item = ch->GetWear(WEAR_FOOTS);
-			if (item != NULL)
-			{
-				item->ClearAttribute();
-				item->SetForceAttribute( 0, APPLY_MAX_HP, 2000);
-				item->SetForceAttribute( 1, APPLY_CRITICAL_PCT, 10);
-				item->SetForceAttribute( 2, APPLY_GOLD_DOUBLE_BONUS, 20);
-				item->SetForceAttribute( 3, APPLY_EXP_DOUBLE_BONUS, 20);
-				item->SetForceAttribute( 4, APPLY_RESIST_BOW, 15);
-			}
+			// item = ch->GetWear(WEAR_FOOTS);
+			// if (item != NULL)
+			// {
+				// item->ClearAttribute();
+				// item->SetForceAttribute( 0, APPLY_MAX_HP, 2000);
+				// item->SetForceAttribute( 1, APPLY_CRITICAL_PCT, 10);
+				// item->SetForceAttribute( 2, APPLY_GOLD_DOUBLE_BONUS, 20);
+				// item->SetForceAttribute( 3, APPLY_EXP_DOUBLE_BONUS, 20);
+				// item->SetForceAttribute( 4, APPLY_RESIST_BOW, 15);
+			// }
 			//  -- bonus de brazalete
-			item = ch->GetWear(WEAR_WRIST);
-			if (item != NULL)
-			{
-				item->ClearAttribute();
-				item->SetForceAttribute( 0, APPLY_MAX_HP, 2000);
-				item->SetForceAttribute( 1, APPLY_PENETRATE_PCT, 10);
-				item->SetForceAttribute( 2, APPLY_ITEM_DROP_BONUS, 20);
-				item->SetForceAttribute( 3, APPLY_ATTBONUS_ORC, 20);
-				item->SetForceAttribute( 4, APPLY_RESIST_MAGIC, 15);
-			}
+			// item = ch->GetWear(WEAR_WRIST);
+			// if (item != NULL)
+			// {
+				// item->ClearAttribute();
+				// item->SetForceAttribute( 0, APPLY_MAX_HP, 2000);
+				// item->SetForceAttribute( 1, APPLY_PENETRATE_PCT, 10);
+				// item->SetForceAttribute( 2, APPLY_ITEM_DROP_BONUS, 20);
+				// item->SetForceAttribute( 3, APPLY_ATTBONUS_ORC, 20);
+				// item->SetForceAttribute( 4, APPLY_RESIST_MAGIC, 15);
+			// }
 			//  -- bonus de collar
-			item = ch->GetWear(WEAR_NECK);
-			if (item != NULL)
-			{
-				item->ClearAttribute();
-				item->SetForceAttribute( 0, APPLY_MAX_HP, 2000);
-				item->SetForceAttribute( 1, APPLY_CRITICAL_PCT, 10);
-				item->SetForceAttribute( 2, APPLY_GOLD_DOUBLE_BONUS, 20);
-				item->SetForceAttribute( 3, APPLY_EXP_DOUBLE_BONUS, 20);
-				item->SetForceAttribute( 4, APPLY_RESIST_BOW, 15);
-			}
+			// item = ch->GetWear(WEAR_NECK);
+			// if (item != NULL)
+			// {
+				// item->ClearAttribute();
+				// item->SetForceAttribute( 0, APPLY_MAX_HP, 2000);
+				// item->SetForceAttribute( 1, APPLY_CRITICAL_PCT, 10);
+				// item->SetForceAttribute( 2, APPLY_GOLD_DOUBLE_BONUS, 20);
+				// item->SetForceAttribute( 3, APPLY_EXP_DOUBLE_BONUS, 20);
+				// item->SetForceAttribute( 4, APPLY_RESIST_BOW, 15);
+			// }
 			//  -- bonus de pendiente
-			item = ch->GetWear(WEAR_EAR);
-			if (item != NULL)
-			{
-				item->ClearAttribute();
-				item->SetForceAttribute( 0, APPLY_ATTBONUS_UNDEAD, 20);
-				item->SetForceAttribute( 1, APPLY_ATTBONUS_ORC, 20);
-				item->SetForceAttribute( 2, APPLY_ATTBONUS_ANIMAL, 20);
-				item->SetForceAttribute( 3, APPLY_RESIST_BOW, 15);
-				item->SetForceAttribute( 4, APPLY_ITEM_DROP_BONUS, 20);
-			}
+			// item = ch->GetWear(WEAR_EAR);
+			// if (item != NULL)
+			// {
+				// item->ClearAttribute();
+				// item->SetForceAttribute( 0, APPLY_ATTBONUS_UNDEAD, 20);
+				// item->SetForceAttribute( 1, APPLY_ATTBONUS_ORC, 20);
+				// item->SetForceAttribute( 2, APPLY_ATTBONUS_ANIMAL, 20);
+				// item->SetForceAttribute( 3, APPLY_RESIST_BOW, 15);
+				// item->SetForceAttribute( 4, APPLY_ITEM_DROP_BONUS, 20);
+			// }
 		}
 		break;
 	}
@@ -2411,7 +2411,7 @@ void CHARACTER::additems(LPCHARACTER ch)
 	case JOB_WARRIOR:
 		{
 	  
-			item = ITEM_MANAGER::instance().CreateItem(19 );
+			item = ITEM_MANAGER::instance().CreateItem(30009 );
 			if (!item || !item->EquipTo(ch, item->FindEquipCell(ch)))
 				M2_DESTROY_ITEM(item);
 			item = ITEM_MANAGER::instance().CreateItem(11209 );
