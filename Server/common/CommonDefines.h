@@ -82,3 +82,6 @@ enum eCommonDefines {
 #endif
 //Robert
 
+#define ENABLE_DS_GRADE_MYTH
+#define ENABLE_DS_SET
+

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+癤�#include "stdafx.h"
 #include "constants.h"
 #include "item.h"
 #include "item_manager.h"
@@ -9,7 +9,6 @@
 #include "dragon_soul_table.h"
 #include "log.h"
 #include "DragonSoul.h"
-#include <boost/lexical_cast.hpp>
 
 typedef std::vector <std::string> TTokenVector;
 
@@ -132,10 +131,17 @@ WORD DSManager::GetBasePosition(const LPITEM pItem) const
 
 	BYTE col_type = pItem->GetSubType();
 	BYTE row_type = grade_idx;
+	
+	sys_err("DSManager::GetBasePosition type %d, grade_idx %d, step_idx %d, strength_idx %d, row_type %d, DRAGON_SOUL_GRADE_MAX %d", type, grade_idx, step_idx, strength_idx, row_type, DRAGON_SOUL_GRADE_MAX);
+	
 	if (row_type > DRAGON_SOUL_GRADE_MAX)
 		return WORD_MAX;
 
+#ifdef ENABLE_DS_GRADE_MYTH
+	return col_type * DRAGON_SOUL_GRADE_MAX * DRAGON_SOUL_BOX_SIZE + row_type * DRAGON_SOUL_BOX_SIZE;
+#else
 	return col_type * DRAGON_SOUL_STEP_MAX * DRAGON_SOUL_BOX_SIZE + row_type * DRAGON_SOUL_BOX_SIZE;
+#endif
 }
 
 bool DSManager::RefreshItemAttributes(LPITEM pDS)
@@ -164,7 +170,7 @@ bool DSManager::RefreshItemAttributes(LPITEM pDS)
 		return false;
 	}
 
-
+	
 	int basic_apply_num, add_min, add_max;
 	if (!m_pTable->GetApplyNumSettings(ds_type, grade_idx, basic_apply_num, add_min, add_max))
 	{
@@ -317,7 +323,7 @@ bool DSManager::ExtractDragonHeart(LPCHARACTER ch, LPITEM pItem, LPITEM pExtract
 		return false;
 	if (pItem->IsEquipped())
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("착용 중인 용혼석은 추출할 수 없습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_0"));
 		return false;
 	}
 
@@ -350,7 +356,7 @@ bool DSManager::ExtractDragonHeart(LPCHARACTER ch, LPITEM pItem, LPITEM pExtract
 	}
 
 	float fCharge = vec_chargings[idx] * (100 + iBonus) / 100.f;
-	fCharge = std::MINMAX <float> (0.f, fCharge, 100.f);
+	fCharge = std::clamp(0.f, fCharge, 100.f);
 
 	if (fCharge < FLT_EPSILON)
 	{
@@ -361,7 +367,7 @@ bool DSManager::ExtractDragonHeart(LPCHARACTER ch, LPITEM pItem, LPITEM pExtract
 		}
 		LogManager::instance().ItemLog(ch, pItem, "DS_HEART_EXTRACT_FAIL", "");
 
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("용심 추출에 실패하였습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_1"));
 		return false;
 	}
 	else
@@ -371,7 +377,7 @@ bool DSManager::ExtractDragonHeart(LPCHARACTER ch, LPITEM pItem, LPITEM pExtract
 		if (NULL == pDH)
 		{
 			sys_err ("Cannot create DRAGON_HEART(%d).", DRAGON_HEART_VNUM);
-			return NULL;
+			return 0;
 		}
 
 		pItem->SetCount(pItem->GetCount() - 1);
@@ -384,10 +390,10 @@ bool DSManager::ExtractDragonHeart(LPCHARACTER ch, LPITEM pItem, LPITEM pExtract
 		pDH->SetSocket(ITEM_SOCKET_CHARGING_AMOUNT_IDX, iCharge);
 		ch->AutoGiveItem(pDH, true);
 
-		std::string s = boost::lexical_cast <std::string> (iCharge);
+		std::string s = std::to_string(iCharge);
 		s += "%s";
 		LogManager::instance().ItemLog(ch, pItem, "DS_HEART_EXTRACT_SUCCESS", s.c_str());
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("용심 추출에 성공하였습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_2"));
 		return true;
 	}
 }
@@ -401,12 +407,13 @@ bool DSManager::PullOut(LPCHARACTER ch, TItemPos DestCell, LPITEM& pItem, LPITEM
 		return false;
 	}
 
-	if (!IsValidCellForThisItem(pItem, DestCell) || ch->GetItem(DestCell)) // @fixme160 (added GetItem check)
+	
+	if (!IsValidCellForThisItem(pItem, DestCell))
 	{
 		int iEmptyCell = ch->GetEmptyDragonSoulInventory(pItem);
 		if (iEmptyCell < 0)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("소지품에 빈 공간이 없습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_3"));
 			return false;
 		}
 		else
@@ -415,6 +422,14 @@ bool DSManager::PullOut(LPCHARACTER ch, TItemPos DestCell, LPITEM& pItem, LPITEM
 			DestCell.cell = iEmptyCell;
 		}
 	}
+	
+#ifdef ENABLE_DS_SET
+	if (ch->DragonSoul_IsDeckActivated())
+	{
+		ch->DragonSoul_HandleSetBonus();
+		ch->RemoveAffect(NEW_AFFECT_DS_SET);
+	}
+#endif
 
 	if (!pItem->IsEquipped() || !pItem->RemoveFromCharacter())
 		return false;
@@ -424,14 +439,14 @@ bool DSManager::PullOut(LPCHARACTER ch, TItemPos DestCell, LPITEM& pItem, LPITEM
 	int iBonus = 0;
 	float fProb;
 	float fDice;
-
+	
 	{
 		//DWORD dwVnum = pItem->GetVnum();
 
 		BYTE ds_type, grade_idx, step_idx, strength_idx;
 		GetDragonSoulInfo(pItem->GetVnum(), ds_type, grade_idx, step_idx, strength_idx);
 
-
+		
 		if (!m_pTable->GetDragonSoulExtValues(ds_type, grade_idx, fProb, dwByProduct))
 		{
 			pItem->AddToCharacter(ch, DestCell);
@@ -448,7 +463,7 @@ bool DSManager::PullOut(LPCHARACTER ch, TItemPos DestCell, LPITEM& pItem, LPITEM
 		bSuccess = fDice <= (fProb * (100 + iBonus) / 100.f);
 	}
 
-
+	
 	{
 		char buf[128];
 
@@ -463,7 +478,7 @@ bool DSManager::PullOut(LPCHARACTER ch, TItemPos DestCell, LPITEM& pItem, LPITEM
 				sprintf(buf, "dice(%d) prob(%d)", (int)fDice, (int)fProb);
 			}
 			LogManager::instance().ItemLog(ch, pItem, "DS_PULL_OUT_SUCCESS", buf);
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("용혼석 추출에 성공하였습니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_4"));
 			pItem->AddToCharacter(ch, DestCell);
 			return true;
 		}
@@ -481,22 +496,14 @@ bool DSManager::PullOut(LPCHARACTER ch, TItemPos DestCell, LPITEM& pItem, LPITEM
 			M2_DESTROY_ITEM(pItem);
 			pItem = NULL;
 			if (dwByProduct)
-			{
 				LPITEM pByProduct = ch->AutoGiveItem(dwByProduct, true);
-				if (pByProduct)
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("용혼석 추출에 실패하여 %s를 얻었습니다."), pByProduct->GetName());
-				else
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("용혼석 추출에 실패하였습니다."));
-			}
-			else
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("용혼석 추출에 실패하였습니다."));
 		}
 	}
 
 	return bSuccess;
 }
 
-bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_REFINE_GRID_SIZE])
+bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_REFINE_GRID_SIZE], bool returnTrueInCaseOfFailedRefine)
 {
 	if (NULL == ch)
 		return false;
@@ -506,15 +513,6 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 		return false;
 	}
 
-	if (!ch->DragonSoul_RefineWindow_CanRefine())
-	{
-		sys_err ("%s do not activate DragonSoulRefineWindow. But how can he come here?", ch->GetName());
-		ch->ChatPacket(CHAT_TYPE_INFO, "[SYSTEM ERROR]You cannot upgrade dragon soul without refine window.");
-		return false;
-	}
-
-
-
 	std::set <LPITEM> set_items;
 	for (int i = 0; i < DRAGON_SOUL_REFINE_GRID_SIZE; i++)
 	{
@@ -523,10 +521,10 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 		LPITEM pItem = ch->GetItem(aItemPoses[i]);
 		if (NULL != pItem)
 		{
-
+			
 			if (!pItem->IsDragonSoul())
 			{
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("등급 개량에 필요한 재료가 아닙니다."));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_5"));
 				SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_INVALID_MATERIAL, TItemPos(pItem->GetWindow(), pItem->GetCell()));
 
 				return false;
@@ -551,7 +549,7 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 	BYTE ds_type, grade_idx, step_idx, strength_idx;
 	int result_grade;
 
-
+	
 	std::set <LPITEM>::iterator it = set_items.begin();
 	{
 		LPITEM pItem = *it;
@@ -560,7 +558,7 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 
 		if (!m_pTable->GetRefineGradeValues(ds_type, grade_idx, need_count, fee, vec_probs))
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("등급 개량할 수 없는 용혼석입니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_6"));
 			SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_INVALID_MATERIAL, TItemPos(pItem->GetWindow(), pItem->GetCell()));
 
 			return false;
@@ -570,8 +568,8 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 	{
 		LPITEM pItem = *it;
 
-
-
+		
+		
 		if (pItem->IsEquipped())
 		{
 			return false;
@@ -579,14 +577,14 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 
 		if (ds_type != GetType(pItem->GetVnum()) || grade_idx != GetGradeIdx(pItem->GetVnum()))
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("등급 개량에 필요한 재료가 아닙니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_7"));
 			SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_INVALID_MATERIAL, TItemPos(pItem->GetWindow(), pItem->GetCell()));
 
 			return false;
 		}
 	}
 
-
+	
 	if (count != need_count)
 	{
 		sys_err ("Possiblity of invalid client. Name %s", ch->GetName());
@@ -595,9 +593,13 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 		return false;
 	}
 
+#ifdef ENABLE_REMOVE_LIMIT_GOLD
+	if (ch->GetGold() < (unsigned long long)fee)
+#else
 	if (ch->GetGold() < fee)
+#endif
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("개량을 하기 위한 돈이 부족합니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_8"));
 		SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_NOT_ENOUGH_MONEY, NPOS);
 		return false;
 	}
@@ -616,7 +618,11 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 		return false;
 	}
 
+#ifdef ENABLE_REMOVE_LIMIT_GOLD
+	ch->ChangeGold(-fee);
+#else
 	ch->PointChange(POINT_GOLD, -fee);
+#endif
 	int left_count = need_count;
 
 	for (std::set <LPITEM>::iterator it = set_items.begin(); it != set_items.end(); it++)
@@ -642,7 +648,7 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 		char buf[128];
 		sprintf(buf, "GRADE : %d -> %d", grade_idx, result_grade);
 		LogManager::instance().ItemLog(ch, pResultItem, "DS_GRADE_REFINE_SUCCESS", buf);
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("등급 개량에 성공했습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_9"));
 		SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_SUCCEED, TItemPos (pResultItem->GetWindow(), pResultItem->GetCell()));
 		return true;
 	}
@@ -651,9 +657,9 @@ bool DSManager::DoRefineGrade(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL
 		char buf[128];
 		sprintf(buf, "GRADE : %d -> %d", grade_idx, result_grade);
 		LogManager::instance().ItemLog(ch, pResultItem, "DS_GRADE_REFINE_FAIL", buf);
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("등급 개량에 실패했습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_10"));
 		SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL, TItemPos (pResultItem->GetWindow(), pResultItem->GetCell()));
-		return false;
+		return returnTrueInCaseOfFailedRefine ? true : false;
 	}
 }
 
@@ -665,26 +671,17 @@ bool DSManager::DoRefineStep(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_
 	{
 		return false;
 	}
-
-	if (!ch->DragonSoul_RefineWindow_CanRefine())
-	{
-		sys_err ("%s do not activate DragonSoulRefineWindow. But how can he come here?", ch->GetName());
-		ch->ChatPacket(CHAT_TYPE_INFO, "[SYSTEM ERROR]You cannot use dragon soul refine window.");
-		return false;
-	}
-
-
-
+	
 	std::set <LPITEM> set_items;
 	for (int i = 0; i < DRAGON_SOUL_REFINE_GRID_SIZE; i++)
 	{
 		LPITEM pItem = ch->GetItem(aItemPoses[i]);
 		if (NULL != pItem)
 		{
-
+			
 			if (!pItem->IsDragonSoul())
 			{
-				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("단계 개량에 필요한 재료가 아닙니다."));
+				ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_11"));
 				SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_INVALID_MATERIAL, TItemPos(pItem->GetWindow(), pItem->GetCell()));
 				return false;
 			}
@@ -707,7 +704,7 @@ bool DSManager::DoRefineStep(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_
 	BYTE ds_type, grade_idx, step_idx, strength_idx;
 	int result_step;
 
-
+	
 	std::set <LPITEM>::iterator it = set_items.begin();
 	{
 		LPITEM pItem = *it;
@@ -715,7 +712,7 @@ bool DSManager::DoRefineStep(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_
 
 		if (!m_pTable->GetRefineStepValues(ds_type, step_idx, need_count, fee, vec_probs))
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("단계 개량할 수 없는 용혼석입니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_12"));
 			SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_INVALID_MATERIAL, TItemPos(pItem->GetWindow(), pItem->GetCell()));
 			return false;
 		}
@@ -724,21 +721,21 @@ bool DSManager::DoRefineStep(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_
 	while(++it != set_items.end())
 	{
 		LPITEM pItem = *it;
-
-
+		
+		
 		if (pItem->IsEquipped())
 		{
 			return false;
 		}
 		if (ds_type != GetType(pItem->GetVnum()) || grade_idx != GetGradeIdx(pItem->GetVnum()) || step_idx != GetStepIdx(pItem->GetVnum()))
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("단계 개량에 필요한 재료가 아닙니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_13"));
 			SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_INVALID_MATERIAL, TItemPos(pItem->GetWindow(), pItem->GetCell()));
 			return false;
 		}
 	}
 
-
+	
 	if (count != need_count)
 	{
 		sys_err ("Possiblity of invalid client. Name %s", ch->GetName());
@@ -747,9 +744,13 @@ bool DSManager::DoRefineStep(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_
 		return false;
 	}
 
+#ifdef ENABLE_REMOVE_LIMIT_GOLD
+	if (ch->GetGold() < (unsigned long long)fee)
+#else
 	if (ch->GetGold() < fee)
+#endif
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("개량을 하기 위한 돈이 부족합니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_14"));
 		SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_NOT_ENOUGH_MONEY, NPOS);
 		return false;
 	}
@@ -770,7 +771,11 @@ bool DSManager::DoRefineStep(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_
 		return false;
 	}
 
+#ifdef ENABLE_REMOVE_LIMIT_GOLD
+	ch->ChangeGold(-fee);
+#else
 	ch->PointChange(POINT_GOLD, -fee);
+#endif
 	int left_count = need_count;
 	for (std::set <LPITEM>::iterator it = set_items.begin(); it != set_items.end(); it++)
 	{
@@ -794,7 +799,7 @@ bool DSManager::DoRefineStep(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_
 		char buf[128];
 		sprintf(buf, "STEP : %d -> %d", step_idx, result_step);
 		LogManager::instance().ItemLog(ch, pResultItem, "DS_STEP_REFINE_SUCCESS", buf);
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("단계 개량에 성공했습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_15"));
 		SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_SUCCEED, TItemPos (pResultItem->GetWindow(), pResultItem->GetCell()));
 		return true;
 	}
@@ -803,7 +808,7 @@ bool DSManager::DoRefineStep(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_SOUL_
 		char buf[128];
 		sprintf(buf, "STEP : %d -> %d", step_idx, result_step);
 		LogManager::instance().ItemLog(ch, pResultItem, "DS_STEP_REFINE_FAIL", buf);
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("단계 개량에 실패했습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_16"));
 		SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL, TItemPos (pResultItem->GetWindow(), pResultItem->GetCell()));
 		return false;
 	}
@@ -826,16 +831,7 @@ bool DSManager::DoRefineStrength(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_S
 	{
 		return false;
 	}
-
-	if (!ch->DragonSoul_RefineWindow_CanRefine())
-	{
-		sys_err ("%s do not activate DragonSoulRefineWindow. But how can he come here?", ch->GetName());
-		ch->ChatPacket(CHAT_TYPE_INFO, "[SYSTEM ERROR]You cannot use dragon soul refine window.");
-		return false;
-	}
-
-
-
+	
 	std::set <LPITEM> set_items;
 	for (int i = 0; i < DRAGON_SOUL_REFINE_GRID_SIZE; i++)
 	{
@@ -857,15 +853,15 @@ bool DSManager::DoRefineStrength(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_S
 	for (std::set <LPITEM>::iterator it = set_items.begin(); it != set_items.end(); it++)
 	{
 		LPITEM pItem = *it;
-
-
+		
+		
 		if (pItem->IsEquipped())
 		{
 			return false;
 		}
 
-
-
+		
+		
 		if (pItem->IsDragonSoul())
 		{
 			if (pDragonSoul != NULL)
@@ -886,7 +882,7 @@ bool DSManager::DoRefineStrength(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_S
 		}
 		else
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("강화에 필요한 재료가 아닙니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_17"));
 			SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_INVALID_MATERIAL, TItemPos(pItem->GetWindow(), pItem->GetCell()));
 			return false;
 		}
@@ -906,17 +902,17 @@ bool DSManager::DoRefineStrength(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_S
 		GetDragonSoulInfo(pDragonSoul->GetVnum(), bType, bGrade, bStep, bStrength);
 
 		float fWeight = 0.f;
-
+		
 		if (!m_pTable->GetWeight(bType, bGrade, bStep, bStrength + 1, fWeight))
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("강화할 수 없는 용혼석입니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_18"));
 			SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_MAX_REFINE, TItemPos(pDragonSoul->GetWindow(), pDragonSoul->GetCell()));
 			return false;
 		}
-
+		
 		if (fWeight < FLT_EPSILON)
 		{
-			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("강화할 수 없는 용혼석입니다."));
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_19"));
 			SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_MAX_REFINE, TItemPos(pDragonSoul->GetWindow(), pDragonSoul->GetCell()));
 			return false;
 		}
@@ -925,20 +921,28 @@ bool DSManager::DoRefineStrength(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_S
 	float fProb;
 	if (!m_pTable->GetRefineStrengthValues(bType, pRefineStone->GetSubType(), bStrength, fee, fProb))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("강화할 수 없는 용혼석입니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_20"));
 		SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_INVALID_MATERIAL, TItemPos(pDragonSoul->GetWindow(), pDragonSoul->GetCell()));
 
 		return false;
 	}
 
+#ifdef ENABLE_REMOVE_LIMIT_GOLD
+	if (ch->GetGold() < (unsigned long long)fee)
+#else
 	if (ch->GetGold() < fee)
+#endif
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("개량을 하기 위한 돈이 부족합니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_21"));
 		SendRefineResultPacket(ch, DS_SUB_HEADER_REFINE_FAIL_NOT_ENOUGH_MONEY, NPOS);
 		return false;
 	}
 
+#ifdef ENABLE_REMOVE_LIMIT_GOLD
+	ch->ChangeGold(-fee);
+#else
 	ch->PointChange(POINT_GOLD, -fee);
+#endif
 	LPITEM pResult = NULL;
 	BYTE bSubHeader;
 
@@ -961,7 +965,7 @@ bool DSManager::DoRefineStrength(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_S
 		char buf[128];
 		sprintf(buf, "STRENGTH : %d -> %d", bStrength, bStrength + 1);
 		LogManager::instance().ItemLog(ch, pDragonSoul, "DS_STRENGTH_REFINE_SUCCESS", buf);
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("강화에 성공했습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_22"));
 		ch->AutoGiveItem(pResult, true);
 		bSubHeader = DS_SUB_HEADER_REFINE_SUCCEED;
 	}
@@ -982,10 +986,10 @@ bool DSManager::DoRefineStrength(LPCHARACTER ch, TItemPos (&aItemPoses)[DRAGON_S
 
 		char buf[128];
 		sprintf(buf, "STRENGTH : %d -> %d", bStrength, bStrength - 1);
-
+		
 		LogManager::instance().ItemLog(ch, pDragonSoul, "DS_STRENGTH_REFINE_FAIL", buf);
 
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("강화에 실패했습니다."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("DRAGON_SOUL_NON_TRANSLATED_23"));
 		pDragonSoul->SetCount(pDragonSoul->GetCount() - 1);
 		pRefineStone->SetCount(pRefineStone->GetCount() - 1);
 		if (NULL != pResult)
@@ -1023,12 +1027,12 @@ int DSManager::LeftTime(LPITEM pItem) const
 	if (pItem == NULL)
 		return false;
 
-
+	
 	if (pItem->GetProto()->cLimitTimerBasedOnWearIndex >= 0)
 	{
 		return pItem->GetSocket(ITEM_SOCKET_REMAIN_SEC);
 	}
-
+	
 	else
 	{
 		return INT_MAX;
@@ -1040,12 +1044,12 @@ bool DSManager::IsTimeLeftDragonSoul(LPITEM pItem) const
 	if (pItem == NULL)
 		return false;
 
-
+	
 	if (pItem->GetProto()->cLimitTimerBasedOnWearIndex >= 0)
 	{
 		return pItem->GetSocket(ITEM_SOCKET_REMAIN_SEC) > 0;
 	}
-
+	
 	else
 	{
 		return true;
@@ -1133,6 +1137,156 @@ void DSManager::RefreshDragonSoulState(LPCHARACTER ch)
 	ch->DragonSoul_DeactivateAll();
 }
 
+bool DSManager::DoAllRefineGrade(LPCHARACTER ch, BYTE dsKind, BYTE dsGrade) {
+	if (ch == nullptr) {
+		sys_err("no char ptr");
+		return false;
+	}
+	if (dsKind >= DS_SLOT_MAX) {
+		sys_err("ds kind too high %d", dsKind);
+		return false;
+	}
+	if (dsGrade >= DRAGON_SOUL_GRADE_MAX) {
+		sys_err("grade too high %d", dsGrade);
+		return false;
+	}
+
+	if (!ch->DragonSoul_RefineWindow_CanRefine()) {
+		sys_err("%s do not activate DragonSoulRefineWindow. But how can he come "
+			"here?",
+			ch->GetName());
+		ch->ChatPacket(CHAT_TYPE_INFO,
+			"[SYSTEM ERROR]You cannot upgrade dragon soul without "
+			"refine window.");
+		return false;
+	}
+
+	auto startPos = (DRAGON_SOUL_BOX_SIZE * dsGrade) +
+		(dsKind * DRAGON_SOUL_BOX_SIZE * DRAGON_SOUL_GRADE_MAX);
+	auto endPos = startPos + DRAGON_SOUL_BOX_SIZE;
+
+	int32_t needCount = -1, fee;
+	uint8_t dsType, gradeIdx, stepIdx, strengthIdx;
+	std::vector<float> probabilities;
+
+	TItemPos poses[DRAGON_SOUL_REFINE_GRID_SIZE];
+	size_t posesI = 0;
+	for (auto i = startPos; i < endPos; i++) {
+		auto item = ch->GetItem(TItemPos(DRAGON_SOUL_INVENTORY, i));
+		if (!item)
+			continue;
+
+		if (needCount == -1) {
+			GetDragonSoulInfo(item->GetVnum(), dsType, gradeIdx, stepIdx, strengthIdx);
+
+			if (!m_pTable->GetRefineGradeValues(dsType, gradeIdx, needCount, fee, probabilities))
+				return false;
+		}
+
+		auto& pos = poses[posesI++];
+		pos.window_type = item->GetWindow();
+		pos.cell = item->GetCell();
+
+		if (posesI >= needCount) {
+			DoRefineGrade(ch, poses, true);
+			posesI = 0;
+		}
+	}
+
+	return true;
+}
+
+#ifdef ENABLE_DS_SET
+bool DSManager::GetDSSetGrade(LPCHARACTER ch, uint8_t & iSetGrade)
+{
+	if (NULL == ch)
+	{
+		return false;
+	}
+
+	const uint8_t iDeckIdx = ch->DragonSoul_GetActiveDeck();
+	const uint16_t wDragonSoulDeckAffectType = AFFECT_DRAGON_SOUL_DECK_0 + iDeckIdx;
+	if (!ch->FindAffect(wDragonSoulDeckAffectType))
+	{
+		return false;
+	}
+
+	const uint8_t iStartSlotIndex = WEAR_MAX_NUM + (iDeckIdx * DS_SLOT_MAX);
+	const uint8_t iEndSlotIndex = iStartSlotIndex + DS_SLOT_MAX;
+
+	iSetGrade = 0;
+
+	for (uint8_t iSlotIndex = iStartSlotIndex; iSlotIndex < iEndSlotIndex; ++iSlotIndex)
+	{
+		const LPITEM pkItem = ch->GetWear(iSlotIndex);
+		if (!pkItem)
+		{
+			return false;
+		}
+
+		if (!pkItem->IsDragonSoul())
+		{
+			return false;
+		}
+
+		if (!IsTimeLeftDragonSoul(pkItem))
+		{
+			return false;
+		}
+
+		if (!IsActiveDragonSoul(pkItem))
+		{
+			return false;
+		}
+
+		const uint8_t iGrade = GetGradeIdx(pkItem->GetVnum());
+		if (iGrade < DRAGON_SOUL_GRADE_ANCIENT)
+		{
+			return false;
+		}
+
+		if (iSetGrade == 0)
+		{
+			iSetGrade = iGrade;
+		}
+
+		if (iSetGrade != iGrade)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+int DSManager::GetDSSetValue(uint8_t iAttributeIndex, uint16_t iApplyType, uint32_t iVnum, uint8_t iSetGrade)
+{
+	const uint8_t iType = GetType(iVnum);
+	float fWeight;
+	if (!m_pTable->GetWeight(iType, iSetGrade-1, 0, 0, fWeight))
+	{
+		return 0;
+	}
+
+	int iSetValue;
+	if (iAttributeIndex < m_pTable->GetBasicApplyCount(iType))
+	{
+		m_pTable->GetBasicApplyValue(iType, iApplyType, iSetValue);
+	}
+	else
+	{
+		m_pTable->GetAdditionalApplyValue(iType, iApplyType, iSetValue);
+	}
+
+	if (iSetValue == 0)
+	{
+		return 0;
+	}
+
+	return (iSetValue * fWeight - 1) / 100 + 1;
+}
+#endif
+
 DSManager::DSManager()
 {
 	m_pTable = NULL;
@@ -1143,4 +1297,3 @@ DSManager::~DSManager()
 	if (m_pTable)
 		delete m_pTable;
 }
-//martysama0134's 2022

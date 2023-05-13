@@ -116,6 +116,12 @@ void WriteMallocMessage(const char* p1, const char* p2, const char* p3, const ch
 }
 #endif
 
+extern "C" ATTRIBUTE_NO_SANITIZE_ADDRESS const char* __asan_default_options()
+{
+	return "halt_on_error=false:log_path=asan-game.log";
+}
+
+
 // TRAFFIC_PROFILER
 static const DWORD	TRAFFIC_PROFILE_FLUSH_CYCLE = 3600;
 // END_OF_TRAFFIC_PROFILER
@@ -191,11 +197,11 @@ void ShutdownOnFatalError()
 		{
 			char buf[256];
 
-			strlcpy(buf, LC_TEXT("¼­¹ö¿¡ Ä¡¸íÀûÀÎ ¿À·ù°¡ ¹ß»ýÇÏ¿© ÀÚµ¿À¸·Î ÀçºÎÆÃµË´Ï´Ù."), sizeof(buf));
+			strlcpy(buf, LC_TEXT("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½ï¿½Ï¿ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ÃµË´Ï´ï¿½."), sizeof(buf));
 			SendNotice(buf);
-			strlcpy(buf, LC_TEXT("10ÃÊÈÄ ÀÚµ¿À¸·Î Á¢¼ÓÀÌ Á¾·áµÇ¸ç,"), sizeof(buf));
+			strlcpy(buf, LC_TEXT("10ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½,"), sizeof(buf));
 			SendNotice(buf);
-			strlcpy(buf, LC_TEXT("5ºÐ ÈÄ¿¡ Á¤»óÀûÀ¸·Î Á¢¼ÓÇÏ½Ç¼ö ÀÖ½À´Ï´Ù."), sizeof(buf));
+			strlcpy(buf, LC_TEXT("5ï¿½ï¿½ ï¿½Ä¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï½Ç¼ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½."), sizeof(buf));
 			SendNotice(buf);
 		}
 

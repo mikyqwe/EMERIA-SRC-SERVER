@@ -3,7 +3,7 @@
 #include "group_text_parse_tree.h"
 #include "dragon_soul_table.h"
 #include "item_manager.h"
-#include <boost/lexical_cast.hpp>
+
 const std::string g_astGradeName[] =
 {
 	"grade_normal",
@@ -11,6 +11,9 @@ const std::string g_astGradeName[] =
 	"grade_rare",
 	"grade_ancient",
 	"grade_legendary",
+#ifdef ENABLE_DS_GRADE_MYTH
+	"grade_myth",
+#endif
 };
 
 const std::string g_astStepName[] =
@@ -161,7 +164,7 @@ bool DragonSoulTable::ReadBasicApplys()
 		return false;
 	}
 
-	for (uint i = 0; i < m_vecDragonSoulNames.size(); i++)
+	for (uint32_t i = 0; i < m_vecDragonSoulNames.size(); i++)
 	{
 		CGroupNode* pChild;
 		if (NULL == (pChild = pGroupNode->GetChildNode(m_vecDragonSoulNames[i])))
@@ -172,6 +175,7 @@ bool DragonSoulTable::ReadBasicApplys()
 		TVecApplys vecApplys;
 		int n = pChild->GetRowCount();
 
+		// BasicApply Group은 Key가 1부터 시작함.
 		for (int j = 1; j <= n; j++)
 		{
 			std::stringstream ss;
@@ -401,34 +405,37 @@ bool DragonSoulTable::CheckRefineStepTables ()
 				std::vector <float> vec_probs;
 				if (!GetRefineStepValues(m_vecDragonSoulTypes[i], j, need_count, fee, vec_probs))
 				{
-					sys_err ("In %s group of RefineStepTables, values in Step(%s) row is invalid.",
-						m_vecDragonSoulNames[i].c_str(), g_astStepName[j].c_str());
+					sys_err ("In %s group of RefineStepTables, values in Step(%s) row is invalid.", m_vecDragonSoulNames[i].c_str(), g_astStepName[j].c_str());
 					return false;
 				}
 				if (need_count < 1)
 				{
-					sys_err ("In %s group of RefineStepTables, need_count of Step(%s) is less than 1.",
-						m_vecDragonSoulNames[i].c_str(), g_astStepName[j].c_str());
+					sys_err ("In %s group of RefineStepTables, need_count of Step(%s) is less than 1.", m_vecDragonSoulNames[i].c_str(), g_astStepName[j].c_str());
 					return false;
 				}
 				if (fee < 0)
 				{
-					sys_err ("In %s group of RefineStepTables, fee of Step(%s) is less than 0.",
-						m_vecDragonSoulNames[i].c_str(), g_astStepName[j].c_str());
+					sys_err ("In %s group of RefineStepTables, fee of Step(%s) is less than 0.", m_vecDragonSoulNames[i].c_str(), g_astStepName[j].c_str());
 					return false;
 				}
-				if (DRAGON_SOUL_GRADE_MAX != vec_probs.size())
+#ifdef ENABLE_DS_GRADE_MYTH
+				if (DRAGON_SOUL_STEP_MAX != vec_probs.size())
 				{
-					sys_err ("In %s group of RefineStepTables, probability list size is not %d.",
-						m_vecDragonSoulNames[i].c_str(), DRAGON_SOUL_GRADE_MAX);
+					sys_err("In %s group of RefineStepTables, probability list size is not %d.", m_vecDragonSoulNames[i].c_str(), DRAGON_SOUL_STEP_MAX);
 					return false;
 				}
+#else
+				if(DRAGON_SOUL_GRADE_MAX != vec_probs.size())
+				{
+					sys_err("In %s group of RefineStepTables, probability list size is not %d.", m_vecDragonSoulNames[i].c_str(), DRAGON_SOUL_GRADE_MAX);
+					return false;
+				}
+#endif
 				for (size_t k = 0; k < vec_probs.size(); k++)
 				{
 					if (vec_probs[k] < 0.f)
 					{
-						sys_err ("In %s group of RefineStepTables, probability(index : %d) is less than 0.",
-							m_vecDragonSoulNames[i].c_str(), k);
+						sys_err ("In %s group of RefineStepTables, probability(index : %d) is less than 0.", m_vecDragonSoulNames[i].c_str(), k);
 						return false;
 					}
 				}
@@ -653,6 +660,7 @@ bool DragonSoulTable::GetWeight(BYTE ds_type, BYTE grade_idx, BYTE step_index, B
 			return true;
 		}
 	}
+	// default group을 살펴봄.
 	pDragonSoulGroup = m_pWeightTableNode->GetChildNode("default");
 	if (NULL != pDragonSoulGroup)
 	{
@@ -786,7 +794,7 @@ bool DragonSoulTable::GetRefineStrengthValues(BYTE ds_type, BYTE material_type, 
 			stDragonSoulName.c_str(), g_astMaterialName[material_type].c_str());
 		return false;
 	}
-	std::string stStrengthIdx = boost::lexical_cast <std::string> ((int)strength_idx);
+	std::string stStrengthIdx = std::to_string((int)strength_idx);
 
 	if (!m_pRefineStrengthTableNode->GetGroupValue(stDragonSoulName, g_astMaterialName[material_type], stStrengthIdx, prob))
 	{
@@ -889,6 +897,59 @@ bool DragonSoulTable::GetDragonSoulExtValues(BYTE ds_type, BYTE grade_idx, OUT f
 	return true;
 }
 
+#ifdef ENABLE_DS_SET
+
+uint8_t DragonSoulTable::GetBasicApplyCount(uint8_t iType)
+{
+	TVecApplys vec_Applys;
+	if (!GetBasicApplys(iType, vec_Applys))
+	{
+		return 0;
+	}
+
+	return vec_Applys.size();
+}
+
+bool DragonSoulTable::GetBasicApplyValue(uint8_t iType, uint16_t iApplyType, int& iApplyValue)
+{
+	TVecApplys vec_Applys;
+	if (!GetBasicApplys(iType, vec_Applys))
+	{
+		return false;
+	}
+
+	for (const auto& it : vec_Applys)
+	{
+		if (it.apply_type == iApplyType)
+		{
+			iApplyValue = it.apply_value;
+		}
+	}
+
+	return false;
+}
+
+bool DragonSoulTable::GetAdditionalApplyValue(uint8_t iType, uint16_t iApplyType, int& iApplyValue)
+{
+	TVecApplys vec_Applys;
+	if (!GetAdditionalApplys(iType, vec_Applys))
+	{
+		return false;
+	}
+
+	for (const auto& it : vec_Applys)
+	{
+		if (it.apply_type == iApplyType)
+		{
+			iApplyValue = it.apply_value;
+		}
+	}
+
+	return false;
+}
+
+#endif
+
 DragonSoulTable::DragonSoulTable()
 {
 	m_pLoader = NULL;
@@ -898,4 +959,3 @@ DragonSoulTable::~DragonSoulTable ()
 	if (m_pLoader)
 		delete m_pLoader;
 }
-//martysama0134's 2022

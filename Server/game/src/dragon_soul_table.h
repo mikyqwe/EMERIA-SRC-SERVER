@@ -1,5 +1,4 @@
-#ifndef __INC_METIN_II_DRAGON_SOUL_TABLE_H__
-#define __INC_METIN_II_DRAGON_SOUL_TABLE_H__
+#pragma once
 
 struct SApply
 {
@@ -34,6 +33,12 @@ public:
 	bool	GetRefineStrengthValues(BYTE ds_type, BYTE material_type, BYTE strength_idx, OUT int& fee, OUT float& prob);
 	bool	GetDragonHeartExtValues(BYTE ds_type, BYTE grade_idx, OUT std::vector<float>& vec_chargings, OUT std::vector<float>& vec_probs);
 	bool	GetDragonSoulExtValues(BYTE ds_type, BYTE grade_idx, OUT float& prob, OUT DWORD& by_product);
+
+#ifdef ENABLE_DS_SET
+	uint8_t	GetBasicApplyCount(uint8_t iType);
+	bool	GetBasicApplyValue(uint8_t iType, uint16_t iApplyType, int& iApplyValue);
+	bool	GetAdditionalApplyValue(uint8_t iType, uint16_t iApplyType, int& iApplyValue);
+#endif
 
 private:
 	CGroupTextParseTreeLoader* m_pLoader;
@@ -70,6 +75,3 @@ private:
 	bool	CheckDragonHeartExtTables();
 	bool	CheckDragonSoulExtTables();
 };
-
-#endif
-//martysama0134's 2022

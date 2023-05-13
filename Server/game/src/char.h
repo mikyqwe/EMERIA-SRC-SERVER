@@ -2339,9 +2339,6 @@ public:
 
 	public:
 
-
-
-
 		void	DragonSoul_Initialize();
 
 		bool	DragonSoul_IsQualified() const;
@@ -2353,13 +2350,9 @@ public:
 
 		void	DragonSoul_DeactivateAll();
 
-
-
-
-		//
-
-
-
+#ifdef ENABLE_DS_SET
+		void DragonSoul_HandleSetBonus();
+#endif
 
 		void	DragonSoul_CleanUp();
 
