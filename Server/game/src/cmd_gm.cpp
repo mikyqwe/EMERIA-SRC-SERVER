@@ -4819,9 +4819,13 @@ ACMD (do_dragon_soul)
 			ch->DragonSoul_DeactivateAll();
 		}
 		break;
+	case 'r':
+		{
+			ch->DragonSoul_RefineWindow_Open(ch);
+		}
+		break;
 	}
 }
-
 #ifdef __ENABLE_NEW_OFFLINESHOP__
 std::string GetNewShopName(const std::string& oldname, const std::string& newname) {
 	auto nameindex = oldname.find('@');
