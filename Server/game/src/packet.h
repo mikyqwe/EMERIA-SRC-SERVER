@@ -367,6 +367,10 @@ enum
 	HEADER_GC_HUNTING_RECIVE_RAND_ITEMS	= 248,
 #endif
 
+#ifdef ENABLE_DS_CHANGE_ATTR
+	HEADER_GC_DRAGON_SOUL_CHANGE_ATTR			= 249,
+#endif
+
 	/////////////////////////////////////////////////////////////////////////////
 
 	HEADER_GG_LOGIN				= 1,
@@ -3229,6 +3233,12 @@ typedef struct SPacketGCReciveRandomItems
 } TPacketGCReciveRandomItems;
 #endif
 
+#ifdef ENABLE_DS_CHANGE_ATTR
+typedef struct SPacketGCDragonSoulAttrChange
+{
+	uint8_t header;
+} TPacketGCDragonSoulChangeAttr;
+#endif
 
 #pragma pack()
 #endif

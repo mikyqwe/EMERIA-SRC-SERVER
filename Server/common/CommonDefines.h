@@ -85,3 +85,9 @@ enum eCommonDefines {
 #define ENABLE_DS_GRADE_MYTH
 #define ENABLE_DS_SET
 
+
+#define ENABLE_DS_CHANGE_ATTR
+#ifdef ENABLE_DS_CHANGE_ATTR
+#define DS_ATTR_CHANGE_PRICE 50000
+#endif
+

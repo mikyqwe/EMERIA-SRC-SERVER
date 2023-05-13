@@ -2529,6 +2529,11 @@ protected:
 	bool			SetBlendAffect(LPITEM item);
 #endif
 
+public:
+#ifdef ENABLE_DS_CHANGE_ATTR
+	bool DragonSoulChangeAttrWindow();
+#endif
+
 };
 
 ESex GET_SEX(LPCHARACTER ch);

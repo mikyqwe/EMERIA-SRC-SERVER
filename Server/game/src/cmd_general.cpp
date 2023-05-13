@@ -3180,3 +3180,80 @@ ACMD(do_anti_exp)
 	ch->SetAntiExp(!ch->GetAntiExp());
 }
 #endif
+
+#ifdef ENABLE_DS_CHANGE_ATTR
+#include "DragonSoul.h"
+ACMD(do_ds_change_attr)
+{
+    char arg1[256];
+    one_argument(argument, arg1, sizeof(arg1));
+
+    if (!*arg1)
+        return;
+
+	if (ch->IsOpenSafebox() || ch->GetShop() || ch->IsCubeOpen() || ch->IsDead() || ch->GetExchange() || ch->GetMyShop() || !ch->CanWarp() || !ch->CanHandleItem()
+#ifdef __ENABLE_NEW_OFFLINESHOP__
+		|| ch->GetOfflineShopGuest() || ch->GetAuctionGuest()
+#endif
+		)
+    {
+        ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("[DS Bonus]Nu poti face asta acum."));
+        return;
+    }
+
+    uint32_t dwPos = 0;
+    str_to_number(dwPos, arg1);
+
+    constexpr int8_t needFireCountList[] = { 1, 3, 9, 27, 81 };
+    int8_t bNeedFire = -1;
+
+    if (dwPos < 0 || dwPos >= DRAGON_SOUL_INVENTORY_MAX_NUM)
+        return;
+
+    LPITEM item = ch->GetItem(TItemPos(DRAGON_SOUL_INVENTORY, dwPos));
+
+    if (!item || item->IsExchanging() || item->IsEquipped())
+        return;
+
+	if (item->IsDragonSoul())
+	{
+		bNeedFire = needFireCountList[(item->GetVnum() / 100) % 10];
+		if (DSManager::Instance().IsActiveDragonSoul(item))
+		{
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("CANNOT_CHANGE_BONUS_OF_EQUIPPED_DRAGON_SOUL_ITEM"));
+			return;
+		}
+
+		if (ch->CountSpecifyItem(100700) < bNeedFire)
+		{
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("CANNOT_CHANGE_BONUS_YOU_HAVE_NOT_ENOUGH_FLAMES, NEEDED %d"), bNeedFire);
+			return;
+		}
+
+		if (ch->GetGold() < DS_ATTR_CHANGE_PRICE)
+		{
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("YOU_DONT_HAVE_ENOUGH_MONEY"));
+			return;
+		}
+
+		bool ret = DSManager::Instance().PutAttributes(item);
+		if (!ret)
+		{
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("FAILED_CHANGING_BONUS_OF_DRAGON_SOUL_ITEM"));
+			ch->ChatPacket(CHAT_TYPE_COMMAND, "DS_ChangeAttr_Failed");
+			return;
+		}
+
+		ch->PointChange(POINT_GOLD, -DS_ATTR_CHANGE_PRICE);
+		ch->RemoveSpecifyItem(100700, bNeedFire);
+
+		for (BYTE i = 0; i < 7; i++) { item->SetForceAttribute(i, 0, 0); }
+		DSManager::Instance().PutAttributes(item);
+
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("SUCCESSFULLY_CHANGED_BONUS_OF_DRAGON_SOUL_ITEM"));
+		ch->ChatPacket(CHAT_TYPE_COMMAND, "DS_ChangeAttr_Success");
+	}
+	else
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("No myth DS Item!"));
+}
+#endif

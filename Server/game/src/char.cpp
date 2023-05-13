@@ -9279,3 +9279,15 @@ auto CHARACTER::HasBlockedDrops() -> bool
 	return CAntiMultipleFarm::instance().GetPlayerDropState(sMAIf, GetPlayerID());
 }
 #endif
+
+#ifdef ENABLE_DS_CHANGE_ATTR
+bool CHARACTER::DragonSoulChangeAttrWindow()
+{
+	TPacketGCDragonSoulChangeAttr p{};
+
+	p.header = HEADER_GC_DRAGON_SOUL_CHANGE_ATTR;
+
+	GetDesc()->Packet(&p, sizeof(TPacketGCDragonSoulChangeAttr));
+	return true;
+}
+#endif
