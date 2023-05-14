@@ -63,6 +63,10 @@
 #define ENABLE_WHISPER_CHAT_SPAMLIMIT
 #define ENABLE_CHECK_GHOSTMODE
 
+#ifdef ENABLE_BIOLOG_SYSTEM
+#include "biologSystem.h"
+#endif
+
 #ifdef ENABLE_CHAT_LOGGING
 static char	__escape_string[1024];
 static char	__escape_string2[1024];
@@ -4042,7 +4046,13 @@ int CInputMain::Analyze(LPDESC d, BYTE bHeader, const char * c_pData)
 			if ((iExtraLen = Messenger(ch, c_pData, m_iBufferLeft))<0)
 				return -1;
 			break;
-
+#ifdef ENABLE_BIOLOG_SYSTEM
+	case HEADER_CG_BIOLOG:
+		{
+			RecvBiologSystem(ch, c_pData);
+		}
+		break;
+#endif
 		case HEADER_CG_ON_CLICK:
 			OnClick(ch, c_pData);
 			break;
@@ -4526,3 +4536,55 @@ auto CInputMain::RecvAntiFarmUpdateStatus(LPCHARACTER ch, const char* data, size
 }
 #endif
 
+#ifdef ENABLE_BIOLOG_SYSTEM
+void CInputMain::RecvBiologSystem(LPCHARACTER ch, const char* c_pData)
+{
+	auto biologPacket = (TBiologCG*)c_pData;
+
+	switch (biologPacket->subHeader)
+	{
+	case BIOLOG_SUB_DELIVER:
+		{
+			bool isRequireDelete = true;
+
+			auto biologTime = ch->GetQuestFlag("biolog.cooldown");
+			if (biologTime && get_global_time() > biologTime)
+				isRequireDelete = false;
+
+			if (biologPacket->resetBiolog && ch->CountSpecifyItem(BIOLOG_RESET_ITEM) < 1 && isRequireDelete)
+			{
+				const auto itemTable = ITEM_MANAGER::instance().GetTable(BIOLOG_RESET_ITEM);
+				if (itemTable)
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You need %s!"), itemTable->szLocaleName);
+				return;
+			}
+
+			if (biologPacket->succesPercentage && ch->CountSpecifyItem(BIOLOG_PERCENT_ITEM) < 1)
+			{
+				const auto itemTable = ITEM_MANAGER::instance().GetTable(BIOLOG_PERCENT_ITEM);
+				if (itemTable)
+					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("You need %s!"), itemTable->szLocaleName);
+				return;
+			}
+
+			if (CBiolog::instance().DeliverItem(ch, biologPacket->firstArgument, biologPacket->succesPercentage,
+			                                    biologPacket->resetBiolog))
+			{
+				if (biologPacket->resetBiolog && isRequireDelete)
+					ch->RemoveSpecifyItem(BIOLOG_RESET_ITEM);
+
+				if (biologPacket->succesPercentage)
+					ch->RemoveSpecifyItem(BIOLOG_PERCENT_ITEM);
+			}
+		}
+		break;
+
+	case BIOLOG_SUB_BUY_ITEM:
+		//Work in progress
+		break;
+
+	default:
+		break;
+	}
+}
+#endif

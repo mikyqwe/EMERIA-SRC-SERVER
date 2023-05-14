@@ -274,6 +274,9 @@ CPacketInfoCG::CPacketInfoCG()
 #ifdef ENABLE_CUBE_RENEWAL_WORLDARD
 	Set(HEADER_CG_CUBE_RENEWAL, sizeof(TPacketCGCubeRenewalSend), "CubeRenewalSend", true);
 #endif
+#ifdef ENABLE_BIOLOG_SYSTEM
+	Set(HEADER_CG_BIOLOG, sizeof(TBiologCG), "RecvBiologSystem");
+#endif
 }
 
 CPacketInfoCG::~CPacketInfoCG()

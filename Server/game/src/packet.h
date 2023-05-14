@@ -3239,7 +3239,47 @@ typedef struct SPacketGCDragonSoulAttrChange
 	uint8_t header;
 } TPacketGCDragonSoulChangeAttr;
 #endif
+#ifdef ENABLE_BIOLOG_SYSTEM
+typedef struct BiologSender
+{
+	uint8_t 	bHeader;
 
+	uint8_t	biologLevel;
+	uint32_t	requestItem;
+	uint8_t actualCount, requestItemCount;
+
+	TBiologApply values[BIOLOG_MAX_VALUES];
+
+	uint32_t secondsCoolDown;
+	uint32_t biologRealCooldown;
+
+	uint8_t isBonusSelectable;
+
+	uint16_t rewardItem, rewardCount;
+
+
+} TPacketGCBiolog;
+enum
+{
+	HEADER_CG_BIOLOG = 231,
+	HEADER_GC_BIOLOG = 235,
+};
+enum
+{
+	BIOLOG_SUB_DELIVER,
+	BIOLOG_SUB_BUY_ITEM,
+};
+
+typedef struct SBiologCG
+{
+	BYTE header;
+	uint8_t subHeader = 0;
+	int16_t firstArgument = -1;
+
+	bool resetBiolog, succesPercentage;
+
+} TBiologCG;
+#endif
 #pragma pack()
 #endif
 //martysama0134's 2022

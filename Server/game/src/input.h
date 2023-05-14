@@ -191,6 +191,9 @@ class CInputMain : public CInputProcessor
 #if defined(__DUNGEON_INFO_SYSTEM__)
 		void DungeonInfo(LPCHARACTER ch, const char* c_pData);
 #endif
+#ifdef ENABLE_BIOLOG_SYSTEM
+		void 		RecvBiologSystem(LPCHARACTER ch, const char* pcData);
+#endif
 };
 
 class CInputDead : public CInputMain

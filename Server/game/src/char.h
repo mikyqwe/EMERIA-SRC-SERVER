@@ -2538,6 +2538,24 @@ public:
 		void SetLastRemoteTime(DWORD dwTime) { dwLastRemoteTime = dwTime; }
 	private:
 		DWORD dwLastRemoteTime;
+#ifdef ENABLE_BIOLOG_SYSTEM
+public:
+	std::tuple<uint8_t, uint8_t, uint32_t> getBiologData() {return std::make_tuple(biologLevel, biologCount, biologItemVnum);}
+
+	void SetBiologData(uint8_t biologLevelValue, uint8_t biologCountValue, uint32_t biologItemVnumValue) {
+		biologLevel = biologLevelValue,
+		biologCount = biologCountValue,
+		biologItemVnum = biologItemVnumValue;}
+
+
+	LPEVENT				m_pkInfoBiolog;
+
+private:
+	uint8_t biologLevel = 0;
+	uint8_t biologCount = 0;
+	uint32_t biologItemVnum = 0;
+
+#endif
 };
 
 ESex GET_SEX(LPCHARACTER ch);

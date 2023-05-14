@@ -85,6 +85,10 @@
 #include "new_offlineshop_manager.h"
 #endif
 
+#ifdef ENABLE_BIOLOG_SYSTEM
+#include "biologSystem.h"
+#endif
+
 //#define __FILEMONITOR__
 
 #if defined (__FreeBSD__) && defined(__FILEMONITOR__)
@@ -456,6 +460,9 @@ int main(int argc, char **argv)
 #ifdef ENABLE_SWITCHBOT
 	CSwitchbotManager switchbot;
 #endif
+#ifdef ENABLE_BIOLOG_SYSTEM
+	CBiolog biolog;
+#endif
 
 	if (!start(argc, argv)) {
 		CleanUpForEarlyExit();
@@ -483,7 +490,9 @@ int main(int argc, char **argv)
 	Blend_Item_init();
 	ani_init();
 	PanamaLoad();
-	
+#ifdef ENABLE_BIOLOG_SYSTEM
+	CBiolog::instance().BootBiologTable();
+#endif
 #ifdef NEW_PET_SYSTEM
     std::string temp_exp_line;
 	std::ifstream exppet_table_open("/home/main/srv1/share/locale/germany/exppettable.txt");

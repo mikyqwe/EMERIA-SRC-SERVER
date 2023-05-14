@@ -90,4 +90,4 @@ enum eCommonDefines {
 #ifdef ENABLE_DS_CHANGE_ATTR
 #define DS_ATTR_CHANGE_PRICE 50000
 #endif
-
+#define ENABLE_BIOLOG_SYSTEM

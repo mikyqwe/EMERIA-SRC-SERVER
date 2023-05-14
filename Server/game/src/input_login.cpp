@@ -46,6 +46,11 @@
 #include "new_offlineshop.h"
 #include "new_offlineshop_manager.h"
 #endif
+
+#ifdef ENABLE_BIOLOG_SYSTEM
+#include "biologSystem.h"
+#endif
+
 #ifdef ENABLE_WOLFMAN_CHARACTER
 
 // #define USE_LYCAN_CREATE_POSITION
@@ -93,22 +98,22 @@ static void _send_bonus_info(LPCHARACTER ch)
 	if (item_drop_bonus)
 	{
 		ch->ChatPacket(CHAT_TYPE_NOTICE,
-				LC_TEXT("¾ÆÀÌÅÛ µå·Ó·ü  %d%% Ãß°¡ ÀÌº¥Æ® ÁßÀÔ´Ï´Ù."), item_drop_bonus);
+				LC_TEXT("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ó·ï¿?  %d%% ï¿½ß°ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½ï¿½Ô´Ï´ï¿½."), item_drop_bonus);
 	}
 	if (gold_drop_bonus)
 	{
 		ch->ChatPacket(CHAT_TYPE_NOTICE,
-				LC_TEXT("°ñµå µå·Ó·ü %d%% Ãß°¡ ÀÌº¥Æ® ÁßÀÔ´Ï´Ù."), gold_drop_bonus);
+				LC_TEXT("ï¿½ï¿½ï¿? ï¿½ï¿½Ó·ï¿? %d%% ï¿½ß°ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½ï¿½Ô´Ï´ï¿½."), gold_drop_bonus);
 	}
 	if (gold10_drop_bonus)
 	{
 		ch->ChatPacket(CHAT_TYPE_NOTICE,
-				LC_TEXT("´ë¹Ú°ñµå µå·Ó·ü %d%% Ãß°¡ ÀÌº¥Æ® ÁßÀÔ´Ï´Ù."), gold10_drop_bonus);
+				LC_TEXT("ï¿½ï¿½Ú°ï¿½ï¿½ ï¿½ï¿½Ó·ï¿? %d%% ï¿½ß°ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½ï¿½Ô´Ï´ï¿½."), gold10_drop_bonus);
 	}
 	if (exp_bonus)
 	{
 		ch->ChatPacket(CHAT_TYPE_NOTICE,
-				LC_TEXT("°æÇèÄ¡ %d%% Ãß°¡ È¹µæ ÀÌº¥Æ® ÁßÀÔ´Ï´Ù."), exp_bonus);
+				LC_TEXT("ï¿½ï¿½ï¿½ï¿½Ä¡ %d%% ï¿½ß°ï¿½ È¹ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½ï¿½Ô´Ï´ï¿½."), exp_bonus);
 	}
 }
 
@@ -713,7 +718,7 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 		{
 			if (0 != g_stClientVersion.compare(d->GetClientVersion())) // @fixme103 (version > date)
 			{
-				ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("Å¬¶óÀÌ¾ðÆ® ¹öÀüÀÌ Æ²·Á ·Î±×¾Æ¿ô µË´Ï´Ù. Á¤»óÀûÀ¸·Î ÆÐÄ¡ ÈÄ Á¢¼ÓÇÏ¼¼¿ä."));
+				ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Æ²ï¿½ï¿½ ï¿½Î±×¾Æ¿ï¿½ ï¿½Ë´Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¼ï¿½ï¿½ï¿½."));
 				d->DelayedDisconnect(0); // @fixme103 (10);
 				LogManager::instance().HackLog("VERSION_CONFLICT", ch);
 
@@ -884,9 +889,9 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 	{
 		if (FN_is_battle_zone(ch))
 		{
-			ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("ÀÌ ¸Ê¿¡¼± °­Á¦ÀûÀÎ ´ëÀüÀÌ ÀÖÀ»¼ö µµ ÀÖ½À´Ï´Ù."));
-			ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("ÀÌ Á¶Ç×¿¡ µ¿ÀÇÇÏÁö ¾ÊÀ»½Ã"));
-			ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("º»ÀÎÀÇ ÁÖ¼º ¹× ºÎ¼ºÀ¸·Î µ¹¾Æ°¡½Ã±â ¹Ù¶ø´Ï´Ù."));
+			ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½."));
+			ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("ï¿½ï¿½ ï¿½ï¿½ï¿½×¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"));
+			ch->ChatPacket(CHAT_TYPE_NOTICE, LC_TEXT("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¼ï¿½ ï¿½ï¿½ ï¿½Î¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Æ°ï¿½ï¿½Ã±ï¿½ ï¿½Ù¶ï¿½ï¿½Ï´ï¿½."));
 		}
 	}
 #if defined(__BL_OFFICIAL_LOOT_FILTER__) && !defined(__PREMIUM_LOOT_FILTER__)
@@ -897,6 +902,10 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 #endif
 #ifdef ENABLE_HUNTING_SYSTEM
 	ch->CheckHunting();
+#endif
+
+#ifdef ENABLE_BIOLOG_SYSTEM
+	CBiolog::instance().OnConnect(ch);
 #endif
 }
 

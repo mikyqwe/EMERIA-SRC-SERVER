@@ -512,6 +512,9 @@ typedef struct SPlayerTable
 #ifdef ENABLE_NEW_DETAILS_GUI
 	long	kill_log[KILL_MAX_NUM];
 #endif
+#ifdef ENABLE_BIOLOG_SYSTEM
+	uint16_t biologLevel, biologCount;
+#endif
 } TPlayerTable;
 
 typedef struct SMobSkillLevel
@@ -2048,6 +2051,46 @@ namespace offlineshop
 
 }
 
+#endif
+#ifdef ENABLE_BIOLOG_SYSTEM
+enum BiologData
+{
+	BIOLOG_RESET_ITEM = 72350,
+	BIOLOG_PERCENT_ITEM = 72349,
+
+	BIOLOG_MAX_ITEMS = 4,
+	BIOLOG_MAX_STAGES = 2,
+	BIOLOG_MAX_VALUES = 3,
+};
+
+enum EBiologTuple
+{
+	TUPLE_LEVEL,
+	TUPLE_REQUEST_ITEM,
+};
+
+
+typedef struct SBiologApply
+{
+	uint8_t type;
+	uint16_t	value;
+} TBiologApply;
+
+typedef struct CBiologTable
+{
+	uint8_t id;
+	uint8_t level;
+
+	uint32_t requestItem, secondsCoolDown, requestItemCount;
+
+	TBiologApply values[BIOLOG_MAX_VALUES];
+
+	uint8_t isBonusSelectable;
+	uint8_t deliverPercent;
+
+	uint16_t rewardItem, rewardCount;
+
+} TBiologTable;
 #endif
 
 #pragma pack()

@@ -432,6 +432,10 @@ void CHARACTER::Initialize()
 	m_pkFishingEvent = NULL;
 	m_pkWarpEvent = NULL;
 
+#ifdef ENABLE_BIOLOG_SYSTEM
+	m_pkInfoBiolog = NULL;
+#endif
+
 	// MINING
 	m_pkMiningEvent = NULL;
 	// END_OF_MINING
@@ -876,6 +880,9 @@ void CHARACTER::Destroy()
 	event_cancel(&m_pkPoisonEvent);
 #ifdef ENABLE_WOLFMAN_CHARACTER
 	event_cancel(&m_pkBleedingEvent);
+#endif
+#ifdef ENABLE_BIOLOG_SYSTEM
+	event_cancel(&m_pkInfoBiolog);
 #endif
 	event_cancel(&m_pkFireEvent);
 	event_cancel(&m_pkPartyRequestEvent);
@@ -1650,6 +1657,10 @@ void CHARACTER::CreatePlayerProto(TPlayerTable & tab)
 	tab.job			= m_points.job;
 	tab.part_base	= m_pointsInstant.bBasePart;
 	tab.skill_group	= m_points.skill_group;
+#ifdef ENABLE_BIOLOG_SYSTEM
+	tab.biologLevel	= biologLevel;
+	tab.biologCount	= biologCount;
+#endif	
 #ifdef ENABLE_NEW_DETAILS_GUI
 	thecore_memcpy(tab.kill_log, m_points.kill_log, sizeof(tab.kill_log));
 #endif
@@ -2659,7 +2670,10 @@ void CHARACTER::SetPlayerProto(const TPlayerTable * t)
 	SetLevel(t->level);
 	SetExp(t->exp);
 	SetGold(t->gold);
-
+#ifdef ENABLE_BIOLOG_SYSTEM
+	biologLevel = t->biologLevel;
+	biologCount = t->biologCount;
+#endif
 	SetMapIndex(t->lMapIndex);
 	SetXYZ(t->x, t->y, t->z);
 
