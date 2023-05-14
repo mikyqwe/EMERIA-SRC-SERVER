@@ -44,6 +44,9 @@
 #endif
 #include "../../common/VnumHelper.h"
 
+#include "shop_manager.h"
+#include "shop.h"
+
 #ifdef ENABLE_ANTI_MULTIPLE_FARM
 ACMD(do_debug_anti_multiple_farm)
 {
@@ -3257,3 +3260,42 @@ ACMD(do_ds_change_attr)
 		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("No myth DS Item!"));
 }
 #endif
+
+ACMD(do_remote_shop)
+{
+    char arg1[256];
+    one_argument(argument, arg1, sizeof(arg1));
+
+    if (!*arg1)
+        return;
+
+    uint32_t shop_index = 0;
+    str_to_number(shop_index, arg1);
+
+	//PREVENT_TRADE_WINDOW
+	if (ch->IsOpenSafebox() || ch->GetExchange() || ch->GetShopOwner() || ch->GetMyShop() || ch->IsCubeOpen())
+		return;
+	//END_PREVENT_TRADE_WINDOW
+
+	const DWORD dwCurrentTime = get_dword_time(), dwLimitTime = ch->GetLastRemoteTime() + 15000; // 15 sec.
+	if (dwCurrentTime < dwLimitTime) {
+		ch->ChatPacket(CHAT_TYPE_INFO, "<RemoteShop> You have to wait %u sec.", MAX(1, (dwLimitTime - dwCurrentTime) / 1000));
+		return;
+	}
+
+	static const/*expr*/ DWORD _arrShopVnum[] = { 70, 75, 48, 107 };
+	if (shop_index >= _countof(_arrShopVnum)) {
+		sys_err("RemoteShop player(%s) unknown index(%d)", ch->GetName(), shop_index);
+		return;
+	}
+
+	const DWORD dwShopVnum = _arrShopVnum[shop_index];
+	LPSHOP pkShop = CShopManager::instance().Get(dwShopVnum);
+	if (pkShop == NULL)
+		return;
+
+	pkShop->AddGuest(ch, NULL, false);
+	ch->SetShopOwner(ch);
+	ch->SetLastRemoteTime(get_dword_time());
+	sys_log(0, "SHOP: START: %s", ch->GetName());	
+}

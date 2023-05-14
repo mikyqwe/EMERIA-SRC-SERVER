@@ -632,6 +632,8 @@ void CHARACTER::Initialize()
 	m_iComboHackCount = 0;
 	m_dwSkipComboAttackByTime = 0;
 
+	dwLastRemoteTime = 0;
+
 	m_dwMountTime = 0;
 
 	m_dwLastGoldDropTime = 0;

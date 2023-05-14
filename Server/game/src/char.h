@@ -2533,7 +2533,11 @@ public:
 #ifdef ENABLE_DS_CHANGE_ATTR
 	bool DragonSoulChangeAttrWindow();
 #endif
-
+	public:
+		DWORD GetLastRemoteTime() const { return dwLastRemoteTime; }
+		void SetLastRemoteTime(DWORD dwTime) { dwLastRemoteTime = dwTime; }
+	private:
+		DWORD dwLastRemoteTime;
 };
 
 ESex GET_SEX(LPCHARACTER ch);

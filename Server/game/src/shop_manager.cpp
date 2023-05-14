@@ -114,15 +114,6 @@ bool CShopManager::StartShopping(LPCHARACTER pkChr, LPCHARACTER pkChrShopKeeper,
 		return false;
 	}
 	//END_PREVENT_TRADE_WINDOW
-
-	long distance = DISTANCE_APPROX(pkChr->GetX() - pkChrShopKeeper->GetX(), pkChr->GetY() - pkChrShopKeeper->GetY());
-
-	if (distance >= SHOP_MAX_DISTANCE)
-	{
-		sys_log(1, "SHOP: TOO_FAR: %s distance %d", pkChr->GetName(), distance);
-		return false;
-	}
-
 	LPSHOP pkShop;
 
 	if (iShopVnum)
@@ -222,30 +213,7 @@ void CShopManager::Buy(LPCHARACTER ch, BYTE pos)
 	if (!ch->GetShopOwner())
 		return;
 
-	if (DISTANCE_APPROX(ch->GetX() - ch->GetShopOwner()->GetX(), ch->GetY() - ch->GetShopOwner()->GetY()) > 2000)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상점과의 거리가 너무 멀어 물건을 살 수 없습니다."));
-		return;
-	}
-
 	CShop* pkShop = ch->GetShop();
-
-	if (!pkShop->IsPCShop())
-	{
-		//if (pkShop->GetVnum() == 0)
-		//	return;
-		//const CMob* pkMob = CMobManager::instance().Get(pkShop->GetNPCVnum());
-		//if (!pkMob)
-		//	return;
-
-		//if (pkMob->m_table.bType != CHAR_TYPE_NPC)
-		//{
-		//	return;
-		//}
-	}
-	else
-	{
-	}
 
 	//PREVENT_ITEM_COPY
 	ch->SetMyShopTime();
@@ -294,12 +262,6 @@ void CShopManager::Sell(LPCHARACTER ch, BYTE bCell, WORD bCount)
 
 	if (ch->GetShop()->IsPCShop())
 		return;
-
-	if (DISTANCE_APPROX(ch->GetX()-ch->GetShopOwner()->GetX(), ch->GetY()-ch->GetShopOwner()->GetY())>2000)
-	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("상점과의 거리가 너무 멀어 물건을 팔 수 없습니다."));
-		return;
-	}
 
 #ifdef __SPECIAL_STORAGE_SYSTEM__
 	LPITEM item = ch->GetItem(TItemPos(bType, bCell));

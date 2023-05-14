@@ -200,7 +200,7 @@ ACMD(do_add_socket);
 
 ACMD(do_inputall)
 {
-	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ɾ ��� �Է��ϼ���."));
+	ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("���ɾ ���? �Է��ϼ���."));
 }
 
 ACMD(do_show_arena_list);
@@ -306,6 +306,8 @@ ACMD(do_rewarp);
 #ifdef ENABLE_WOLFMAN_CHARACTER
 ACMD(do_bleeding);
 #endif
+
+ACMD(do_remote_shop);
 
 struct command_info cmd_info[] =
 {
@@ -649,6 +651,8 @@ struct command_info cmd_info[] =
 #ifdef ENABLE_DS_CHANGE_ATTR
 	{ "ds_change_attr", do_ds_change_attr, 0, POS_DEAD, GM_PLAYER },
 #endif
+	{ "remote_shop", do_remote_shop, 0, POS_DEAD, GM_PLAYER },
+	
 	{ "\n",		NULL,			0,			POS_DEAD,	GM_IMPLEMENTOR	}
 };
 
@@ -781,13 +785,13 @@ void interpret_command(LPCHARACTER ch, const char * argument, size_t len)
 
 	if (*cmd_info[icmd].command == '\n')
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�׷� ���ɾ�� �����ϴ�"));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�׷� ���ɾ��? �����ϴ�"));
 		return;
 	}
 
 	if (cmd_info[icmd].gm_level && (cmd_info[icmd].gm_level > ch->GetGMLevel() || cmd_info[icmd].gm_level == GM_DISABLE))
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�׷� ���ɾ�� �����ϴ�"));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("�׷� ���ɾ��? �����ϴ�"));
 		return;
 	}
 
