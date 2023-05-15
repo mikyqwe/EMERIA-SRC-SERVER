@@ -567,6 +567,8 @@ typedef struct SMobTable : public SEntityTable
 	char	cEnchants[MOB_ENCHANTS_MAX_NUM];
 	char	cResists[MOB_RESISTS_MAX_NUM];
 
+	char cElements[MOB_ELEMENT_MAX_NUM];
+
 	DWORD	dwResurrectionVnum;
 	DWORD	dwDropItemVnum;
 

@@ -1083,6 +1083,17 @@ enum
 };
 #endif
 
+enum EMobElements
+{
+	MOB_ELEMENT_ELECT,
+	MOB_ELEMENT_FIRE,
+	MOB_ELEMENT_ICE,
+	MOB_ELEMENT_WIND,
+	MOB_ELEMENT_EARTH,
+	MOB_ELEMENT_DARK,
+	MOB_ELEMENT_MAX_NUM
+};
+
 #pragma pack(pop)
 
 #endif
