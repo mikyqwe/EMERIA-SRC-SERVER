@@ -699,6 +699,8 @@ int CItem::FindEquipCell(LPCHARACTER ch, int iCandidateCell)
 			return WEAR_UNIQUE1;
 	}
 
+	else if (IsTalisman())
+		return WEAR_PENDANT_START + GetTalismanType();
 
 	else if (GetWearFlag() & WEARABLE_ABILITY)
 	{
@@ -2722,6 +2724,30 @@ void CItem::StopBlendExpireEvent()
 	event_cancel(&m_pkBlendUseEvent);
 }
 #endif
+
+BYTE CItem::GetTalismanType()
+{
+	if (GetVnum() >= 9600 && GetVnum() <= 9800)
+		return PENDANT_FIRE;
+
+	else if (GetVnum() >= 9830 && GetVnum() <= 10030)
+		return PENDANT_ICE;
+
+	else if (GetVnum() >= 10060 && GetVnum() <= 10260)
+		return PENDANT_EARTH;
+
+	else if (GetVnum() >= 10290 && GetVnum() <= 10490)
+		return PENDANT_DARK;
+
+	else if (GetVnum() >= 10520 && GetVnum() <= 10720)
+		return PENDANT_WIND;
+
+	else if (GetVnum() >= 10750 && GetVnum() <= 10950)
+		return PENDANT_LIGHTNING;
+
+	return PENDANT_FIRE;
+
+}
 
 //martysama0134's 2022
 

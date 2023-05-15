@@ -48,6 +48,10 @@ int CItem::GetAttributeSetIndex()
 
 			case ARMOR_EAR:
 				return ATTRIBUTE_SET_EAR;
+#ifdef ENABLE_PENDANT
+			case ARMOR_PENDANT:
+				return -1;
+#endif
 		}
 	}
 	else if (GetType() == ITEM_COSTUME)

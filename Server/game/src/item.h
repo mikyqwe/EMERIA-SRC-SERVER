@@ -379,6 +379,12 @@ private:
 	LPEVENT m_pkBlendUseEvent;
 #endif
 
+#ifdef ENABLE_PENDANT_SYSTEM_RENEWAL
+	public:
+		BYTE		GetTalismanType();
+		bool		IsTalisman() { return (GetVnum() >= 9600 && GetVnum() <= 10950); }
+#endif
+
 };
 
 EVENTINFO(item_event_info)

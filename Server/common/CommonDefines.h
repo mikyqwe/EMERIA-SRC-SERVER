@@ -91,3 +91,13 @@ enum eCommonDefines {
 #define DS_ATTR_CHANGE_PRICE 50000
 #endif
 #define ENABLE_BIOLOG_SYSTEM
+
+//Pendant
+#define ENABLE_PENDANT
+#define ENABLE_PENDANT_SYSTEM_RENEWAL
+
+#ifdef ENABLE_PENDANT
+#define ENABLE_ELEMENT_ADD
+#define ENABLE_ELEMENT_TARGET
+#define ENABLE_PENDANT_EX
+#endif

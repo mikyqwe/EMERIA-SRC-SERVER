@@ -4414,6 +4414,13 @@ void CHARACTER::PointChange(BYTE type, int amount, bool bAmount, bool bBroadcast
 		case POINT_SKILL_DAMAGE_BONUS:
 		case POINT_NORMAL_HIT_DAMAGE_BONUS:
 
+		case POINT_ENCHANT_ELECT:
+		case POINT_ENCHANT_FIRE:
+		case POINT_ENCHANT_ICE:
+		case POINT_ENCHANT_WIND:
+		case POINT_ENCHANT_EARTH:
+		case POINT_ENCHANT_DARK:
+
 			// DEPEND_BONUS_ATTRIBUTES
 		case POINT_SKILL_DEFEND_BONUS:
 		case POINT_NORMAL_HIT_DEFEND_BONUS:
@@ -4802,12 +4809,16 @@ void CHARACTER::ApplyPoint(BYTE bApplyType, int iVal)
 		case APPLY_COSTUME_ATTR_BONUS:		// 84
 		case APPLY_MAGIC_ATTBONUS_PER:		// 85
 		case APPLY_MELEE_MAGIC_ATTBONUS_PER:			// 86
-#ifdef ENABLE_ACCE_COSTUME_SYSTEM
-		case APPLY_ACCEDRAIN_RATE:			//97
-#endif
 #ifdef ENABLE_MAGIC_REDUCTION_SYSTEM
 		case APPLY_RESIST_MAGIC_REDUCTION:	//98
 #endif
+		case APPLY_ENCHANT_ELECT:
+		case APPLY_ENCHANT_FIRE:
+		case APPLY_ENCHANT_ICE:
+		case APPLY_ENCHANT_WIND:
+		case APPLY_ENCHANT_EARTH:
+		case APPLY_ENCHANT_DARK:
+
 		case APPLY_MONSTER_RESISTANCE:
 		case APPLY_DEMI_HUMAN_RESISTANCE:
 		case APPLY_ATTBONUS_BOSS:
@@ -9307,3 +9318,10 @@ bool CHARACTER::DragonSoulChangeAttrWindow()
 	return true;
 }
 #endif
+
+int CHARACTER::GetMobElement(BYTE bElement) const
+{
+	if (bElement >= 0 && bElement < MOB_ELEMENT_MAX_NUM)
+		return m_pkMobData->m_table.cElements[bElement];
+	return 0;
+}

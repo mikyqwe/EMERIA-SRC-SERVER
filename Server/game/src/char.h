@@ -333,6 +333,12 @@ enum EPointTypes
 	POINT_ATTBONUS_BOSS,
 	POINT_ATTBONUS_METIN,
 
+	POINT_ENCHANT_ELECT,
+	POINT_ENCHANT_FIRE,
+	POINT_ENCHANT_ICE,
+	POINT_ENCHANT_WIND,
+	POINT_ENCHANT_EARTH,
+	POINT_ENCHANT_DARK,
 
 #ifdef ENABLE_WOLFMAN_CHARACTER
 	POINT_BLEEDING_REDUCE,
@@ -831,6 +837,8 @@ public:
 		WORD				GetMobAttackRange() const;
 		DWORD				GetMobDropItemVnum() const;
 		float				GetMobDamageMultiply() const;
+
+		int GetMobElement(BYTE bElement) const;
 
 		// NEWAI
 		bool			IsBerserker() const;

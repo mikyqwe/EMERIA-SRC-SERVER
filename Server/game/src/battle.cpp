@@ -296,6 +296,26 @@ int CalcAttBonus(LPCHARACTER pkAttacker, LPCHARACTER pkVictim, int iAtk)
 		else if (pkVictim->IsRaceFlag(RACE_FLAG_TREE))
 			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_TREE)) / 100;
 
+		{
+			if (pkVictim->GetMobElement(MOB_ELEMENT_ELECT))
+				iAtk += (iAtk * pkAttacker->GetPoint(POINT_ENCHANT_ELECT)) / pkVictim->GetMobElement(MOB_ELEMENT_ELECT);
+
+			if (pkVictim->GetMobElement(MOB_ELEMENT_FIRE))
+				iAtk += (iAtk * pkAttacker->GetPoint(POINT_ENCHANT_FIRE)) / pkVictim->GetMobElement(MOB_ELEMENT_FIRE);
+
+			if (pkVictim->GetMobElement(MOB_ELEMENT_ICE))
+				iAtk += (iAtk * pkAttacker->GetPoint(POINT_ENCHANT_ICE)) / pkVictim->GetMobElement(MOB_ELEMENT_ICE);
+
+			if (pkVictim->GetMobElement(MOB_ELEMENT_WIND))
+				iAtk += (iAtk * pkAttacker->GetPoint(POINT_ENCHANT_WIND)) / pkVictim->GetMobElement(MOB_ELEMENT_WIND);
+
+			if (pkVictim->GetMobElement(MOB_ELEMENT_EARTH))
+				iAtk += (iAtk * pkAttacker->GetPoint(POINT_ENCHANT_EARTH)) / pkVictim->GetMobElement(MOB_ELEMENT_EARTH);
+
+			if (pkVictim->GetMobElement(MOB_ELEMENT_DARK))
+				iAtk += (iAtk * pkAttacker->GetPoint(POINT_ENCHANT_DARK)) / pkVictim->GetMobElement(MOB_ELEMENT_DARK);
+		}
+
 		if (pkVictim->IsStone())
 			iAtk += (iAtk * pkAttacker->GetPoint(POINT_ATTBONUS_METIN)) / 100;
 		else if (pkVictim->GetMobRank() >= MOB_RANK_BOSS)

@@ -132,6 +132,9 @@ enum EArmorSubTypes
 	ARMOR_FOOTS,
 	ARMOR_NECK,
 	ARMOR_EAR,
+#ifdef ENABLE_PENDANT
+	ARMOR_PENDANT,
+#endif	
 	ARMOR_NUM_TYPES
 };
 

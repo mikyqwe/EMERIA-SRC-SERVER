@@ -416,14 +416,12 @@ int get_Item_ApplyType_Value(string inputString)
 			"APPLY_ATTBONUS_BOSS",
 			"APPLY_ATTBONUS_METIN",
 
-#if defined(__PENDANT__)
 			"APPLY_ENCHANT_ELECT",
 			"APPLY_ENCHANT_FIRE",
 			"APPLY_ENCHANT_ICE",
 			"APPLY_ENCHANT_WIND",
 			"APPLY_ENCHANT_EARTH",
 			"APPLY_ENCHANT_DARK",
-#endif
 
 	};
 
