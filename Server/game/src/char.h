@@ -2564,6 +2564,9 @@ private:
 	uint32_t biologItemVnum = 0;
 
 #endif
+	bool IsItemEquip(DWORD item);
+	void RefreshPendantSet();
+
 };
 
 ESex GET_SEX(LPCHARACTER ch);
