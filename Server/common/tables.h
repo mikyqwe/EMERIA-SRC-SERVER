@@ -649,6 +649,11 @@ typedef struct SShopItemTable
 	DWORD		price;
 #endif
 	TItemPos	pos;
+
+	BYTE		money_type;
+	DWORD		item_vnum[8];
+	DWORD		item_price[8];
+
 	BYTE		display_pos;
 } TShopItemTable;
 

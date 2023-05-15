@@ -269,11 +269,30 @@ bool CClientManager::InitializeShopTable()
 		"shop.vnum, "
 		"shop.npc_vnum, "
 		"shop_item.item_vnum, "
-		"shop_item.count "
+		"shop_item.count, "
+		"shop_item.price, "
+		"shop_item.money_type+0, "
+		"shop_item.price_vnum0, "
+		"shop_item.price_count0, "
+		"shop_item.price_vnum1, "
+		"shop_item.price_count1, "
+		"shop_item.price_vnum2, "
+		"shop_item.price_count2, "
+		"shop_item.price_vnum3, "
+		"shop_item.price_count3, "	
+		"shop_item.price_vnum4, "
+		"shop_item.price_count4, "
+		"shop_item.price_vnum5, "
+		"shop_item.price_count5, "
+		"shop_item.price_vnum6, "
+		"shop_item.price_count6, "
+		"shop_item.price_vnum7, "
+		"shop_item.price_count7 " 					
 		"FROM shop LEFT JOIN shop_item "
-		"ON shop.vnum = shop_item.shop_vnum ORDER BY shop.vnum, shop_item.item_vnum";
+		"ON shop.vnum = shop_item.shop_vnum "
+		"ORDER BY shop.vnum, shop_item.item_vnum, shop_item.count";
 
-	auto pkMsg2(CDBManager::instance().DirectQuery(s_szQuery));
+	std::unique_ptr<SQLMsg> pkMsg2(CDBManager::instance().DirectQuery(s_szQuery));
 
 	SQLResult * pRes2 = pkMsg2->Get();
 
@@ -302,7 +321,8 @@ bool CClientManager::InitializeShopTable()
 
 		if (map_shop.end() == map_shop.find(iShopVnum))
 		{
-			shop_table = new TShopTable{};
+			shop_table = new TShopTable;
+			memset(shop_table, 0, sizeof(TShopTable));
 			shop_table->dwVnum	= iShopVnum;
 
 			map_shop[iShopVnum] = shop_table;
@@ -319,6 +339,13 @@ bool CClientManager::InitializeShopTable()
 
 		str_to_number(pItem->vnum, data[col++]);
 		str_to_number(pItem->count, data[col++]);
+		str_to_number(pItem->price, data[col++]);
+		str_to_number(pItem->money_type, data[col++]);
+		for (int i = 0; i < 8; i++)
+		{
+			str_to_number(pItem->item_vnum[i], data[col++]);
+			str_to_number(pItem->item_price[i], data[col++]);
+		}
 
 		++shop_table->byItemCount;
 	}
@@ -326,7 +353,7 @@ bool CClientManager::InitializeShopTable()
 	m_pShopTable = new TShopTable[map_shop.size()];
 	m_iShopTableSize = map_shop.size();
 
-	typeof(map_shop.begin()) it = map_shop.begin();
+	auto it = map_shop.begin();
 
 	int i = 0;
 

@@ -1414,21 +1414,26 @@ enum EPacketShopSubHeaders
 	SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY_EX,
 };
 
-struct packet_shop_item
+enum EShopMoneyTypes
 {
-	DWORD       vnum;
-#ifdef ENABLE_LONG_LONG
-	long long price;
-#else
-	DWORD price;
-#endif
+	SHOP_MONEY_TYPE_NONE,
+	SHOP_MONEY_TYPE_YANG,
+	SHOP_MONEY_TYPE_ITEM,
+	SHOP_MONEY_TYPE_MAX_NUM,
+};
 
-	WORD count;
+struct packet_shop_item
+{   
+	DWORD       vnum;
+	long long	price;
+    WORD        count;
 	BYTE		display_pos;
+	BYTE		money_type;
+	DWORD		item_vnum[8];
+	DWORD		item_price[8];
 	long	alSockets[ITEM_SOCKET_MAX_NUM];
 	TPlayerItemAttribute aAttr[ITEM_ATTRIBUTE_MAX_NUM];
 };
-
 typedef struct packet_shop_start
 {
 	DWORD   owner_vid;

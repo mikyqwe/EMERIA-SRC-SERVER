@@ -88,9 +88,9 @@ void CShop::SetShopItems(TShopItemTable * pTable, BYTE bItemCount)
 	m_pGrid->Clear();
 
 	m_itemVector.resize(SHOP_HOST_ITEM_MAX_NUM);
-	msl::refill(m_itemVector);
+	memset(&m_itemVector[0], 0, sizeof(SHOP_ITEM) * m_itemVector.size());
 
-	for (int i = 0; i < bItemCount; ++i)
+	for (int i = 0; i < bItemCount; ++i, ++pTable)
 	{
 		LPITEM pkItem = NULL;
 		const TItemTable * item_table;
@@ -101,7 +101,7 @@ void CShop::SetShopItems(TShopItemTable * pTable, BYTE bItemCount)
 
 			if (!pkItem)
 			{
-				sys_err("cannot find item on pos (%d, %d) (name: %s)", pTable->pos.window_type, pTable->pos.cell, m_pkPC->GetName());
+				sys_err("cannot find item on pos %d (name: %s)", pTable->pos, m_pkPC->GetName());
 				continue;
 			}
 
@@ -156,35 +156,42 @@ void CShop::SetShopItems(TShopItemTable * pTable, BYTE bItemCount)
 
 		item.pkItem = pkItem;
 		item.itemid = 0;
+		DWORD ItemPrice = pTable->money_type;
 
 		if (item.pkItem)
 		{
 			item.vnum = pkItem->GetVnum();
-			item.count = pkItem->GetCount();
-			item.price = pTable->price;
+			item.count = pkItem->GetCount(); // PC ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½? ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Â¥ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ´ï¿½.
+			item.price = pTable->price; // ï¿½ï¿½ï¿½Ýµï¿½ ï¿½ï¿½ï¿½ï¿½Ú°ï¿½? ï¿½ï¿½ï¿½Ñ´ï¿½ï¿½?..
 			item.itemid	= pkItem->GetID();
+			item.money_type = SHOP_MONEY_TYPE_YANG;
 		}
 		else
 		{
-			item.vnum = pTable->vnum;
-			item.count = pTable->count;
-
-			if (IS_SET(item_table->dwFlags, ITEM_FLAG_COUNT_PER_1GOLD))
+			if (ItemPrice == SHOP_MONEY_TYPE_ITEM)
 			{
-				if (item_table->dwGold == 0)
-					item.price = item.count;
-				else
-					item.price = item.count / item_table->dwGold;
+				item.vnum = pTable->vnum;
+				item.count = pTable->count;
+				for (int i = 0; i < 8; i++)		
+				{
+					item.item_vnum[i] = pTable->item_vnum[i];
+					item.item_price[i] = pTable->item_price[i];	
+				}
+				item.money_type = SHOP_MONEY_TYPE_ITEM;
 			}
 			else
-				item.price = item_table->dwGold * item.count;
+			{
+				item.vnum = pTable->vnum;
+				item.count = pTable->count;
+				item.price = pTable->price;	
+				item.money_type = SHOP_MONEY_TYPE_YANG;
+			}
 		}
 
 		char name[36];
 		snprintf(name, sizeof(name), "%-20s(#%-5d) (x %d)", item_table->szName, (int) item.vnum, item.count);
 
 		sys_log(0, "SHOP_ITEM: %-36s PRICE %-5d", name, item.price);
-		++pTable;
 	}
 }
 
@@ -202,6 +209,7 @@ int CShop::Buy(LPCHARACTER ch, BYTE pos
 )
 #endif
 {
+	bool bCheck;
 	if (pos >= m_itemVector.size())
 	{
 		sys_log(0, "Shop::Buy : invalid position %d : %s", pos, ch->GetName());
@@ -246,16 +254,35 @@ int CShop::Buy(LPCHARACTER ch, BYTE pos
 		}
 	}
 
-#ifdef ENABLE_LONG_LONG
 	long long dwPrice = r_item.price;
-	if (ch->GetGold() < (long long)dwPrice)
-#else
-	DWORD dwPrice = r_item.price;
-	if (ch->GetGold() < (int)dwPrice)
-#endif
+
+	if (r_item.money_type == SHOP_MONEY_TYPE_YANG)
 	{
-		sys_log(1, "Shop::Buy : Not enough money : %s has %d, price %d", ch->GetName(), ch->GetGold(), dwPrice);
-		return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
+
+		if (ch->GetGold() < (long long) dwPrice)
+		{
+			sys_log(1, "Shop::Buy : Not enough money : %s has %lld, price %lld", ch->GetName(), ch->GetGold(), dwPrice);
+			
+			return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
+		}
+	}
+
+	else if (r_item.money_type == SHOP_MONEY_TYPE_ITEM)
+	{
+		for (int i = 0; i < 8; i++)	
+		{
+			if (ch->CountSpecifyItem(r_item.item_vnum[i]) < r_item.item_price[i]) 
+			{
+				if (r_item.item_vnum[i] == 0)
+					bCheck = true;
+
+				else if (r_item.item_vnum[i] > 0)
+				{
+					bCheck = false;
+					return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
+				}
+			}
+		}
 	}
 
 	LPITEM item;
@@ -311,8 +338,16 @@ int CShop::Buy(LPCHARACTER ch, BYTE pos
 		}
 	}
 
-	ch->PointChange(POINT_GOLD, -dwPrice, false);
+	if (r_item.money_type == SHOP_MONEY_TYPE_YANG)
+		ch->PointChange(POINT_GOLD, -dwPrice, false);
 
+	else if (r_item.money_type == SHOP_MONEY_TYPE_ITEM)
+	{
+		for (int i = 0; i < 8; i++)	
+		{
+			ch->RemoveSpecifyItem(r_item.item_vnum[i], r_item.item_price[i]);
+		}
+	}
 
 	DWORD dwTax = 0;
 	int iVal = 0;
@@ -393,7 +428,7 @@ int CShop::Buy(LPCHARACTER ch, BYTE pos
 		m_pkPC->PointChange(POINT_GOLD, dwPrice, false);
 
 		if (iVal > 0)
-			m_pkPC->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("ÆÇ¸Å±Ý¾×ÀÇ %d %% °¡ ¼¼±ÝÀ¸·Î ³ª°¡°ÔµË´Ï´Ù"), iVal);
+			m_pkPC->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("ï¿½Ç¸Å±Ý¾ï¿½ï¿½ï¿½ %d %% ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ÔµË´Ï´ï¿½"), iVal);
 
 		CMonarch::instance().SendtoDBAddMoney(dwTax, m_pkPC->GetEmpire(), m_pkPC);
 	}
@@ -465,38 +500,19 @@ bool CShop::AddGuest(LPCHARACTER ch, DWORD owner_vid, bool bOtherEmpire)
 	for (DWORD i = 0; i < m_itemVector.size() && i < SHOP_HOST_ITEM_MAX_NUM; ++i)
 	{
 		const SHOP_ITEM & item = m_itemVector[i];
-
-#ifdef ENABLE_SHOP_BLACKLIST
-		//HIVALUE_ITEM_EVENT
-		if (quest::CQuestManager::instance().GetEventFlag("hivalue_item_sell") == 0)
-		{
-
-			if (item.vnum == 70024 || item.vnum == 70035)
-			{
-				continue;
-			}
-		}
-#endif
 		//END_HIVALUE_ITEM_EVENT
 		if (m_pkPC && !item.pkItem)
 			continue;
 
 		pack2.items[i].vnum = item.vnum;
-
-		// REMOVED_EMPIRE_PRICE_LIFT
-#ifdef ENABLE_NEWSTUFF
-		if (bOtherEmpire && !g_bEmpireShopPriceTripleDisable) // no empire price penalty for pc shop
-#else
-		if (bOtherEmpire) // no empire price penalty for pc shop
-#endif
-		{
-			pack2.items[i].price = item.price * 3;
-		}
-		else
-			pack2.items[i].price = item.price;
-		// END_REMOVED_EMPIRE_PRICE_LIFT
-
+		pack2.items[i].price = item.price;
 		pack2.items[i].count = item.count;
+		pack2.items[i].money_type = item.money_type;
+		for (int j = 0; j < 8; j++)													
+		{
+				pack2.items[i].item_vnum[j] = item.item_vnum[j];
+				pack2.items[i].item_price[j] = item.item_price[j];
+		}				
 
 		if (item.pkItem)
 		{
@@ -561,11 +577,18 @@ void CShop::BroadcastUpdateItem(BYTE pos)
 
 	pack2.pos		= pos;
 
+
 	if (m_pkPC && !m_itemVector[pos].pkItem)
 		pack2.item.vnum = 0;
 	else
 	{
 		pack2.item.vnum	= m_itemVector[pos].vnum;
+		pack2.item.money_type = m_itemVector[pos].money_type;
+		for (int i = 0; i < 8; i++)	
+		{
+			pack2.item.item_vnum[i] = m_itemVector[pos].item_vnum[i];
+			pack2.item.item_price[i] = m_itemVector[pos].item_price[i];
+		}
 		if (m_itemVector[pos].pkItem)
 		{
 			thecore_memcpy(pack2.item.alSockets, m_itemVector[pos].pkItem->GetSockets(), sizeof(pack2.item.alSockets));
@@ -586,6 +609,7 @@ void CShop::BroadcastUpdateItem(BYTE pos)
 
 	Broadcast(buf.read_peek(), buf.size());
 }
+
 
 int CShop::GetNumberByVnum(DWORD dwVnum)
 {

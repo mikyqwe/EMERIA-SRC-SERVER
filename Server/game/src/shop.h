@@ -15,15 +15,15 @@ class CShop
 		typedef struct shop_item
 		{
 			DWORD	vnum;
-#ifdef ENABLE_LONG_LONG
-			long long		price;
-#else
-			long			price;
-#endif
+			long long	price;
+			WORD	count;
+			
+			BYTE		money_type;
+			DWORD		item_vnum[8];
+			DWORD		item_price[8];					
 
-			WORD			count;
 			LPITEM	pkItem;
-			int		itemid;
+			int		itemid;	
 
 			shop_item()
 			{
@@ -31,6 +31,9 @@ class CShop
 				price = 0;
 				count = 0;
 				itemid = 0;
+				money_type = 0;
+				memset(&item_vnum, 0, sizeof(item_vnum));
+				memset(&item_price, 0, sizeof(item_price));				
 				pkItem = NULL;
 			}
 		} SHOP_ITEM;
