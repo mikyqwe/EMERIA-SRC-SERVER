@@ -224,13 +224,6 @@ int CShop::Buy(LPCHARACTER ch, BYTE pos
 		return SHOP_SUBHEADER_GC_END;
 
 	SHOP_ITEM& r_item = m_itemVector[pos];
-
-	if (r_item.price <= 0)
-	{
-		LogManager::instance().HackLog("SHOP_BUY_GOLD_OVERFLOW", ch);
-		return SHOP_SUBHEADER_GC_NOT_ENOUGH_MONEY;
-	}
-
 	LPITEM pkSelectedItem = ITEM_MANAGER::instance().Find(r_item.itemid);
 
 	if (IsPCShop())
