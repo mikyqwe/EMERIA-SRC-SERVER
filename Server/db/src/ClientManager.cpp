@@ -697,7 +697,7 @@ void CClientManager::RESULT_SAFEBOX_LOAD(CPeer * pkPeer, SQLMsg * msg)
 
 		char szQuery[512];
 		snprintf(szQuery, sizeof(szQuery),
-				"SELECT id, window+0, pos, count, vnum, socket0, socket1, socket2, socket3, "
+				"SELECT id, window+0, pos, count, vnum, socket0, socket1, socket2, socket3, socket4, socket5, socket6 "
 
 				"attrtype0, attrvalue0, "
 				"attrtype1, attrvalue1, "
