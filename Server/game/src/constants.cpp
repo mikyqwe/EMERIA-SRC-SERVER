@@ -964,19 +964,19 @@ const SStoneDropInfo aStoneDrop[STONE_INFO_MAX_NUM] =
 
 const char * c_apszEmpireNames[EMPIRE_MAX_NUM] =
 {
-	"������",
-	"�ż���",
-	"õ����",
-	"���뱹"
+	"ÀüÁ¦±¹",
+	"½Å¼ö±¹",
+	"ÃµÁ¶±¹",
+	"Áø³ë±¹"
 };
 
 const char * c_apszPrivNames[MAX_PRIV_NUM] =
 {
 	"",
-	"�������� ���� Ȯ��",
-	"���� ���� Ȯ��",
-	"�� ����� ���� Ȯ��",
-	"����ġ ����",
+	"¾ÆÀÌÅÛÀÌ ³ª¿Ã È®·ü",
+	"µ·ÀÌ ³ª¿Ã È®·ü",
+	"µ· ´ë¹ÚÀÌ ³ª¿Ã È®·ü",
+	"°æÇèÄ¡ ¹èÀ²",
 };
 
 const int aiPolymorphPowerByLevel[SKILL_MAX_LEVEL + 1] =

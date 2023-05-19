@@ -170,10 +170,10 @@ int battle_melee_attack(LPCHARACTER ch, LPCHARACTER victim)
 	}
 
 	if (timed_event_cancel(ch))
-		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ ���� �Ǿ� ��� �Ǿ����ϴ�."));
+		ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("ÀüÅõ°¡ ½ÃÀÛ µÇ¾î Ãë¼Ò µÇ¾ú½À´Ï´Ù."));
 
 	if (timed_event_cancel(victim))
-		victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("������ ���� �Ǿ� ��� �Ǿ����ϴ�."));
+		victim->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("ÀüÅõ°¡ ½ÃÀÛ µÇ¾î Ãë¼Ò µÇ¾ú½À´Ï´Ù."));
 
 	ch->SetPosition(POS_FIGHTING);
 	ch->SetVictim(victim);
