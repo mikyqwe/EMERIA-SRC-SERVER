@@ -831,8 +831,13 @@ void CItem::ModifyPoints(bool bAdd)
 	}
 #endif
 
+
+
 	for (int i = 0; i < ITEM_APPLY_MAX_NUM; ++i)
 	{
+		if(IsMountItem())
+			continue;
+
 		if (m_pProto->aApplies[i].bType == APPLY_NONE)
 			continue;
 		int value = m_pProto->aApplies[i].lValue;

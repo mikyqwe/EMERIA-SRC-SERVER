@@ -1,11 +1,12 @@
 #ifndef	__HEADER_MOUNT_SYSTEM__
 #define	__HEADER_MOUNT_SYSTEM__
 
+
 class CHARACTER;
 
 class CMountActor
 {
-protected:
+public:
 	friend class CMountSystem;
 
 	CMountActor(LPCHARACTER owner, DWORD vnum);
@@ -14,7 +15,7 @@ protected:
 
 	virtual bool	Update(DWORD deltaTime);
 	virtual bool	_UpdateFollowAI();
-	
+
 private:
 	bool Follow(float fMinDistance = 50.f);
 
@@ -49,7 +50,7 @@ private:
 class CMountSystem
 {
 public:
-	typedef	boost::unordered_map<DWORD,	CMountActor*>		TMountActorMap;
+	typedef	std::unordered_map<DWORD,	CMountActor*>		TMountActorMap;
 
 public:
 	CMountSystem(LPCHARACTER owner);
@@ -70,12 +71,14 @@ public:
 
 	void		Unsummon(DWORD mobVnum, bool bDeleteFromList = false);
 	void		Unsummon(CMountActor* mountActor, bool bDeleteFromList = false);
-	
+
 	void		Mount(DWORD mobVnum, LPITEM mountItem);
 	void		Unmount(DWORD mobVnum);
 
 	void		DeleteMount(DWORD mobVnum);
 	void		DeleteMount(CMountActor* mountActor);
+	void		UpdateObserver(bool bFlag);
+
 private:
 	TMountActorMap	m_mountActorMap;
 	LPCHARACTER		m_pkOwner;
@@ -85,4 +88,3 @@ private:
 };
 
 #endif
-
