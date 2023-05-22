@@ -98,17 +98,17 @@ static void _send_bonus_info(LPCHARACTER ch)
 	if (item_drop_bonus)
 	{
 		ch->ChatPacket(CHAT_TYPE_NOTICE,
-				LC_TEXT("������ ��ӷ�?  %d%% �߰� �̺�Ʈ ���Դϴ�."), item_drop_bonus);
+				LC_TEXT("������ ��ӷ�?  %d%% �߰� �̺�Ʈ ���Դϴ�."), item_drop_bonus);
 	}
 	if (gold_drop_bonus)
 	{
 		ch->ChatPacket(CHAT_TYPE_NOTICE,
-				LC_TEXT("���? ��ӷ�? %d%% �߰� �̺�Ʈ ���Դϴ�."), gold_drop_bonus);
+				LC_TEXT("���? ��ӷ�? %d%% �߰� �̺�Ʈ ���Դϴ�."), gold_drop_bonus);
 	}
 	if (gold10_drop_bonus)
 	{
 		ch->ChatPacket(CHAT_TYPE_NOTICE,
-				LC_TEXT("��ڰ�� ��ӷ�? %d%% �߰� �̺�Ʈ ���Դϴ�."), gold10_drop_bonus);
+				LC_TEXT("��ڰ�� ��ӷ�? %d%% �߰� �̺�Ʈ ���Դϴ�."), gold10_drop_bonus);
 	}
 	if (exp_bonus)
 	{
@@ -872,6 +872,10 @@ void CInputLogin::Entergame(LPDESC d, const char * data)
 		if(auction)
 			ch->SetAuction(auction);
 	}
+#endif
+
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+	ch->CheckPet();	
 #endif
 
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM

@@ -44,6 +44,10 @@
 #endif
 #include "../../common/VnumHelper.h"
 
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+#include "PetSystem.h"
+#endif
+
 #include "shop_manager.h"
 #include "shop.h"
 #include "biologSystem.h"
@@ -610,6 +614,9 @@ ACMD(do_restart)
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 					ch->CheckMount();
 #endif
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+				ch->CheckPet();
+#endif
 					break;
 
 				case SCMD_RESTART_HERE:
@@ -621,6 +628,9 @@ ACMD(do_restart)
 					ch->ReviveInvisible(5);
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 					ch->CheckMount();
+#endif
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+				ch->CheckPet();
 #endif
 					break;
 			}
@@ -651,6 +661,9 @@ ACMD(do_restart)
 			ch->ReviveInvisible(5);
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 			ch->CheckMount();
+#endif
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+				ch->CheckPet();
 #endif
 			break;
 	}

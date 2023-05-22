@@ -86,6 +86,9 @@ bool ITEM_MANAGER::Initialize(TItemTable * table, int size)
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 			|| (m_vec_prototype[i].bType == ITEM_COSTUME && m_vec_prototype[i].bSubType == COSTUME_MOUNT)
 #endif
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+			|| (m_vec_prototype[i].bType == ITEM_COSTUME && m_vec_prototype[i].bSubType == COSTUME_PET)
+#endif
 		)
 			quest::CQuestManager::instance().RegisterNPCVnum(m_vec_prototype[i].dwVnum);
 
@@ -1654,7 +1657,7 @@ void ITEM_MANAGER::CreateQuestDropItem(LPCHARACTER pkChr, LPCHARACTER pkKiller, 
 
 	if (GetDropPerKillPct(100, 2000, iDeltaPercent, "2006_drop") >= number(1, iRandRange))
 	{
-		sys_log(0, "À°°¢º¸ÇÕ DROP EVENT ");
+		sys_log(0, "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ DROP EVENT ");
 
 		const static DWORD dwVnum = 50037;
 
@@ -1666,7 +1669,7 @@ void ITEM_MANAGER::CreateQuestDropItem(LPCHARACTER pkChr, LPCHARACTER pkKiller, 
 
 	if (GetDropPerKillPct(100, 2000, iDeltaPercent, "2007_drop") >= number(1, iRandRange))
 	{
-		sys_log(0, "À°°¢º¸ÇÕ DROP EVENT ");
+		sys_log(0, "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ DROP EVENT ");
 
 		const static DWORD dwVnum = 50043;
 

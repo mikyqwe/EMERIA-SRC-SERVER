@@ -1834,7 +1834,11 @@ public:
 #ifdef __PET_SYSTEM__
 	public:
 		CPetSystem*			GetPetSystem()				{ return m_petSystem; }
-
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+	void CheckPet();
+	void PetSummon(LPITEM petItem);
+	void PetUnsummon(LPITEM petItem);
+#endif
 	protected:
 		CPetSystem*			m_petSystem;
 

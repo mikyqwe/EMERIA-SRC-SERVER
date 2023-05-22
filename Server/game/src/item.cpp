@@ -661,6 +661,10 @@ int CItem::FindEquipCell(LPCHARACTER ch, int iCandidateCell)
 		else if (GetSubType() == COSTUME_WEAPON)
 			return WEAR_COSTUME_WEAPON;
 #endif
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+		else if (GetSubType() == COSTUME_PET)
+			return WEAR_COSTUME_PET;
+#endif
 	}
 #if !defined(ENABLE_MOUNT_COSTUME_SYSTEM) && !defined(ENABLE_ACCE_COSTUME_SYSTEM)
 	else if (GetType() == ITEM_RING)
@@ -1152,7 +1156,10 @@ bool CItem::EquipTo(LPCHARACTER ch, BYTE bWearCell)
 		ch->MountSummon(this);
 	}
 #endif
-
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+	if (IsPetItem())
+		ch->PetSummon(this);
+#endif
 	m_pOwner->UpdatePacket();
 
 #ifdef ENABLE_HIGHLIGHT_NEW_ITEM
@@ -1184,6 +1191,11 @@ bool CItem::Unequip()
 #ifdef ENABLE_MOUNT_COSTUME_SYSTEM
 	if (IsMountItem())
 		m_pOwner->MountUnsummon(this);
+#endif
+
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+	if (IsPetItem())
+		m_pOwner->PetUnsummon(this);
 #endif
 
 	if (IsRideItem())
@@ -2757,3 +2769,13 @@ BYTE CItem::GetTalismanType()
 //martysama0134's 2022
 
 
+
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+bool CItem::IsPetItem()
+{
+	if (GetType() == ITEM_COSTUME && GetSubType() == COSTUME_PET)
+		return true;
+
+	return false;
+}
+#endif

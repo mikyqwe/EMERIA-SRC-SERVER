@@ -9325,3 +9325,52 @@ int CHARACTER::GetMobElement(BYTE bElement) const
 		return m_pkMobData->m_table.cElements[bElement];
 	return 0;
 }
+
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+void CHARACTER::PetSummon(LPITEM petItem)
+{
+
+	CPetSystem* petSystem = GetPetSystem();
+	DWORD mobVnum = 0;
+
+	if (!petSystem || !petItem)
+		return;
+
+	if (petItem->GetValue(1) != 0)
+		mobVnum = petItem->GetValue(1);
+
+	petSystem->Summon(mobVnum, petItem, 0, false);
+}
+
+void CHARACTER::PetUnsummon(LPITEM petItem)
+{
+	CPetSystem* petSystem = GetPetSystem();
+	DWORD mobVnum = 0;
+
+	if (!petSystem || !petItem)
+		return;
+
+	if (petItem->GetValue(1) != 0)
+		mobVnum = petItem->GetValue(1);
+
+	petSystem->Unsummon(mobVnum);
+}
+
+void CHARACTER::CheckPet()
+{
+	CPetSystem* petSystem = GetPetSystem();
+	LPITEM petItem = GetWear(WEAR_COSTUME_PET);
+	DWORD mobVnum = 0;
+
+	if (!petSystem || !petItem)
+		return;
+
+
+	if (petItem->GetValue(1) != 0)
+		mobVnum = petItem->GetValue(1);
+
+	if (petSystem->CountSummoned() == 0)
+		petSystem->Summon(mobVnum, petItem, 0, false);
+}
+#endif
+

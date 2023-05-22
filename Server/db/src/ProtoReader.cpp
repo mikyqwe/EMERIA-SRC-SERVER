@@ -125,7 +125,7 @@ int get_Item_SubType_Value(unsigned int type_value, string inputString)
 					"UNIQUE_14", "UNIQUE_15", "UNIQUE_16", "UNIQUE_17", "UNIQUE_18", "UNIQUE_19", "UNIQUE_20", "UNIQUE_21",
 					"UNIQUE_22", "UNIQUE_23", "UNIQUE_24", "UNIQUE_25", "UNIQUE_26", "UNIQUE_27", "UNIQUE_28", "UNIQUE_29",
 					"UNIQUE_30"};
-	static string arSub28[] = { "COSTUME_BODY", "COSTUME_HAIR" , "COSTUME_MOUNT", "COSTUME_ACCE", "COSTUME_WEAPON" };
+	static string arSub28[] = { "COSTUME_BODY", "COSTUME_HAIR" , "COSTUME_MOUNT", "COSTUME_ACCE", "COSTUME_WEAPON", "COSTUME_PET" };
 	static string arSub29[] = { "DS_SLOT1", "DS_SLOT2", "DS_SLOT3", "DS_SLOT4", "DS_SLOT5", "DS_SLOT6" };
 	static string arSub31[] = { "EXTRACT_DRAGON_SOUL", "EXTRACT_DRAGON_HEART" };
 

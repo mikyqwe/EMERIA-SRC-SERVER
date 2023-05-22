@@ -76,7 +76,10 @@ int CItem::GetAttributeSetIndex()
 			case COSTUME_MOUNT:
 				break;
 #endif
-
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+			case COSTUME_PET:
+				break;
+#endif
 #ifdef ENABLE_WEAPON_COSTUME_SYSTEM
 			case COSTUME_WEAPON:
 #ifdef ENABLE_ITEM_ATTR_COSTUME

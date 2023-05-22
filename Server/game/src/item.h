@@ -384,7 +384,9 @@ private:
 		BYTE		GetTalismanType();
 		bool		IsTalisman() { return (GetVnum() >= 9600 && GetVnum() <= 10950); }
 #endif
-
+#ifdef ENABLE_PET_COSTUME_SYSTEM
+	bool			IsPetItem();
+#endif
 };
 
 EVENTINFO(item_event_info)

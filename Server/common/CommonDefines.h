@@ -101,3 +101,4 @@ enum eCommonDefines {
 #define ENABLE_ELEMENT_TARGET
 #define ENABLE_PENDANT_EX
 #endif
+#define ENABLE_PET_COSTUME_SYSTEM
