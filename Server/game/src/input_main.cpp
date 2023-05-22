@@ -88,13 +88,7 @@ void CInputMain::TargetInfoLoad(LPCHARACTER ch, const char* c_pData)
 	LPITEM pkInfoItem;
 	LPCHARACTER m_pkChrTarget = CHARACTER_MANAGER::instance().Find(p->dwVID);
 	if (!ch || !m_pkChrTarget)
-	return;
-	// if (m_pkChrTarget && (m_pkChrTarget->IsMonster() || m_pkChrTarget->IsStone()))
-	// {
-	// if (thecore_heart->pulse - (int) ch->GetLastTargetInfoPulse() < passes_per_sec * 3)
-	// return;
-
-	// ch->SetLastTargetInfoPulse(thecore_heart->pulse);
+		return;
 
 	if (ITEM_MANAGER::instance().CreateDropItemVector(m_pkChrTarget, ch, s_vec_item) && (m_pkChrTarget->IsMonster() || m_pkChrTarget->IsStone()))
 	{

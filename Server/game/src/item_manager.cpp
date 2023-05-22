@@ -314,7 +314,12 @@ LPITEM ITEM_MANAGER::CreateItem(DWORD vnum, DWORD count, DWORD id, bool bTryMagi
 			}
 		}
 	}
-
+#ifdef ENABLE_SEND_TARGET_INFO_EXTENDED
+	if (iRarePct)
+	{
+		item->SetRarity(iRarePct);
+	}
+#endif
 	if (id == 0)
 	{
 

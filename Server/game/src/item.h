@@ -387,6 +387,13 @@ private:
 #ifdef ENABLE_PET_COSTUME_SYSTEM
 	bool			IsPetItem();
 #endif
+#ifdef ENABLE_SEND_TARGET_INFO_EXTENDED
+	public:
+		void		SetRarity(DWORD rarity) { dwRarity = rarity; }
+		DWORD		GetRarity() { return dwRarity; }
+	protected:
+		DWORD		dwRarity;
+#endif
 };
 
 EVENTINFO(item_event_info)

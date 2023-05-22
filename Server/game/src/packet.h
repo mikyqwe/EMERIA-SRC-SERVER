@@ -1666,6 +1666,7 @@ typedef struct packet_target_info
 	DWORD	race;
 	DWORD	dwVnum;
 	BYTE	count;
+	DWORD	rarity;
 } TPacketGCTargetInfo;
 
 typedef struct packet_target_info_load
