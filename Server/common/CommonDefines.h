@@ -102,3 +102,5 @@ enum eCommonDefines {
 #define ENABLE_PENDANT_EX
 #endif
 #define ENABLE_PET_COSTUME_SYSTEM
+#define __VIEW_TARGET_DECIMAL_HP__
+#define __VIEW_TARGET_PLAYER_HP__

@@ -6058,7 +6058,10 @@ void CHARACTER::ClearTarget()
 	p.header = HEADER_GC_TARGET;
 	p.dwVID = 0;
 	p.bHPPercent = 0;
-
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+	p.iMinHP = 0;
+	p.iMaxHP = 0;
+#endif
 	CHARACTER_SET::iterator it = m_set_pkChrTargetedBy.begin();
 
 	while (it != m_set_pkChrTargetedBy.end())
@@ -6083,10 +6086,8 @@ void CHARACTER::SetTarget(LPCHARACTER pkChrTarget)
 	if (m_pkChrTarget == pkChrTarget)
 		return;
 
-	// CASTLE
 	if (IS_CASTLE_MAP(GetMapIndex()) && !IsGM())
 		return;
-	// CASTLE
 
 	if (m_pkChrTarget)
 		m_pkChrTarget->m_set_pkChrTargetedBy.erase(this);
@@ -6094,50 +6095,92 @@ void CHARACTER::SetTarget(LPCHARACTER pkChrTarget)
 	m_pkChrTarget = pkChrTarget;
 
 	TPacketGCTarget p;
-
 	p.header = HEADER_GC_TARGET;
-
 	if (m_pkChrTarget)
 	{
 		m_pkChrTarget->m_set_pkChrTargetedBy.insert(this);
-
 		p.dwVID	= m_pkChrTarget->GetVID();
 
-		if ((m_pkChrTarget->IsPC() && !m_pkChrTarget->IsPolymorphed()) || (m_pkChrTarget->GetMaxHP() <= 0))
+
+#ifdef __VIEW_TARGET_PLAYER_HP__
+		if ((m_pkChrTarget->GetMaxHP() <= 0))
+		{
 			p.bHPPercent = 0;
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+			p.iMinHP = 0;
+			p.iMaxHP = 0;
+#endif
+		}
+		else if (m_pkChrTarget->IsPC() && !m_pkChrTarget->IsPolymorphed())
+		{
+			p.bHPPercent = MINMAX(0, m_pkChrTarget->GetHPPct(), 100);
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+			p.iMinHP = m_pkChrTarget->GetHP();
+			p.iMaxHP = m_pkChrTarget->GetMaxHP();
+#endif
+#else
+		if ((m_pkChrTarget->IsPC() && !m_pkChrTarget->IsPolymorphed()) || (m_pkChrTarget->GetMaxHP() <= 0))
+		{
+			p.bHPPercent = 0;
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+			p.iMinHP = 0;
+			p.iMaxHP = 0;
+#endif
+#endif
+		}
 		else
 		{
-			if (m_pkChrTarget->GetRaceNum() == 20101 ||
-					m_pkChrTarget->GetRaceNum() == 20102 ||
-					m_pkChrTarget->GetRaceNum() == 20103 ||
-					m_pkChrTarget->GetRaceNum() == 20104 ||
-					m_pkChrTarget->GetRaceNum() == 20105 ||
-					m_pkChrTarget->GetRaceNum() == 20106 ||
-					m_pkChrTarget->GetRaceNum() == 20107 ||
-					m_pkChrTarget->GetRaceNum() == 20108 ||
-					m_pkChrTarget->GetRaceNum() == 20109)
+			if (m_pkChrTarget->GetRaceNum() == 20101 || m_pkChrTarget->GetRaceNum() == 20102 || m_pkChrTarget->GetRaceNum() == 20103 || m_pkChrTarget->GetRaceNum() == 20104 || m_pkChrTarget->GetRaceNum() == 20105 || m_pkChrTarget->GetRaceNum() == 20106 || m_pkChrTarget->GetRaceNum() == 20107 || m_pkChrTarget->GetRaceNum() == 20108 || m_pkChrTarget->GetRaceNum() == 20109)
 			{
 				LPCHARACTER owner = m_pkChrTarget->GetVictim();
-
 				if (owner)
 				{
 					int iHorseHealth = owner->GetHorseHealth();
 					int iHorseMaxHealth = owner->GetHorseMaxHealth();
-
 					if (iHorseMaxHealth)
+					{
 						p.bHPPercent = MINMAX(0,  iHorseHealth * 100 / iHorseMaxHealth, 100);
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+						p.iMinHP = 100;
+						p.iMaxHP = 100;
+#endif
+					}
 					else
+					{
 						p.bHPPercent = 100;
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+						p.iMinHP = 100;
+						p.iMaxHP = 100;
+#endif
+					}
 				}
 				else
+				{
 					p.bHPPercent = 100;
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+					p.iMinHP = 100;
+					p.iMaxHP = 100;
+#endif
+				}
 			}
 			else
 			{
-				if (m_pkChrTarget->GetMaxHP() <= 0) // @fixme136
+				if (m_pkChrTarget->GetMaxHP() <= 0)
+				{
 					p.bHPPercent = 0;
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+					p.iMinHP = 0;
+					p.iMaxHP = 0;
+#endif
+				}
 				else
-					p.bHPPercent = MINMAX(0, (m_pkChrTarget->GetHP() * 100) / m_pkChrTarget->GetMaxHP(), 100);
+				{
+					p.bHPPercent = MINMAX(0, m_pkChrTarget->GetHPPct(), 100);
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+					p.iMinHP = m_pkChrTarget->GetHP();
+					p.iMaxHP = m_pkChrTarget->GetMaxHP();
+#endif
+				}
 			}
 		}
 	}
@@ -6145,6 +6188,10 @@ void CHARACTER::SetTarget(LPCHARACTER pkChrTarget)
 	{
 		p.dwVID = 0;
 		p.bHPPercent = 0;
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+		p.iMinHP = 0;
+		p.iMaxHP = 0;
+#endif
 	}
 
 	GetDesc()->Packet(&p, sizeof(TPacketGCTarget));
@@ -6156,23 +6203,48 @@ void CHARACTER::BroadcastTargetPacket()
 		return;
 
 	TPacketGCTarget p;
-
 	p.header = HEADER_GC_TARGET;
 	p.dwVID = GetVID();
-
-	if (IsPC())
+	if (GetMaxHP() <= 0)
+	{
 		p.bHPPercent = 0;
-	else if (GetMaxHP() <= 0) // @fixme136
-		p.bHPPercent = 0;
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+		p.iMinHP = 0;
+		p.iMaxHP = 0;
+#endif
+	}
 	else
-		p.bHPPercent = MINMAX(0, (GetHP() * 100) / GetMaxHP(), 100);
+	{
+#ifdef __VIEW_TARGET_PLAYER_HP__
+		p.bHPPercent = MINMAX(0, GetHPPct(), 100);
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+		p.iMinHP = GetHP();
+		p.iMaxHP = GetMaxHP();
+#endif
+#else
+		if (IsPC())
+		{
+			p.bHPPercent = 0;
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+			p.iMinHP = 0;
+			p.iMaxHP = 0;
+#endif
+		}
+		else
+		{
+			p.bHPPercent = MINMAX(0, GetHPPct(), 100);
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+			p.iMinHP = GetHP();
+			p.iMaxHP = GetMaxHP();
+#endif
+		}
+#endif
+	}
 
 	CHARACTER_SET::iterator it = m_set_pkChrTargetedBy.begin();
-
 	while (it != m_set_pkChrTargetedBy.end())
 	{
 		LPCHARACTER pkChr = *it++;
-
 		if (!pkChr->GetDesc())
 		{
 			sys_err("%s %p does not have desc", pkChr->GetName(), get_pointer(pkChr));

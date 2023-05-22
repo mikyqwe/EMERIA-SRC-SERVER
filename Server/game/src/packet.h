@@ -1652,6 +1652,10 @@ typedef struct packet_target
 #ifdef ELEMENT_TARGET
 	BYTE	bElement;
 #endif
+#ifdef __VIEW_TARGET_DECIMAL_HP__
+	int		iMinHP;
+	int		iMaxHP;
+#endif
 } TPacketGCTarget;
 
 #ifdef TARGET_INFORMATION_SYSTEM
