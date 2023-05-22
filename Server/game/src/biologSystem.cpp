@@ -231,11 +231,14 @@ bool CBiolog::DeliverItem(LPCHARACTER pkChar, int16_t option, bool morePercentag
 	auto biologTime = pkChar->GetQuestFlag("biolog.cooldown");
 	if (biologTime && get_global_time() < biologTime)
 	{
+		if (resetDeliver)
+		{
+			if (pkChar->CountSpecifyItem())
+		}
 		pkChar->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("YOU NEED TO WAIT!"));
 		return false;
 	}
 
-	
 	auto biologData = pkChar->getBiologData();
 	uint8_t biologLevel = 0; uint8_t biologCount = 0; uint16_t biologItemVnum = 0;
 	std::tie(biologLevel, biologCount, biologItemVnum) = biologData;

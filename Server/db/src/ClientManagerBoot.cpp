@@ -288,9 +288,8 @@ bool CClientManager::InitializeShopTable()
 		"shop_item.price_count6, "
 		"shop_item.price_vnum7, "
 		"shop_item.price_count7 " 					
-		"FROM shop LEFT JOIN shop_item "
-		"ON shop.vnum = shop_item.shop_vnum "
-		"ORDER BY shop.vnum, shop_item.item_vnum, shop_item.count";
+        "FROM shop LEFT JOIN shop_item "
+        "ON shop.vnum = shop_item.shop_vnum ORDER BY shop.vnum, shop_item.id";    // shop_item.item_vnum - shop_item.id
 
 	std::unique_ptr<SQLMsg> pkMsg2(CDBManager::instance().DirectQuery(s_szQuery));
 
