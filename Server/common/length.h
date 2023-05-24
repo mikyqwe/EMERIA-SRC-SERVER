@@ -139,7 +139,7 @@ enum SwitchbotValues
 const DWORD c_arSwitchingItems[2] =
 {
 	71151,
-	11074,
+	71084,
 };
 #endif
 
